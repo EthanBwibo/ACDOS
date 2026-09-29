@@ -1,0 +1,50 @@
+# --- Python / FastAPI backend ---
+__pycache__/
+*.py[cod]
+*.so
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# Trained model artefacts (large binaries — track via release/LFS if needed)
+*.pkl
+*.joblib
+backend/models/*.pkl
+
+# Environment / secrets
+.env
+.env.local
+*.env
+
+# --- Android / Gradle ---
+*.iml
+.gradle/
+build/
+android/build/
+android/*/build/
+local.properties
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# --- Data ---
+# Raw/large calibration and trip-log data — commit processed samples only,
+# keep bulk generation output out of git history
+data/raw/
+data/trip_records_full.csv
+*.csv.gz
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.vscode/
