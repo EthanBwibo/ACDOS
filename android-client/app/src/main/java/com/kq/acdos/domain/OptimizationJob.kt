@@ -10,5 +10,12 @@ data class OptimizationJob(
     val status: OptimizationJobStatus
 )
 
-enum class OptimizationTrigger { SCHEDULED, STANDBY_ACTIVATION, VEHICLE_BREAKDOWN, FLIGHT_AMENDMENT, MANUAL }
+enum class OptimizationTrigger {
+    SCHEDULED,
+    STANDBY_ACTIVATION,
+    VEHICLE_BREAKDOWN,
+    FLIGHT_AMENDMENT,
+    MANUAL
+}
+
 enum class OptimizationJobStatus { RUNNING, COMPLETE, FAILED }
