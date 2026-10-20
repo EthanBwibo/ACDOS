@@ -18,7 +18,7 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | routes | id UUID; vehicle_id UUID; optimization_job_id UUID; total_distance_km NUMERIC; status TEXT; created_at TIMESTAMPTZ | PK id; FK vehicle_id, optimization_job_id; status in (active, completed, superseded) |
 | route_nodes | id UUID; route_id UUID; pickup_request_id UUID; seq_order INT; estimated_arrival TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK route_id, pickup_request_id (unique); route_id and seq_order unique together |
 | pickup_events | id UUID; route_node_id UUID; driver_id UUID; event_type TEXT; exception_type TEXT; confirmed_at TIMESTAMPTZ; synced_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id, driver_id to profiles; event_type in (pickup_confirmed, exception); exception_type in (no_show, vehicle_issue, traffic_delay) or null; idempotency_key unique; at most one pickup_confirmed per route_node_id (partial unique index); synced_at null until synchronised |
-| trip_records | id UUID; route_node_id UUID; vehicle_id UUID; crew_count INT; pickup_timestamp TIMESTAMPTZ; scheduled_report_time TIMESTAMPTZ; actual_arrival TIMESTAMPTZ; actual_duration_sec INT; day_of_week SMALLINT; route_corridor TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id (unique), vehicle_id; day_of_week 0 = Monday to 6 = Sunday (Python `datetime.weekday()`; in SQL `extract(isodow from pickup_timestamp) - 1`) |
+| trip_records | id UUID; route_node_id UUID; vehicle_id UUID; crew_count INT; pickup_timestamp TIMESTAMPTZ; scheduled_report_time TIMESTAMPTZ; actual_arrival TIMESTAMPTZ; actual_duration_sec INT; day_of_week SMALLINT; route_corridor TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id (unique), vehicle_id; day_of_week 0 = Monday to 6 = Sunday (see Conventions) |
 
 ## Communication model (ERD Figure: communication)
 
@@ -57,9 +57,26 @@ for every client path, not only a backstop behind FastAPI.
   messages; register their own device tokens.
 
 Policies get the caller's role and any cross-table lookup through `SECURITY DEFINER` functions
-(`public.current_app_role()` and similar), never through a subquery on a table that has its
+(`private.current_app_role()` and similar), never through a subquery on a table that has its
 own policies. Policies on `route_nodes` and `pickup_requests` refer to each other, so a direct
 subquery would recurse.
+
+The helpers live in the `private` schema, which the Supabase API does not expose, so clients
+cannot call them as `/rest/v1/rpc/...` endpoints. Only `authenticated` may execute them; `anon`
+and `PUBLIC` may not.
+
+## Conventions
+
+- `day_of_week` (on `trip_records`) is 0 = Monday to 6 = Sunday, the same as Python's
+  `datetime.weekday()`. Any SQL that derives it must use `EXTRACT(ISODOW FROM ts) - 1`, never
+  `EXTRACT(DOW ...)`: DOW counts Sunday as 0 and would shift every day by one.
+
+## Supabase-provided, not ours
+
+- `public.rls_auto_enable()` backs the `ensure_rls` event trigger that Supabase created with the
+  project. It turns RLS on automatically for every new table in `public`. It is not in
+  `backend/migrations/`; leave it alone. The security advisor lists it as an executable
+  `SECURITY DEFINER` function; that warning is expected.
 
 ## Not in the table
 
