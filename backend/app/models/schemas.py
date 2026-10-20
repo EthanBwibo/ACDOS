@@ -90,7 +90,7 @@ class PickupEvent(BaseModel):
 
 class TripRecord(BaseModel):
     id: str
-    route_id: str
+    route_node_id: str
     actual_duration_seconds: int
     day_of_week: int
     hour_of_day: int

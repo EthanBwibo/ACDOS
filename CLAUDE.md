@@ -86,10 +86,11 @@ The `data-logger` branch holds only `travel_time_log.csv`, written hourly by the
   pulled from it. That is why L3 is synthetic.
 - Real validation data: the hourly logger, running since 20 October 2026.
 
-## Known inconsistency
+## Data model decisions
 
-`TripRecord` in `backend/app/models/schemas.py` has `route_id`, but the Chapter 4 design
-hangs `trip_records` off `route_nodes`. Reconcile before writing the first migration.
+The Chapter 4 class diagram and ERD are the source of truth for the schema. `trip_records`
+hang off `route_nodes` (`route_node_id`), not `routes`: each record is one crew pickup leg,
+which is the unit the Random Forest predicts.
 
 ## Git workflow
 
