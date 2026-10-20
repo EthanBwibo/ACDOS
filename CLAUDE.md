@@ -88,9 +88,10 @@ The `data-logger` branch holds only `travel_time_log.csv`, written hourly by the
 
 ## Data model decisions
 
-The Chapter 4 class diagram and ERD are the source of truth for the schema. `trip_records`
-hang off `route_nodes` (`route_node_id`), not `routes`: each record is one crew pickup leg,
-which is the unit the Random Forest predicts.
+The Chapter 4 class diagram and ERD are the source of truth for the schema. The table
+definitions are in `docs/schema.md` (Table 4.1); migrations follow it, not the Pydantic models.
+`trip_records` hang off `route_nodes` (`route_node_id`), not `routes`: each record is one crew
+pickup leg, which is the unit the Random Forest predicts.
 
 ## Git workflow
 
