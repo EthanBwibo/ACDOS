@@ -2,7 +2,7 @@ package com.kq.acdos.domain
 
 data class TripRecord(
     val id: String,
-    val routeId: String,
+    val routeNodeId: String,
     val actualDurationSeconds: Long,
     val dayOfWeek: Int,
     val hourOfDay: Int,
