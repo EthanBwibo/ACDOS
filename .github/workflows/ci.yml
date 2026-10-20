@@ -1,0 +1,77 @@
+name: ci
+
+# Lint and test on every PR into main, and again after each merge.
+# The data-logger branch is never built: it only holds the hourly CSV.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A new push to the same PR cancels the run that is now out of date.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Pytest
+        run: pytest
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: android-client
+    env:
+      KTLINT_VERSION: "1.8.0"
+    steps:
+      - uses: actions/checkout@v7
+
+      # JDK 25 matches gradle/gradle-daemon-jvm.properties, so Gradle does not
+      # have to download its own toolchain on every run.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Standalone ktlint CLI, pinned, so no extra Gradle plugin is needed.
+      # Style rules come from android-client/.editorconfig.
+      - name: Ktlint
+        run: |
+          curl -sSLo ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
+          chmod +x ktlint
+          ./ktlint "app/src/**/*.kt" "*.kts" "app/*.kts"
+
+      # gradlew is stored without the execute bit, so call it through bash.
+      - name: Build, unit test and Android lint
+        run: bash ./gradlew assembleDebug testDebugUnitTest lintDebug

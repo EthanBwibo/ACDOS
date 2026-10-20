@@ -1,0 +1,5 @@
+# ktlint reads its style from here (run in CI by .github/workflows/ci.yml).
+root = true
+
+[*.{kt,kts}]
+ktlint_code_style = android_studio
