@@ -44,6 +44,46 @@ jobs:
       - name: Pytest
         run: pytest
 
+  # Applies backend/migrations in order to a throwaway PostGIS database, then
+  # checks the RLS policies role by role. Supabase itself is never touched.
+  migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install psql if the runner lacks it
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+
+      - name: Supabase stand-ins (auth schema, roles)
+        run: psql -v ON_ERROR_STOP=1 -q -f backend/tests/sql/supabase_stubs.sql
+
+      - name: Apply migrations in order
+        run: |
+          for f in backend/migrations/*.sql; do
+            echo "== $f"
+            psql -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: RLS smoke test
+        run: psql -v ON_ERROR_STOP=1 -q -f backend/tests/sql/rls_smoke_test.sql
+
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 20
