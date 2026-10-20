@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/F: pycodestyle and pyflakes, I: import order, UP: modern syntax, B: likely bugs
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+# Lets tests import `app` when pytest is run from backend/
+pythonpath = ["."]
+testpaths = ["tests"]

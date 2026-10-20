@@ -1,7 +1,11 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
+
+
+class HealthResponse(BaseModel):
+    status: str
 
 
 class GeoPoint(BaseModel):
@@ -9,7 +13,7 @@ class GeoPoint(BaseModel):
     longitude: float
 
 
-class CrewRole(str, Enum):
+class CrewRole(StrEnum):
     PILOT = "PILOT"
     CABIN_CREW = "CABIN_CREW"
 
@@ -22,7 +26,7 @@ class CrewMember(BaseModel):
     duty_report_time: datetime
 
 
-class PickupRequestStatus(str, Enum):
+class PickupRequestStatus(StrEnum):
     PENDING = "PENDING"
     ASSIGNED = "ASSIGNED"
     CONFIRMED = "CONFIRMED"
@@ -36,10 +40,12 @@ class PickupRequest(BaseModel):
     hard_deadline: datetime
     status: PickupRequestStatus
 
+
 class Vehicle(BaseModel):
     id: str
     registration: str
     seating_capacity: int
+
 
 class RouteNode(BaseModel):
     id: str
@@ -48,13 +54,15 @@ class RouteNode(BaseModel):
     estimated_arrival_time: datetime
     actual_arrival_time: datetime | None = None
 
+
 class Route(BaseModel):
     id: str
     vehicle_id: str
     nodes: list[RouteNode]
     optimization_job_id: str
 
-class OptimizationTrigger(str, Enum):
+
+class OptimizationTrigger(StrEnum):
     SCHEDULED = "SCHEDULED"
     STANDBY_ACTIVATION = "STANDBY_ACTIVATION"
     VEHICLE_BREAKDOWN = "VEHICLE_BREAKDOWN"
@@ -62,7 +70,7 @@ class OptimizationTrigger(str, Enum):
     MANUAL = "MANUAL"
 
 
-class OptimizationJobStatus(str, Enum):
+class OptimizationJobStatus(StrEnum):
     RUNNING = "RUNNING"
     COMPLETE = "COMPLETE"
     FAILED = "FAILED"
@@ -75,7 +83,8 @@ class OptimizationJob(BaseModel):
     resulting_routes: list[Route] = []
     status: OptimizationJobStatus
 
-class PickupEventType(str, Enum):
+
+class PickupEventType(StrEnum):
     CONFIRMED = "CONFIRMED"
     EXCEPTION_FLAGGED = "EXCEPTION_FLAGGED"
 
@@ -87,6 +96,7 @@ class PickupEvent(BaseModel):
     event_type: PickupEventType
     device_local_timestamp: datetime
     synced_at: datetime | None = None
+
 
 class TripRecord(BaseModel):
     id: str

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="ACDOS Backend")
+from app.config import settings
+from app.routers import health
 
+app = FastAPI(title=settings.app_name)
 
-@app.get("/health")
-async def health() -> dict:
-    return {"status": "ok"}
+app.include_router(health.router)
