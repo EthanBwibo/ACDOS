@@ -1,8 +1,18 @@
 -- Minimal stand-ins for what Supabase provides, so CI can apply
--- backend/migrations to a plain PostGIS container. Never applied to Supabase.
+-- backend/migrations to a clean database in a PostGIS container.
+-- Never applied to Supabase.
 
 create schema if not exists auth;
 create schema if not exists extensions;
+
+-- Supabase's default search path. Migrations name PostGIS types (geography)
+-- without a schema, which works because extensions is on this path.
+-- Takes effect for the later psql sessions that apply each migration.
+alter database acdos_ci set search_path = "$user", public, extensions;
+
+-- PostGIS as the ACDOS project had it before #62: enabled from the
+-- dashboard into public. 000 then has to move it, so CI tests that move.
+create extension postgis;
 
 create table auth.users (id uuid primary key);
 
