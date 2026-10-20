@@ -1,5 +1,5 @@
--- Checks the 011_enable_rls policies, and the pickup_events confirmation
--- index, by impersonating each role.
+-- Checks the RLS policies (011, helpers moved to private by 012) and the
+-- pickup_events confirmation index, by impersonating each role.
 -- Seed data is inserted as the superuser, which bypasses RLS.
 -- Any failed assert stops psql (ON_ERROR_STOP) and fails CI.
 
@@ -165,4 +165,29 @@ begin
 end $$;
 
 reset role;
+
+-- RLS helper functions (012) ----------------------------------------------
+-- None left in public, where the API would expose them as RPC endpoints.
+do $$
+begin
+    assert not exists (
+        select 1 from pg_proc
+        where pronamespace = 'public'::regnamespace
+          and proname in ('current_app_role', 'current_crew_member_id',
+                          'driver_active_pickup_request_ids',
+                          'driver_active_crew_member_ids', 'crew_pickup_request_ids')
+    ), 'an RLS helper function is still in the public schema';
+end $$;
+
+-- Not callable without signing in.
+set role anon;
+do $$
+begin
+    perform private.current_app_role();
+    raise exception 'anon was able to call private.current_app_role()';
+exception when insufficient_privilege then
+    null; -- expected: no access to the private schema
+end $$;
+reset role;
+
 \echo 'RLS smoke test passed'
