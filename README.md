@@ -30,12 +30,18 @@ platform.
 ## Repo structure
 
 ```
-acdos/
-├── android/          # Kotlin client
-├── backend/          # FastAPI app, GA-ALNS solver, RF service
+ACDOS/
+├── android-client/   # Kotlin client (driver, crew, dispatcher)
+├── backend/
+│   ├── app/          # FastAPI: routers/, models/, solver/ (GA-ALNS), ml/ (Random Forest)
+│   ├── migrations/   # Supabase SQL migrations
+│   └── tests/
+├── data/             # Layer 1-3 datasets: pickup zones, temporal calibration, trip_records
+├── scripts/          # scripts that generated the data/ files
+├── logger/           # hourly Distance Matrix logger (runs in GitHub Actions)
 ├── docs/             # design artefacts, diagrams, chapter drafts
-├── data/             # pickup zones, calibration data, trip_records pipeline
-└── .github/
+├── .githooks/        # commit-msg hook enforcing Conventional Commits
+└── .github/workflows/
 ```
 
 ## Setup
@@ -50,7 +56,7 @@ uvicorn app.main:app --reload
 ```
 
 ### Android
-Open `android/` in Android Studio. Gradle sync will pull Room, KSP, coroutines, and
+Open `android-client/` in Android Studio. Gradle sync will pull Room, KSP, coroutines, and
 Retrofit dependencies automatically.
 
 ### Database
@@ -63,6 +69,10 @@ Real Kenya Airways trip-log data was not confirmed available within the project 
 Training data for the Random Forest service is a synthetic dataset calibrated against live
 Google Distance Matrix queries across 28 Nairobi pickup zones and a full weekday/hour
 temporal grid — documented in `docs/`.
+
+A held-out set of real observations is being collected for validation: `logger/` queries
+Google Distance Matrix hourly for all 28 zones (from 20 October 2026) and appends the
+results to `travel_time_log.csv` on the `data-logger` branch.
 
 ## Contributing
 
