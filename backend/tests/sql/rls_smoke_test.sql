@@ -1,0 +1,168 @@
+-- Checks the 011_enable_rls policies, and the pickup_events confirmation
+-- index, by impersonating each role.
+-- Seed data is inserted as the superuser, which bypasses RLS.
+-- Any failed assert stops psql (ON_ERROR_STOP) and fails CI.
+
+-- Users: dispatcher D, drivers A and B, crew member C (with an account).
+insert into auth.users (id) values
+    ('00000000-0000-0000-0000-00000000000d'),
+    ('00000000-0000-0000-0000-00000000000a'),
+    ('00000000-0000-0000-0000-00000000000b'),
+    ('00000000-0000-0000-0000-00000000000c');
+
+insert into public.profiles (id, role, full_name) values
+    ('00000000-0000-0000-0000-00000000000d', 'dispatcher', 'Dispatcher D'),
+    ('00000000-0000-0000-0000-00000000000a', 'driver', 'Driver A'),
+    ('00000000-0000-0000-0000-00000000000b', 'driver', 'Driver B'),
+    ('00000000-0000-0000-0000-00000000000c', 'crew', 'Crew C');
+
+-- Crew C has an account; crew E and F do not (profile_id null).
+insert into public.crew_members (id, profile_id, name, role, home_location) values
+    ('10000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000c',
+     'Crew C', 'cabin_crew', 'SRID=4326;POINT(36.8120 -1.2675)'),
+    ('10000000-0000-0000-0000-00000000000e', null,
+     'Crew E', 'pilot', 'SRID=4326;POINT(36.7778 -1.2789)'),
+    ('10000000-0000-0000-0000-00000000000f', null,
+     'Crew F', 'cabin_crew', 'SRID=4326;POINT(36.8219 -1.2921)');
+
+insert into public.vehicles (id, assigned_driver_id, plate_number, capacity) values
+    ('20000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', 'KDA 001A', 14),
+    ('20000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', 'KDB 002B', 14);
+
+insert into public.optimization_jobs (id, trigger_type, status) values
+    ('30000000-0000-0000-0000-000000000000', 'scheduled', 'completed'),
+    ('30000000-0000-0000-0000-000000000001', 'flight_delay', 'completed');
+
+insert into public.pickup_requests (id, crew_member_id, pickup_location, report_time, request_type) values
+    ('40000000-0000-0000-0000-00000000000c', '10000000-0000-0000-0000-00000000000c',
+     'SRID=4326;POINT(36.8120 -1.2675)', '2026-11-01T04:10:00Z', 'rostered'),
+    ('40000000-0000-0000-0000-00000000000e', '10000000-0000-0000-0000-00000000000e',
+     'SRID=4326;POINT(36.7778 -1.2789)', '2026-11-01T04:40:00Z', 'standby'),
+    ('40000000-0000-0000-0000-00000000000f', '10000000-0000-0000-0000-00000000000f',
+     'SRID=4326;POINT(36.8219 -1.2921)', '2026-11-01T05:00:00Z', 'rostered');
+
+-- Active routes: vehicle A picks up crew C, vehicle B picks up crew E.
+-- Vehicle A also has an older, superseded route that held crew F.
+insert into public.routes (id, vehicle_id, optimization_job_id, total_distance_km, status) values
+    ('50000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-00000000000a',
+     '30000000-0000-0000-0000-000000000001', 14.1, 'active'),
+    ('50000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-00000000000b',
+     '30000000-0000-0000-0000-000000000001', 17.3, 'active'),
+    ('50000000-0000-0000-0000-0000000000a0', '20000000-0000-0000-0000-00000000000a',
+     '30000000-0000-0000-0000-000000000000', 9.8, 'superseded');
+
+insert into public.route_nodes (id, route_id, pickup_request_id, seq_order, estimated_arrival) values
+    ('60000000-0000-0000-0000-00000000000a', '50000000-0000-0000-0000-00000000000a',
+     '40000000-0000-0000-0000-00000000000c', 1, '2026-11-01T03:40:00Z'),
+    ('60000000-0000-0000-0000-00000000000b', '50000000-0000-0000-0000-00000000000b',
+     '40000000-0000-0000-0000-00000000000e', 1, '2026-11-01T04:05:00Z'),
+    ('60000000-0000-0000-0000-0000000000a0', '50000000-0000-0000-0000-0000000000a0',
+     '40000000-0000-0000-0000-00000000000f', 1, '2026-11-01T04:20:00Z');
+
+set role authenticated;
+
+-- Driver A ---------------------------------------------------------------
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+
+-- Sees their own vehicle and its routes (active and superseded), not B's.
+do $$
+begin
+    assert (select count(*) from public.vehicles) = 1, 'driver A should see 1 vehicle';
+    assert (select count(*) from public.routes) = 2, 'driver A should see the 2 routes of vehicle A';
+    assert (select count(*) from public.route_nodes) = 2, 'driver A should see the 2 stops of vehicle A';
+    assert (select count(*) from public.trip_records) = 0, 'driver A should see no trip records';
+end $$;
+
+-- Sees the crew and pickups on their active route only: C, not E (driver B's
+-- crew) and not F (superseded route).
+do $$
+begin
+    assert (select count(*) from public.pickup_requests) = 1, 'driver A should see 1 pickup request';
+    assert (select id from public.pickup_requests) = '40000000-0000-0000-0000-00000000000c',
+        'driver A should see the pickup of crew C';
+    assert (select count(*) from public.crew_members) = 1, 'driver A should see 1 crew member';
+    assert (select id from public.crew_members) = '10000000-0000-0000-0000-00000000000c',
+        'driver A should see crew C only, not the crew of driver B';
+end $$;
+
+-- An exception, then a confirmation, on the same stop: both allowed.
+insert into public.pickup_events (route_node_id, driver_id, event_type, exception_type, confirmed_at, idempotency_key)
+values ('60000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a',
+        'exception', 'traffic_delay', '2026-11-01T03:38:00Z', 'device-a-1');
+insert into public.pickup_events (route_node_id, driver_id, event_type, confirmed_at, idempotency_key)
+values ('60000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a',
+        'pickup_confirmed', '2026-11-01T03:41:00Z', 'device-a-2');
+
+-- A second confirmation on the same stop is rejected.
+do $$
+begin
+    insert into public.pickup_events (route_node_id, driver_id, event_type, confirmed_at, idempotency_key)
+    values ('60000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a',
+            'pickup_confirmed', '2026-11-01T03:45:00Z', 'device-a-3');
+    raise exception 'a stop was confirmed twice';
+exception when unique_violation then
+    null; -- expected: pickup_events_one_confirmation_per_node
+end $$;
+
+-- No events on driver B's route.
+do $$
+begin
+    insert into public.pickup_events (route_node_id, driver_id, event_type, confirmed_at, idempotency_key)
+    values ('60000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000a',
+            'pickup_confirmed', '2026-11-01T04:06:00Z', 'device-a-4');
+    raise exception 'driver A inserted an event on the route of driver B';
+exception when insufficient_privilege then
+    null; -- expected: blocked by RLS
+end $$;
+
+-- No events while claiming to be driver B.
+do $$
+begin
+    insert into public.pickup_events (route_node_id, driver_id, event_type, exception_type, confirmed_at, idempotency_key)
+    values ('60000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b',
+            'exception', 'no_show', '2026-11-01T03:42:00Z', 'device-a-5');
+    raise exception 'driver A inserted an event as driver B';
+exception when insufficient_privilege then
+    null; -- expected: blocked by RLS
+end $$;
+
+-- Crew C ------------------------------------------------------------------
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+
+-- Sees their own pickup and its ETA; not the ETA of crew E or F.
+do $$
+begin
+    assert (select count(*) from public.pickup_requests) = 1, 'crew C should see 1 pickup request';
+    assert (select crew_member_id from public.pickup_requests)
+        = '10000000-0000-0000-0000-00000000000c', 'crew C should see their own request';
+    assert (select count(*) from public.route_nodes) = 1, 'crew C should see 1 route node';
+    assert (select estimated_arrival from public.route_nodes) = '2026-11-01T03:40:00Z',
+        'crew C should see only their own ETA';
+    assert (select count(*) from public.routes) = 0, 'crew C should see no routes';
+    assert (select count(*) from public.vehicles) = 0, 'crew C should see no vehicles';
+    assert (select count(*) from public.profiles) = 1, 'crew C should see only their own profile';
+end $$;
+
+-- Dispatcher D ------------------------------------------------------------
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+do $$
+begin
+    assert (select count(*) from public.routes) = 3, 'dispatcher should see 3 routes';
+    assert (select count(*) from public.pickup_requests) = 3, 'dispatcher should see 3 requests';
+    assert (select count(*) from public.crew_members) = 3, 'dispatcher should see 3 crew members';
+    assert (select count(*) from public.pickup_events) = 2, 'dispatcher should see 2 events';
+    assert (select count(*) from public.profiles) = 4, 'dispatcher should see 4 profiles';
+end $$;
+insert into public.vehicles (plate_number, capacity) values ('KDC 003C', 7);
+
+-- Not signed in -----------------------------------------------------------
+reset request.jwt.claim.sub;
+do $$
+begin
+    assert (select count(*) from public.vehicles) = 0, 'no user should see no vehicles';
+    assert (select count(*) from public.pickup_requests) = 0, 'no user should see no requests';
+    assert (select count(*) from public.route_nodes) = 0, 'no user should see no route nodes';
+end $$;
+
+reset role;
+\echo 'RLS smoke test passed'
