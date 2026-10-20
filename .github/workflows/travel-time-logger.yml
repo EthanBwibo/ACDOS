@@ -1,0 +1,51 @@
+name: travel-time-logger
+
+# Hourly Distance Matrix snapshot for all pickup zones to JKIA.
+# Data is appended on the unprotected data-logger branch, never on main.
+on:
+  schedule:
+    - cron: "7 * * * *" # minute 7 avoids the top-of-hour Actions queue
+  workflow_dispatch: # manual run button for testing
+
+permissions:
+  contents: write
+
+concurrency:
+  group: travel-time-logger
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out main (script and zone list)
+        uses: actions/checkout@v4
+
+      - name: Check out data-logger branch (log file)
+        uses: actions/checkout@v4
+        with:
+          ref: data-logger
+          path: logger-data
+
+      - name: Query Distance Matrix
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: >
+          python3 logger/log_travel_times.py
+          --zones data/pickup_zones.csv
+          --out logger-data/travel_time_log.csv
+
+      - name: Commit and push log
+        working-directory: logger-data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add travel_time_log.csv
+          git diff --cached --quiet && { echo "nothing to commit"; exit 0; }
+          git commit -m "chore(data): log travel times $(date -u +%Y-%m-%dT%H:%MZ)"
+          for attempt in 1 2 3; do
+            git push origin HEAD:data-logger && exit 0
+            git pull --rebase origin data-logger
+          done
+          exit 1
