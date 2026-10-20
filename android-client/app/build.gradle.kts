@@ -47,4 +47,14 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.moshi)
+    // Moshi adapters generated at compile time (KSP), so no kotlin-reflect in the APK
+    implementation(libs.moshi)
+    ksp(libs.moshi.kotlin.codegen)
+    // ViewModel + lifecycleScope: coroutines tied to screen lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    // Fragments for the bottom-nav tabs (Driver: Route/Schedule/Sync, Crew: Pickup/Message)
+    implementation(libs.androidx.fragment.ktx)
+    testImplementation(libs.kotlinx.coroutines.test)
+    kspTest(libs.moshi.kotlin.codegen)
 }
