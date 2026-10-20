@@ -64,12 +64,17 @@ jobs:
       PGHOST: localhost
       PGUSER: postgres
       PGPASSWORD: postgres
-      PGDATABASE: postgres
+      PGDATABASE: acdos_ci
     steps:
       - uses: actions/checkout@v7
 
       - name: Install psql if the runner lacks it
         run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+
+      # The image pre-installs PostGIS and its add-ons into its default
+      # database. A database made from template0 starts clean, like Supabase.
+      - name: Create a clean database
+        run: createdb --maintenance-db=postgres -T template0 acdos_ci
 
       - name: Supabase stand-ins (auth schema, roles)
         run: psql -v ON_ERROR_STOP=1 -q -f backend/tests/sql/supabase_stubs.sql
@@ -80,6 +85,11 @@ jobs:
             echo "== $f"
             psql -v ON_ERROR_STOP=1 -q -f "$f"
           done
+
+      - name: PostGIS is in extensions, nothing of it left in public
+        run: |
+          test "$(psql -tAc "select extnamespace::regnamespace from pg_extension where extname = 'postgis'")" = extensions
+          test "$(psql -tAc "select count(*) from pg_class where relnamespace = 'public'::regnamespace and relname = 'spatial_ref_sys'")" = 0
 
       - name: RLS smoke test
         run: psql -v ON_ERROR_STOP=1 -q -f backend/tests/sql/rls_smoke_test.sql
