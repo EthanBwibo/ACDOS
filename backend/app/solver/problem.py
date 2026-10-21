@@ -68,23 +68,30 @@ class Problem:
             raise ValueError("pickup demand must be above 0")
 
 
+def haversine_km(origin: Point, dest: Point) -> float:
+    """Straight-line (great-circle) distance in km.
+
+    Haversine instead of PostGIS because the solver uses it in memory, inside
+    loops that run thousands of times per generation, where a database round
+    trip per pair would be far too slow.
+    """
+    earth_radius_km = 6371.0
+    lat1, lat2 = math.radians(origin.lat), math.radians(dest.lat)
+    dlat = lat2 - lat1
+    dlon = math.radians(dest.lon - origin.lon)
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    return 2 * earth_radius_km * math.asin(math.sqrt(a))
+
+
 def haversine_travel_time(speed_kmh: float) -> TravelTimeFn:
     """Straight-line distance at a constant speed, ignoring departure time.
 
-    Haversine instead of PostGIS because this runs inside the solver's
-    in-memory loop, thousands of times per generation, where a database round
-    trip per pair would be far too slow. Only a placeholder until the Random
-    Forest is wired into fitness (#23); also handy for tests.
+    Only a placeholder until the Random Forest is wired into fitness (#23);
+    also handy for tests.
     """
-    earth_radius_km = 6371.0
     metres_per_sec = speed_kmh * 1000 / 3600
 
     def travel_time(origin: Point, dest: Point, depart_sec: float) -> float:
-        lat1, lat2 = math.radians(origin.lat), math.radians(dest.lat)
-        dlat = lat2 - lat1
-        dlon = math.radians(dest.lon - origin.lon)
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-        km = 2 * earth_radius_km * math.asin(math.sqrt(a))
-        return km * 1000 / metres_per_sec
+        return haversine_km(origin, dest) * 1000 / metres_per_sec
 
     return travel_time
