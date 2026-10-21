@@ -116,6 +116,21 @@ def route_evaluation(
     )
 
 
+# Route cost by (vehicle index, route), so an operator costs each route once
+# per call even when it looks at the same route many times.
+RouteCostCache = dict[tuple[int, tuple[int, ...]], float]
+
+
+def cached_route_cost(
+    problem: Problem, vehicle_index: int, route: list[int], cache: RouteCostCache
+) -> float:
+    """route_evaluation(...).cost, remembered in cache."""
+    key = (vehicle_index, tuple(route))
+    if key not in cache:
+        cache[key] = route_evaluation(problem, vehicle_index, route).cost
+    return cache[key]
+
+
 def evaluate(
     problem: Problem, individual: Individual, buffer_sec: float = REPORT_BUFFER_SEC
 ) -> Evaluation:

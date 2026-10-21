@@ -17,6 +17,7 @@ import random
 
 from app.solver.individual import Individual
 from app.solver.problem import Problem, haversine_km
+from app.solver.removal import take_out
 
 # R&P's relatedness weights (phi, chi, psi). Sensitivity run against 9/9/2 is
 # planned (#14): crew in one zone reporting hours apart cannot share a van.
@@ -25,9 +26,6 @@ SHAW_TIME_WEIGHT = 3.0
 SHAW_DEMAND_WEIGHT = 2.0
 # R&P's p: higher picks the most related pickup more often.
 SHAW_DETERMINISM = 6
-# R&P remove between 4 and xi = 40% of the requests per destroy.
-SHAW_MIN_REMOVED = 4
-SHAW_MAX_REMOVED_FRACTION = 0.4
 
 
 def relatedness_matrix(problem: Problem) -> list[list[float]]:
@@ -76,13 +74,6 @@ def _normalise(matrix: list[list[float]]) -> list[list[float]]:
     ]
 
 
-def removal_count(n_routed: int, rng: random.Random) -> int:
-    """How many pickups one destroy removes: between 4 and 40% of those routed."""
-    low = min(SHAW_MIN_REMOVED, n_routed)
-    high = max(low, math.ceil(SHAW_MAX_REMOVED_FRACTION * n_routed))
-    return rng.randint(low, high)
-
-
 def shaw_removal(
     individual: Individual,
     relatedness: list[list[float]],
@@ -113,6 +104,4 @@ def shaw_removal(
         remaining.sort(key=lambda j: (relatedness[r][j], j))
         removed.append(remaining.pop(int(rng.random() ** determinism * len(remaining))))
 
-    taken = set(removed)
-    routes = [[i for i in route if i not in taken] for route in individual.routes]
-    return Individual(routes, individual.unassigned + removed), removed
+    return take_out(individual, removed), removed

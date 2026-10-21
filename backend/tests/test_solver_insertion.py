@@ -7,7 +7,8 @@ from app.solver.fitness import UNASSIGNED_WEIGHT, fitness
 from app.solver.individual import Individual, split
 from app.solver.insertion import greedy_insertion, insertion_cost
 from app.solver.problem import Pickup, Point, Problem, Vehicle, haversine_travel_time
-from app.solver.shaw import relatedness_matrix, removal_count, shaw_removal
+from app.solver.removal import removal_count
+from app.solver.shaw import relatedness_matrix, shaw_removal
 from tests.solver_checks import assert_feasible
 
 
