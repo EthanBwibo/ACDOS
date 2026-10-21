@@ -1,8 +1,17 @@
 import math
+import random
 
 import pytest
 
-from app.solver.individual import Individual, schedule_route, split
+from app.solver.individual import (
+    DEPARTURE_TOLERANCE_SEC,
+    MAX_DEPARTURE_SEARCH_STEPS,
+    REPORT_BUFFER_SEC,
+    Individual,
+    schedule,
+    schedule_route,
+    split,
+)
 from app.solver.problem import JKIA, Pickup, Point, Problem, Vehicle, haversine_travel_time
 from tests.solver_checks import assert_feasible
 
@@ -106,6 +115,31 @@ def test_a_lost_cause_joins_the_route_where_it_adds_least_lateness():
 
     assert individual.routes == [[0, 2], [1], []]
     assert assert_feasible(problem, individual) == {"p2": 1800}
+
+
+def test_a_lost_cause_avoids_making_an_on_time_pickup_late_even_at_more_total_lateness():
+    # v0 holds three pickups with no deadline (JKIA at 2400 s); p3 (deadline
+    # 1200) cannot join and opens v1. Lost cause p4 on v1 adds 2400 s (1800 its
+    # own, 600 for p3); on v0 it adds 3000 s, all its own. Least total lateness
+    # would pick v1 and make p3 late; the rule picks v0.
+    problem = make_problem([math.inf, math.inf, math.inf, 1200, 0], capacities=[14, 14])
+
+    individual = split(problem, [0, 1, 2, 3, 4])
+
+    assert individual.routes == [[0, 1, 2, 4], [3]]
+    assert assert_feasible(problem, individual) == {"p4": 3000}
+
+
+def test_a_lost_cause_takes_least_total_lateness_when_every_route_would_make_someone_late():
+    # p0 (deadline 1200) on v0, p1 (deadline 1500) on v1. Lost cause p2 makes
+    # someone late either way: on v0 it adds 2400 s (600 for p0), on v1 2100 s
+    # (300 for p1). It goes to v1 and does not open a new vehicle.
+    problem = make_problem([1200, 1500, 0], capacities=[14, 14, 14])
+
+    individual = split(problem, [0, 1, 2])
+
+    assert individual.routes == [[0], [1, 2], []]
+    assert assert_feasible(problem, individual) == {"p1": 300, "p2": 1800}
 
 
 def test_a_lost_cause_opens_the_next_vehicle_only_when_no_open_route_has_room():
@@ -229,3 +263,164 @@ def test_feasibility_check_catches_an_overfull_vehicle():
 
     with pytest.raises(AssertionError, match="carries 3 > 2"):
         assert_feasible(problem, Individual(routes=[[0, 1, 2]]))
+
+
+# Latest departure. make_problem legs take 600 s, so depot -> pickup -> JKIA
+# is 1200 s, and the target is report time minus REPORT_BUFFER_SEC (900 s).
+
+
+def test_latest_departure_leaves_as_late_as_the_buffer_allows():
+    # Target 10000 - 900 = 9100, so the latest start is 7900 s.
+    problem = make_problem([10000], capacities=[14])
+
+    route = schedule_route(problem, 0, [0])
+
+    assert 7900 - DEPARTURE_TOLERANCE_SEC < route.start <= 7900
+    assert route.destination_arrival <= 9100
+    assert assert_feasible(problem, problem_individual(problem, [[0]])) == {}
+
+
+def test_earliest_departure_leaves_at_available_from():
+    problem = make_problem([10000], capacities=[14])
+
+    route = schedule_route(problem, 0, [0], latest_departure=False)
+
+    assert route.start == 0
+    assert route.destination_arrival == 1200
+
+
+def test_latest_departure_uses_the_earliest_report_time_on_board():
+    # Three legs (1800 s). p0 reports at 5000, so the target is 4100 and the
+    # start at most 2300, though p1 alone could leave much later.
+    problem = make_problem([5000, 20000], capacities=[14])
+
+    route = schedule_route(problem, 0, [0, 1])
+
+    assert 2300 - DEPARTURE_TOLERANCE_SEC < route.start <= 2300
+
+
+def test_latest_departure_takes_a_configured_buffer():
+    problem = make_problem([10000], capacities=[14])
+
+    route = schedule_route(problem, 0, [0], buffer_sec=0)
+
+    assert 8800 - DEPARTURE_TOLERANCE_SEC < route.start <= 8800
+
+
+def test_latest_departure_leaves_at_available_from_when_the_target_is_out_of_reach():
+    # On time (1200 <= 1500) but only inside the buffer (target 600).
+    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=1500)
+    vehicle = Vehicle("v0", 14, DEPOT, available_from=300)
+    problem = Problem((pickup,), (vehicle,), every_leg_takes(600))
+
+    route = schedule_route(problem, 0, [0])
+
+    assert route.start == 300
+    assert route.destination_arrival == 1500
+    assert assert_feasible(problem, problem_individual(problem, [[0]])) == {}
+
+
+def test_latest_departure_leaves_at_once_with_a_lost_cause_on_board():
+    problem = make_problem([0, 20000], capacities=[14])
+
+    route = schedule_route(problem, 0, [0, 1])
+
+    assert route.start == 0
+    assert [s.lateness for s in route.stops] == [1800, 0]
+
+
+def test_latest_departure_leaves_at_available_from_with_no_report_time():
+    problem = make_problem([math.inf], capacities=[14])
+
+    assert schedule_route(problem, 0, [0]).start == 0
+
+
+def test_latest_departure_allows_for_travel_time_that_changes_with_departure():
+    # Rush hour from 5000 s: legs leaving then take 1800 s instead of 600 s.
+    # Target 6100. Assuming fixed 600 s legs would start at 4900, but the
+    # second leg would then leave at 5500 and arrive at 7300, late. Leaving
+    # before 4400 keeps both legs out of rush hour.
+    def rush_hour(origin, dest, depart_sec):
+        return 600.0 if depart_sec < 5000 else 1800.0
+
+    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=7000)
+    problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), rush_hour)
+
+    route = schedule_route(problem, 0, [0])
+
+    assert 4400 - DEPARTURE_TOLERANCE_SEC < route.start < 4400
+    assert route.destination_arrival <= 6100
+    assert assert_feasible(problem, problem_individual(problem, [[0]])) == {}
+
+
+def test_latest_departure_is_still_on_time_when_travel_time_is_not_fifo():
+    # Legs leaving after 5000 s take 60 s instead of 3000 s, so leaving later
+    # can arrive earlier. On-time starts for target 6100 are [0, 100],
+    # [2000, 3040] and [5000, 5980]; any of them will do.
+    def not_fifo(origin, dest, depart_sec):
+        return 3000.0 if depart_sec < 5000 else 60.0
+
+    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=7000)
+    problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), not_fifo)
+
+    route = schedule_route(problem, 0, [0])
+
+    assert route.start >= 0
+    assert route.destination_arrival <= 6100
+    assert assert_feasible(problem, problem_individual(problem, [[0]])) == {}
+
+
+def test_departure_search_stops_at_the_step_cap():
+    # A report time 1e12 s away would take about 34 bisection steps to narrow
+    # to 60 s; the cap stops it sooner, still with an on-time start.
+    calls = 0
+
+    def counting(origin, dest, depart_sec):
+        nonlocal calls
+        calls += 1
+        return 600.0
+
+    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=1e12)
+    problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), counting)
+
+    route = schedule_route(problem, 0, [0])
+
+    # Two legs per drive: one reachability check, the steps, the final schedule.
+    assert calls == 2 * (1 + MAX_DEPARTURE_SEARCH_STEPS + 1)
+    assert route.destination_arrival <= 1e12 - REPORT_BUFFER_SEC
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_latest_departure_never_changes_who_is_late(seed):
+    rng = random.Random(seed)
+    pickups = tuple(
+        Pickup(
+            f"p{i}",
+            Point(rng.uniform(-1.35, -1.20), rng.uniform(36.70, 36.95)),
+            deadline=rng.uniform(1800, 4 * 3600),
+            service_sec=60,
+        )
+        for i in range(12)
+    )
+    vehicles = tuple(
+        Vehicle(f"v{v}", 4, DEPOT, available_from=rng.uniform(0, 1800)) for v in range(4)
+    )
+    problem = Problem(pickups, vehicles, haversine_travel_time(speed_kmh=30))
+    individual = split(problem, rng.sample(range(12), 12))
+
+    latest = schedule(problem, individual)
+    earliest = schedule(problem, individual, latest_departure=False)
+
+    def lateness(schedules):
+        return {s.pickup_index: s.lateness for r in schedules for s in r.stops}
+
+    assert lateness(latest) == lateness(earliest)
+    for late_route, early_route in zip(latest, earliest, strict=True):
+        if late_route.start is not None:
+            assert late_route.start >= early_route.start
+    assert_feasible(problem, individual)
+
+
+def problem_individual(problem, routes):
+    """Individual with these routes and an empty route for every other vehicle."""
+    return Individual(routes + [[] for _ in range(len(problem.vehicles) - len(routes))])
