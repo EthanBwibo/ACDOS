@@ -1,8 +1,9 @@
 """Feasibility check shared by every solver test (CLAUDE.md: every pickup
 visited once, capacity respected, every deadline met or explicitly reported).
 
-Recomputes route times on its own instead of calling schedule(), so a bug in
-the solver's timing cannot hide behind the same bug in the check.
+Takes only each route's start time from schedule() and recomputes the rest on
+its own, so a bug in the solver's timing cannot hide behind the same bug in the
+check.
 """
 
 import pytest
@@ -24,6 +25,7 @@ def assert_feasible(problem: Problem, individual: Individual) -> dict[str, float
         "every pickup must appear exactly once, in a route or in unassigned"
     )
 
+    schedules = schedule(problem, individual)
     late: dict[str, float] = {}
     for v, route in enumerate(individual.routes):
         vehicle = problem.vehicles[v]
@@ -32,7 +34,12 @@ def assert_feasible(problem: Problem, individual: Individual) -> dict[str, float
         if not route:
             continue
 
-        clock, position = vehicle.available_from, vehicle.start
+        start = schedules[v].start
+        assert start >= vehicle.available_from, (
+            f"vehicle {vehicle.id} leaves at {start}, before it is available "
+            f"at {vehicle.available_from}"
+        )
+        clock, position = start, vehicle.start
         for i in route:
             pickup = problem.pickups[i]
             clock += problem.travel_time(position, pickup.location, clock) + pickup.service_sec
@@ -46,7 +53,7 @@ def assert_feasible(problem: Problem, individual: Individual) -> dict[str, float
 
     reported = {
         problem.pickups[stop.pickup_index].id: stop.lateness
-        for route_schedule in schedule(problem, individual)
+        for route_schedule in schedules
         for stop in route_schedule.stops
         if stop.lateness > 0
     }
