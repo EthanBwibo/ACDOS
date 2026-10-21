@@ -10,19 +10,9 @@ versions. Left out here because the GA population and crossover already
 supply diversity.
 """
 
-from app.solver.fitness import UNASSIGNED_WEIGHT, route_evaluation
+from app.solver.fitness import UNASSIGNED_WEIGHT, RouteCostCache, cached_route_cost
 from app.solver.individual import Individual
 from app.solver.problem import Problem
-
-# Route cost by (vehicle index, route), so a route is costed once per call.
-RouteCostCache = dict[tuple[int, tuple[int, ...]], float]
-
-
-def _route_cost(problem: Problem, v: int, route: list[int], cache: RouteCostCache) -> float:
-    key = (v, tuple(route))
-    if key not in cache:
-        cache[key] = route_evaluation(problem, v, route).cost
-    return cache[key]
 
 
 def insertion_cost(
@@ -45,8 +35,8 @@ def insertion_cost(
     if load > problem.vehicles[v].capacity:
         return None
     cache = {} if cache is None else cache
-    after = _route_cost(problem, v, route[:k] + [i] + route[k:], cache)
-    return after - _route_cost(problem, v, route, cache)
+    after = cached_route_cost(problem, v, route[:k] + [i] + route[k:], cache)
+    return after - cached_route_cost(problem, v, route, cache)
 
 
 def _best_position(

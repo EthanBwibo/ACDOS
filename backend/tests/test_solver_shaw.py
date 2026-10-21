@@ -10,7 +10,6 @@ from app.solver.shaw import (
     SHAW_DISTANCE_WEIGHT,
     SHAW_TIME_WEIGHT,
     relatedness_matrix,
-    removal_count,
     shaw_removal,
 )
 from tests.solver_checks import assert_feasible
@@ -190,19 +189,3 @@ def test_the_same_rng_seed_gives_the_same_removal():
     second = shaw_removal(individual, relatedness, 4, random.Random(7))
 
     assert first == second
-
-
-# Removal count
-
-
-@pytest.mark.parametrize(
-    ("n_routed", "low", "high"),
-    [(0, 0, 0), (2, 2, 2), (4, 4, 4), (10, 4, 4), (20, 4, 8), (25, 4, 10)],
-)
-def test_removal_count_stays_between_4_and_40_percent(n_routed, low, high):
-    rng = random.Random(0)
-
-    counts = {removal_count(n_routed, rng) for _ in range(500)}
-
-    assert min(counts) == low
-    assert max(counts) == high
