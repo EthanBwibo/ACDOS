@@ -1,5 +1,8 @@
+import math
+
 from app.solver.fitness import (
     BUFFER_WEIGHT,
+    LATE_CREW_WEIGHT,
     LATENESS_WEIGHT,
     TIME_WEIGHT,
     UNASSIGNED_WEIGHT,
@@ -7,6 +10,7 @@ from app.solver.fitness import (
     Evaluation,
     evaluate,
     fitness,
+    route_evaluation,
 )
 from app.solver.individual import DEPARTURE_TOLERANCE_SEC, Individual
 from app.solver.problem import Pickup, Point, Problem, Vehicle
@@ -48,6 +52,7 @@ def test_evaluation_breaks_the_cost_into_its_terms():
     assert evaluation == Evaluation(
         unassigned=1,
         lateness_sec=200,
+        late_crew=1,
         buffer_used_sec=100 + 900,
         vehicles_used=2,
         travel_sec=1800 + 1200,
@@ -56,6 +61,7 @@ def test_evaluation_breaks_the_cost_into_its_terms():
     assert evaluation.cost == (
         UNASSIGNED_WEIGHT * 1
         + LATENESS_WEIGHT * 200
+        + LATE_CREW_WEIGHT * 1
         + BUFFER_WEIGHT * 1000
         + VEHICLE_WEIGHT * 2
         + TIME_WEIGHT * (3000 + 1300)
@@ -73,6 +79,23 @@ def test_waiting_counts_only_time_beyond_the_buffer():
     assert evaluation.buffer_used_sec == 0
     assert 0 <= evaluation.waiting_sec < DEPARTURE_TOLERANCE_SEC
     assert evaluation.travel_sec == 1200
+
+
+def test_evaluate_is_unassigned_plus_the_sum_of_route_evaluations():
+    problem = make_problem([2600, 4000, 1000, 10000, 1200], capacities=[14, 14, 14])
+    individual = Individual([[0, 1], [2], [4]], unassigned=[3])
+
+    routes = [route_evaluation(problem, v, r) for v, r in enumerate(individual.routes)]
+
+    assert evaluate(problem, individual).cost == (
+        UNASSIGNED_WEIGHT * 1 + sum(route.cost for route in routes)
+    )
+
+
+def test_an_unused_vehicle_costs_nothing():
+    problem = make_problem([1000], capacities=[14, 14])
+
+    assert route_evaluation(problem, 1, []).cost == 0
 
 
 def test_an_empty_problem_costs_nothing():
@@ -122,7 +145,14 @@ def test_arriving_ten_minutes_into_the_buffer_costs_more_than_an_extra_vehicle()
 def test_a_minute_late_costs_more_than_losing_the_whole_buffer():
     # Compared term by term: a crew member who is late has lost the buffer
     # too, so this is the weight ratio a swap between two crew members tests.
-    terms = {"unassigned": 0, "vehicles_used": 1, "travel_sec": 1200, "waiting_sec": 0}
+    # late_crew is left at 0 to compare the two per-second weights alone.
+    terms = {
+        "unassigned": 0,
+        "late_crew": 0,
+        "vehicles_used": 1,
+        "travel_sec": 1200,
+        "waiting_sec": 0,
+    }
     late = Evaluation(lateness_sec=60, buffer_used_sec=0, **terms)
     whole_buffer_gone = Evaluation(lateness_sec=0, buffer_used_sec=900, **terms)
 
@@ -148,3 +178,28 @@ def test_crew_reporting_90_minutes_apart_get_a_vehicle_each():
     separate = cost(problem, [[0], [1]])
 
     assert separate < shared
+
+
+def test_making_an_on_time_crew_member_late_costs_more_than_the_same_seconds_on_someone_late():
+    # Lost cause p3 (deadline 0) joins v0 or v1. On v0, behind p0 and p1 (no
+    # report time), it is 2400 s late. On v1, behind p2 (reports 1200), it is
+    # 1800 s late and makes p2 600 s late: the same 2400 s in total, the same
+    # buffer and driving, but two late crew instead of one.
+    problem = make_problem([math.inf, math.inf, 1200, 0], capacities=[14, 14])
+
+    behind_crew_without_a_deadline = cost(problem, [[0, 1, 3], [2]])
+    making_p2_late = cost(problem, [[0, 1], [2, 3]])
+
+    assert making_p2_late - behind_crew_without_a_deadline == LATE_CREW_WEIGHT
+
+
+def test_a_lost_cause_placement_that_keeps_others_on_time_now_costs_less():
+    # #12's instance: on v0 the lost cause p4 is 3000 s late; on v1 it is
+    # 1800 s late but makes p3 600 s late. Without K_late, v1 was cheaper by
+    # 600 s of lateness; at 6,000,000 per late crew member it tied (#75).
+    problem = make_problem([math.inf, math.inf, math.inf, 1200, 0], capacities=[14, 14])
+
+    on_v0 = cost(problem, [[0, 1, 2, 4], [3]])
+    on_v1 = cost(problem, [[0, 1, 2], [3, 4]])
+
+    assert on_v1 - on_v0 == LATE_CREW_WEIGHT - 600 * LATENESS_WEIGHT  # 12,000,000
