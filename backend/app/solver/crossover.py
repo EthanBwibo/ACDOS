@@ -3,10 +3,14 @@
 As in Prins (2004), the GA crosses giant tours and splits the child into
 routes: both parents become giant tours (routes end to end, unassigned last),
 the child tour takes a slice of parent A and the rest in parent B's order, and
-split() turns it back into routes. Prins's Split is optimal (a shortest path);
-split() here is greedy, in tour order, with the deadline and lost-cause rules. The child keeps a run of A's visiting
-order and B's sense of who comes before whom, without ever visiting a pickup
-twice or missing one.
+split() turns it back into routes.
+
+The child keeps a run of A's visiting order and B's sense of who comes before
+whom, without ever visiting a pickup twice or missing one.
+
+Prins's Split is optimal (a shortest path); split() here is greedy, in tour
+order, with the deadline and lost-cause rules. The ALNS mutation step repairs
+the cuts it gets wrong.
 """
 
 import random
