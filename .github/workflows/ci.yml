@@ -79,10 +79,13 @@ jobs:
       - name: Supabase stand-ins (auth schema, roles)
         run: psql -v ON_ERROR_STOP=1 -q -f backend/tests/sql/supabase_stubs.sql
 
+      # Migrations marked "-- supabase-only" need Supabase extensions this
+      # Postgres lacks (pg_cron, pg_net, Vault); they are applied on Supabase.
       - name: Apply migrations in order
         run: |
           for f in backend/migrations/*.sql; do
             echo "== $f"
+            if grep -q '^-- supabase-only' "$f"; then echo "   skipped: Supabase only"; continue; fi
             psql -v ON_ERROR_STOP=1 -q -f "$f"
           done
 
@@ -125,3 +128,23 @@ jobs:
       # gradlew is stored without the execute bit, so call it through bash.
       - name: Build, unit test and Android lint
         run: bash ./gradlew assembleDebug testDebugUnitTest lintDebug
+
+  functions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: supabase/functions/log-travel-times
+    steps:
+      - uses: actions/checkout@v7
+
+      # Pinned Deno 2, the major version the Supabase Edge Runtime runs.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.4.0"
+
+      - name: Type check
+        run: deno check index.ts logic_test.ts
+
+      - name: Test
+        run: deno test

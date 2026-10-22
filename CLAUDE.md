@@ -44,12 +44,14 @@ backend/tests/    pytest
 data/             pickup_zones.csv (L1), temporal_calibration.csv (L2), trip_records.csv (L3),
                   jkia_reachability.csv (record of why the Rising & Campbell grid was rejected)
 scripts/          generators for data/. Take the Maps API key as argv[1]
-logger/           hourly Distance Matrix logger, stdlib only, run by GitHub Actions
+logger/           GitHub Actions Distance Matrix logger (being retired, #81) and csv_to_sql.py
+supabase/functions/  Edge Functions (Deno): log-travel-times, the hourly logger, run by pg_cron
 docs/             design artefacts and chapter drafts
 ```
 
-The `data-logger` branch holds only `travel_time_log.csv`, written hourly by the
-`travel-time-logger` workflow. Never merge it into `main` and never commit to it by hand.
+The `data-logger` branch holds only `travel_time_log.csv`, written by the
+`travel-time-logger` workflow until the Supabase logger takes over (#81). Never merge it into
+`main` and never commit to it by hand.
 
 ## Coding standards
 
@@ -74,6 +76,8 @@ The `data-logger` branch holds only `travel_time_log.csv`, written hourly by the
 **Supabase**
 - Schema changes only via files in `backend/migrations/`. No ad hoc changes in the dashboard.
 - RLS on every table that holds crew or driver data.
+- Secrets (Maps key, LOGGER_SECRET) live in Edge Function secrets and Vault, never in code or
+  migrations. Migrations marked `-- supabase-only` are skipped by CI's plain Postgres.
 
 ## Data facts (do not get these wrong)
 
@@ -84,7 +88,9 @@ The `data-logger` branch holds only `travel_time_log.csv`, written hourly by the
   zone, flat-speed artifacts, pre-Expressway). Cited in literature only.
 - Google Distance Matrix cannot query past departure times, so historical records cannot be
   pulled from it. That is why L3 is synthetic.
-- Real validation data: the hourly logger, running since 20 October 2026.
+- Real validation data: the hourly logger, running since 20 October 2026. Since #81 it is in
+  the `travel_time_observations` table, written by the `log-travel-times` Edge Function on a
+  pg_cron schedule; the GitHub Actions rows were imported into it.
 
 ## Data model decisions
 
@@ -107,4 +113,5 @@ pickup leg, which is the unit the Random Forest predicts.
 ## Environment
 
 Windows machine. Backend venv at `backend/venv` (`backend\venv\Scripts\activate`). Supabase
-and Firebase are not provisioned yet; the schema in the proposal is a design specification.
+is provisioned (project `ACDOS`, ref `yqqczlvhwlznvaezfpcl`, eu-west-1); Firebase is not yet.
+Deno is not installed locally; the Edge Function is type-checked and tested in CI.

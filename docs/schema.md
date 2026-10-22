@@ -29,6 +29,16 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | schedule_change_notices | id UUID; pickup_request_id UUID; reason TEXT; previous_pickup_time TIMESTAMPTZ; new_pickup_time TIMESTAMPTZ; issued_at TIMESTAMPTZ; delivered_at TIMESTAMPTZ; acknowledged_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK pickup_request_id; reason in (flight_delay, standby_activation, vehicle_breakdown); pending while acknowledged_at is null |
 | device_tokens | id UUID; crew_member_id UUID; fcm_token TEXT; updated_at TIMESTAMPTZ | PK id; FK crew_member_id; fcm_token unique |
 
+## Validation data (not in the Chapter 4 ERD)
+
+Real observed journey times for validating the Random Forest (#21), logged hourly by the
+`log-travel-times` Edge Function (#81). Not operational data, so it has no links to the
+tables above.
+
+| Table | Columns | Keys and constraints |
+|---|---|---|
+| travel_time_observations | id UUID; logged_at_utc TIMESTAMPTZ; logged_at_eat TIMESTAMP; day_of_week TEXT; hour_eat SMALLINT; minute_eat SMALLINT; zone TEXT; origin_lat DOUBLE PRECISION; origin_lon DOUBLE PRECISION; element_status TEXT; distance_m INT; duration_sec INT; duration_in_traffic_sec INT; run_id TEXT; created_at TIMESTAMPTZ | PK id; run_id and zone unique together; hour_eat 0 to 23, minute_eat 0 to 59; distance and durations null unless element_status is OK; index on logged_at_utc |
+
 ## Relationships
 
 - crew_members 1 to many pickup_requests
@@ -52,6 +62,8 @@ for every client path, not only a backstop behind FastAPI.
 - **Driver:** read the route of their assigned vehicle; read the `pickup_requests` and
   `crew_members` rows linked to route nodes on an **active** route of that vehicle (who to pick
   up and where); insert pickup events.
+- **Dispatcher, validation data:** read `travel_time_observations`. No client writes it: only
+  the Edge Function, with the service role.
 - **Crew:** read their own pickup requests and notices; read the `route_nodes` for their own
   pickup requests (their ETA); set `acknowledged_at` on their own notices; insert their own crew
   messages; register their own device tokens.
@@ -70,6 +82,9 @@ and `PUBLIC` may not.
 - `day_of_week` (on `trip_records`) is 0 = Monday to 6 = Sunday, the same as Python's
   `datetime.weekday()`. Any SQL that derives it must use `EXTRACT(ISODOW FROM ts) - 1`, never
   `EXTRACT(DOW ...)`: DOW counts Sunday as 0 and would shift every day by one.
+- `day_of_week` on `travel_time_observations` is the English day name ("Tuesday"), as the
+  logger's CSV wrote it. Convert it before joining with `trip_records`.
+- `logged_at_eat` is Nairobi wall-clock time without a zone; `logged_at_utc` is the instant.
 
 ## Supabase-provided, not ours
 
