@@ -23,6 +23,7 @@ from app.solver.fitness import (
     BUFFER_WEIGHT,
     LATE_CREW_WEIGHT,
     LATENESS_WEIGHT,
+    RIDE_WEIGHT,
     RouteCostCache,
     cached_route_cost,
     route_evaluation,
@@ -66,10 +67,10 @@ def random_removal(
 def unavoidable_costs(problem: Problem) -> list[float]:
     """For each pickup, the crew-level cost it has even driven alone.
 
-    The lateness, late-crew and buffer terms of the pickup alone on a vehicle,
-    on the vehicle where they are smallest. With FIFO travel times a route
-    with other stops arrives no earlier than the pickup alone on the same
-    vehicle, so no placement costs it less than this. 0 for crew who can
+    The lateness, late-crew, buffer and ride terms of the pickup alone on a
+    vehicle, on the vehicle where they are smallest. With FIFO travel times a
+    route with other stops arrives no earlier, and rides no shorter, than the
+    pickup alone on the same vehicle, so no placement costs it less than this. 0 for crew who can
     arrive before their buffer starts; positive for lost causes and crew who
     can only arrive inside their buffer. Built once per Problem.
     """
@@ -82,6 +83,7 @@ def unavoidable_costs(problem: Problem) -> list[float]:
                     LATENESS_WEIGHT * e.lateness_sec
                     + LATE_CREW_WEIGHT * e.late_crew
                     + BUFFER_WEIGHT * e.buffer_used_sec
+                    + RIDE_WEIGHT * e.ride_excess_sec
                     for e in alone
                 ),
                 default=0.0,
