@@ -8,7 +8,7 @@ job, not the solver's.
 
 import math
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -51,11 +51,28 @@ class Vehicle:
 
 
 @dataclass(frozen=True)
+class LegTable:
+    """Every leg time a route can use, for travel time that ignores departure.
+
+    Locations are numbered: pickups by their index, the destination after
+    them. between[a][b] is the time from location a to b; from_start[v][b]
+    from vehicle v's start to b.
+    """
+
+    between: tuple[tuple[float, ...], ...]
+    from_start: tuple[tuple[float, ...], ...]
+    destination: int  # index of the destination in the rows
+
+
+@dataclass(frozen=True)
 class Problem:
     pickups: tuple[Pickup, ...]
     vehicles: tuple[Vehicle, ...]
     travel_time: TravelTimeFn
     destination: Point = JKIA
+    # Built in __post_init__ when travel time ignores departure; None
+    # otherwise (the Random Forest, whose legs change with the hour).
+    legs: LegTable | None = field(default=None, init=False, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if len({p.id for p in self.pickups}) != len(self.pickups):
@@ -70,6 +87,18 @@ class Problem:
             # A memo made here lives as long as this Problem, so it cannot
             # grow across solves (#85). The dataclass is frozen, hence setattr.
             object.__setattr__(self, "travel_time", _remember_legs(self.travel_time))
+            object.__setattr__(self, "legs", self._leg_table())
+
+    def _leg_table(self) -> LegTable:
+        """All leg times, computed once: the solver reads them millions of
+        times per solve, and a list lookup is cheaper than any call (#88)."""
+        places = [p.location for p in self.pickups] + [self.destination]
+        travel = self.travel_time
+        return LegTable(
+            between=tuple(tuple(travel(a, b, 0.0) for b in places) for a in places),
+            from_start=tuple(tuple(travel(v.start, b, 0.0) for b in places) for v in self.vehicles),
+            destination=len(self.pickups),
+        )
 
 
 def _remember_legs(travel_time: TravelTimeFn) -> TravelTimeFn:

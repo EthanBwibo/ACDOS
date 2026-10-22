@@ -5,7 +5,12 @@ import pytest
 
 from app.solver.fitness import UNASSIGNED_WEIGHT, fitness
 from app.solver.individual import Individual, split
-from app.solver.insertion import greedy_insertion, insertion_cost
+from app.solver.insertion import (
+    _best_position,
+    _positions_worth_costing,
+    greedy_insertion,
+    insertion_cost,
+)
 from app.solver.problem import Pickup, Point, Problem, Vehicle, haversine_travel_time
 from app.solver.removal import removal_count
 from app.solver.shaw import relatedness_matrix, shaw_removal
@@ -183,3 +188,57 @@ def test_shaw_then_greedy_stays_feasible_and_places_everyone_when_there_is_room(
 
     assert repaired.unassigned == []
     assert_feasible(problem, repaired)
+
+
+# Positions worth costing (#88)
+
+
+def test_only_the_smallest_detours_are_fully_costed(monkeypatch):
+    # On the road to JKIA (0.4): p0 at 0.1, p2 at 0.3. p1 at 0.2 is on the way
+    # between them (no detour); before p0 or after p2 it doubles back.
+    monkeypatch.setattr("app.solver.insertion.FULLY_COSTED_POSITIONS", 1)
+    problem = map_problem([(0.0, 0.1), (0.0, 0.2), (0.0, 0.3)], capacities=[14])
+
+    assert _positions_worth_costing(problem, [0, 2], 0, 1) == [1]
+
+
+def test_ties_in_detour_go_to_the_lowest_positions(monkeypatch):
+    # Every leg 600 s: every position adds the same detour.
+    monkeypatch.setattr("app.solver.insertion.FULLY_COSTED_POSITIONS", 2)
+    problem = map_problem([(0.0, 0.1 * k) for k in range(1, 6)], capacities=[14])
+    object.__setattr__(problem, "travel_time", lambda o, d, t: 600.0)
+    object.__setattr__(problem, "legs", problem._leg_table())
+
+    assert _positions_worth_costing(problem, [0, 1, 2, 3], 0, 4) == [0, 1]
+
+
+def test_short_routes_cost_every_position(monkeypatch):
+    monkeypatch.setattr("app.solver.insertion.FULLY_COSTED_POSITIONS", 2)
+    problem = map_problem([(0.0, 0.1), (0.0, 0.2)], capacities=[14])
+
+    assert _positions_worth_costing(problem, [0], 0, 1) == [0, 1]
+
+
+def test_travel_time_that_depends_on_departure_costs_every_position(monkeypatch):
+    monkeypatch.setattr("app.solver.insertion.FULLY_COSTED_POSITIONS", 1)
+    problem = legs_problem([20000] * 5, capacities=[14])  # a lambda: no leg table
+
+    assert problem.legs is None
+    assert _positions_worth_costing(problem, [0, 1, 2, 3], 0, 4) == [0, 1, 2, 3, 4]
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_the_shortlist_never_beats_costing_every_position(seed, monkeypatch):
+    # The cheapest among the shortlisted positions can only be the overall
+    # cheapest or dearer; with a long enough shortlist they are the same.
+    rng = random.Random(seed)
+    problem = random_problem(rng, n_pickups=12, n_vehicles=2, capacity=14)
+    routes = [rng.sample(range(11), 9), []]
+    i = next(p for p in range(12) if p not in routes[0])
+
+    monkeypatch.setattr("app.solver.insertion.FULLY_COSTED_POSITIONS", 1)
+    shortlist = _best_position(problem, routes, 0, i, {})
+    monkeypatch.setattr("app.solver.insertion.FULLY_COSTED_POSITIONS", 100)
+    every = _best_position(problem, routes, 0, i, {})
+
+    assert shortlist[0] >= every[0]

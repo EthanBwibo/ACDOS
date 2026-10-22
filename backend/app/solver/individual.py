@@ -98,17 +98,30 @@ def _destination_arrival(problem: Problem, partial: _Partial) -> float:
 
 
 def _drive(
-    problem: Problem, vehicle: Vehicle, route: list[int], start: float
+    problem: Problem, vehicle_index: int, route: list[int], start: float
 ) -> tuple[list[float], float]:
     """Arrival at each stop, and at the destination, leaving at start.
 
     A plain loop rather than _add: it runs millions of times per solve, and
     building a _Partial for every stop cost as much as the driving (#85).
+    When travel time ignores departure, the legs come from Problem.legs, a
+    table built once, instead of a call per leg (#88).
     """
-    travel_time = problem.travel_time
     pickups = problem.pickups
-    clock, position = start, vehicle.start
     arrivals = []
+    clock = start
+    legs = problem.legs
+    if legs is not None:
+        row = legs.from_start[vehicle_index]
+        for i in route:
+            arrival = clock + row[i]
+            arrivals.append(arrival)
+            clock = arrival + pickups[i].service_sec
+            row = legs.between[i]
+        return arrivals, clock + row[legs.destination]
+
+    travel_time = problem.travel_time
+    position = problem.vehicles[vehicle_index].start
     for i in route:
         pickup = pickups[i]
         arrival = clock + travel_time(position, pickup.location, clock)
@@ -118,7 +131,9 @@ def _drive(
     return arrivals, clock + travel_time(position, problem.destination, clock)
 
 
-def _latest_start(problem: Problem, vehicle: Vehicle, route: list[int], buffer_sec: float) -> float:
+def _latest_start(
+    problem: Problem, vehicle_index: int, route: list[int], buffer_sec: float
+) -> float:
     """Latest start that has everyone at the destination buffer_sec before the
     earliest report time on board, never before available_from.
 
@@ -139,10 +154,10 @@ def _latest_start(problem: Problem, vehicle: Vehicle, route: list[int], buffer_s
     """
     report = min(problem.pickups[i].deadline for i in route)
     target = report - buffer_sec
-    lo = vehicle.available_from
+    lo = problem.vehicles[vehicle_index].available_from
     if math.isinf(target):
         return lo  # no report time to work back from
-    end_lo = _drive(problem, vehicle, route, lo)[1]
+    end_lo = _drive(problem, vehicle_index, route, lo)[1]
     if end_lo > target:
         # Out of reach even leaving now (a lost cause on board, or on time only
         # inside the buffer): leave as early as possible.
@@ -154,7 +169,7 @@ def _latest_start(problem: Problem, vehicle: Vehicle, route: list[int], buffer_s
         if target - end_lo <= DEPARTURE_TOLERANCE_SEC or hi - lo <= DEPARTURE_TOLERANCE_SEC:
             break
         start = guess if lo < guess < hi else (lo + hi) / 2
-        end = _drive(problem, vehicle, route, start)[1]
+        end = _drive(problem, vehicle_index, route, start)[1]
         if end <= target:
             lo, end_lo = start, end
         else:
@@ -169,9 +184,8 @@ def route_times(
     """When a non-empty route leaves (latest departure), reaches each stop and
     reaches the destination; all route_evaluation needs, without building
     Stops."""
-    vehicle = problem.vehicles[vehicle_index]
-    start = _latest_start(problem, vehicle, route, buffer_sec)
-    arrivals, end = _drive(problem, vehicle, route, start)
+    start = _latest_start(problem, vehicle_index, route, buffer_sec)
+    arrivals, end = _drive(problem, vehicle_index, route, start)
     return start, arrivals, end
 
 
@@ -195,12 +209,11 @@ def schedule_route(
     if not route:
         return RouteSchedule(vehicle_index, (), 0, None, None)
 
-    vehicle = problem.vehicles[vehicle_index]
     if latest_departure:
-        start = _latest_start(problem, vehicle, route, buffer_sec)
+        start = _latest_start(problem, vehicle_index, route, buffer_sec)
     else:
-        start = vehicle.available_from
-    arrivals, end = _drive(problem, vehicle, route, start)
+        start = problem.vehicles[vehicle_index].available_from
+    arrivals, end = _drive(problem, vehicle_index, route, start)
     stops = tuple(
         Stop(
             pickup_index=i,
