@@ -5,14 +5,9 @@ import random
 import pytest
 
 from app.solver.fitness import fitness
-from app.solver.ga import (
-    Outcome,
-    Population,
-    StopReason,
-    UniformMutation,
-    solve,
-)
+from app.solver.ga import Population, StopReason, solve
 from app.solver.individual import Individual, split
+from app.solver.mutation import Outcome, UniformMutation
 from app.solver.population import structure_key
 from app.solver.problem import Pickup, Point, Problem, Vehicle, haversine_travel_time
 from tests.solver_checks import assert_feasible
