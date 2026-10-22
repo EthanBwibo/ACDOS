@@ -106,6 +106,7 @@ pickup leg, which is the unit the Random Forest predicts.
 - Conventional Commits, six types only: feat, fix, refactor, test, docs, chore. Format
   `type(scope): summary`, first line 72 characters max. Enforced by `.githooks/commit-msg`.
 - One PR per issue, linked with `Closes #n`, squash-merged, branch deleted after.
+- Stage files by explicit path; never `git add -A` or a whole directory.
 - Never commit secrets: `.env`, `local.properties` and API keys stay out of git. GitHub
   Actions reads keys from repository secrets.
 - Do not commit or push without the student's go-ahead.

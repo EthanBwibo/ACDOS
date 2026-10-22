@@ -7,10 +7,12 @@ from app.solver.individual import (
     DEPARTURE_TOLERANCE_SEC,
     REPORT_BUFFER_SEC,
     Individual,
+    _drive,
     schedule,
     schedule_route,
     split,
 )
+from app.solver.instances import morning_wave
 from app.solver.problem import JKIA, Pickup, Point, Problem, Vehicle, haversine_travel_time
 from tests.solver_checks import assert_feasible
 
@@ -459,6 +461,7 @@ def test_a_problem_remembers_each_leg_of_a_travel_time_that_ignores_departure():
     travel.ignores_departure_time = True
     a, b = Point(-1.28, 36.81), Point(-1.29, 36.82)
     problem = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+    travel.calls = 0  # building the leg table (#88) asked for its own legs
 
     first = problem.travel_time(a, b, 0)
     second = problem.travel_time(a, b, 5000)
@@ -473,6 +476,7 @@ def test_equal_points_that_are_different_objects_are_not_mixed_up():
     travel = counting(every_leg_takes(600))
     travel.ignores_departure_time = True
     problem = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+    travel.calls = 0  # building the leg table (#88) asked for its own legs
 
     problem.travel_time(Point(-1.28, 36.81), JKIA, 0)
     problem.travel_time(Point(-1.28, 36.81), JKIA, 0)
@@ -488,10 +492,12 @@ def test_each_problem_has_its_own_memo():
     travel.ignores_departure_time = True
     first = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
     second = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+    travel.calls = 0  # building the leg tables (#88) asked for their own legs
+    a = Point(-1.28, 36.81)  # a leg neither table holds
 
-    first.travel_time(DEPOT, JKIA, 0)
-    second.travel_time(DEPOT, JKIA, 0)
-    second.travel_time(DEPOT, JKIA, 0)
+    first.travel_time(a, JKIA, 0)
+    second.travel_time(a, JKIA, 0)
+    second.travel_time(a, JKIA, 0)
 
     assert travel.calls == 2
 
@@ -515,3 +521,28 @@ def test_travel_time_that_depends_on_departure_is_left_alone():
     problem = Problem((), (Vehicle("v0", 14, DEPOT),), rush_hour)
 
     assert problem.travel_time is rush_hour
+
+
+# Leg table (#88)
+
+
+def test_the_leg_table_gives_the_same_drive_as_calling_travel_time():
+    problem = morning_wave(n_crew=15, n_vans=4, seed=3)
+    plain = Problem(problem.pickups, problem.vehicles, haversine_travel_time(speed_kmh=30))
+    object.__setattr__(plain, "legs", None)  # force the travel_time path
+    rng = random.Random(3)
+
+    for _ in range(50):
+        route = rng.sample(range(15), rng.randint(1, 8))
+        v = rng.randrange(4)
+        start = rng.uniform(0, 3600)
+        assert _drive(problem, v, route, start) == _drive(plain, v, route, start)
+
+
+def test_travel_time_that_depends_on_departure_gets_no_leg_table():
+    def rush_hour(origin, dest, depart_sec):
+        return 600.0 if depart_sec < 5000 else 1800.0
+
+    problem = Problem((), (Vehicle("v0", 14, DEPOT),), rush_hour)
+
+    assert problem.legs is None
