@@ -20,8 +20,9 @@ from app.solver.problem import Pickup, Point, Problem, Vehicle
 REPORT_BUFFER_SEC = 900.0
 # The departure search stops once the latest start is known to within this.
 DEPARTURE_TOLERANCE_SEC = 60.0
-# Bisection halves the interval each step, so a day-long interval needs about
-# 11 steps to reach 60 s. The cap only guards against a broken bound (NaN).
+# The departure search (_latest_start) settles in one step when travel time does
+# not depend on departure, and in a few otherwise. The cap bounds it when travel
+# times keep shifting, or a bound is broken (NaN).
 MAX_DEPARTURE_SEARCH_STEPS = 20
 
 
@@ -99,47 +100,77 @@ def _destination_arrival(problem: Problem, partial: _Partial) -> float:
 def _drive(
     problem: Problem, vehicle: Vehicle, route: list[int], start: float
 ) -> tuple[list[float], float]:
-    """Arrival at each stop, and at the destination, leaving at start."""
-    partial = _Partial(0, start, vehicle.start, math.inf)
+    """Arrival at each stop, and at the destination, leaving at start.
+
+    A plain loop rather than _add: it runs millions of times per solve, and
+    building a _Partial for every stop cost as much as the driving (#85).
+    """
+    travel_time = problem.travel_time
+    pickups = problem.pickups
+    clock, position = start, vehicle.start
     arrivals = []
     for i in route:
-        partial = _add(problem, partial, problem.pickups[i])
-        # _add moved the clock to departure; arrival is before boarding.
-        arrivals.append(partial.clock - problem.pickups[i].service_sec)
-    return arrivals, _destination_arrival(problem, partial)
+        pickup = pickups[i]
+        arrival = clock + travel_time(position, pickup.location, clock)
+        arrivals.append(arrival)
+        clock = arrival + pickup.service_sec
+        position = pickup.location
+    return arrivals, clock + travel_time(position, problem.destination, clock)
 
 
 def _latest_start(problem: Problem, vehicle: Vehicle, route: list[int], buffer_sec: float) -> float:
     """Latest start that has everyone at the destination buffer_sec before the
     earliest report time on board, never before available_from.
 
-    Found by bisection on [available_from, earliest report time], because the
-    drive times change with the start once travel time depends on departure
-    time. lo is always a start known to arrive in time, so the answer is never
-    late. If travel time is not FIFO (leaving later can arrive earlier), the
-    answer may not be the latest such start, but it still arrives in time.
-    An RF predicting by whole hour is not FIFO at hour boundaries, which is why
-    #23 interpolates between hours.
+    The drive times change with the start once travel time depends on
+    departure time, so the start is searched for, between lo (a start known to
+    arrive in time, from available_from) and hi (one known to be late, from
+    the report time). Each step tries the start that would arrive exactly on
+    target if the drive took as long as the last one did. When travel time does
+    not depend on departure that is exact, and the search ends after one step
+    (#85). Otherwise each try narrows [lo, hi], and a guess outside it falls
+    back to the midpoint, as plain bisection would.
+
+    Only lo is ever returned, so the answer is never late. If travel time is
+    not FIFO (leaving later can arrive earlier), the answer may not be the
+    latest such start, but it still arrives in time. An RF predicting by whole
+    hour is not FIFO at hour boundaries, which is why #23 interpolates between
+    hours.
     """
     report = min(problem.pickups[i].deadline for i in route)
     target = report - buffer_sec
     lo = vehicle.available_from
-    # No report time to work back from, or the target is out of reach even
-    # leaving now (a lost cause on board, or on time only inside the buffer):
-    # leave as early as possible.
-    if math.isinf(target) or _drive(problem, vehicle, route, lo)[1] > target:
+    if math.isinf(target):
+        return lo  # no report time to work back from
+    end_lo = _drive(problem, vehicle, route, lo)[1]
+    if end_lo > target:
+        # Out of reach even leaving now (a lost cause on board, or on time only
+        # inside the buffer): leave as early as possible.
         return lo
 
     hi = report
+    guess = lo + (target - end_lo)
     for _ in range(MAX_DEPARTURE_SEARCH_STEPS):
-        if hi - lo <= DEPARTURE_TOLERANCE_SEC:
+        if target - end_lo <= DEPARTURE_TOLERANCE_SEC or hi - lo <= DEPARTURE_TOLERANCE_SEC:
             break
-        mid = (lo + hi) / 2
-        if _drive(problem, vehicle, route, mid)[1] <= target:
-            lo = mid
+        start = guess if lo < guess < hi else (lo + hi) / 2
+        end = _drive(problem, vehicle, route, start)[1]
+        if end <= target:
+            lo, end_lo = start, end
         else:
-            hi = mid
+            hi = start
+        guess = start + (target - end)
     return lo
+
+
+def departure_and_arrival(
+    problem: Problem, vehicle_index: int, route: list[int], buffer_sec: float = REPORT_BUFFER_SEC
+) -> tuple[float, float]:
+    """When a non-empty route leaves (latest departure) and reaches the
+    destination; all route_evaluation needs, without building Stops."""
+    vehicle = problem.vehicles[vehicle_index]
+    start = _latest_start(problem, vehicle, route, buffer_sec)
+    return start, _drive(problem, vehicle, route, start)[1]
 
 
 def schedule_route(

@@ -1,4 +1,7 @@
 import math
+import random
+
+import pytest
 
 from app.solver.fitness import (
     BUFFER_WEIGHT,
@@ -12,8 +15,13 @@ from app.solver.fitness import (
     fitness,
     route_evaluation,
 )
-from app.solver.individual import DEPARTURE_TOLERANCE_SEC, Individual
-from app.solver.problem import Pickup, Point, Problem, Vehicle
+from app.solver.individual import (
+    DEPARTURE_TOLERANCE_SEC,
+    REPORT_BUFFER_SEC,
+    Individual,
+    schedule_route,
+)
+from app.solver.problem import Pickup, Point, Problem, Vehicle, haversine_travel_time
 from tests.solver_checks import assert_feasible
 
 DEPOT = Point(-1.30, 36.80)
@@ -203,3 +211,48 @@ def test_a_lost_cause_placement_that_keeps_others_on_time_now_costs_less():
     on_v1 = cost(problem, [[0, 1, 2], [3, 4]])
 
     assert on_v1 - on_v0 == LATE_CREW_WEIGHT - 600 * LATENESS_WEIGHT  # 12,000,000
+
+
+# route_evaluation works from departure and arrival alone (#85); it must give
+# the same terms as reading them off schedule_route's stops.
+
+
+def evaluation_from_schedule(problem, v, route, buffer_sec=REPORT_BUFFER_SEC):
+    scheduled = schedule_route(problem, v, route, buffer_sec=buffer_sec)
+    if scheduled.start is None:
+        return Evaluation(0, 0.0, 0, 0.0, 0, 0.0, 0.0)
+    end = scheduled.destination_arrival
+    lateness = buffer_used = waiting = 0.0
+    late_crew = 0
+    for stop in scheduled.stops:
+        deadline = problem.pickups[stop.pickup_index].deadline
+        ideal = deadline - buffer_sec
+        lateness += stop.lateness
+        late_crew += stop.lateness > 0
+        buffer_used += min(buffer_sec, max(0.0, end - ideal))
+        if math.isfinite(deadline):
+            waiting += max(0.0, ideal - end)
+    return Evaluation(0, lateness, late_crew, buffer_used, 1, end - scheduled.start, waiting)
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_route_evaluation_matches_the_schedule(seed):
+    rng = random.Random(seed)
+    pickups = tuple(
+        Pickup(
+            f"p{i}",
+            Point(rng.uniform(-1.35, -1.20), rng.uniform(36.70, 36.95)),
+            deadline=rng.choice([math.inf, rng.uniform(600, 4 * 3600)]),
+            service_sec=60,
+        )
+        for i in range(10)
+    )
+    vehicles = tuple(
+        Vehicle(f"v{v}", 10, Point(-1.30, 36.80), available_from=rng.uniform(0, 1800))
+        for v in range(3)
+    )
+    problem = Problem(pickups, vehicles, haversine_travel_time(speed_kmh=30))
+    route = rng.sample(range(10), rng.randint(0, 10))
+    v = rng.randrange(3)
+
+    assert route_evaluation(problem, v, route) == evaluation_from_schedule(problem, v, route)

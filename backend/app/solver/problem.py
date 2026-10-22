@@ -66,6 +66,36 @@ class Problem:
             raise ValueError("vehicle capacity must be above 0")
         if any(p.demand <= 0 for p in self.pickups):
             raise ValueError("pickup demand must be above 0")
+        if getattr(self.travel_time, "ignores_departure_time", False):
+            # A memo made here lives as long as this Problem, so it cannot
+            # grow across solves (#85). The dataclass is frozen, hence setattr.
+            object.__setattr__(self, "travel_time", _remember_legs(self.travel_time))
+
+
+def _remember_legs(travel_time: TravelTimeFn) -> TravelTimeFn:
+    """Wrap a travel time function that ignores departure time so each leg is
+    computed once. The solver asks for the same few hundred legs millions of
+    times per solve.
+
+    Keyed on the identity of the two Points, which is cheaper than hashing
+    them (a dataclass hash costs as much as the haversine). Each entry keeps
+    both Points, so their ids cannot be reused by other objects while it
+    exists, and is only used when handed those very objects.
+
+    Not for time-dependent travel (the Random Forest): its legs change with
+    the departure time; its caching is #23's.
+    """
+    memo: dict[tuple[int, int], tuple[Point, Point, float]] = {}
+
+    def remembered(origin: Point, dest: Point, depart_sec: float) -> float:
+        entry = memo.get((id(origin), id(dest)))
+        if entry is not None and entry[0] is origin and entry[1] is dest:
+            return entry[2]
+        seconds = travel_time(origin, dest, depart_sec)
+        memo[(id(origin), id(dest))] = (origin, dest, seconds)
+        return seconds
+
+    return remembered
 
 
 def haversine_km(origin: Point, dest: Point) -> float:
@@ -87,11 +117,13 @@ def haversine_travel_time(speed_kmh: float) -> TravelTimeFn:
     """Straight-line distance at a constant speed, ignoring departure time.
 
     Only a placeholder until the Random Forest is wired into fitness (#23);
-    also handy for tests.
+    also handy for tests. Marked as ignoring departure time, so a Problem
+    built with it remembers each leg (_remember_legs).
     """
     metres_per_sec = speed_kmh * 1000 / 3600
 
     def travel_time(origin: Point, dest: Point, depart_sec: float) -> float:
         return haversine_km(origin, dest) * 1000 / metres_per_sec
 
+    travel_time.ignores_departure_time = True  # type: ignore[attr-defined]
     return travel_time
