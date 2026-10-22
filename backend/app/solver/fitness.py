@@ -1,7 +1,8 @@
 """Fitness: one number per Individual, lower is better.
 
     cost = UNASSIGNED_WEIGHT * U + LATENESS_WEIGHT * L + LATE_CREW_WEIGHT * K_late
-           + BUFFER_WEIGHT * B + VEHICLE_WEIGHT * K + TIME_WEIGHT * (T + W)
+           + BUFFER_WEIGHT * B + RIDE_WEIGHT * R + VEHICLE_WEIGHT * K
+           + TIME_WEIGHT * (T + W)
 
 Computed on the latest-departure schedule, so a vehicle leaves as late as it
 can and W measures report-time spread on a route, not an early start.
@@ -12,6 +13,12 @@ rate: each vehicle makes one trip, so if saving a vehicle always won, the GA
 would put crew reporting hours apart in one van and leave the later ones
 waiting at JKIA.
 
+W charges waiting at JKIA, but time in the van was free, so the GA could build
+long zigzag routes that collect crew hours before their report time and
+arrive just in time (#89). R charges each crew member's ride beyond
+MAX_RIDE_SEC, the soft form of the maximum ride time constraint in
+dial-a-ride problems (Cordeau and Laporte, 2003).
+
 Every term except U belongs to one route, so the cost is U plus a sum over
 routes (route_evaluation). Insertion operators re-cost only the route they
 change.
@@ -20,7 +27,7 @@ change.
 import math
 from dataclasses import dataclass
 
-from app.solver.individual import REPORT_BUFFER_SEC, Individual, departure_and_arrival
+from app.solver.individual import REPORT_BUFFER_SEC, Individual, route_times
 from app.solver.problem import Problem
 
 # Per crew member left without a vehicle. One outweighs about 278 h of total
@@ -38,6 +45,12 @@ LATE_CREW_WEIGHT = 18_000_000.0
 # Per second of buffer eaten, per crew member. The whole 15 min buffer
 # (90,000) costs about 25 vehicles, and still less than a minute late.
 BUFFER_WEIGHT = 100.0
+# A crew member's ride (JKIA arrival minus arrival at their stop) is free up to
+# 90 min; each second beyond costs RIDE_WEIGHT, the buffer's tier: 15 min over
+# (90,000) costs about 25 vehicles and less than a minute late. Both are in the
+# #14 sensitivity runs.
+MAX_RIDE_SEC = 5400.0
+RIDE_WEIGHT = 100.0
 # Per vehicle used: worth 1 h of T + W. Sensitivity check at 1,800 and 7,200
 # planned for the results chapter.
 VEHICLE_WEIGHT = 3_600.0
@@ -53,6 +66,7 @@ class Evaluation:
     lateness_sec: float  # L: sum of seconds each crew member arrives late
     late_crew: int  # K_late: crew members who arrive late at all
     buffer_used_sec: float  # B: sum of buffer seconds each crew member loses
+    ride_excess_sec: float  # R: sum of seconds each crew member rides beyond MAX_RIDE_SEC
     vehicles_used: int  # K: routes that are not empty
     travel_sec: float  # T: sum of route durations, start to destination
     waiting_sec: float  # W: sum of crew waiting at JKIA beyond the buffer
@@ -64,6 +78,7 @@ class Evaluation:
             + LATENESS_WEIGHT * self.lateness_sec
             + LATE_CREW_WEIGHT * self.late_crew
             + BUFFER_WEIGHT * self.buffer_used_sec
+            + RIDE_WEIGHT * self.ride_excess_sec
             + VEHICLE_WEIGHT * self.vehicles_used
             + TIME_WEIGHT * (self.travel_sec + self.waiting_sec)
         )
@@ -77,9 +92,8 @@ def route_evaluation(
 ) -> Evaluation:
     """The terms for one route; unassigned is always 0.
 
-    Works from the route's departure and arrival alone, not schedule_route's
-    Stops: the operators cost hundreds of thousands of routes per solve, and
-    only the arrival at JKIA matters for every term (#85).
+    Works from the route's times alone, not schedule_route's Stops: the
+    operators cost hundreds of thousands of routes per solve (#85).
     """
     if not route:
         return Evaluation(
@@ -87,15 +101,16 @@ def route_evaluation(
             lateness_sec=0.0,
             late_crew=0,
             buffer_used_sec=0.0,
+            ride_excess_sec=0.0,
             vehicles_used=0,
             travel_sec=0.0,
             waiting_sec=0.0,
         )
 
-    start, end = departure_and_arrival(problem, vehicle_index, route, buffer_sec)
-    lateness = buffer_used = waiting = 0.0
+    start, arrivals, end = route_times(problem, vehicle_index, route, buffer_sec)
+    lateness = buffer_used = waiting = ride_excess = 0.0
     late_crew = 0
-    for i in route:
+    for i, arrival in zip(route, arrivals, strict=True):
         deadline = problem.pickups[i].deadline
         # Everyone on board arrives together, as Stop.lateness counts it.
         late = max(0.0, end - deadline)
@@ -110,12 +125,15 @@ def route_evaluation(
         # has nothing to wait for.
         if math.isfinite(deadline):
             waiting += max(0.0, ideal - end)
+        # In the van from the moment it reaches their stop until JKIA.
+        ride_excess += max(0.0, end - arrival - MAX_RIDE_SEC)
 
     return Evaluation(
         unassigned=0,
         lateness_sec=lateness,
         late_crew=late_crew,
         buffer_used_sec=buffer_used,
+        ride_excess_sec=ride_excess,
         vehicles_used=1,
         travel_sec=end - start,
         waiting_sec=waiting,
@@ -148,6 +166,7 @@ def evaluate(
         lateness_sec=sum(r.lateness_sec for r in routes),
         late_crew=sum(r.late_crew for r in routes),
         buffer_used_sec=sum(r.buffer_used_sec for r in routes),
+        ride_excess_sec=sum(r.ride_excess_sec for r in routes),
         vehicles_used=sum(r.vehicles_used for r in routes),
         travel_sec=sum(r.travel_sec for r in routes),
         waiting_sec=sum(r.waiting_sec for r in routes),

@@ -7,6 +7,8 @@ from app.solver.fitness import (
     BUFFER_WEIGHT,
     LATE_CREW_WEIGHT,
     LATENESS_WEIGHT,
+    MAX_RIDE_SEC,
+    RIDE_WEIGHT,
     TIME_WEIGHT,
     UNASSIGNED_WEIGHT,
     VEHICLE_WEIGHT,
@@ -62,6 +64,7 @@ def test_evaluation_breaks_the_cost_into_its_terms():
         lateness_sec=200,
         late_crew=1,
         buffer_used_sec=100 + 900,
+        ride_excess_sec=0,
         vehicles_used=2,
         travel_sec=1800 + 1200,
         waiting_sec=1300,
@@ -157,6 +160,7 @@ def test_a_minute_late_costs_more_than_losing_the_whole_buffer():
     terms = {
         "unassigned": 0,
         "late_crew": 0,
+        "ride_excess_sec": 0,
         "vehicles_used": 1,
         "travel_sec": 1200,
         "waiting_sec": 0,
@@ -220,9 +224,9 @@ def test_a_lost_cause_placement_that_keeps_others_on_time_now_costs_less():
 def evaluation_from_schedule(problem, v, route, buffer_sec=REPORT_BUFFER_SEC):
     scheduled = schedule_route(problem, v, route, buffer_sec=buffer_sec)
     if scheduled.start is None:
-        return Evaluation(0, 0.0, 0, 0.0, 0, 0.0, 0.0)
+        return Evaluation(0, 0.0, 0, 0.0, 0.0, 0, 0.0, 0.0)
     end = scheduled.destination_arrival
-    lateness = buffer_used = waiting = 0.0
+    lateness = buffer_used = waiting = ride_excess = 0.0
     late_crew = 0
     for stop in scheduled.stops:
         deadline = problem.pickups[stop.pickup_index].deadline
@@ -232,7 +236,10 @@ def evaluation_from_schedule(problem, v, route, buffer_sec=REPORT_BUFFER_SEC):
         buffer_used += min(buffer_sec, max(0.0, end - ideal))
         if math.isfinite(deadline):
             waiting += max(0.0, ideal - end)
-    return Evaluation(0, lateness, late_crew, buffer_used, 1, end - scheduled.start, waiting)
+        ride_excess += max(0.0, end - stop.arrival - MAX_RIDE_SEC)
+    return Evaluation(
+        0, lateness, late_crew, buffer_used, ride_excess, 1, end - scheduled.start, waiting
+    )
 
 
 @pytest.mark.parametrize("seed", range(20))
@@ -256,3 +263,42 @@ def test_route_evaluation_matches_the_schedule(seed):
     v = rng.randrange(3)
 
     assert route_evaluation(problem, v, route) == evaluation_from_schedule(problem, v, route)
+
+
+# Ride time (#89). With 600 s legs and no boarding time, a crew member n stops
+# from the end of a route rides n * 600 s; MAX_RIDE_SEC (5400) is 9 legs.
+
+
+def test_a_route_within_the_ride_cap_costs_nothing_extra():
+    # Three stops: the longest ride is 1800 s.
+    problem = make_problem([20000] * 3, capacities=[14])
+
+    evaluation = evaluate(problem, Individual([[0, 1, 2]]))
+
+    assert evaluation.ride_excess_sec == 0
+
+
+def test_rides_beyond_the_cap_are_charged_by_the_second():
+    # Eleven stops: the first rides 6600 s (1200 over), the second 6000 s
+    # (600 over), the third exactly 5400 s (not over).
+    problem = make_problem([20000] * 11, capacities=[14])
+
+    evaluation = evaluate(problem, Individual([list(range(11))]))
+
+    assert evaluation.ride_excess_sec == 1200 + 600
+
+
+def test_a_long_route_over_the_cap_costs_more_than_splitting_it_with_one_more_van():
+    # One van: 1800 s of ride excess, 180,000. Two vans (6 + 5 stops): nobody
+    # over the cap, for one more van (3600) and 600 s more driving.
+    problem = make_problem([20000] * 11, capacities=[14, 14])
+
+    one_van = evaluate(problem, Individual([list(range(11)), []]))
+    two_vans = evaluate(problem, Individual([list(range(6)), list(range(6, 11))]))
+
+    assert two_vans.ride_excess_sec == 0
+    assert two_vans.cost < one_van.cost
+    assert one_van.cost - two_vans.cost == pytest.approx(
+        RIDE_WEIGHT * 1800 - VEHICLE_WEIGHT - TIME_WEIGHT * 600
+    )
+    assert MAX_RIDE_SEC == 5400

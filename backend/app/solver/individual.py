@@ -163,14 +163,16 @@ def _latest_start(problem: Problem, vehicle: Vehicle, route: list[int], buffer_s
     return lo
 
 
-def departure_and_arrival(
+def route_times(
     problem: Problem, vehicle_index: int, route: list[int], buffer_sec: float = REPORT_BUFFER_SEC
-) -> tuple[float, float]:
-    """When a non-empty route leaves (latest departure) and reaches the
-    destination; all route_evaluation needs, without building Stops."""
+) -> tuple[float, list[float], float]:
+    """When a non-empty route leaves (latest departure), reaches each stop and
+    reaches the destination; all route_evaluation needs, without building
+    Stops."""
     vehicle = problem.vehicles[vehicle_index]
     start = _latest_start(problem, vehicle, route, buffer_sec)
-    return start, _drive(problem, vehicle, route, start)[1]
+    arrivals, end = _drive(problem, vehicle, route, start)
+    return start, arrivals, end
 
 
 def schedule_route(
