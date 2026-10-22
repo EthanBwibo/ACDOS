@@ -1,0 +1,32 @@
+#!/bin/sh
+# Runs ruff on backend/ before every commit, so a lint or format failure cannot
+# be committed (CI would reject it later anyway). Skips when no backend file
+# is staged. Enable with: git config core.hooksPath .githooks
+#
+# Checks the files as they are in the working tree, which is what is staged
+# unless only part of a file was added.
+
+if [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- backend/)" ]; then
+  exit 0
+fi
+
+cd "$(git rev-parse --show-toplevel)/backend" || exit 1
+
+# The project venv (Windows or Unix layout), else ruff on PATH.
+if [ -x venv/Scripts/ruff.exe ]; then
+  ruff=venv/Scripts/ruff.exe
+elif [ -x venv/bin/ruff ]; then
+  ruff=venv/bin/ruff
+elif command -v ruff >/dev/null 2>&1; then
+  ruff=ruff
+else
+  echo "pre-commit: ruff not found (backend/venv or PATH); install requirements-dev.txt" >&2
+  exit 1
+fi
+
+if ! "$ruff" check . || ! "$ruff" format --check .; then
+  echo "pre-commit: rejected, ruff failed in backend/." >&2
+  echo "  Fix with:  cd backend && ruff check --fix . && ruff format ." >&2
+  echo "  Then stage the changes and commit again." >&2
+  exit 1
+fi
