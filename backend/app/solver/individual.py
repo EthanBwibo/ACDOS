@@ -202,93 +202,115 @@ def split(problem: Problem, tour: list[int]) -> Individual:
 
     Lost causes: a pickup that would be late even driven alone by any vehicle
     (its report time is too soon for the fleet to reach JKIA). It must not use
-    up a vehicle of its own, so it joins an open route with room: preferably
-    one where it makes no on-time pickup late, and among those the one where it
-    adds the least lateness (its own plus other lost causes it delays). Only if
-    every open route would make someone late does it take the least total
-    lateness regardless. Lowest vehicle index on a tie. Only if no open route
-    has room does it move on to the next vehicle. Its lateness is reported
-    through Stop.lateness like any other.
+    up a vehicle of its own, so it joins an open route with room (see
+    RouteBuilder.join_least_late_route). Only if no open route has room does
+    it move on to the next vehicle. Its lateness is reported through
+    Stop.lateness like any other.
     """
     vehicles = problem.vehicles
-    routes: list[list[int]] = [[] for _ in vehicles]
-    # partials[w] is the state of vehicle w's route, set once it has a stop.
-    partials: list[_Partial | None] = [None] * len(vehicles)
+    builder = RouteBuilder(problem)
     unassigned: list[int] = []
     v = 0  # the vehicle being filled
 
     for i in tour:
-        if v < len(vehicles) and _try_append(problem, routes, partials, v, i):
+        if v < len(vehicles) and builder.try_append(v, i):
             continue
-        if _late_even_alone(problem, problem.pickups[i]):
-            w = _least_late_open_route(problem, routes, partials, i)
-            if w is not None:
-                partials[w] = _add(problem, partials[w], problem.pickups[i], track_deadline=False)
-                routes[w].append(i)
-                continue
+        if late_even_alone(problem, problem.pickups[i]) and builder.join_least_late_route(i):
+            continue
         # Move on: this vehicle's route is closed for the rest of the tour.
         v += 1
-        while v < len(vehicles) and not _try_append(problem, routes, partials, v, i):
+        while v < len(vehicles) and not builder.try_append(v, i):
             v += 1
         if v >= len(vehicles):
             unassigned.append(i)
 
-    return Individual(routes, unassigned)
+    return Individual(builder.routes, unassigned)
 
 
-def _try_append(
-    problem: Problem, routes: list[list[int]], partials: list[_Partial | None], w: int, i: int
-) -> bool:
-    """Add pickup i to the end of vehicle w's route if that keeps it valid."""
-    vehicle = problem.vehicles[w]
-    pickup = problem.pickups[i]
-    partial = partials[w] if partials[w] is not None else _start(vehicle)
-    candidate = _add(problem, partial, pickup)
-    if candidate.load > vehicle.capacity:
-        return False
-    if _destination_arrival(problem, candidate) > candidate.earliest_deadline:
-        if routes[w]:
+class RouteBuilder:
+    """Routes built one stop at a time, as split() and the nearest-neighbour
+    heuristic build them.
+
+    For each vehicle it keeps the route so far and enough state (a _Partial)
+    to check whether one more pickup still fits, without re-timing the route.
+    Times assume the vehicle leaves at available_from; that is enough to tell
+    who is late, since leaving later never changes that (schedule_route).
+    """
+
+    def __init__(self, problem: Problem) -> None:
+        self.problem = problem
+        self.routes: list[list[int]] = [[] for _ in problem.vehicles]
+        # _partials[w] is the state of vehicle w's route, set once it has a stop.
+        self._partials: list[_Partial | None] = [None] * len(problem.vehicles)
+
+    def position_and_clock(self, w: int) -> tuple[Point, float]:
+        """Where vehicle w is, and when it leaves there, after its last stop."""
+        partial = self._partials[w] or _start(self.problem.vehicles[w])
+        return partial.position, partial.clock
+
+    def try_append(self, w: int, i: int) -> bool:
+        """Add pickup i to the end of vehicle w's route if that keeps it valid."""
+        problem = self.problem
+        vehicle = problem.vehicles[w]
+        pickup = problem.pickups[i]
+        partial = self._partials[w] or _start(vehicle)
+        candidate = _add(problem, partial, pickup)
+        if candidate.load > vehicle.capacity:
             return False
-        # First stop and late even so: accept it, but leave its deadline out
-        # so it does not turn away every pickup after it.
-        candidate = _add(problem, partial, pickup, track_deadline=False)
-    partials[w] = candidate
-    routes[w].append(i)
-    return True
+        if _destination_arrival(problem, candidate) > candidate.earliest_deadline:
+            if self.routes[w]:
+                return False
+            # First stop and late even so: accept it, but leave its deadline
+            # out so it does not turn away every pickup after it.
+            candidate = _add(problem, partial, pickup, track_deadline=False)
+        self._partials[w] = candidate
+        self.routes[w].append(i)
+        return True
+
+    def join_least_late_route(self, i: int) -> bool:
+        """Add lost cause i to the end of the best open route with room.
+
+        Preferably one where it makes no on-time pickup late, and among those
+        the one where it adds the least lateness (its own plus other lost
+        causes it delays). Only if every open route would make someone late
+        does it take the least total lateness regardless. Lowest vehicle index
+        on a tie. False if no open route has room.
+        """
+        problem = self.problem
+        pickup = problem.pickups[i]
+        # Tuples compare element by element: False (nobody made late) sorts first.
+        best, best_key = None, (True, math.inf)
+        for w, route in enumerate(self.routes):
+            if not route:
+                continue
+            candidate = _add(problem, self._partials[w], pickup, track_deadline=False)
+            if candidate.load > problem.vehicles[w].capacity:
+                continue
+            end_before = _destination_arrival(problem, self._partials[w])
+            end_after = _destination_arrival(problem, candidate)
+            makes_someone_late = any(
+                end_before <= problem.pickups[j].deadline < end_after for j in route
+            )
+            added = _total_lateness(problem, [*route, i], end_after) - _total_lateness(
+                problem, route, end_before
+            )
+            if (makes_someone_late, added) < best_key:
+                best, best_key = w, (makes_someone_late, added)
+        if best is None:
+            return False
+        self._partials[best] = _add(problem, self._partials[best], pickup, track_deadline=False)
+        self.routes[best].append(i)
+        return True
 
 
-def _late_even_alone(problem: Problem, pickup: Pickup) -> bool:
+def late_even_alone(problem: Problem, pickup: Pickup) -> bool:
+    """True if no vehicle could get this pickup to the destination on time,
+    even driving it alone: a lost cause."""
     for vehicle in problem.vehicles:
         alone = _add(problem, _start(vehicle), pickup)
         if _destination_arrival(problem, alone) <= pickup.deadline:
             return False
     return True
-
-
-def _least_late_open_route(
-    problem: Problem, routes: list[list[int]], partials: list[_Partial | None], i: int
-) -> int | None:
-    """Open route with room for lost cause i: one where it makes no on-time
-    pickup late if any, then the least total lateness added."""
-    # Tuples compare element by element: False (nobody made late) sorts first.
-    best, best_key = None, (True, math.inf)
-    for w, route in enumerate(routes):
-        if not route:
-            continue
-        candidate = _add(problem, partials[w], problem.pickups[i], track_deadline=False)
-        if candidate.load > problem.vehicles[w].capacity:
-            continue
-        end_before = _destination_arrival(problem, partials[w])
-        end_after = _destination_arrival(problem, candidate)
-        makes_someone_late = any(
-            end_before <= problem.pickups[j].deadline < end_after for j in route
-        )
-        added = _total_lateness(problem, [*route, i], end_after) - _total_lateness(
-            problem, route, end_before
-        )
-        if (makes_someone_late, added) < best_key:
-            best, best_key = w, (makes_someone_late, added)
-    return best
 
 
 def _total_lateness(problem: Problem, route: list[int], end: float) -> float:
