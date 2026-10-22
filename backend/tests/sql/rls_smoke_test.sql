@@ -190,4 +190,41 @@ exception when insufficient_privilege then
 end $$;
 reset role;
 
+-- Travel time observations (014) -------------------------------------------
+-- Written only by the Edge Function (service role, which bypasses RLS);
+-- dispatchers read, nobody else does, and no client writes.
+insert into public.travel_time_observations
+    (logged_at_utc, logged_at_eat, day_of_week, hour_eat, minute_eat, zone,
+     origin_lat, origin_lon, element_status, distance_m, duration_sec,
+     duration_in_traffic_sec, run_id)
+values ('2026-10-20T03:42:29Z', '2026-10-20T06:42:29', 'Tuesday', 6, 42,
+        'South B, Nairobi', -1.310341, 36.833737, 'OK', 13268, 1001, 849, 'ci');
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+do $$
+begin
+    assert (select count(*) from public.travel_time_observations) = 1,
+        'dispatcher should see the travel time observation';
+end $$;
+do $$
+begin
+    insert into public.travel_time_observations
+        (logged_at_utc, logged_at_eat, day_of_week, hour_eat, minute_eat, zone,
+         origin_lat, origin_lon, element_status, run_id)
+    values (now(), now(), 'Tuesday', 6, 42, 'South C, Nairobi', -1.32, 36.83, 'OK', 'ci-2');
+    raise exception 'dispatcher inserted a travel time observation';
+exception when insufficient_privilege then
+    null; -- expected: insert revoked from authenticated
+end $$;
+
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+do $$
+begin
+    assert (select count(*) from public.travel_time_observations) = 0,
+        'driver A should see no travel time observations';
+end $$;
+reset request.jwt.claim.sub;
+reset role;
+
 \echo 'RLS smoke test passed'

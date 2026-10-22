@@ -1,0 +1,142 @@
+[
+  {
+    "zone": "South B, Nairobi",
+    "lat": -1.310341,
+    "lon": 36.833737
+  },
+  {
+    "zone": "South C, Nairobi",
+    "lat": -1.322274,
+    "lon": 36.828893
+  },
+  {
+    "zone": "Embakasi, Nairobi",
+    "lat": -1.323786,
+    "lon": 36.899962
+  },
+  {
+    "zone": "Imara Daima, Nairobi",
+    "lat": -1.328436,
+    "lon": 36.88065
+  },
+  {
+    "zone": "Nyayo Estate, Nairobi",
+    "lat": -1.307259,
+    "lon": 36.904456
+  },
+  {
+    "zone": "Karen, Nairobi",
+    "lat": -1.323994,
+    "lon": 36.667803
+  },
+  {
+    "zone": "Lavington, Nairobi",
+    "lat": -1.278937,
+    "lon": 36.777798
+  },
+  {
+    "zone": "Kilimani, Nairobi",
+    "lat": -1.289279,
+    "lon": 36.786931
+  },
+  {
+    "zone": "Westlands, Nairobi",
+    "lat": -1.2675,
+    "lon": 36.812022
+  },
+  {
+    "zone": "Runda, Nairobi",
+    "lat": -1.215566,
+    "lon": 36.815044
+  },
+  {
+    "zone": "Buruburu, Nairobi",
+    "lat": -1.292248,
+    "lon": 36.881548
+  },
+  {
+    "zone": "Donholm, Nairobi",
+    "lat": -1.293916,
+    "lon": 36.897118
+  },
+  {
+    "zone": "Langata, Nairobi",
+    "lat": -1.364094,
+    "lon": 36.747626
+  },
+  {
+    "zone": "Ruiru, Kiambu County",
+    "lat": -1.148378,
+    "lon": 36.960578
+  },
+  {
+    "zone": "Ongata Rongai, Kajiado County",
+    "lat": -1.393864,
+    "lon": 36.744238
+  },
+  {
+    "zone": "Kitengela, Kajiado County",
+    "lat": -1.478682,
+    "lon": 36.957676
+  },
+  {
+    "zone": "Athi River, Machakos County",
+    "lat": -1.457725,
+    "lon": 36.978503
+  },
+  {
+    "zone": "Kasarani, Nairobi",
+    "lat": -1.225399,
+    "lon": 36.897637
+  },
+  {
+    "zone": "Roysambu, Nairobi",
+    "lat": -1.216019,
+    "lon": 36.887962
+  },
+  {
+    "zone": "Kahawa, Nairobi",
+    "lat": -1.183333,
+    "lon": 36.916667
+  },
+  {
+    "zone": "Dagoretti, Nairobi",
+    "lat": -1.288983,
+    "lon": 36.728069
+  },
+  {
+    "zone": "Kawangware, Nairobi",
+    "lat": -1.282272,
+    "lon": 36.752365
+  },
+  {
+    "zone": "Umoja, Nairobi",
+    "lat": -1.274357,
+    "lon": 36.905729
+  },
+  {
+    "zone": "Kayole, Nairobi",
+    "lat": -1.277394,
+    "lon": 36.915798
+  },
+  {
+    "zone": "Mlolongo, Machakos County",
+    "lat": -1.38872,
+    "lon": 36.938489
+  },
+  {
+    "zone": "Nairobi CBD, Nairobi",
+    "lat": -1.292066,
+    "lon": 36.821946
+  },
+  {
+    "zone": "Upper Hill, Nairobi",
+    "lat": -1.298356,
+    "lon": 36.813231
+  },
+  {
+    "zone": "Ngara, Nairobi",
+    "lat": -1.278124,
+    "lon": 36.830417
+  }
+]
