@@ -32,7 +32,7 @@ METHODS = {"uniform": UniformMutation, "adaptive": AdaptiveMutation}
 COLUMNS = [
     "instance", "method", "seed", "time_limit_sec", "stop_reason", "generations",
     "cost", "unassigned", "late_crew", "lateness_sec", "buffer_used_sec",
-    "vehicles_used", "travel_sec", "waiting_sec",
+    "ride_excess_sec", "vehicles_used", "travel_sec", "waiting_sec",
 ]  # fmt: skip
 
 
@@ -55,6 +55,7 @@ def run(seeds: int, out: Path) -> list[dict]:
                         "generations": result.generations, "cost": e.cost,
                         "unassigned": e.unassigned, "late_crew": e.late_crew,
                         "lateness_sec": e.lateness_sec, "buffer_used_sec": e.buffer_used_sec,
+                        "ride_excess_sec": e.ride_excess_sec,
                         "vehicles_used": e.vehicles_used, "travel_sec": e.travel_sec,
                         "waiting_sec": e.waiting_sec,
                     }
