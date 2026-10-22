@@ -10,6 +10,8 @@ One iteration:
    cheaper than the worst and not already in the population.
 5. The outcome is reported to the mutation, for the adaptive operator scores
    (#71): "accepted" in Ropke and Pisinger's sense means step 4 succeeded.
+   The mutation is adaptive (mutation.AdaptiveMutation) unless the caller
+   passes another, such as the uniform baseline.
 
 Elitism: only the worst individual is ever replaced, and only by a cheaper
 one, so the best individual always survives and the best cost never rises.
@@ -21,22 +23,18 @@ comes first. All of these are tuned in #14.
 """
 
 import enum
-import functools
 import random
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol
 
 from app.solver.crossover import order_crossover
 from app.solver.fitness import Evaluation, evaluate, fitness
 from app.solver.individual import Individual
-from app.solver.insertion import greedy_insertion
+from app.solver.mutation import AdaptiveMutation, Mutation, Outcome
 from app.solver.nearest_neighbour import nearest_neighbour
 from app.solver.population import StructureKey, initial_population, structure_key
 from app.solver.problem import Problem
-from app.solver.removal import random_removal, removal_count, unavoidable_costs, worst_removal
-from app.solver.shaw import relatedness_matrix, shaw_removal
 
 POPULATION_SIZE = 30
 MAX_GENERATIONS = 200
@@ -46,54 +44,10 @@ NO_IMPROVEMENT_GENERATIONS = 30
 MUTATION_RATE = 1.0
 
 
-class Outcome(enum.Enum):
-    """What happened to a mutated child, in Ropke and Pisinger's score terms."""
-
-    NEW_BEST = "new_best"  # sigma 1: cheapest in the population so far
-    IMPROVED = "improved"  # sigma 2: accepted, cheaper than before mutation
-    ACCEPTED_NEW = "accepted_new"  # sigma 3: accepted, not cheaper, never seen before
-    NO_SCORE = "no_score"  # rejected, or accepted but seen before
-
-
 class StopReason(enum.Enum):
     MAX_GENERATIONS = "max_generations"
     TIME_LIMIT = "time_limit"
     NO_IMPROVEMENT = "no_improvement"
-
-
-class Mutation(Protocol):
-    """The destroy-and-repair step. #71 supplies an adaptive one."""
-
-    def __call__(self, individual: Individual, rng: random.Random) -> Individual: ...
-
-    def record(self, outcome: Outcome) -> None: ...
-
-
-class UniformMutation:
-    """Shaw, random or worst removal with equal probability, then greedy
-    insertion. Stands in until the adaptive selection (#71), and stays as the
-    non-adaptive baseline for the results chapter."""
-
-    def __init__(self, problem: Problem) -> None:
-        self.problem = problem
-        relatedness = relatedness_matrix(problem)
-        floor = unavoidable_costs(problem)
-        # Every destroy operator called as op(individual, q, rng). Shaw needs a
-        # lambda: its matrix comes before q, so partial cannot bind it (#78).
-        self.destroy_operators = [
-            lambda individual, q, rng: shaw_removal(individual, relatedness, q, rng),
-            random_removal,
-            functools.partial(worst_removal, problem, floor=floor),
-        ]
-
-    def __call__(self, individual: Individual, rng: random.Random) -> Individual:
-        routed = sum(len(route) for route in individual.routes)
-        destroy = rng.choice(self.destroy_operators)
-        destroyed, _ = destroy(individual, removal_count(routed, rng), rng)
-        return greedy_insertion(self.problem, destroyed)
-
-    def record(self, outcome: Outcome) -> None:
-        pass  # nothing adapts
 
 
 class Population:
@@ -180,7 +134,7 @@ def solve(
     if population_size < 1:
         raise ValueError("population_size must be at least 1")
     started = clock()
-    mutation = mutation or UniformMutation(problem)
+    mutation = mutation or AdaptiveMutation(problem)
     population = Population(
         problem,
         initial_population(problem, population_size, rng, seeds=(nearest_neighbour(problem),)),
