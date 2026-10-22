@@ -5,7 +5,6 @@ import pytest
 
 from app.solver.individual import (
     DEPARTURE_TOLERANCE_SEC,
-    MAX_DEPARTURE_SEARCH_STEPS,
     REPORT_BUFFER_SEC,
     Individual,
     schedule,
@@ -370,24 +369,50 @@ def test_latest_departure_is_still_on_time_when_travel_time_is_not_fifo():
     assert assert_feasible(problem, problem_individual(problem, [[0]])) == {}
 
 
-def test_departure_search_stops_at_the_step_cap():
-    # A report time 1e12 s away would take about 34 bisection steps to narrow
-    # to 60 s; the cap stops it sooner, still with an on-time start.
-    calls = 0
+def counting(travel_time):
+    """Wrap a travel time function to count legs driven."""
 
-    def counting(origin, dest, depart_sec):
-        nonlocal calls
-        calls += 1
-        return 600.0
+    def counted(origin, dest, depart_sec):
+        counted.calls += 1
+        return travel_time(origin, dest, depart_sec)
 
-    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=1e12)
-    problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), counting)
+    counted.calls = 0
+    return counted
+
+
+def test_departure_search_is_exact_in_one_step_when_travel_time_ignores_departure():
+    # Two legs of 600 s, report at 10000: the latest start is exactly 7900.
+    # One drive from available_from shows 7900 s of slack; the next tries
+    # 7900 and lands exactly on target. Then the final schedule: 3 drives.
+    travel = counting(every_leg_takes(600))
+    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=10000)
+    problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), travel)
 
     route = schedule_route(problem, 0, [0])
 
-    # Two legs per drive: one reachability check, the steps, the final schedule.
-    assert calls == 2 * (1 + MAX_DEPARTURE_SEARCH_STEPS + 1)
-    assert route.destination_arrival <= 1e12 - REPORT_BUFFER_SEC
+    assert route.start == 7900
+    assert route.destination_arrival == 10000 - REPORT_BUFFER_SEC
+    assert travel.calls == 2 * 3
+
+
+def test_departure_search_stops_at_the_step_cap_still_on_time(monkeypatch):
+    # The rush-hour travel time needs several corrections (see
+    # test_latest_departure_allows_for_travel_time_that_changes_with_departure).
+    # With the cap at 1, the search stops after one, still on time.
+    monkeypatch.setattr("app.solver.individual.MAX_DEPARTURE_SEARCH_STEPS", 1)
+
+    def rush_hour(origin, dest, depart_sec):
+        return 600.0 if depart_sec < 5000 else 1800.0
+
+    travel = counting(rush_hour)
+    pickup = Pickup("p0", Point(-1.28, 36.81), deadline=7000)
+    problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), travel)
+
+    route = schedule_route(problem, 0, [0])
+
+    # Two legs per drive: the reachability check, 1 step, the final schedule.
+    assert travel.calls == 2 * (1 + 1 + 1)
+    assert route.destination_arrival <= 7000 - REPORT_BUFFER_SEC
 
 
 @pytest.mark.parametrize("seed", range(20))
@@ -424,3 +449,69 @@ def test_latest_departure_never_changes_who_is_late(seed):
 def problem_individual(problem, routes):
     """Individual with these routes and an empty route for every other vehicle."""
     return Individual(routes + [[] for _ in range(len(problem.vehicles) - len(routes))])
+
+
+# Remembering legs for travel time that ignores departure time (#85)
+
+
+def test_a_problem_remembers_each_leg_of_a_travel_time_that_ignores_departure():
+    travel = counting(every_leg_takes(600))
+    travel.ignores_departure_time = True
+    a, b = Point(-1.28, 36.81), Point(-1.29, 36.82)
+    problem = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+
+    first = problem.travel_time(a, b, 0)
+    second = problem.travel_time(a, b, 5000)
+
+    assert first == second == 600
+    assert travel.calls == 1
+
+
+def test_equal_points_that_are_different_objects_are_not_mixed_up():
+    # The memo is keyed on identity and checks it, so it never hands one
+    # point's leg to another object, even an equal one.
+    travel = counting(every_leg_takes(600))
+    travel.ignores_departure_time = True
+    problem = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+
+    problem.travel_time(Point(-1.28, 36.81), JKIA, 0)
+    problem.travel_time(Point(-1.28, 36.81), JKIA, 0)
+
+    assert travel.calls == 2
+
+
+def test_each_problem_has_its_own_memo():
+    # The same leg asked through two problems built from one function is
+    # computed once per problem: the memo goes when its Problem does, so it
+    # cannot grow across solves.
+    travel = counting(every_leg_takes(600))
+    travel.ignores_departure_time = True
+    first = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+    second = Problem((), (Vehicle("v0", 14, DEPOT),), travel)
+
+    first.travel_time(DEPOT, JKIA, 0)
+    second.travel_time(DEPOT, JKIA, 0)
+    second.travel_time(DEPOT, JKIA, 0)
+
+    assert travel.calls == 2
+
+
+def test_remembered_haversine_gives_the_same_times():
+    rng = random.Random(0)
+    points = [Point(rng.uniform(-1.4, -1.1), rng.uniform(36.6, 37.0)) for _ in range(10)]
+    plain = haversine_travel_time(speed_kmh=30)
+    problem = Problem((), (Vehicle("v0", 14, DEPOT),), plain)
+
+    for _ in range(2):  # second pass comes from the memo
+        for a in points:
+            for b in points:
+                assert problem.travel_time(a, b, 0) == plain(a, b, 0)
+
+
+def test_travel_time_that_depends_on_departure_is_left_alone():
+    def rush_hour(origin, dest, depart_sec):
+        return 600.0 if depart_sec < 5000 else 1800.0
+
+    problem = Problem((), (Vehicle("v0", 14, DEPOT),), rush_hour)
+
+    assert problem.travel_time is rush_hour

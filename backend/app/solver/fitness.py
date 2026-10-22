@@ -20,7 +20,7 @@ change.
 import math
 from dataclasses import dataclass
 
-from app.solver.individual import REPORT_BUFFER_SEC, Individual, schedule_route
+from app.solver.individual import REPORT_BUFFER_SEC, Individual, departure_and_arrival
 from app.solver.problem import Problem
 
 # Per crew member left without a vehicle. One outweighs about 278 h of total
@@ -75,9 +75,13 @@ def route_evaluation(
     route: list[int],
     buffer_sec: float = REPORT_BUFFER_SEC,
 ) -> Evaluation:
-    """The terms for one route; unassigned is always 0."""
-    scheduled = schedule_route(problem, vehicle_index, route, buffer_sec=buffer_sec)
-    if scheduled.start is None:
+    """The terms for one route; unassigned is always 0.
+
+    Works from the route's departure and arrival alone, not schedule_route's
+    Stops: the operators cost hundreds of thousands of routes per solve, and
+    only the arrival at JKIA matters for every term (#85).
+    """
+    if not route:
         return Evaluation(
             unassigned=0,
             lateness_sec=0.0,
@@ -88,15 +92,17 @@ def route_evaluation(
             waiting_sec=0.0,
         )
 
+    start, end = departure_and_arrival(problem, vehicle_index, route, buffer_sec)
     lateness = buffer_used = waiting = 0.0
     late_crew = 0
-    end = scheduled.destination_arrival
-    for stop in scheduled.stops:
-        deadline = problem.pickups[stop.pickup_index].deadline
+    for i in route:
+        deadline = problem.pickups[i].deadline
+        # Everyone on board arrives together, as Stop.lateness counts it.
+        late = max(0.0, end - deadline)
         # When this crew member would ideally arrive: report time minus buffer.
         ideal = deadline - buffer_sec
-        lateness += stop.lateness
-        if stop.lateness > 0:
+        lateness += late
+        if late > 0:
             late_crew += 1
         # Capped at the whole buffer: time past report time is lateness.
         buffer_used += min(buffer_sec, max(0.0, end - ideal))
@@ -111,7 +117,7 @@ def route_evaluation(
         late_crew=late_crew,
         buffer_used_sec=buffer_used,
         vehicles_used=1,
-        travel_sec=end - scheduled.start,
+        travel_sec=end - start,
         waiting_sec=waiting,
     )
 
