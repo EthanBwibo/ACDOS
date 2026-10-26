@@ -1,10 +1,10 @@
 name: travel-time-logger
 
-# Hourly Distance Matrix snapshot for all pickup zones to JKIA.
+# Distance Matrix snapshot for all pickup zones to JKIA.
 # Data is appended on the unprotected data-logger branch, never on main.
+# Manual only: the hourly schedule moved to Supabase (#81), where the
+# log-travel-times Edge Function writes to travel_time_observations.
 on:
-  schedule:
-    - cron: "7 * * * *" # minute 7 avoids the top-of-hour Actions queue
   workflow_dispatch: # manual run button for testing
 
 permissions:
