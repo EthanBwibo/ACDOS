@@ -1,3 +1,6 @@
 # Hooks run under sh; CRLF line endings would break them on Windows checkouts.
 .githooks/* text eol=lf
 *.sh text eol=lf
+
+# Solomon instances and SINTEF solutions are kept byte for byte as downloaded.
+backend/benchmarks/solomon_data/**/*.txt -text
