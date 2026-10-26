@@ -4,3 +4,10 @@ fastapi==0.141.1
 uvicorn==0.52.4
 pydantic==2.13.5
 pydantic-settings==2.15.0
+# Random Forest journey time model (app/ml/journey_time.py, #103), and what
+# scikit-learn pulls in, pinned at the versions it resolved to.
+scikit-learn==1.9.1
+numpy==2.5.4
+scipy==1.18.1
+joblib==1.6.0
+threadpoolctl==3.7.0
