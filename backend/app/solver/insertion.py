@@ -19,6 +19,13 @@ who rides past the new stop, and a route already arriving late can trade
 waiting for lateness, so the cheapest detour is not always the cheapest
 position. Hence two positions, measured in #88, not one.
 
+With travel time that depends on departure (the Random Forest, #104), the
+ranking uses the legs at time 0 (Problem.detour_legs) while the full costing
+uses the real departure times. A detour that is shortest at 03:00 need not
+be shortest at 07:00, so this is an approximation. Measured in #104, neither
+2 nor 3 positions chose what costing every position chose, so for now every
+position is costed (TIME_DEPENDENT_FULLY_COSTED_POSITIONS is None).
+
 With stop windows (Solomon, #99) every position is costed: a vehicle that
 waits for a ready time can absorb a detour, so a longer detour is not always
 a later route, and the shortlist's premise does not hold.
@@ -33,6 +40,12 @@ from app.solver.problem import Problem
 # chose exactly what costing every position chose; with 1 they did not, because
 # of the ride-time term. 2 is the faster of the two exact-in-practice settings.
 FULLY_COSTED_POSITIONS = 2
+# The same when positions are ranked by the legs at time 0 (Problem.detour_legs
+# for time-dependent travel, #104); None costs every position. On
+# morning_wave_120 under RF travel, 3 generations with 2 or 3 positions chose a
+# different plan from costing every position for each of 3 seeds, though 2.4
+# times faster. Whether that speed buys a better plan in a fixed time is #14's.
+TIME_DEPENDENT_FULLY_COSTED_POSITIONS: int | None = None
 
 
 def insertion_cost(
@@ -75,12 +88,19 @@ def _best_position(
 
 
 def _positions_worth_costing(problem: Problem, route: list[int], v: int, i: int) -> list[int]:
-    """Every position, or with a leg table and no stop windows only the
-    FULLY_COSTED_POSITIONS with the smallest detour (lowest position on a
-    tie), in route order."""
+    """Every position, or with a leg table to rank by and no stop windows only
+    the few with the smallest detour (lowest position on a tie), in route
+    order: FULLY_COSTED_POSITIONS when the table holds the real legs,
+    TIME_DEPENDENT_FULLY_COSTED_POSITIONS (if not None) when it holds the legs
+    at time 0."""
     positions = len(route) + 1
-    legs = problem.legs
-    if legs is None or problem.stop_windows or positions <= FULLY_COSTED_POSITIONS:
+    legs = problem.detour_legs
+    if legs is None or problem.stop_windows:
+        return list(range(positions))
+    worth = (
+        FULLY_COSTED_POSITIONS if legs is problem.legs else TIME_DEPENDENT_FULLY_COSTED_POSITIONS
+    )
+    if worth is None or positions <= worth:
         return list(range(positions))
     before = [legs.from_start[v]] + [legs.between[j] for j in route]  # rows of prev stops
     after = route + [legs.destination]
@@ -88,7 +108,7 @@ def _positions_worth_costing(problem: Problem, route: list[int], v: int, i: int)
     detours = sorted(
         (before[k][i] + from_i[after[k]] - before[k][after[k]], k) for k in range(positions)
     )
-    return sorted(k for _, k in detours[:FULLY_COSTED_POSITIONS])
+    return sorted(k for _, k in detours[:worth])
 
 
 def greedy_insertion(problem: Problem, individual: Individual) -> Individual:

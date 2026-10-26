@@ -104,6 +104,11 @@ class Problem:
     # Built in __post_init__ when travel time ignores departure; None
     # otherwise (the Random Forest, whose legs change with the hour).
     legs: LegTable | None = field(default=None, init=False, compare=False, repr=False)
+    # What insertion ranks positions by before costing the best few (#88):
+    # legs itself, or, for time-dependent travel that asks for it with
+    # ranks_detours_at_start (the Random Forest, #104), the legs at time 0.
+    # None: every position is costed.
+    detour_legs: LegTable | None = field(default=None, init=False, compare=False, repr=False)
     # Every leg's length by Problem.distance, laid out as legs. Built only
     # when weights.distance is above 0, so crew solves never pay for it.
     leg_lengths: LegTable | None = field(default=None, init=False, compare=False, repr=False)
@@ -143,6 +148,9 @@ class Problem:
             # grow across solves (#85).
             object.__setattr__(self, "travel_time", _remember_legs(self.travel_time))
             object.__setattr__(self, "legs", self._leg_table())
+            object.__setattr__(self, "detour_legs", self.legs)
+        elif getattr(self.travel_time, "ranks_detours_at_start", False) and not self.stop_windows:
+            object.__setattr__(self, "detour_legs", self._leg_table())
         if self.weights.distance > 0:
             object.__setattr__(self, "leg_lengths", self._leg_table(self.distance))
 
