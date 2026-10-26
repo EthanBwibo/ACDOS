@@ -1,4 +1,5 @@
-"""Zone-to-zone travel times (#102): the L2-blended matrix and its held-out check."""
+"""Zone-to-zone travel times (#102, #106): the L2-blended matrix, its 07:30
+anchor and the held-out check."""
 
 import csv
 
@@ -26,6 +27,11 @@ PEAK = {("A", "B"): 1000, ("B", "A"): 1050, ("A", "C"): 1300, ("C", "A"): 1350,
         ("B", "C"): 600, ("C", "B"): 640}  # fmt: skip
 MORNING = {("A", "B"): 720, ("B", "A"): 700, ("A", "C"): 1000, ("C", "A"): 1100,
            ("B", "C"): 500, ("C", "B"): 450}  # fmt: skip
+# Held out at 08:30: 30 s slower than 07:30 everywhere.
+HELD_0830 = {pair: sec + 30 for pair, sec in MORNING.items()}
+# Every fixture L2 is linear from 05:00 to 18:00, so on Tuesday c = (h - 5) / 13
+# for every pair, and c_m (07:30) = 2.5 / 13.
+C_M = 2.5 / 13
 
 
 def write_files(tmp_path, l2=L2, l2_saturday=L2_SATURDAY):
@@ -47,6 +53,7 @@ def write_files(tmp_path, l2=L2, l2_saturday=L2_SATURDAY):
             ("off_peak", "2026-10-27T05:00", OFF),
             ("evening_peak", "2026-10-27T18:00", PEAK),
             ("morning_peak", "2026-10-27T07:30", MORNING),
+            ("held_out_0830", "2026-10-27T08:30", HELD_0830),
         ]:
             for zone in L2:
                 w.writerow([period, when, zone, zone, 0, 0, 0, ""])
@@ -62,6 +69,13 @@ def files(tmp_path):
 
 @pytest.fixture
 def matrix(files):
+    """#105's two-anchor model."""
+    return zone_matrix.load(*files, morning_anchor=False)
+
+
+@pytest.fixture
+def anchored(files):
+    """With the 07:30 anchor (#106)."""
     return zone_matrix.load(*files)
 
 
@@ -123,23 +137,89 @@ def test_a_zone_not_busier_at_the_peak_is_refused(tmp_path):
         zone_matrix.load(*write_files(tmp_path, l2=flat))
 
 
-def test_the_held_out_check_skips_the_diagonal_and_scores_each_model(files, matrix):
-    rows = check(matrix, zone_matrix.load_queries(files[0]))
+def test_the_three_matrices_come_back_exactly_at_their_query_times(anchored):
+    assert anchored.has_morning_anchor
+    assert anchored.morning_congestion("A", "B") == pytest.approx(C_M)
+    assert anchored.leg("A", "B", TUESDAY, 5) == 600
+    assert anchored.leg("A", "B", TUESDAY, 7.5) == pytest.approx(720)
+    assert anchored.leg("A", "B", TUESDAY, 18) == pytest.approx(1000)
+    assert anchored.leg("C", "B", TUESDAY, 7.5) == pytest.approx(450)
+
+
+def test_each_piece_by_hand(anchored):
+    # Tuesday 06:15: c = 1.25 / 13, half of c_m: halfway from off (600) to
+    # morning (720), 660.
+    assert anchored.leg("A", "B", TUESDAY, 6.25) == pytest.approx(660)
+    # Tuesday 12:45: c = 7.75 / 13, halfway from c_m to 1 ((7.75 - 2.5) /
+    # (13 - 2.5)): halfway from morning (720) to peak (1000), 860.
+    assert anchored.leg("A", "B", TUESDAY, 12.75) == pytest.approx(860)
+    # Outside [0, 1], #105's line: Saturday 05:00, c = (-100 - 50) / 800 =
+    # -0.1875, 600 - 0.1875 * 400 = 525 (the off-to-morning slope would give
+    # 600 - 0.1875 / C_M * 120 = 483).
+    assert anchored.leg("A", "B", SATURDAY, 5) == pytest.approx(525)
+    assert anchored.leg_at("A", "B", 1.25) == pytest.approx(600 + 1.25 * 400)
+
+
+def test_the_pieces_meet(anchored):
+    for c in (0.0, C_M, 1.0):
+        below, above = anchored.leg_at("A", "B", c - 1e-9), anchored.leg_at("A", "B", c + 1e-9)
+        assert above == pytest.approx(below, abs=1e-5)
+
+
+def test_a_pair_whose_c_m_is_not_inside_0_1_keeps_the_two_anchor_line(files, matrix):
+    queries = zone_matrix.load_queries(files[0])
+    # A "morning" matrix queried at 05:00 has c_m = 0 for every pair.
+    at_off_peak = zone_matrix.Query(TUESDAY, 5.0, queries["morning_peak"].seconds)
+    fallback = zone_matrix.ZoneMatrix(
+        queries["off_peak"], queries["evening_peak"], zone_matrix.load_calibration(files[1]),
+        at_off_peak,
+    )  # fmt: skip
+
+    assert len(fallback.fallback_pairs) == 6
+    assert fallback.morning_congestion("A", "B") is None
+    for hour in (6.25, 7.5, 12.75):
+        assert fallback.leg("A", "B", TUESDAY, hour) == matrix.leg("A", "B", TUESDAY, hour)
+
+
+def test_without_the_morning_anchor_it_is_the_two_anchor_model(matrix):
+    for hour in (2, 6.25, 7.5, 12.75, 20):
+        c = matrix.congestion("A", "B", TUESDAY, hour)
+        assert matrix.leg("A", "B", TUESDAY, hour) == pytest.approx(600 + c * 400)
+    assert matrix.fallback_pairs == []
+    assert not matrix.has_morning_anchor
+
+
+def test_the_held_out_check_skips_the_diagonal_and_scores_each_model(files, matrix, anchored):
+    models = {"three_anchor": anchored, "two_anchor": matrix}
+    rows = check(models, zone_matrix.load_queries(files[0]), "held_out_0830")
 
     assert len(rows) == 6
     a_to_b = next(r for r in rows if (r["origin_zone"], r["dest_zone"]) == ("A", "B"))
-    # Tuesday 07:30: A at 1000 + 2.5/13 * 600, B at 500 + 2.5/13 * 200, so
-    # c = (2.5/13 * 800) / 800 = 0.1923; leg 600 + 0.1923 * 400 = 676.9.
-    assert a_to_b["c"] == pytest.approx(2.5 / 13, abs=1e-4)
-    assert a_to_b["blend"] == pytest.approx(600 + 2.5 / 13 * 400, abs=0.05)
+    # Tuesday 08:30: c = 3.5 / 13. Two anchors: 600 + 3.5/13 * 400 = 707.7.
+    # Three: 720 + (3.5/13 - 2.5/13) / (1 - 2.5/13) * 280 = 720 + 280 / 10.5
+    # = 746.7. The single matrices are copied as they are.
+    assert a_to_b["c"] == pytest.approx(3.5 / 13, abs=1e-4)
+    assert a_to_b["two_anchor"] == pytest.approx(600 + 3.5 / 13 * 400, abs=0.05)
+    assert a_to_b["three_anchor"] == pytest.approx(720 + 280 / 10.5, abs=0.05)
+    assert (a_to_b["off_peak_only"], a_to_b["morning_peak_only"]) == (600, 720)
+    assert a_to_b["actual_sec"] == 750
 
     off = errors(rows, "off_peak_only")
-    # Off-peak against the morning matrix: errors -120/720, -50/700, -100/1000,
-    # -150/1100, -100/500, -30/450.
-    pe = [-120 / 720, -50 / 700, -100 / 1000, -150 / 1100, -100 / 500, -30 / 450]
+    # Off-peak against the 08:30 matrix: A-B -150/750, B-A -80/730, A-C
+    # -130/1030, C-A -180/1130, B-C -130/530, C-B -60/480.
+    pe = [-150 / 750, -80 / 730, -130 / 1030, -180 / 1130, -130 / 530, -60 / 480]
     assert off["mpe"] == pytest.approx(100 * sum(pe) / 6)
     assert off["mape"] == pytest.approx(-off["mpe"])
-    assert off["mae_sec"] == pytest.approx((120 + 50 + 100 + 150 + 100 + 30) / 6)
+    assert off["mae_sec"] == pytest.approx((150 + 80 + 130 + 180 + 130 + 60) / 6)
+
+
+def test_rechecking_105_never_scores_the_held_out_matrix_against_itself(files, matrix):
+    # #105's check: 07:30 held out from the two-anchor model, so there is no
+    # morning_peak_only column (it would be the answer itself).
+    rows = check({"two_anchor": matrix}, zone_matrix.load_queries(files[0]), "morning_peak")
+
+    assert "morning_peak_only" not in rows[0]
+    assert {"off_peak_only", "evening_peak_only"} <= set(rows[0])
 
 
 def test_the_real_matrix_covers_the_28_zones_and_stays_positive():

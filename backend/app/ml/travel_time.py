@@ -16,16 +16,20 @@ Travel time depends on the departure time, so the function is never marked
 ignores_departure_time (Problem would freeze one hour's times for the whole
 solve, #85). It is continuous in the departure time, so leaving later
 does not arrive earlier unless the time falls faster than the clock (FIFO,
-#12): the RF between its knots at h:30, the matrix linear in Layer 2, which
-is linear between whole hours.
+#12): the RF between its knots at h:30, the matrix piecewise linear in c
+(zone_matrix.py), which is linear in Layer 2, itself linear between whole
+hours.
 
 Every lookup is cached per function, and a function is built per solve, so
 no cache outlives its solve (#85):
 - RF: the week of hourly predictions, made in one predict() call (predict_grid).
-- Matrix: a pair's leg at each whole hour of the week, filled the first time
-  the pair is asked for. A leg is linear in the Layer 2 values (c is), and
-  Layer 2 is sampled at whole hours, so the leg is linear between whole hours
-  and interpolating the cached hours gives exactly what ZoneMatrix.leg would.
+- Matrix: a pair's congestion c at each whole hour of the week, filled the
+  first time the pair is asked for. c is linear in the Layer 2 values, and
+  Layer 2 is sampled at whole hours, so c is linear between whole hours:
+  interpolating the cached c and mapping it to seconds (ZoneMatrix.leg_at)
+  gives exactly what ZoneMatrix.leg would. The leg itself is not cached by
+  hour: with the 07:30 anchor (#106) it bends where c crosses c_m, which
+  falls between whole hours.
 - Points: the zone of each Point object, and the straight line between two
   points in the same zone.
 """
@@ -81,7 +85,7 @@ def rf_travel_time(
     rf_hours = {
         zone: [grid.seconds(zone, 0, k + 0.5) for k in range(HOURS_PER_WEEK)] for zone in zones
     }
-    matrix_hours: dict[tuple[str, str], list[float]] = {}
+    congestion_hours: dict[tuple[str, str], list[float]] = {}
     same_zone_hours: dict[str, list[float]] = {}
     # Point identity -> (point, its zone, whether it is the destination).
     # Keeps the point, so its id cannot be reused while the entry exists.
@@ -109,11 +113,11 @@ def rf_travel_time(
         if to_destination:
             return _between(rf_hours[o], hour - 0.5)  # RF knots at h:30
         if o != d:
-            values = matrix_hours.get((o, d))
+            values = congestion_hours.get((o, d))
             if values is None:
-                values = [matrix.leg(o, d, 0, k) for k in range(HOURS_PER_WEEK)]
-                matrix_hours[(o, d)] = values
-            return _between(values, hour)
+                values = [matrix.congestion(o, d, 0, k) for k in range(HOURS_PER_WEEK)]
+                congestion_hours[(o, d)] = values
+            return matrix.leg_at(o, d, _between(values, hour))
         per_km = same_zone_hours.get(o)
         if per_km is None:
             per_km = [matrix.same_zone(o, 1.0, 0, k) for k in range(HOURS_PER_WEEK)]
