@@ -23,8 +23,25 @@ Two places in the same zone are one point to the matrix (its diagonal is 0),
 so their leg is the straight line at 30 km/h, the off-peak speed, slowed by
 the zone's Layer 2 ratio to its own 05:00 value.
 
-A third matrix, queried at 07:30, is held out: benchmarks/zone_matrix_check.py
-compares this model with it.
+A third anchor (#106): the matrix queried at Q 07:30. Layer 2 measures zone to
+JKIA, against Nairobi's inbound morning flow, so its morning rise is too mild
+for cross-city legs: with only two anchors the model was 14% too fast at the
+morning peak (#105). c still says how congested it is; the three matrices say
+what that means for each pair. With c_m = c(o, d, Q, 07:30), where the morning
+matrix sits for this pair, the leg runs through the three points:
+
+    off + c / c_m * (morning - off)                       0 <= c <= c_m
+    morning + (c - c_m) / (1 - c_m) * (peak - morning)    c_m < c <= 1
+    off + c * (peak - off)                                c < 0 or c > 1
+
+Each matrix comes back exactly at its query time, and the pieces meet at
+c = 0, c_m and 1, so the leg is continuous in time. Outside [0, 1] it follows
+the two-anchor line: the off-to-morning slope is steep where c_m is small and
+would carry night hours (c below 0) far under the off-peak time. A pair whose
+c_m is not strictly between 0 and 1 keeps the two-anchor line throughout.
+
+Held-out queries (08:30, 12:30) are kept out of the model:
+benchmarks/zone_matrix_check.py compares the model with them.
 """
 
 import bisect
@@ -112,9 +129,12 @@ def load_queries(path: Path = ZONE_MATRIX_CSV) -> dict[str, Query]:
 
 
 class ZoneMatrix:
-    def __init__(self, off: Query, peak: Query, calibration: Calibration):
-        if off.weekday != peak.weekday:
-            raise ValueError("the off-peak and peak matrices must be from the same day")
+    def __init__(
+        self, off: Query, peak: Query, calibration: Calibration, morning: Query | None = None
+    ):
+        """Without morning, the two-anchor model of #105."""
+        if off.weekday != peak.weekday or (morning and morning.weekday != off.weekday):
+            raise ValueError("the anchor matrices must be from the same day")
         missing = {z for pair in off.seconds for z in pair} - set(calibration.zones)
         if missing:
             raise ValueError(f"zones without Layer 2 calibration: {sorted(missing)}")
@@ -130,6 +150,20 @@ class ZoneMatrix:
         if flat:
             # c would divide by zero or turn upside down.
             raise ValueError(f"Layer 2 is not busier at the peak query for {flat}")
+        # Each pair's morning matrix and its c_m, for pairs where c_m is
+        # strictly between 0 and 1; the others keep the two-anchor line.
+        self._morning: dict[tuple[str, str], tuple[float, float]] = {}
+        self.fallback_pairs: list[tuple[str, str]] = []
+        self.has_morning_anchor = morning is not None
+        if morning is not None:
+            for o, d in off.seconds:
+                if o == d:
+                    continue
+                c_m = self.congestion(o, d, q, morning.hour)
+                if 0 < c_m < 1:
+                    self._morning[(o, d)] = (morning.seconds[(o, d)], c_m)
+                else:
+                    self.fallback_pairs.append((o, d))
 
     def congestion(self, origin: str, dest: str, weekday: int, hour: float) -> float:
         """c: 0 at the off-peak query, 1 at the peak query, pooled over both zones."""
@@ -141,8 +175,23 @@ class ZoneMatrix:
         (Monday 0) at hour (0 to 24, fractional)."""
         if origin == dest:
             raise ValueError("same zone: use same_zone() with the distance between the points")
+        return self.leg_at(origin, dest, self.congestion(origin, dest, weekday, hour))
+
+    def leg_at(self, origin: str, dest: str, c: float) -> float:
+        """Seconds from zone origin to another zone dest at congestion c."""
         off, peak = self._off[(origin, dest)], self._peak[(origin, dest)]
-        return off + self.congestion(origin, dest, weekday, hour) * (peak - off)
+        anchor = self._morning.get((origin, dest))
+        if anchor is None or c < 0 or c > 1:
+            return off + c * (peak - off)
+        morning, c_m = anchor
+        if c <= c_m:
+            return off + c / c_m * (morning - off)
+        return morning + (c - c_m) / (1 - c_m) * (peak - morning)
+
+    def morning_congestion(self, origin: str, dest: str) -> float | None:
+        """c_m for a pair, or None when it keeps the two-anchor line."""
+        anchor = self._morning.get((origin, dest))
+        return None if anchor is None else anchor[1]
 
     def same_zone(self, zone: str, km: float, weekday: int, hour: float) -> float:
         """Seconds between two points km apart in one zone: 30 km/h at the
@@ -152,7 +201,14 @@ class ZoneMatrix:
 
 
 def load(
-    matrix_path: Path = ZONE_MATRIX_CSV, calibration_path: Path = CALIBRATION_CSV
+    matrix_path: Path = ZONE_MATRIX_CSV,
+    calibration_path: Path = CALIBRATION_CSV,
+    morning_anchor: bool = True,
 ) -> ZoneMatrix:
+    """The model from the data: with the 07:30 anchor (#106) when the file has
+    it and morning_anchor is True, else the two-anchor model (#105)."""
     queries = load_queries(matrix_path)
-    return ZoneMatrix(queries[OFF_PEAK], queries[EVENING_PEAK], load_calibration(calibration_path))
+    morning = queries.get(MORNING_PEAK) if morning_anchor else None
+    return ZoneMatrix(
+        queries[OFF_PEAK], queries[EVENING_PEAK], load_calibration(calibration_path), morning
+    )

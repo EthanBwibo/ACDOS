@@ -19,6 +19,10 @@ shell history.
 Usage (from the repo root):
     python scripts/build_zone_matrix.py --dry-run
     python scripts/build_zone_matrix.py [--date YYYY-MM-DD]
+    python scripts/build_zone_matrix.py --add held_out_0830 08:30   (#106)
+
+--add queries one more departure on the date already in data/zone_matrix.csv
+and appends it, leaving the existing rows untouched (#106).
 
 Output:
     data/zone_matrix.csv (refuses to overwrite it unless --force)
@@ -100,47 +104,13 @@ def request(origins, destinations, depart, key):
     sys.exit(f"Distance Matrix request failed: {data.get('status')} {message}. Nothing written.")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("key", nargs="?", help="fallback only: prefer GOOGLE_MAPS_API_KEY")
-    parser.add_argument("--date", type=date.fromisoformat, help="query date (Mon-Thu), YYYY-MM-DD")
-    parser.add_argument("--dry-run", action="store_true", help="print the plan, query nothing")
-    parser.add_argument("--force", action="store_true", help="overwrite data/zone_matrix.csv")
-    args = parser.parse_args()
-
-    zones = load_zones()
-    query_date = args.date or default_date(datetime.now(EAT).date())
-    plan = departures(query_date)
-    if query_date.weekday() not in QUERY_WEEKDAYS:
-        sys.exit(f"{query_date} is a {query_date:%A}: the query date must be Monday to Thursday.")
-    if min(depart for _, depart in plan) <= datetime.now(EAT):
-        sys.exit(f"Every departure on {query_date} must be in the future: pick a later date.")
-
-    origin_chunks = chunks(zones, ORIGINS_PER_REQUEST)
-    dest_chunks = chunks(zones, DESTINATIONS_PER_REQUEST)
-    n_requests = len(plan) * len(origin_chunks) * len(dest_chunks)
-    print(f"{len(zones)} zones, {query_date:%A %d %B %Y}:")
-    for period, depart in plan:
-        print(f"  {period:<13} {depart:%H:%M} EAT")
-    print(f"{n_requests} requests, {len(plan) * len(zones) ** 2} elements -> {OUT_CSV}")
-    if args.dry_run:
-        return
-
-    key = os.environ.get("GOOGLE_MAPS_API_KEY")
-    if not key and args.key:
-        print("WARNING: key taken from the command line, which is kept in shell history. "
-              "Set GOOGLE_MAPS_API_KEY instead.", file=sys.stderr)
-        key = args.key
-    if not key:
-        sys.exit("Set GOOGLE_MAPS_API_KEY first (see the docstring).")
-    if OUT_CSV.exists() and not args.force:
-        sys.exit(f"{OUT_CSV} exists; pass --force to query again and overwrite it.")
-
+def query(plan, zones, key):
+    """Every pair of zones at each departure in plan; nothing is written here."""
     rows, failed = [], 0
     for period, depart in plan:
         print(f"{period} {depart:%H:%M} ...", end=" ", flush=True)
-        for origins in origin_chunks:
-            for destinations in dest_chunks:
+        for origins in chunks(zones, ORIGINS_PER_REQUEST):
+            for destinations in chunks(zones, DESTINATIONS_PER_REQUEST):
                 data = request(origins, destinations, depart, key)
                 queried = datetime.now(UTC).isoformat(timespec="seconds")
                 for origin, row in zip(origins, data["rows"]):
@@ -163,10 +133,87 @@ def main():
                         })
                 time.sleep(0.2)
         print("ok")
+    return rows, failed
 
-    with OUT_CSV.open("w", newline="", encoding="utf-8") as f:
+
+def existing_matrix():
+    """Periods and the single query date already in data/zone_matrix.csv."""
+    with OUT_CSV.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    dates = {r["departure_eat"][:10] for r in rows}
+    if len(dates) != 1:
+        sys.exit(f"{OUT_CSV} holds more than one query date: {sorted(dates)}")
+    return {r["period"] for r in rows}, date.fromisoformat(dates.pop())
+
+
+def get_key(args):
+    key = os.environ.get("GOOGLE_MAPS_API_KEY")
+    if not key and args.key:
+        print("WARNING: key taken from the command line, which is kept in shell history. "
+              "Set GOOGLE_MAPS_API_KEY instead.", file=sys.stderr)
+        key = args.key
+    if not key:
+        sys.exit("Set GOOGLE_MAPS_API_KEY first (see the docstring).")
+    return key
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("key", nargs="?", help="fallback only: prefer GOOGLE_MAPS_API_KEY")
+    parser.add_argument("--date", type=date.fromisoformat, help="query date (Mon-Thu), YYYY-MM-DD")
+    parser.add_argument(
+        "--add", nargs=2, metavar=("PERIOD", "HH:MM"),
+        help="query one more departure on the existing file's date and append it (#106)",
+    )  # fmt: skip
+    parser.add_argument("--dry-run", action="store_true", help="print the plan, query nothing")
+    parser.add_argument("--force", action="store_true", help="overwrite data/zone_matrix.csv")
+    args = parser.parse_args()
+
+    zones = load_zones()
+    if args.add:
+        if not OUT_CSV.exists():
+            sys.exit(f"--add appends to {OUT_CSV}, which does not exist yet.")
+        period, at = args.add
+        periods, query_date = existing_matrix()
+        if args.date and args.date != query_date:
+            sys.exit(f"--add queries on the file's own date, {query_date}, not {args.date}.")
+        if period in periods:
+            sys.exit(f"{OUT_CSV} already has a {period} matrix.")
+        hour, minute = (int(x) for x in at.split(":"))
+        plan = [(period, datetime(query_date.year, query_date.month, query_date.day,
+                                  hour, minute, tzinfo=EAT))]  # fmt: skip
+    else:
+        query_date = args.date or default_date(datetime.now(EAT).date())
+        plan = departures(query_date)
+        if query_date.weekday() not in QUERY_WEEKDAYS:
+            sys.exit(
+                f"{query_date} is a {query_date:%A}: the query date must be Monday to Thursday."
+            )
+    if min(depart for _, depart in plan) <= datetime.now(EAT):
+        sys.exit(f"Every departure on {query_date} must be in the future: pick a later date.")
+
+    n_requests = (
+        len(plan) * len(chunks(zones, ORIGINS_PER_REQUEST))
+        * len(chunks(zones, DESTINATIONS_PER_REQUEST))
+    )  # fmt: skip
+    print(f"{len(zones)} zones, {query_date:%A %d %B %Y}:")
+    for period, depart in plan:
+        print(f"  {period:<13} {depart:%H:%M} EAT")
+    action = "appended to" if args.add else "->"
+    print(f"{n_requests} requests, {len(plan) * len(zones) ** 2} elements {action} {OUT_CSV}")
+    if args.dry_run:
+        return
+
+    key = get_key(args)
+    if not args.add and OUT_CSV.exists() and not args.force:
+        sys.exit(f"{OUT_CSV} exists; pass --force to query again and overwrite it.")
+    rows, failed = query(plan, zones, key)
+
+    # Written only once every request has succeeded (request() exits otherwise).
+    with OUT_CSV.open("a" if args.add else "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=COLUMNS)
-        writer.writeheader()
+        if not args.add:
+            writer.writeheader()
         writer.writerows(rows)
     missing_traffic = sum(
         1 for r in rows if r["duration_sec"] != "" and r["duration_in_traffic_sec"] == ""

@@ -1,0 +1,1513 @@
+held_out,origin_zone,dest_zone,actual_sec,c,three_anchor,two_anchor,off_peak_only,morning_peak_only,evening_peak_only
+held_out_0830,"Athi River, Machakos County","Buruburu, Nairobi",2958.0,0.2547,2911.4,2549.9,2271.0,2940.0,3366.0
+held_out_0830,"Athi River, Machakos County","Dagoretti, Nairobi",4016.0,0.2134,4033.0,3589.1,3387.0,4041.0,4334.0
+held_out_0830,"Athi River, Machakos County","Donholm, Nairobi",2778.0,0.3026,2757.9,2498.8,2100.0,2757.0,3418.0
+held_out_0830,"Athi River, Machakos County","Embakasi, Nairobi",1993.0,0.2242,2017.6,1714.8,1496.0,2011.0,2472.0
+held_out_0830,"Athi River, Machakos County","Imara Daima, Nairobi",2083.0,0.2025,2121.2,1738.6,1548.0,2116.0,2489.0
+held_out_0830,"Athi River, Machakos County","Kahawa, Nairobi",4197.0,0.3711,4118.1,4121.0,3498.0,4140.0,5177.0
+held_out_0830,"Athi River, Machakos County","Karen, Nairobi",3702.0,0.2623,3730.7,3343.1,3064.0,3718.0,4128.0
+held_out_0830,"Athi River, Machakos County","Kasarani, Nairobi",3370.0,0.2868,3291.0,3139.7,2670.0,3364.0,4308.0
+held_out_0830,"Athi River, Machakos County","Kawangware, Nairobi",3861.0,0.2429,3969.6,3237.1,3061.0,3970.0,3786.0
+held_out_0830,"Athi River, Machakos County","Kayole, Nairobi",3079.0,0.2763,3096.5,3007.0,2537.0,3070.0,4238.0
+held_out_0830,"Athi River, Machakos County","Kilimani, Nairobi",3308.0,0.2931,3339.6,2604.8,2436.0,3363.0,3012.0
+held_out_0830,"Athi River, Machakos County","Kitengela, Kajiado County",815.0,0.2663,839.5,867.8,684.0,838.0,1374.0
+held_out_0830,"Athi River, Machakos County","Langata, Nairobi",3252.0,0.2565,3306.4,2830.4,2640.0,3306.0,3382.0
+held_out_0830,"Athi River, Machakos County","Lavington, Nairobi",3499.0,0.2812,3576.2,2728.8,2492.0,3592.0,3334.0
+held_out_0830,"Athi River, Machakos County","Mlolongo, Machakos County",1713.0,0.213,1783.7,1360.0,1271.0,1784.0,1689.0
+held_out_0830,"Athi River, Machakos County","Nairobi CBD, Nairobi",2910.0,0.2283,2833.9,2086.1,1916.0,2839.0,2661.0
+held_out_0830,"Athi River, Machakos County","Ngara, Nairobi",3299.0,0.225,3240.3,2541.5,2333.0,3240.0,3260.0
+held_out_0830,"Athi River, Machakos County","Nyayo Estate, Nairobi",2660.0,0.2704,2685.9,2462.9,2103.0,2672.0,3434.0
+held_out_0830,"Athi River, Machakos County","Ongata Rongai, Kajiado County",3876.0,0.2975,3862.1,3560.1,3215.0,3950.0,4375.0
+held_out_0830,"Athi River, Machakos County","Roysambu, Nairobi",3303.0,0.2816,3184.8,3075.7,2611.0,3258.0,4261.0
+held_out_0830,"Athi River, Machakos County","Ruiru, Kiambu County",4048.0,0.3702,3900.4,4005.7,3295.0,4007.0,5215.0
+held_out_0830,"Athi River, Machakos County","Runda, Nairobi",3793.0,0.313,3901.5,3208.6,2915.0,3904.0,3853.0
+held_out_0830,"Athi River, Machakos County","South B, Nairobi",2697.0,0.1787,2641.7,2029.5,1918.0,2643.0,2542.0
+held_out_0830,"Athi River, Machakos County","South C, Nairobi",2517.0,0.2754,2458.3,2010.7,1881.0,2464.0,2352.0
+held_out_0830,"Athi River, Machakos County","Umoja, Nairobi",3277.0,0.311,3221.1,3082.8,2666.0,3208.0,4006.0
+held_out_0830,"Athi River, Machakos County","Upper Hill, Nairobi",2952.0,0.2129,2944.0,2141.3,2018.0,2955.0,2597.0
+held_out_0830,"Athi River, Machakos County","Westlands, Nairobi",2936.0,0.2284,2981.9,2258.8,2106.0,2989.0,2775.0
+held_out_0830,"Buruburu, Nairobi","Athi River, Machakos County",2575.0,0.2547,2739.0,2389.5,2202.0,2763.0,2938.0
+held_out_0830,"Buruburu, Nairobi","Dagoretti, Nairobi",3333.0,0.1701,3008.7,2556.4,2422.0,3146.0,3212.0
+held_out_0830,"Buruburu, Nairobi","Donholm, Nairobi",723.0,0.2752,721.4,716.1,628.0,745.0,948.0
+held_out_0830,"Buruburu, Nairobi","Embakasi, Nairobi",1458.0,0.1614,1516.7,1152.0,994.0,1647.0,1973.0
+held_out_0830,"Buruburu, Nairobi","Imara Daima, Nairobi",1504.0,0.1447,1379.3,1102.4,1046.0,1446.0,1436.0
+held_out_0830,"Buruburu, Nairobi","Kahawa, Nairobi",2109.0,0.3845,2084.0,2282.8,1979.0,2105.0,2769.0
+held_out_0830,"Buruburu, Nairobi","Karen, Nairobi",2858.0,0.2352,2833.4,2505.0,2311.0,2844.0,3136.0
+held_out_0830,"Buruburu, Nairobi","Kasarani, Nairobi",1290.0,0.2654,1260.2,1349.4,1141.0,1299.0,1926.0
+held_out_0830,"Buruburu, Nairobi","Kawangware, Nairobi",2936.0,0.211,2832.7,2317.0,2118.0,2942.0,3061.0
+held_out_0830,"Buruburu, Nairobi","Kayole, Nairobi",1268.0,0.2293,1241.2,1212.9,1145.0,1261.0,1441.0
+held_out_0830,"Buruburu, Nairobi","Kilimani, Nairobi",2319.0,0.2775,2296.5,1706.6,1519.0,2301.0,2195.0
+held_out_0830,"Buruburu, Nairobi","Kitengela, Kajiado County",2726.0,0.244,2911.1,2628.0,2282.0,2985.0,3700.0
+held_out_0830,"Buruburu, Nairobi","Langata, Nairobi",2446.0,0.2257,2375.0,2032.9,1932.0,2439.0,2379.0
+held_out_0830,"Buruburu, Nairobi","Lavington, Nairobi",2600.0,0.2629,2567.0,1901.8,1665.0,2567.0,2566.0
+held_out_0830,"Buruburu, Nairobi","Mlolongo, Machakos County",1913.0,0.1737,1926.8,1511.7,1408.0,2016.0,2005.0
+held_out_0830,"Buruburu, Nairobi","Nairobi CBD, Nairobi",1682.0,0.1886,1597.0,1069.6,1003.0,1620.0,1356.0
+held_out_0830,"Buruburu, Nairobi","Ngara, Nairobi",1608.0,0.1841,1482.1,1062.2,995.0,1536.0,1360.0
+held_out_0830,"Buruburu, Nairobi","Nyayo Estate, Nairobi",881.0,0.2236,889.9,911.3,842.0,900.0,1152.0
+held_out_0830,"Buruburu, Nairobi","Ongata Rongai, Kajiado County",3070.0,0.2832,2937.7,2726.3,2476.0,3078.0,3360.0
+held_out_0830,"Buruburu, Nairobi","Roysambu, Nairobi",1213.0,0.2586,1194.1,1290.8,1087.0,1231.0,1875.0
+held_out_0830,"Buruburu, Nairobi","Ruiru, Kiambu County",1983.0,0.3811,1909.0,2196.5,1783.0,1956.0,2868.0
+held_out_0830,"Buruburu, Nairobi","Runda, Nairobi",2100.0,0.3035,2166.1,1979.4,1776.0,2161.0,2446.0
+held_out_0830,"Buruburu, Nairobi","South B, Nairobi",1372.0,0.1137,1256.1,928.5,910.0,1341.0,1073.0
+held_out_0830,"Buruburu, Nairobi","South C, Nairobi",1809.0,0.2527,1752.3,1288.0,1222.0,1758.0,1483.0
+held_out_0830,"Buruburu, Nairobi","Umoja, Nairobi",1176.0,0.2905,1164.5,1192.2,1119.0,1172.0,1371.0
+held_out_0830,"Buruburu, Nairobi","Upper Hill, Nairobi",1732.0,0.1662,1708.4,1161.5,1107.0,1727.0,1435.0
+held_out_0830,"Buruburu, Nairobi","Westlands, Nairobi",2112.0,0.1885,2125.4,1321.8,1201.0,2137.0,1842.0
+held_out_0830,"Dagoretti, Nairobi","Athi River, Machakos County",3501.0,0.2134,3533.4,3440.3,3245.0,3537.0,4160.0
+held_out_0830,"Dagoretti, Nairobi","Buruburu, Nairobi",3086.0,0.1701,3031.1,2548.7,2348.0,3191.0,3528.0
+held_out_0830,"Dagoretti, Nairobi","Donholm, Nairobi",3324.0,0.1974,3319.3,2836.2,2548.0,3455.0,4008.0
+held_out_0830,"Dagoretti, Nairobi","Embakasi, Nairobi",2353.0,0.1279,2346.2,2222.9,2123.0,2379.0,2904.0
+held_out_0830,"Dagoretti, Nairobi","Imara Daima, Nairobi",2258.0,0.1208,2260.1,2051.4,1955.0,2295.0,2753.0
+held_out_0830,"Dagoretti, Nairobi","Kahawa, Nairobi",3726.0,0.2852,3645.2,3490.3,3079.0,3734.0,4521.0
+held_out_0830,"Dagoretti, Nairobi","Karen, Nairobi",1959.0,0.196,2041.8,1866.5,1706.0,2040.0,2525.0
+held_out_0830,"Dagoretti, Nairobi","Kasarani, Nairobi",2896.0,0.2158,2774.1,2545.7,2236.0,2922.0,3671.0
+held_out_0830,"Dagoretti, Nairobi","Kawangware, Nairobi",823.0,0.1782,859.4,778.3,743.0,872.0,941.0
+held_out_0830,"Dagoretti, Nairobi","Kayole, Nairobi",3431.0,0.1649,3433.1,3367.0,3111.0,3470.0,4664.0
+held_out_0830,"Dagoretti, Nairobi","Kilimani, Nairobi",1564.0,0.2326,1653.4,1315.5,1196.0,1651.0,1710.0
+held_out_0830,"Dagoretti, Nairobi","Kitengela, Kajiado County",3661.0,0.2075,3719.0,3671.3,3359.0,3749.0,4864.0
+held_out_0830,"Dagoretti, Nairobi","Langata, Nairobi",2311.0,0.1867,2360.9,2110.9,2003.0,2396.0,2581.0
+held_out_0830,"Dagoretti, Nairobi","Lavington, Nairobi",1350.0,0.2224,1412.4,1184.6,1101.0,1410.0,1477.0
+held_out_0830,"Dagoretti, Nairobi","Mlolongo, Machakos County",2744.0,0.1494,2755.5,2595.3,2500.0,2786.0,3138.0
+held_out_0830,"Dagoretti, Nairobi","Nairobi CBD, Nairobi",2153.0,0.1584,2102.0,1541.4,1432.0,2102.0,2123.0
+held_out_0830,"Dagoretti, Nairobi","Ngara, Nairobi",2576.0,0.1547,2571.1,1986.1,1851.0,2613.0,2724.0
+held_out_0830,"Dagoretti, Nairobi","Nyayo Estate, Nairobi",3027.0,0.1645,3003.4,2925.3,2716.0,3039.0,3988.0
+held_out_0830,"Dagoretti, Nairobi","Ongata Rongai, Kajiado County",2980.0,0.237,2984.9,2834.9,2588.0,3090.0,3630.0
+held_out_0830,"Dagoretti, Nairobi","Roysambu, Nairobi",2830.0,0.2109,2701.9,2489.8,2187.0,2852.0,3623.0
+held_out_0830,"Dagoretti, Nairobi","Ruiru, Kiambu County",3608.0,0.294,3415.4,3375.9,2877.0,3592.0,4574.0
+held_out_0830,"Dagoretti, Nairobi","Runda, Nairobi",2668.0,0.254,2752.3,2315.6,2147.0,2751.0,2811.0
+held_out_0830,"Dagoretti, Nairobi","South B, Nairobi",2455.0,0.0979,2340.0,1783.6,1691.0,2429.0,2636.0
+held_out_0830,"Dagoretti, Nairobi","South C, Nairobi",2413.0,0.2101,2478.7,2083.3,1960.0,2477.0,2547.0
+held_out_0830,"Dagoretti, Nairobi","Umoja, Nairobi",3686.0,0.211,3657.8,3328.2,3064.0,3719.0,4316.0
+held_out_0830,"Dagoretti, Nairobi","Upper Hill, Nairobi",1945.0,0.14,1914.0,1418.5,1337.0,1914.0,1919.0
+held_out_0830,"Dagoretti, Nairobi","Westlands, Nairobi",2139.0,0.1581,2177.2,1682.7,1585.0,2177.0,2203.0
+held_out_0830,"Donholm, Nairobi","Athi River, Machakos County",2490.0,0.3026,2740.0,2266.8,2048.0,2740.0,2771.0
+held_out_0830,"Donholm, Nairobi","Buruburu, Nairobi",929.0,0.2752,936.4,782.5,709.0,994.0,976.0
+held_out_0830,"Donholm, Nairobi","Dagoretti, Nairobi",3341.0,0.1974,3265.4,2805.1,2586.0,3385.0,3696.0
+held_out_0830,"Donholm, Nairobi","Embakasi, Nairobi",1374.0,0.2084,1507.3,1020.8,847.0,1605.0,1681.0
+held_out_0830,"Donholm, Nairobi","Imara Daima, Nairobi",1617.0,0.1711,1616.2,1202.6,1059.0,1675.0,1898.0
+held_out_0830,"Donholm, Nairobi","Kahawa, Nairobi",2284.0,0.5527,2332.9,2511.0,1992.0,2387.0,2931.0
+held_out_0830,"Donholm, Nairobi","Karen, Nairobi",2976.0,0.281,3075.5,2680.2,2323.0,3068.0,3594.0
+held_out_0830,"Donholm, Nairobi","Kasarani, Nairobi",1463.0,0.3285,1488.3,1461.1,1154.0,1586.0,2089.0
+held_out_0830,"Donholm, Nairobi","Kawangware, Nairobi",3275.0,0.2476,3277.0,2556.3,2276.0,3380.0,3408.0
+held_out_0830,"Donholm, Nairobi","Kayole, Nairobi",745.0,0.363,770.9,795.3,722.0,776.0,924.0
+held_out_0830,"Donholm, Nairobi","Kilimani, Nairobi",2649.0,0.3296,2729.7,1966.5,1694.0,2747.0,2521.0
+held_out_0830,"Donholm, Nairobi","Kitengela, Kajiado County",2640.0,0.2843,2902.7,2531.8,2129.0,2962.0,3546.0
+held_out_0830,"Donholm, Nairobi","Langata, Nairobi",2561.0,0.2724,2588.6,2172.9,1916.0,2650.0,2859.0
+held_out_0830,"Donholm, Nairobi","Lavington, Nairobi",2943.0,0.3084,2989.3,2031.0,1701.0,3005.0,2771.0
+held_out_0830,"Donholm, Nairobi","Mlolongo, Machakos County",1828.0,0.1987,1994.5,1409.0,1260.0,2079.0,2010.0
+held_out_0830,"Donholm, Nairobi","Nairobi CBD, Nairobi",2020.0,0.2227,2056.5,1291.0,1173.0,2060.0,1703.0
+held_out_0830,"Donholm, Nairobi","Ngara, Nairobi",1956.0,0.2169,1953.6,1283.3,1164.0,1987.0,1714.0
+held_out_0830,"Donholm, Nairobi","Nyayo Estate, Nairobi",802.0,0.3339,867.0,795.5,698.0,887.0,990.0
+held_out_0830,"Donholm, Nairobi","Ongata Rongai, Kajiado County",3185.0,0.337,3117.4,2925.8,2459.0,3300.0,3844.0
+held_out_0830,"Donholm, Nairobi","Roysambu, Nairobi",1389.0,0.3187,1412.6,1398.9,1100.0,1510.0,2038.0
+held_out_0830,"Donholm, Nairobi","Ruiru, Kiambu County",2159.0,0.511,2124.6,2434.2,1796.0,2239.0,3045.0
+held_out_0830,"Donholm, Nairobi","Runda, Nairobi",2278.0,0.3615,2457.3,2033.4,1707.0,2450.0,2610.0
+held_out_0830,"Donholm, Nairobi","South B, Nairobi",1648.0,0.1276,1609.7,1124.8,1080.0,1681.0,1431.0
+held_out_0830,"Donholm, Nairobi","South C, Nairobi",1904.0,0.3033,1967.1,1393.2,1234.0,1978.0,1759.0
+held_out_0830,"Donholm, Nairobi","Umoja, Nairobi",994.0,0.4403,985.6,1041.3,929.0,991.0,1184.0
+held_out_0830,"Donholm, Nairobi","Upper Hill, Nairobi",2070.0,0.1949,2162.5,1373.3,1277.0,2168.0,1771.0
+held_out_0830,"Donholm, Nairobi","Westlands, Nairobi",2286.0,0.2228,2470.9,1396.9,1214.0,2479.0,2035.0
+held_out_0830,"Embakasi, Nairobi","Athi River, Machakos County",2119.0,0.2242,2204.2,1796.9,1655.0,2203.0,2288.0
+held_out_0830,"Embakasi, Nairobi","Buruburu, Nairobi",1527.0,0.1614,1430.6,1083.6,996.0,1539.0,1539.0
+held_out_0830,"Embakasi, Nairobi","Dagoretti, Nairobi",3113.0,0.1279,3051.1,2535.8,2426.0,3143.0,3285.0
+held_out_0830,"Embakasi, Nairobi","Donholm, Nairobi",999.0,0.2084,993.6,951.6,822.0,1019.0,1444.0
+held_out_0830,"Embakasi, Nairobi","Imara Daima, Nairobi",1151.0,0.0875,1199.7,613.7,545.0,1205.0,1330.0
+held_out_0830,"Embakasi, Nairobi","Kahawa, Nairobi",2760.0,0.3541,2669.1,2605.4,2218.0,2731.0,3312.0
+held_out_0830,"Embakasi, Nairobi","Karen, Nairobi",2752.0,0.2004,2845.6,2287.6,2082.0,2839.0,3108.0
+held_out_0830,"Embakasi, Nairobi","Kasarani, Nairobi",1934.0,0.2299,1802.3,1627.5,1378.0,1929.0,2463.0
+held_out_0830,"Embakasi, Nairobi","Kawangware, Nairobi",2993.0,0.1756,2907.5,2224.3,2116.0,2960.0,2733.0
+held_out_0830,"Embakasi, Nairobi","Kayole, Nairobi",1071.0,0.1452,1126.5,1100.7,996.0,1126.0,1717.0
+held_out_0830,"Embakasi, Nairobi","Kilimani, Nairobi",2508.0,0.2501,2350.5,1600.8,1472.0,2379.0,1987.0
+held_out_0830,"Embakasi, Nairobi","Kitengela, Kajiado County",2271.0,0.2153,2418.1,2019.2,1735.0,2449.0,3055.0
+held_out_0830,"Embakasi, Nairobi","Langata, Nairobi",2338.0,0.1873,2400.0,1797.9,1672.0,2436.0,2344.0
+held_out_0830,"Embakasi, Nairobi","Lavington, Nairobi",2701.0,0.2355,2591.5,1783.7,1625.0,2612.0,2299.0
+held_out_0830,"Embakasi, Nairobi","Mlolongo, Machakos County",1357.0,0.1363,1387.9,927.4,871.0,1426.0,1285.0
+held_out_0830,"Embakasi, Nairobi","Nairobi CBD, Nairobi",2037.0,0.147,1856.1,1048.9,957.0,1862.0,1582.0
+held_out_0830,"Embakasi, Nairobi","Ngara, Nairobi",2428.0,0.1418,2222.8,1475.5,1358.0,2223.0,2187.0
+held_out_0830,"Embakasi, Nairobi","Nyayo Estate, Nairobi",655.0,0.1466,653.4,643.3,597.0,655.0,913.0
+held_out_0830,"Embakasi, Nairobi","Ongata Rongai, Kajiado County",2961.0,0.2563,2885.3,2495.2,2210.0,3074.0,3323.0
+held_out_0830,"Embakasi, Nairobi","Roysambu, Nairobi",1861.0,0.2226,1724.4,1566.3,1325.0,1853.0,2409.0
+held_out_0830,"Embakasi, Nairobi","Ruiru, Kiambu County",2684.0,0.3556,2445.4,2513.3,2019.0,2600.0,3409.0
+held_out_0830,"Embakasi, Nairobi","Runda, Nairobi",2711.0,0.2791,2807.4,2245.1,2002.0,2804.0,2873.0
+held_out_0830,"Embakasi, Nairobi","South B, Nairobi",1807.0,0.0546,1645.4,986.9,959.0,1654.0,1470.0
+held_out_0830,"Embakasi, Nairobi","South C, Nairobi",1624.0,0.2202,1515.5,1007.3,928.0,1528.0,1288.0
+held_out_0830,"Embakasi, Nairobi","Umoja, Nairobi",1564.0,0.2324,1558.6,1496.9,1357.0,1565.0,1959.0
+held_out_0830,"Embakasi, Nairobi","Upper Hill, Nairobi",2087.0,0.12,1958.8,1120.2,1062.0,1969.0,1547.0
+held_out_0830,"Embakasi, Nairobi","Westlands, Nairobi",2150.0,0.1465,2003.4,1234.0,1148.0,2011.0,1735.0
+held_out_0830,"Imara Daima, Nairobi","Athi River, Machakos County",1453.0,0.2025,1507.1,1529.5,1425.0,1501.0,1941.0
+held_out_0830,"Imara Daima, Nairobi","Buruburu, Nairobi",1179.0,0.1447,1092.5,982.7,885.0,1134.0,1560.0
+held_out_0830,"Imara Daima, Nairobi","Dagoretti, Nairobi",2669.0,0.1208,2592.3,2394.6,2289.0,2627.0,3163.0
+held_out_0830,"Imara Daima, Nairobi","Donholm, Nairobi",980.0,0.1711,957.8,839.4,710.0,984.0,1466.0
+held_out_0830,"Imara Daima, Nairobi","Embakasi, Nairobi",211.0,0.0875,199.7,195.5,163.0,200.0,535.0
+held_out_0830,"Imara Daima, Nairobi","Kahawa, Nairobi",2409.0,0.287,2310.3,2460.2,2108.0,2334.0,3335.0
+held_out_0830,"Imara Daima, Nairobi","Karen, Nairobi",2321.0,0.1815,2334.4,2205.4,2008.0,2317.0,3096.0
+held_out_0830,"Imara Daima, Nairobi","Kasarani, Nairobi",1583.0,0.2036,1481.2,1517.7,1271.0,1537.0,2483.0
+held_out_0830,"Imara Daima, Nairobi","Kawangware, Nairobi",2437.0,0.1614,2419.2,2107.7,1961.0,2442.0,2870.0
+held_out_0830,"Imara Daima, Nairobi","Kayole, Nairobi",1279.0,0.1261,1323.3,1297.7,1160.0,1319.0,2252.0
+held_out_0830,"Imara Daima, Nairobi","Kilimani, Nairobi",2042.0,0.2251,1803.1,1467.3,1330.0,1794.0,1940.0
+held_out_0830,"Imara Daima, Nairobi","Kitengela, Kajiado County",1628.0,0.1966,1728.3,1743.8,1502.0,1736.0,2732.0
+held_out_0830,"Imara Daima, Nairobi","Langata, Nairobi",1911.0,0.1696,1902.8,1721.8,1598.0,1913.0,2328.0
+held_out_0830,"Imara Daima, Nairobi","Lavington, Nairobi",2281.0,0.2137,2033.0,1562.3,1376.0,2020.0,2248.0
+held_out_0830,"Imara Daima, Nairobi","Mlolongo, Machakos County",713.0,0.1286,707.7,685.0,646.0,711.0,949.0
+held_out_0830,"Imara Daima, Nairobi","Nairobi CBD, Nairobi",1602.0,0.1365,1301.5,922.9,827.0,1297.0,1530.0
+held_out_0830,"Imara Daima, Nairobi","Ngara, Nairobi",2010.0,0.1321,1647.9,1333.9,1211.0,1645.0,2141.0
+held_out_0830,"Imara Daima, Nairobi","Nyayo Estate, Nairobi",883.0,0.1285,857.3,847.7,758.0,857.0,1456.0
+held_out_0830,"Imara Daima, Nairobi","Ongata Rongai, Kajiado County",2539.0,0.2302,2475.5,2404.7,2134.0,2563.0,3310.0
+held_out_0830,"Imara Daima, Nairobi","Roysambu, Nairobi",1510.0,0.1978,1404.9,1456.5,1216.0,1459.0,2432.0
+held_out_0830,"Imara Daima, Nairobi","Ruiru, Kiambu County",2283.0,0.2976,2118.0,2363.2,1910.0,2187.0,3433.0
+held_out_0830,"Imara Daima, Nairobi","Runda, Nairobi",2608.0,0.25,2387.7,2078.2,1826.0,2368.0,2835.0
+held_out_0830,"Imara Daima, Nairobi","South B, Nairobi",1382.0,0.0605,1094.6,865.1,829.0,1094.0,1425.0
+held_out_0830,"Imara Daima, Nairobi","South C, Nairobi",1210.0,0.1981,976.4,885.0,797.0,964.0,1241.0
+held_out_0830,"Imara Daima, Nairobi","Umoja, Nairobi",1473.0,0.1903,1400.4,1387.7,1248.0,1402.0,1982.0
+held_out_0830,"Imara Daima, Nairobi","Upper Hill, Nairobi",1652.0,0.1139,1388.5,995.7,931.0,1386.0,1499.0
+held_out_0830,"Imara Daima, Nairobi","Westlands, Nairobi",1707.0,0.1361,1424.8,1095.3,1001.0,1418.0,1694.0
+held_out_0830,"Kahawa, Nairobi","Athi River, Machakos County",4522.0,0.3711,4675.0,4361.8,3938.0,4701.0,5080.0
+held_out_0830,"Kahawa, Nairobi","Buruburu, Nairobi",2967.0,0.3845,2986.6,2847.2,2560.0,3072.0,3307.0
+held_out_0830,"Kahawa, Nairobi","Dagoretti, Nairobi",4931.0,0.2852,5039.0,4124.6,3802.0,5233.0,4933.0
+held_out_0830,"Kahawa, Nairobi","Donholm, Nairobi",2710.0,0.5527,2793.0,2830.8,2408.0,2854.0,3173.0
+held_out_0830,"Kahawa, Nairobi","Embakasi, Nairobi",3309.0,0.3541,3542.5,3216.1,2891.0,3632.0,3809.0
+held_out_0830,"Kahawa, Nairobi","Imara Daima, Nairobi",3461.0,0.287,3667.0,3034.5,2763.0,3773.0,3709.0
+held_out_0830,"Kahawa, Nairobi","Karen, Nairobi",5356.0,0.357,5419.3,4409.1,3975.0,5443.0,5191.0
+held_out_0830,"Kahawa, Nairobi","Kasarani, Nairobi",1865.0,0.407,1818.8,1788.1,1664.0,1856.0,1969.0
+held_out_0830,"Kahawa, Nairobi","Kawangware, Nairobi",4558.0,0.3238,4649.2,3619.7,3280.0,4802.0,4329.0
+held_out_0830,"Kahawa, Nairobi","Kayole, Nairobi",3226.0,0.5158,3278.8,3363.8,2996.0,3312.0,3709.0
+held_out_0830,"Kahawa, Nairobi","Kilimani, Nairobi",3936.0,0.3926,4109.6,3013.5,2668.0,4142.0,3548.0
+held_out_0830,"Kahawa, Nairobi","Kitengela, Kajiado County",4676.0,0.3486,4822.5,4632.0,4039.0,4894.0,5740.0
+held_out_0830,"Kahawa, Nairobi","Langata, Nairobi",4652.0,0.355,4773.8,3976.8,3544.0,4902.0,4763.0
+held_out_0830,"Kahawa, Nairobi","Lavington, Nairobi",3915.0,0.3707,4108.0,3003.0,2686.0,4136.0,3541.0
+held_out_0830,"Kahawa, Nairobi","Mlolongo, Machakos County",3874.0,0.2772,3973.4,3437.6,3194.0,4067.0,4073.0
+held_out_0830,"Kahawa, Nairobi","Nairobi CBD, Nairobi",3528.0,0.3102,3706.1,2530.4,2321.0,3745.0,2996.0
+held_out_0830,"Kahawa, Nairobi","Ngara, Nairobi",3004.0,0.3054,3110.4,2261.3,2144.0,3184.0,2528.0
+held_out_0830,"Kahawa, Nairobi","Nyayo Estate, Nairobi",2854.0,0.4799,2926.2,2946.3,2596.0,2967.0,3326.0
+held_out_0830,"Kahawa, Nairobi","Ongata Rongai, Kajiado County",5289.0,0.3995,5273.9,4817.4,4161.0,5539.0,5804.0
+held_out_0830,"Kahawa, Nairobi","Roysambu, Nairobi",1854.0,0.3979,1813.5,1793.9,1657.0,1853.0,2001.0
+held_out_0830,"Kahawa, Nairobi","Ruiru, Kiambu County",1308.0,0.5723,1271.2,1422.7,1251.0,1277.0,1551.0
+held_out_0830,"Kahawa, Nairobi","Runda, Nairobi",3036.0,0.4198,3162.6,2918.7,2632.0,3159.0,3315.0
+held_out_0830,"Kahawa, Nairobi","South B, Nairobi",3719.0,0.2461,3765.5,2768.5,2580.0,3921.0,3346.0
+held_out_0830,"Kahawa, Nairobi","South C, Nairobi",3771.0,0.3757,4111.4,3114.4,2883.0,4128.0,3499.0
+held_out_0830,"Kahawa, Nairobi","Umoja, Nairobi",3051.0,0.5497,3090.1,3165.8,2770.0,3125.0,3490.0
+held_out_0830,"Kahawa, Nairobi","Upper Hill, Nairobi",3715.0,0.2904,3903.8,2669.5,2479.0,3935.0,3135.0
+held_out_0830,"Kahawa, Nairobi","Westlands, Nairobi",3167.0,0.3109,3366.8,2323.1,2186.0,3379.0,2627.0
+held_out_0830,"Karen, Nairobi","Athi River, Machakos County",3323.0,0.2623,3343.5,3177.8,2969.0,3330.0,3765.0
+held_out_0830,"Karen, Nairobi","Buruburu, Nairobi",2761.0,0.2352,2778.2,2404.1,2195.0,2790.0,3084.0
+held_out_0830,"Karen, Nairobi","Dagoretti, Nairobi",2024.0,0.196,2069.0,1796.8,1728.0,2069.0,2079.0
+held_out_0830,"Karen, Nairobi","Donholm, Nairobi",2997.0,0.281,2933.8,2689.3,2383.0,2926.0,3473.0
+held_out_0830,"Karen, Nairobi","Embakasi, Nairobi",2170.0,0.2004,2174.9,1943.5,1797.0,2166.0,2528.0
+held_out_0830,"Karen, Nairobi","Imara Daima, Nairobi",2070.0,0.1815,2090.7,1766.0,1629.0,2084.0,2384.0
+held_out_0830,"Karen, Nairobi","Kahawa, Nairobi",4281.0,0.357,4325.4,3877.4,3254.0,4343.0,5000.0
+held_out_0830,"Karen, Nairobi","Kasarani, Nairobi",3454.0,0.2716,3421.0,2889.0,2424.0,3528.0,4136.0
+held_out_0830,"Karen, Nairobi","Kawangware, Nairobi",1806.0,0.2275,1900.4,1535.1,1415.0,1900.0,1943.0
+held_out_0830,"Karen, Nairobi","Kayole, Nairobi",3246.0,0.2518,3280.8,3150.9,2820.0,3249.0,4134.0
+held_out_0830,"Karen, Nairobi","Kilimani, Nairobi",1968.0,0.2804,2083.0,1507.9,1366.0,2100.0,1872.0
+held_out_0830,"Karen, Nairobi","Kitengela, Kajiado County",3465.0,0.2531,3556.1,3425.9,3064.0,3547.0,4494.0
+held_out_0830,"Karen, Nairobi","Langata, Nairobi",1224.0,0.2404,1314.9,1232.4,1185.0,1314.0,1382.0
+held_out_0830,"Karen, Nairobi","Lavington, Nairobi",1975.0,0.2684,2059.9,1534.0,1396.0,2071.0,1910.0
+held_out_0830,"Karen, Nairobi","Mlolongo, Machakos County",2552.0,0.1969,2579.6,2284.0,2171.0,2578.0,2745.0
+held_out_0830,"Karen, Nairobi","Nairobi CBD, Nairobi",2349.0,0.2112,2473.6,1743.6,1630.0,2485.0,2168.0
+held_out_0830,"Karen, Nairobi","Ngara, Nairobi",2837.0,0.2076,2967.1,2156.1,1996.0,2972.0,2767.0
+held_out_0830,"Karen, Nairobi","Nyayo Estate, Nairobi",2843.0,0.2468,2846.1,2667.7,2391.0,2825.0,3512.0
+held_out_0830,"Karen, Nairobi","Ongata Rongai, Kajiado County",1346.0,0.2849,1380.4,1371.7,1329.0,1387.0,1479.0
+held_out_0830,"Karen, Nairobi","Roysambu, Nairobi",3386.0,0.2663,3340.5,2823.3,2365.0,3456.0,4086.0
+held_out_0830,"Karen, Nairobi","Ruiru, Kiambu County",4162.0,0.3576,4042.8,3766.6,3052.0,4214.0,5050.0
+held_out_0830,"Karen, Nairobi","Runda, Nairobi",2939.0,0.3013,2940.8,2658.1,2430.0,2926.0,3187.0
+held_out_0830,"Karen, Nairobi","South B, Nairobi",2205.0,0.157,2372.0,1706.3,1617.0,2376.0,2186.0
+held_out_0830,"Karen, Nairobi","South C, Nairobi",2222.0,0.261,2258.1,1832.9,1716.0,2264.0,2164.0
+held_out_0830,"Karen, Nairobi","Umoja, Nairobi",3540.0,0.291,3395.1,3158.3,2828.0,3378.0,3963.0
+held_out_0830,"Karen, Nairobi","Upper Hill, Nairobi",2249.0,0.1945,2351.2,1622.0,1511.0,2362.0,2082.0
+held_out_0830,"Karen, Nairobi","Westlands, Nairobi",2728.0,0.2112,2845.3,1939.6,1758.0,2855.0,2618.0
+held_out_0830,"Kasarani, Nairobi","Athi River, Machakos County",3171.0,0.2868,3356.3,2871.5,2593.0,3446.0,3564.0
+held_out_0830,"Kasarani, Nairobi","Buruburu, Nairobi",1527.0,0.2654,1591.8,1361.2,1195.0,1721.0,1821.0
+held_out_0830,"Kasarani, Nairobi","Dagoretti, Nairobi",3644.0,0.2158,3567.6,2661.3,2398.0,3889.0,3618.0
+held_out_0830,"Kasarani, Nairobi","Donholm, Nairobi",1298.0,0.3285,1421.7,1261.4,1041.0,1533.0,1712.0
+held_out_0830,"Kasarani, Nairobi","Embakasi, Nairobi",2013.0,0.2299,2101.5,1628.0,1376.0,2318.0,2472.0
+held_out_0830,"Kasarani, Nairobi","Imara Daima, Nairobi",2148.0,0.2036,2302.7,1599.5,1398.0,2543.0,2388.0
+held_out_0830,"Kasarani, Nairobi","Kahawa, Nairobi",1290.0,0.407,1288.7,1298.7,1221.0,1305.0,1412.0
+held_out_0830,"Kasarani, Nairobi","Karen, Nairobi",3880.0,0.2716,3970.2,2961.3,2593.0,4118.0,3949.0
+held_out_0830,"Kasarani, Nairobi","Kawangware, Nairobi",3184.0,0.2492,3227.4,2168.6,1890.0,3506.0,3008.0
+held_out_0830,"Kasarani, Nairobi","Kayole, Nairobi",1781.0,0.2966,1878.5,1773.4,1585.0,1958.0,2220.0
+held_out_0830,"Kasarani, Nairobi","Kilimani, Nairobi",2562.0,0.3058,2798.4,1515.7,1309.0,2804.0,1985.0
+held_out_0830,"Kasarani, Nairobi","Kitengela, Kajiado County",3320.0,0.275,3516.0,3130.5,2688.0,3658.0,4297.0
+held_out_0830,"Kasarani, Nairobi","Langata, Nairobi",3271.0,0.2655,3285.3,2496.9,2164.0,3514.0,3418.0
+held_out_0830,"Kasarani, Nairobi","Lavington, Nairobi",2545.0,0.2918,2827.3,1567.4,1326.0,2830.0,2153.0
+held_out_0830,"Kasarani, Nairobi","Mlolongo, Machakos County",2511.0,0.2152,2599.2,1989.1,1797.0,2782.0,2690.0
+held_out_0830,"Kasarani, Nairobi","Nairobi CBD, Nairobi",2098.0,0.233,2247.7,1097.9,967.0,2424.0,1529.0
+held_out_0830,"Kasarani, Nairobi","Ngara, Nairobi",1587.0,0.2291,1666.3,849.0,805.0,1829.0,997.0
+held_out_0830,"Kasarani, Nairobi","Nyayo Estate, Nairobi",1429.0,0.2881,1524.1,1396.7,1223.0,1606.0,1826.0
+held_out_0830,"Kasarani, Nairobi","Ongata Rongai, Kajiado County",3895.0,0.3108,3816.5,3249.7,2725.0,4161.0,4413.0
+held_out_0830,"Kasarani, Nairobi","Roysambu, Nairobi",343.0,0.2947,336.9,318.0,282.0,356.0,404.0
+held_out_0830,"Kasarani, Nairobi","Ruiru, Kiambu County",1157.0,0.4014,1119.4,1240.3,1026.0,1154.0,1560.0
+held_out_0830,"Kasarani, Nairobi","Runda, Nairobi",1641.0,0.3282,1685.6,1433.0,1263.0,1701.0,1781.0
+held_out_0830,"Kasarani, Nairobi","South B, Nairobi",2280.0,0.1759,2236.8,1322.6,1213.0,2542.0,1836.0
+held_out_0830,"Kasarani, Nairobi","South C, Nairobi",2552.0,0.2865,2727.2,1701.1,1524.0,2775.0,2142.0
+held_out_0830,"Kasarani, Nairobi","Umoja, Nairobi",1600.0,0.3376,1694.2,1579.3,1367.0,1770.0,1996.0
+held_out_0830,"Kasarani, Nairobi","Upper Hill, Nairobi",2292.0,0.2154,2428.2,1251.9,1119.0,2617.0,1736.0
+held_out_0830,"Kasarani, Nairobi","Westlands, Nairobi",1790.0,0.2331,1908.0,938.5,842.0,2036.0,1256.0
+held_out_0830,"Kawangware, Nairobi","Athi River, Machakos County",3162.0,0.2429,3130.5,3132.0,2910.0,3129.0,3824.0
+held_out_0830,"Kawangware, Nairobi","Buruburu, Nairobi",2614.0,0.211,2567.4,2270.0,2040.0,2648.0,3130.0
+held_out_0830,"Kawangware, Nairobi","Dagoretti, Nairobi",820.0,0.1782,843.1,791.5,761.0,852.0,932.0
+held_out_0830,"Kawangware, Nairobi","Donholm, Nairobi",2850.0,0.2476,2851.4,2566.4,2224.0,2916.0,3607.0
+held_out_0830,"Kawangware, Nairobi","Embakasi, Nairobi",2025.0,0.1756,1956.6,1873.7,1725.0,1972.0,2572.0
+held_out_0830,"Kawangware, Nairobi","Imara Daima, Nairobi",1925.0,0.1614,1917.0,1728.3,1595.0,1933.0,2421.0
+held_out_0830,"Kawangware, Nairobi","Kahawa, Nairobi",3115.0,0.3238,2957.2,3115.6,2726.0,2983.0,3929.0
+held_out_0830,"Kawangware, Nairobi","Karen, Nairobi",1632.0,0.2275,1697.8,1580.5,1396.0,1693.0,2207.0
+held_out_0830,"Kawangware, Nairobi","Kasarani, Nairobi",2288.0,0.2492,2129.1,2183.0,1885.0,2180.0,3081.0
+held_out_0830,"Kawangware, Nairobi","Kayole, Nairobi",3425.0,0.219,3371.0,3193.8,2800.0,3398.0,4598.0
+held_out_0830,"Kawangware, Nairobi","Kilimani, Nairobi",1031.0,0.2607,1031.1,898.0,813.0,1026.0,1139.0
+held_out_0830,"Kawangware, Nairobi","Kitengela, Kajiado County",3312.0,0.2353,3346.5,3363.3,3005.0,3365.0,4528.0
+held_out_0830,"Kawangware, Nairobi","Langata, Nairobi",1982.0,0.2201,2017.8,1830.7,1709.0,2036.0,2262.0
+held_out_0830,"Kawangware, Nairobi","Lavington, Nairobi",809.0,0.2499,792.4,665.0,612.0,791.0,824.0
+held_out_0830,"Kawangware, Nairobi","Mlolongo, Machakos County",2401.0,0.1805,2364.8,2235.0,2113.0,2383.0,2789.0
+held_out_0830,"Kawangware, Nairobi","Nairobi CBD, Nairobi",1800.0,0.1924,1803.2,1259.0,1124.0,1803.0,1826.0
+held_out_0830,"Kawangware, Nairobi","Ngara, Nairobi",2023.0,0.1889,1823.8,1667.4,1541.0,1830.0,2210.0
+held_out_0830,"Kawangware, Nairobi","Nyayo Estate, Nairobi",2695.0,0.216,2656.7,2620.5,2333.0,2675.0,3664.0
+held_out_0830,"Kawangware, Nairobi","Ongata Rongai, Kajiado County",2656.0,0.265,2659.8,2543.2,2258.0,2745.0,3334.0
+held_out_0830,"Kawangware, Nairobi","Roysambu, Nairobi",2216.0,0.2442,2055.5,2127.6,1836.0,2104.0,3030.0
+held_out_0830,"Kawangware, Nairobi","Ruiru, Kiambu County",2994.0,0.328,2773.1,3007.2,2526.0,2838.0,3993.0
+held_out_0830,"Kawangware, Nairobi","Runda, Nairobi",2056.0,0.281,2003.9,1831.8,1668.0,1997.0,2251.0
+held_out_0830,"Kawangware, Nairobi","South B, Nairobi",1981.0,0.1385,1832.5,1475.6,1381.0,1858.0,2064.0
+held_out_0830,"Kawangware, Nairobi","South C, Nairobi",2077.0,0.2409,1967.2,1788.7,1656.0,1960.0,2207.0
+held_out_0830,"Kawangware, Nairobi","Umoja, Nairobi",3308.0,0.2583,3254.3,3006.5,2657.0,3286.0,4010.0
+held_out_0830,"Kawangware, Nairobi","Upper Hill, Nairobi",1612.0,0.1758,1615.1,1133.4,1029.0,1615.0,1623.0
+held_out_0830,"Kawangware, Nairobi","Westlands, Nairobi",1530.0,0.1923,1417.1,1280.0,1185.0,1414.0,1679.0
+held_out_0830,"Kayole, Nairobi","Athi River, Machakos County",3238.0,0.2763,3303.8,2648.1,2484.0,3309.0,3078.0
+held_out_0830,"Kayole, Nairobi","Buruburu, Nairobi",1405.0,0.2293,1366.1,1254.7,1196.0,1401.0,1452.0
+held_out_0830,"Kayole, Nairobi","Dagoretti, Nairobi",4134.0,0.1649,4037.1,3251.0,3086.0,4146.0,4087.0
+held_out_0830,"Kayole, Nairobi","Donholm, Nairobi",726.0,0.363,736.7,795.3,734.0,737.0,903.0
+held_out_0830,"Kayole, Nairobi","Embakasi, Nairobi",2068.0,0.1452,2176.9,1378.0,1270.0,2177.0,2014.0
+held_out_0830,"Kayole, Nairobi","Imara Daima, Nairobi",2285.0,0.1261,2281.8,1471.1,1359.0,2282.0,2248.0
+held_out_0830,"Kayole, Nairobi","Kahawa, Nairobi",2646.0,0.5158,2643.6,2907.2,2461.0,2665.0,3326.0
+held_out_0830,"Kayole, Nairobi","Karen, Nairobi",3654.0,0.2518,3672.7,3234.7,3000.0,3663.0,3932.0
+held_out_0830,"Kayole, Nairobi","Kasarani, Nairobi",1820.0,0.2966,1812.2,1874.3,1621.0,1864.0,2475.0
+held_out_0830,"Kayole, Nairobi","Kawangware, Nairobi",3736.0,0.219,3735.3,2972.0,2770.0,3781.0,3692.0
+held_out_0830,"Kayole, Nairobi","Kilimani, Nairobi",3107.0,0.3051,3115.9,2364.5,2182.0,3151.0,2780.0
+held_out_0830,"Kayole, Nairobi","Kitengela, Kajiado County",3378.0,0.2603,3497.6,2880.4,2546.0,3528.0,3831.0
+held_out_0830,"Kayole, Nairobi","Langata, Nairobi",3206.0,0.2403,3230.1,2725.2,2575.0,3250.0,3200.0
+held_out_0830,"Kayole, Nairobi","Lavington, Nairobi",3309.0,0.2847,3352.1,2423.8,2171.0,3379.0,3059.0
+held_out_0830,"Kayole, Nairobi","Mlolongo, Machakos County",2473.0,0.1702,2515.4,1755.9,1689.0,2557.0,2082.0
+held_out_0830,"Kayole, Nairobi","Nairobi CBD, Nairobi",2487.0,0.1897,2448.1,1757.1,1660.0,2457.0,2172.0
+held_out_0830,"Kayole, Nairobi","Ngara, Nairobi",2417.0,0.1835,2389.9,1759.7,1663.0,2392.0,2190.0
+held_out_0830,"Kayole, Nairobi","Nyayo Estate, Nairobi",1058.0,0.2588,1066.7,1106.4,1073.0,1066.0,1202.0
+held_out_0830,"Kayole, Nairobi","Ongata Rongai, Kajiado County",3831.0,0.3127,3741.5,3474.9,3151.0,3895.0,4187.0
+held_out_0830,"Kayole, Nairobi","Roysambu, Nairobi",1747.0,0.2868,1742.0,1825.4,1585.0,1788.0,2423.0
+held_out_0830,"Kayole, Nairobi","Ruiru, Kiambu County",2524.0,0.4803,2456.5,2820.1,2263.0,2522.0,3423.0
+held_out_0830,"Kayole, Nairobi","Runda, Nairobi",2599.0,0.3385,2754.0,2496.8,2249.0,2738.0,2981.0
+held_out_0830,"Kayole, Nairobi","South B, Nairobi",2173.0,0.0828,2178.8,1598.2,1571.0,2180.0,1900.0
+held_out_0830,"Kayole, Nairobi","South C, Nairobi",2571.0,0.2751,2550.8,1825.8,1732.0,2587.0,2073.0
+held_out_0830,"Kayole, Nairobi","Umoja, Nairobi",603.0,0.381,571.3,625.8,630.0,571.0,619.0
+held_out_0830,"Kayole, Nairobi","Upper Hill, Nairobi",2527.0,0.159,2563.1,1838.7,1763.0,2575.0,2239.0
+held_out_0830,"Kayole, Nairobi","Westlands, Nairobi",2580.0,0.1895,2758.8,1819.2,1681.0,2773.0,2410.0
+held_out_0830,"Kilimani, Nairobi","Athi River, Machakos County",2718.0,0.2931,2701.0,2591.2,2284.0,2656.0,3332.0
+held_out_0830,"Kilimani, Nairobi","Buruburu, Nairobi",2129.0,0.2775,1979.8,1751.8,1408.0,1950.0,2647.0
+held_out_0830,"Kilimani, Nairobi","Dagoretti, Nairobi",1492.0,0.2326,1506.7,1377.9,1233.0,1492.0,1856.0
+held_out_0830,"Kilimani, Nairobi","Donholm, Nairobi",2364.0,0.3296,2306.1,2129.2,1590.0,2230.0,3226.0
+held_out_0830,"Kilimani, Nairobi","Embakasi, Nairobi",1583.0,0.2501,1531.2,1348.9,1100.0,1487.0,2095.0
+held_out_0830,"Kilimani, Nairobi","Imara Daima, Nairobi",1488.0,0.2251,1473.0,1200.3,977.0,1440.0,1969.0
+held_out_0830,"Kilimani, Nairobi","Kahawa, Nairobi",2518.0,0.3926,2487.0,2601.1,2137.0,2439.0,3319.0
+held_out_0830,"Kilimani, Nairobi","Karen, Nairobi",1617.0,0.2804,1720.3,1636.7,1390.0,1676.0,2270.0
+held_out_0830,"Kilimani, Nairobi","Kasarani, Nairobi",1692.0,0.3058,1643.7,1656.5,1299.0,1638.0,2468.0
+held_out_0830,"Kilimani, Nairobi","Kawangware, Nairobi",972.0,0.2607,1080.7,879.2,788.0,1078.0,1138.0
+held_out_0830,"Kilimani, Nairobi","Kayole, Nairobi",2755.0,0.3051,2663.1,2648.0,2154.0,2547.0,3773.0
+held_out_0830,"Kilimani, Nairobi","Kitengela, Kajiado County",2870.0,0.2824,2929.7,2839.4,2364.0,2878.0,4047.0
+held_out_0830,"Kilimani, Nairobi","Langata, Nairobi",1309.0,0.2756,1342.3,1275.6,1194.0,1334.0,1490.0
+held_out_0830,"Kilimani, Nairobi","Lavington, Nairobi",317.0,0.2972,361.6,251.2,206.0,362.0,358.0
+held_out_0830,"Kilimani, Nairobi","Mlolongo, Machakos County",1955.0,0.2308,1917.6,1673.6,1483.0,1900.0,2309.0
+held_out_0830,"Kilimani, Nairobi","Nairobi CBD, Nairobi",909.0,0.2476,872.5,660.4,520.0,856.0,1087.0
+held_out_0830,"Kilimani, Nairobi","Ngara, Nairobi",1341.0,0.2444,1234.2,1101.1,931.0,1209.0,1627.0
+held_out_0830,"Kilimani, Nairobi","Nyayo Estate, Nairobi",2333.0,0.298,2245.0,2190.1,1699.0,2140.0,3347.0
+held_out_0830,"Kilimani, Nairobi","Ongata Rongai, Kajiado County",1946.0,0.3139,1975.2,1943.4,1709.0,1981.0,2456.0
+held_out_0830,"Kilimani, Nairobi","Roysambu, Nairobi",1619.0,0.3006,1564.9,1596.0,1244.0,1562.0,2415.0
+held_out_0830,"Kilimani, Nairobi","Ruiru, Kiambu County",2392.0,0.3895,2273.2,2514.1,1938.0,2291.0,3417.0
+held_out_0830,"Kilimani, Nairobi","Runda, Nairobi",2030.0,0.3289,2074.5,1688.0,1393.0,2053.0,2290.0
+held_out_0830,"Kilimani, Nairobi","South B, Nairobi",1315.0,0.2013,1230.2,924.0,766.0,1210.0,1551.0
+held_out_0830,"Kilimani, Nairobi","South C, Nairobi",1454.0,0.2931,1384.0,1290.7,1111.0,1349.0,1724.0
+held_out_0830,"Kilimani, Nairobi","Umoja, Nairobi",2624.0,0.3367,2563.4,2557.4,2050.0,2468.0,3557.0
+held_out_0830,"Kilimani, Nairobi","Upper Hill, Nairobi",716.0,0.2331,618.9,527.3,473.0,612.0,706.0
+held_out_0830,"Kilimani, Nairobi","Westlands, Nairobi",994.0,0.2478,979.3,716.8,581.0,967.0,1129.0
+held_out_0830,"Kitengela, Kajiado County","Athi River, Machakos County",735.0,0.2663,781.5,732.0,654.0,781.0,947.0
+held_out_0830,"Kitengela, Kajiado County","Buruburu, Nairobi",3033.0,0.244,3043.7,2622.0,2334.0,3127.0,3514.0
+held_out_0830,"Kitengela, Kajiado County","Dagoretti, Nairobi",4126.0,0.2075,4157.5,3675.0,3444.0,4217.0,4557.0
+held_out_0830,"Kitengela, Kajiado County","Donholm, Nairobi",2853.0,0.2843,2888.4,2571.2,2163.0,2944.0,3599.0
+held_out_0830,"Kitengela, Kajiado County","Embakasi, Nairobi",2066.0,0.2153,2156.9,1795.9,1558.0,2184.0,2663.0
+held_out_0830,"Kitengela, Kajiado County","Imara Daima, Nairobi",2157.0,0.1966,2265.6,1817.2,1610.0,2288.0,2664.0
+held_out_0830,"Kitengela, Kajiado County","Kahawa, Nairobi",4273.0,0.3486,4263.3,4198.8,3565.0,4327.0,5383.0
+held_out_0830,"Kitengela, Kajiado County","Karen, Nairobi",3782.0,0.2531,3895.7,3417.1,3125.0,3892.0,4279.0
+held_out_0830,"Kitengela, Kajiado County","Kasarani, Nairobi",3446.0,0.275,3397.7,3226.8,2737.0,3511.0,4518.0
+held_out_0830,"Kitengela, Kajiado County","Kawangware, Nairobi",3945.0,0.2353,4126.5,3325.7,3121.0,4181.0,3991.0
+held_out_0830,"Kitengela, Kajiado County","Kayole, Nairobi",3150.0,0.2603,3254.1,3076.3,2600.0,3275.0,4430.0
+held_out_0830,"Kitengela, Kajiado County","Kilimani, Nairobi",3394.0,0.2824,3549.1,2698.0,2498.0,3565.0,3206.0
+held_out_0830,"Kitengela, Kajiado County","Langata, Nairobi",3331.0,0.2473,3446.6,2905.1,2701.0,3481.0,3526.0
+held_out_0830,"Kitengela, Kajiado County","Lavington, Nairobi",3610.0,0.2716,3795.1,2806.0,2552.0,3808.0,3487.0
+held_out_0830,"Kitengela, Kajiado County","Mlolongo, Machakos County",1785.0,0.2076,1920.8,1441.6,1331.0,1954.0,1864.0
+held_out_0830,"Kitengela, Kajiado County","Nairobi CBD, Nairobi",2990.0,0.2213,3020.4,2157.3,1975.0,3022.0,2799.0
+held_out_0830,"Kitengela, Kajiado County","Ngara, Nairobi",3412.0,0.2181,3407.9,2619.0,2395.0,3423.0,3422.0
+held_out_0830,"Kitengela, Kajiado County","Nyayo Estate, Nairobi",2739.0,0.2557,2819.3,2545.2,2166.0,2845.0,3649.0
+held_out_0830,"Kitengela, Kajiado County","Ongata Rongai, Kajiado County",3955.0,0.2865,3997.6,3636.5,3276.0,4128.0,4534.0
+held_out_0830,"Kitengela, Kajiado County","Roysambu, Nairobi",3379.0,0.2703,3321.9,3162.7,2678.0,3439.0,4471.0
+held_out_0830,"Kitengela, Kajiado County","Ruiru, Kiambu County",4154.0,0.35,4044.3,4081.6,3361.0,4196.0,5420.0
+held_out_0830,"Kitengela, Kajiado County","Runda, Nairobi",3885.0,0.3012,4096.8,3297.0,2972.0,4098.0,4051.0
+held_out_0830,"Kitengela, Kajiado County","South B, Nairobi",2777.0,0.1748,2795.3,2100.5,1978.0,2826.0,2679.0
+held_out_0830,"Kitengela, Kajiado County","South C, Nairobi",2597.0,0.2654,2643.5,2095.0,1940.0,2647.0,2524.0
+held_out_0830,"Kitengela, Kajiado County","Umoja, Nairobi",3351.0,0.2925,3373.0,3160.4,2731.0,3398.0,4199.0
+held_out_0830,"Kitengela, Kajiado County","Upper Hill, Nairobi",3032.0,0.2068,3134.7,2224.4,2077.0,3138.0,2790.0
+held_out_0830,"Kitengela, Kajiado County","Westlands, Nairobi",2997.0,0.2213,3186.2,2338.7,2165.0,3189.0,2950.0
+held_out_0830,"Langata, Nairobi","Athi River, Machakos County",3001.0,0.2565,3114.9,2886.3,2697.0,3113.0,3435.0
+held_out_0830,"Langata, Nairobi","Buruburu, Nairobi",2453.0,0.2257,2506.5,2109.9,1921.0,2591.0,2758.0
+held_out_0830,"Langata, Nairobi","Dagoretti, Nairobi",2366.0,0.1867,2374.8,2209.5,2118.0,2400.0,2608.0
+held_out_0830,"Langata, Nairobi","Donholm, Nairobi",2686.0,0.2724,2653.4,2398.2,2110.0,2703.0,3168.0
+held_out_0830,"Langata, Nairobi","Embakasi, Nairobi",1866.0,0.1873,1934.7,1638.6,1505.0,1956.0,2218.0
+held_out_0830,"Langata, Nairobi","Imara Daima, Nairobi",1766.0,0.1696,1858.2,1481.8,1358.0,1875.0,2088.0
+held_out_0830,"Langata, Nairobi","Kahawa, Nairobi",4044.0,0.355,4077.8,3627.7,3059.0,4184.0,4661.0
+held_out_0830,"Langata, Nairobi","Karen, Nairobi",1223.0,0.2404,1283.6,1333.1,1267.0,1280.0,1542.0
+held_out_0830,"Langata, Nairobi","Kasarani, Nairobi",3157.0,0.2655,3069.9,2639.4,2216.0,3244.0,3811.0
+held_out_0830,"Langata, Nairobi","Kawangware, Nairobi",2131.0,0.2201,2187.1,1946.3,1798.0,2210.0,2472.0
+held_out_0830,"Langata, Nairobi","Kayole, Nairobi",2951.0,0.2403,3000.3,2849.0,2550.0,3014.0,3794.0
+held_out_0830,"Langata, Nairobi","Kilimani, Nairobi",1681.0,0.2756,1810.2,1364.9,1269.0,1821.0,1617.0
+held_out_0830,"Langata, Nairobi","Kitengela, Kajiado County",3153.0,0.2473,3325.4,3130.6,2792.0,3350.0,4161.0
+held_out_0830,"Langata, Nairobi","Lavington, Nairobi",1956.0,0.2633,2182.7,1604.1,1484.0,2195.0,1940.0
+held_out_0830,"Langata, Nairobi","Mlolongo, Machakos County",2238.0,0.1884,2339.7,1998.3,1899.0,2367.0,2426.0
+held_out_0830,"Langata, Nairobi","Nairobi CBD, Nairobi",2047.0,0.2024,2221.9,1376.6,1276.0,2227.0,1773.0
+held_out_0830,"Langata, Nairobi","Ngara, Nairobi",2526.0,0.1986,2691.4,1833.3,1699.0,2700.0,2375.0
+held_out_0830,"Langata, Nairobi","Nyayo Estate, Nairobi",2530.0,0.2356,2598.3,2370.6,2115.0,2618.0,3200.0
+held_out_0830,"Langata, Nairobi","Ongata Rongai, Kajiado County",1172.0,0.2803,1206.2,1259.9,1159.0,1216.0,1519.0
+held_out_0830,"Langata, Nairobi","Roysambu, Nairobi",3091.0,0.2599,2992.8,2582.6,2168.0,3172.0,3763.0
+held_out_0830,"Langata, Nairobi","Ruiru, Kiambu County",3925.0,0.3559,3803.6,3515.1,2857.0,4050.0,4706.0
+held_out_0830,"Langata, Nairobi","Runda, Nairobi",3282.0,0.2975,3278.4,2699.7,2363.0,3271.0,3495.0
+held_out_0830,"Langata, Nairobi","South B, Nairobi",1903.0,0.144,2080.4,1376.9,1307.0,2110.0,1792.0
+held_out_0830,"Langata, Nairobi","South C, Nairobi",1917.0,0.255,2047.5,1549.0,1448.0,2055.0,1844.0
+held_out_0830,"Langata, Nairobi","Umoja, Nairobi",3235.0,0.2836,3130.6,2857.1,2546.0,3154.0,3643.0
+held_out_0830,"Langata, Nairobi","Upper Hill, Nairobi",1960.0,0.1845,2077.7,1463.7,1379.0,2081.0,1838.0
+held_out_0830,"Langata, Nairobi","Westlands, Nairobi",2465.0,0.2023,2596.1,1749.7,1565.0,2598.0,2478.0
+held_out_0830,"Lavington, Nairobi","Athi River, Machakos County",2962.0,0.2812,2853.8,2754.5,2430.0,2806.0,3584.0
+held_out_0830,"Lavington, Nairobi","Buruburu, Nairobi",2279.0,0.2629,2214.3,1904.3,1545.0,2187.0,2912.0
+held_out_0830,"Lavington, Nairobi","Dagoretti, Nairobi",1338.0,0.2224,1413.0,1203.2,1128.0,1411.0,1466.0
+held_out_0830,"Lavington, Nairobi","Donholm, Nairobi",2372.0,0.3084,2473.5,2210.8,1731.0,2415.0,3287.0
+held_out_0830,"Lavington, Nairobi","Embakasi, Nairobi",1826.0,0.2355,1689.5,1507.2,1251.0,1644.0,2339.0
+held_out_0830,"Lavington, Nairobi","Imara Daima, Nairobi",1779.0,0.2137,1637.8,1375.0,1129.0,1599.0,2280.0
+held_out_0830,"Lavington, Nairobi","Kahawa, Nairobi",2746.0,0.3707,2700.3,2720.3,2215.0,2657.0,3578.0
+held_out_0830,"Lavington, Nairobi","Karen, Nairobi",1697.0,0.2684,1819.8,1603.0,1366.0,1788.0,2249.0
+held_out_0830,"Lavington, Nairobi","Kasarani, Nairobi",1920.0,0.2918,1858.6,1771.3,1375.0,1855.0,2733.0
+held_out_0830,"Lavington, Nairobi","Kawangware, Nairobi",733.0,0.2499,727.9,647.5,606.0,726.0,772.0
+held_out_0830,"Lavington, Nairobi","Kayole, Nairobi",2911.0,0.2847,2809.4,2766.5,2293.0,2704.0,3956.0
+held_out_0830,"Lavington, Nairobi","Kilimani, Nairobi",405.0,0.2972,397.7,302.1,240.0,392.0,449.0
+held_out_0830,"Lavington, Nairobi","Kitengela, Kajiado County",3113.0,0.2716,3078.7,2998.2,2518.0,3028.0,4286.0
+held_out_0830,"Lavington, Nairobi","Langata, Nairobi",1721.0,0.2633,1736.5,1567.4,1440.0,1727.0,1924.0
+held_out_0830,"Lavington, Nairobi","Mlolongo, Machakos County",2198.0,0.2214,2077.4,1837.8,1635.0,2058.0,2551.0
+held_out_0830,"Lavington, Nairobi","Nairobi CBD, Nairobi",1159.0,0.2367,1101.5,813.4,656.0,1086.0,1321.0
+held_out_0830,"Lavington, Nairobi","Ngara, Nairobi",1400.0,0.2335,1353.0,1156.3,987.0,1332.0,1712.0
+held_out_0830,"Lavington, Nairobi","Nyayo Estate, Nairobi",2488.0,0.2789,2383.6,2289.9,1855.0,2297.0,3414.0
+held_out_0830,"Lavington, Nairobi","Ongata Rongai, Kajiado County",2354.0,0.3014,2366.5,2249.7,1973.0,2377.0,2891.0
+held_out_0830,"Lavington, Nairobi","Roysambu, Nairobi",1847.0,0.287,1779.7,1712.3,1322.0,1779.0,2682.0
+held_out_0830,"Lavington, Nairobi","Ruiru, Kiambu County",2623.0,0.3699,2486.4,2628.6,2016.0,2514.0,3672.0
+held_out_0830,"Lavington, Nairobi","Runda, Nairobi",1715.0,0.316,1605.6,1418.8,1184.0,1576.0,1927.0
+held_out_0830,"Lavington, Nairobi","South B, Nairobi",1532.0,0.1912,1459.1,1069.1,902.0,1441.0,1776.0
+held_out_0830,"Lavington, Nairobi","South C, Nairobi",1806.0,0.2808,1656.0,1433.4,1211.0,1623.0,2003.0
+held_out_0830,"Lavington, Nairobi","Umoja, Nairobi",2714.0,0.3159,2749.9,2620.8,2129.0,2671.0,3686.0
+held_out_0830,"Lavington, Nairobi","Upper Hill, Nairobi",1088.0,0.2224,1062.7,778.9,687.0,1060.0,1100.0
+held_out_0830,"Lavington, Nairobi","Westlands, Nairobi",1050.0,0.2368,1015.8,746.2,610.0,1003.0,1185.0
+held_out_0830,"Mlolongo, Machakos County","Athi River, Machakos County",1175.0,0.213,1193.2,1176.5,1057.0,1192.0,1618.0
+held_out_0830,"Mlolongo, Machakos County","Buruburu, Nairobi",2054.0,0.1737,1962.1,1778.1,1596.0,2025.0,2644.0
+held_out_0830,"Mlolongo, Machakos County","Dagoretti, Nairobi",3162.0,0.1494,3075.3,2865.5,2743.0,3115.0,3563.0
+held_out_0830,"Mlolongo, Machakos County","Donholm, Nairobi",1867.0,0.1987,1819.2,1689.4,1421.0,1865.0,2772.0
+held_out_0830,"Mlolongo, Machakos County","Embakasi, Nairobi",1090.0,0.1363,1083.1,986.8,854.0,1100.0,1828.0
+held_out_0830,"Mlolongo, Machakos County","Imara Daima, Nairobi",1192.0,0.1286,1190.7,1027.4,903.0,1206.0,1870.0
+held_out_0830,"Mlolongo, Machakos County","Kahawa, Nairobi",3329.0,0.2772,3175.8,3236.9,2825.0,3218.0,4311.0
+held_out_0830,"Mlolongo, Machakos County","Karen, Nairobi",2799.0,0.1969,2819.3,2595.6,2405.0,2814.0,3373.0
+held_out_0830,"Mlolongo, Machakos County","Kasarani, Nairobi",2499.0,0.2152,2332.6,2302.4,1984.0,2412.0,3464.0
+held_out_0830,"Mlolongo, Machakos County","Kawangware, Nairobi",3145.0,0.1805,2896.9,2532.9,2427.0,2931.0,3014.0
+held_out_0830,"Mlolongo, Machakos County","Kayole, Nairobi",2181.0,0.1702,2147.0,2160.3,1868.0,2161.0,3585.0
+held_out_0830,"Mlolongo, Machakos County","Kilimani, Nairobi",2548.0,0.2308,2346.2,1908.9,1803.0,2350.0,2262.0
+held_out_0830,"Mlolongo, Machakos County","Kitengela, Kajiado County",1366.0,0.2076,1411.0,1407.9,1163.0,1425.0,2343.0
+held_out_0830,"Mlolongo, Machakos County","Langata, Nairobi",2388.0,0.1884,2387.0,2118.3,2000.0,2411.0,2628.0
+held_out_0830,"Mlolongo, Machakos County","Lavington, Nairobi",2741.0,0.2214,2583.7,2013.9,1854.0,2584.0,2576.0
+held_out_0830,"Mlolongo, Machakos County","Nairobi CBD, Nairobi",2092.0,0.1623,1839.1,1374.0,1281.0,1839.0,1854.0
+held_out_0830,"Mlolongo, Machakos County","Ngara, Nairobi",2483.0,0.1589,2191.1,1822.9,1698.0,2201.0,2484.0
+held_out_0830,"Mlolongo, Machakos County","Nyayo Estate, Nairobi",1758.0,0.1697,1742.3,1680.4,1453.0,1760.0,2793.0
+held_out_0830,"Mlolongo, Machakos County","Ongata Rongai, Kajiado County",3010.0,0.2349,2956.9,2799.1,2549.0,3050.0,3614.0
+held_out_0830,"Mlolongo, Machakos County","Roysambu, Nairobi",2433.0,0.2107,2259.3,2246.8,1935.0,2338.0,3415.0
+held_out_0830,"Mlolongo, Machakos County","Ruiru, Kiambu County",3208.0,0.2859,2973.0,3123.1,2625.0,3072.0,4367.0
+held_out_0830,"Mlolongo, Machakos County","Runda, Nairobi",3069.0,0.2507,2929.1,2486.8,2275.0,2924.0,3120.0
+held_out_0830,"Mlolongo, Machakos County","South B, Nairobi",1861.0,0.1075,1611.6,1333.1,1282.0,1632.0,1757.0
+held_out_0830,"Mlolongo, Machakos County","South C, Nairobi",1703.0,0.2099,1505.6,1316.3,1251.0,1504.0,1562.0
+held_out_0830,"Mlolongo, Machakos County","Umoja, Nairobi",2383.0,0.2107,2283.5,2273.4,1989.0,2300.0,3339.0
+held_out_0830,"Mlolongo, Machakos County","Upper Hill, Nairobi",2142.0,0.1455,1945.9,1449.2,1385.0,1947.0,1826.0
+held_out_0830,"Mlolongo, Machakos County","Westlands, Nairobi",2190.0,0.1621,1982.2,1556.2,1470.0,1982.0,2002.0
+held_out_0830,"Nairobi CBD, Nairobi","Athi River, Machakos County",2064.0,0.2283,2095.1,2134.4,1973.0,2078.0,2680.0
+held_out_0830,"Nairobi CBD, Nairobi","Buruburu, Nairobi",1194.0,0.1886,1200.0,1152.4,1019.0,1207.0,1726.0
+held_out_0830,"Nairobi CBD, Nairobi","Dagoretti, Nairobi",2062.0,0.1584,2080.9,1820.1,1653.0,2080.0,2708.0
+held_out_0830,"Nairobi CBD, Nairobi","Donholm, Nairobi",1452.0,0.2227,1501.1,1417.9,1191.0,1494.0,2210.0
+held_out_0830,"Nairobi CBD, Nairobi","Embakasi, Nairobi",934.0,0.147,917.9,888.7,788.0,906.0,1473.0
+held_out_0830,"Nairobi CBD, Nairobi","Imara Daima, Nairobi",894.0,0.1365,871.1,813.9,709.0,859.0,1478.0
+held_out_0830,"Nairobi CBD, Nairobi","Kahawa, Nairobi",2128.0,0.3102,2087.8,2186.5,1903.0,2093.0,2817.0
+held_out_0830,"Nairobi CBD, Nairobi","Karen, Nairobi",2185.0,0.2112,2285.8,2092.0,1827.0,2256.0,3082.0
+held_out_0830,"Nairobi CBD, Nairobi","Kasarani, Nairobi",1309.0,0.233,1260.1,1277.0,1065.0,1287.0,1975.0
+held_out_0830,"Nairobi CBD, Nairobi","Kawangware, Nairobi",1680.0,0.1924,1722.1,1542.4,1362.0,1718.0,2300.0
+held_out_0830,"Nairobi CBD, Nairobi","Kayole, Nairobi",1992.0,0.1897,2024.3,1939.1,1757.0,2002.0,2717.0
+held_out_0830,"Nairobi CBD, Nairobi","Kilimani, Nairobi",1070.0,0.2476,1067.4,899.6,757.0,1047.0,1333.0
+held_out_0830,"Nairobi CBD, Nairobi","Kitengela, Kajiado County",2216.0,0.2213,2333.3,2363.4,2053.0,2325.0,3456.0
+held_out_0830,"Nairobi CBD, Nairobi","Langata, Nairobi",1724.0,0.2024,1823.4,1580.9,1398.0,1818.0,2302.0
+held_out_0830,"Nairobi CBD, Nairobi","Lavington, Nairobi",1248.0,0.2367,1311.4,1066.2,892.0,1289.0,1628.0
+held_out_0830,"Nairobi CBD, Nairobi","Mlolongo, Machakos County",1302.0,0.1623,1297.8,1252.3,1170.0,1295.0,1677.0
+held_out_0830,"Nairobi CBD, Nairobi","Ngara, Nairobi",510.0,0.1693,502.0,432.3,399.0,500.0,596.0
+held_out_0830,"Nairobi CBD, Nairobi","Nyayo Estate, Nairobi",1607.0,0.188,1587.8,1583.0,1387.0,1565.0,2430.0
+held_out_0830,"Nairobi CBD, Nairobi","Ongata Rongai, Kajiado County",2357.0,0.2522,2390.5,2269.7,1928.0,2463.0,3283.0
+held_out_0830,"Nairobi CBD, Nairobi","Roysambu, Nairobi",1232.0,0.2278,1192.5,1219.0,1011.0,1220.0,1924.0
+held_out_0830,"Nairobi CBD, Nairobi","Ruiru, Kiambu County",2003.0,0.3163,1902.9,2094.5,1707.0,1944.0,2932.0
+held_out_0830,"Nairobi CBD, Nairobi","Runda, Nairobi",1525.0,0.2694,1564.7,1380.6,1178.0,1544.0,1930.0
+held_out_0830,"Nairobi CBD, Nairobi","South B, Nairobi",643.0,0.1124,619.0,487.2,450.0,616.0,781.0
+held_out_0830,"Nairobi CBD, Nairobi","South C, Nairobi",975.0,0.2256,963.4,862.9,758.0,948.0,1223.0
+held_out_0830,"Nairobi CBD, Nairobi","Umoja, Nairobi",1914.0,0.2358,1941.1,1911.9,1683.0,1923.0,2654.0
+held_out_0830,"Nairobi CBD, Nairobi","Upper Hill, Nairobi",471.0,0.1545,472.5,397.2,366.0,469.0,568.0
+held_out_0830,"Nairobi CBD, Nairobi","Westlands, Nairobi",714.0,0.1728,719.7,600.9,509.0,707.0,1041.0
+held_out_0830,"Ngara, Nairobi","Athi River, Machakos County",2358.0,0.225,2388.2,2348.9,2159.0,2378.0,3003.0
+held_out_0830,"Ngara, Nairobi","Buruburu, Nairobi",1097.0,0.1841,1046.1,1047.1,930.0,1059.0,1566.0
+held_out_0830,"Ngara, Nairobi","Dagoretti, Nairobi",2462.0,0.1547,2326.0,1998.8,1828.0,2355.0,2932.0
+held_out_0830,"Ngara, Nairobi","Donholm, Nairobi",1354.0,0.2169,1339.8,1300.5,1099.0,1350.0,2028.0
+held_out_0830,"Ngara, Nairobi","Embakasi, Nairobi",1226.0,0.1418,1212.5,1090.1,975.0,1210.0,1787.0
+held_out_0830,"Ngara, Nairobi","Imara Daima, Nairobi",1227.0,0.1321,1186.9,962.1,852.0,1184.0,1685.0
+held_out_0830,"Ngara, Nairobi","Kahawa, Nairobi",1833.0,0.3054,1814.6,1910.3,1691.0,1824.0,2409.0
+held_out_0830,"Ngara, Nairobi","Karen, Nairobi",2509.0,0.2076,2663.3,2296.1,2004.0,2645.0,3411.0
+held_out_0830,"Ngara, Nairobi","Kasarani, Nairobi",1016.0,0.2291,989.4,1018.5,854.0,1015.0,1572.0
+held_out_0830,"Ngara, Nairobi","Kawangware, Nairobi",1872.0,0.1889,1892.8,1580.2,1426.0,1903.0,2242.0
+held_out_0830,"Ngara, Nairobi","Kayole, Nairobi",1892.0,0.1835,1867.9,1820.8,1660.0,1861.0,2536.0
+held_out_0830,"Ngara, Nairobi","Kilimani, Nairobi",1231.0,0.2444,1177.8,893.6,747.0,1167.0,1347.0
+held_out_0830,"Ngara, Nairobi","Kitengela, Kajiado County",2508.0,0.2181,2604.5,2569.9,2239.0,2610.0,3756.0
+held_out_0830,"Ngara, Nairobi","Langata, Nairobi",1932.0,0.1986,2017.3,1775.3,1586.0,2021.0,2539.0
+held_out_0830,"Ngara, Nairobi","Lavington, Nairobi",1218.0,0.2335,1223.3,998.9,856.0,1209.0,1468.0
+held_out_0830,"Ngara, Nairobi","Mlolongo, Machakos County",1600.0,0.1589,1606.9,1458.0,1356.0,1612.0,1998.0
+held_out_0830,"Ngara, Nairobi","Nairobi CBD, Nairobi",614.0,0.1693,621.1,449.3,395.0,619.0,716.0
+held_out_0830,"Ngara, Nairobi","Nyayo Estate, Nairobi",1514.0,0.1821,1507.8,1482.6,1312.0,1503.0,2249.0
+held_out_0830,"Ngara, Nairobi","Ongata Rongai, Kajiado County",2560.0,0.2489,2587.9,2516.6,2182.0,2668.0,3526.0
+held_out_0830,"Ngara, Nairobi","Roysambu, Nairobi",939.0,0.224,921.9,960.5,799.0,947.0,1520.0
+held_out_0830,"Ngara, Nairobi","Ruiru, Kiambu County",1702.0,0.3121,1639.5,1814.4,1496.0,1676.0,2516.0
+held_out_0830,"Ngara, Nairobi","Runda, Nairobi",1381.0,0.2662,1357.4,1163.3,1015.0,1348.0,1572.0
+held_out_0830,"Ngara, Nairobi","South B, Nairobi",745.0,0.1082,701.9,650.5,624.0,701.0,869.0
+held_out_0830,"Ngara, Nairobi","South C, Nairobi",1183.0,0.2221,1165.1,1111.9,1010.0,1151.0,1469.0
+held_out_0830,"Ngara, Nairobi","Umoja, Nairobi",1815.0,0.2302,1780.9,1792.4,1588.0,1778.0,2476.0
+held_out_0830,"Ngara, Nairobi","Upper Hill, Nairobi",767.0,0.1507,781.5,699.9,667.0,779.0,885.0
+held_out_0830,"Ngara, Nairobi","Westlands, Nairobi",573.0,0.1691,514.2,415.5,371.0,511.0,634.0
+held_out_0830,"Nyayo Estate, Nairobi","Athi River, Machakos County",2415.0,0.2704,2640.2,2149.2,1984.0,2641.0,2595.0
+held_out_0830,"Nyayo Estate, Nairobi","Buruburu, Nairobi",1666.0,0.2236,1618.7,1275.8,1171.0,1713.0,1640.0
+held_out_0830,"Nyayo Estate, Nairobi","Dagoretti, Nairobi",3401.0,0.1645,3505.9,2878.7,2739.0,3601.0,3588.0
+held_out_0830,"Nyayo Estate, Nairobi","Donholm, Nairobi",874.0,0.3339,894.7,958.1,918.0,892.0,1038.0
+held_out_0830,"Nyayo Estate, Nairobi","Embakasi, Nairobi",1300.0,0.1466,1480.1,887.4,782.0,1500.0,1501.0
+held_out_0830,"Nyayo Estate, Nairobi","Imara Daima, Nairobi",1446.0,0.1285,1653.0,968.8,871.0,1653.0,1632.0
+held_out_0830,"Nyayo Estate, Nairobi","Kahawa, Nairobi",2945.0,0.4799,2961.8,2874.3,2393.0,3032.0,3396.0
+held_out_0830,"Nyayo Estate, Nairobi","Karen, Nairobi",3042.0,0.2468,3282.6,2645.1,2399.0,3279.0,3396.0
+held_out_0830,"Nyayo Estate, Nairobi","Kasarani, Nairobi",2119.0,0.2881,2085.3,1838.5,1553.0,2230.0,2544.0
+held_out_0830,"Nyayo Estate, Nairobi","Kawangware, Nairobi",3297.0,0.216,3465.8,2554.1,2421.0,3525.0,3037.0
+held_out_0830,"Nyayo Estate, Nairobi","Kayole, Nairobi",1077.0,0.2588,1131.6,1143.5,1108.0,1131.0,1245.0
+held_out_0830,"Nyayo Estate, Nairobi","Kilimani, Nairobi",2773.0,0.298,2874.7,1942.1,1797.0,2931.0,2284.0
+held_out_0830,"Nyayo Estate, Nairobi","Kitengela, Kajiado County",2565.0,0.2557,2832.8,2398.4,2065.0,2863.0,3369.0
+held_out_0830,"Nyayo Estate, Nairobi","Langata, Nairobi",2622.0,0.2356,2825.1,2148.5,1994.0,2859.0,2650.0
+held_out_0830,"Nyayo Estate, Nairobi","Lavington, Nairobi",2976.0,0.2789,3121.1,2116.3,1930.0,3165.0,2598.0
+held_out_0830,"Nyayo Estate, Nairobi","Mlolongo, Machakos County",1653.0,0.1697,1844.2,1261.3,1196.0,1884.0,1581.0
+held_out_0830,"Nyayo Estate, Nairobi","Nairobi CBD, Nairobi",2318.0,0.188,2337.5,1388.0,1275.0,2350.0,1876.0
+held_out_0830,"Nyayo Estate, Nairobi","Ngara, Nairobi",2718.0,0.1821,2734.3,1707.9,1572.0,2737.0,2318.0
+held_out_0830,"Nyayo Estate, Nairobi","Ongata Rongai, Kajiado County",3248.0,0.3052,3309.7,2875.6,2542.0,3510.0,3635.0
+held_out_0830,"Nyayo Estate, Nairobi","Roysambu, Nairobi",2046.0,0.2789,2006.7,1779.9,1504.0,2154.0,2493.0
+held_out_0830,"Nyayo Estate, Nairobi","Ruiru, Kiambu County",2825.0,0.4548,2719.8,2783.4,2194.0,2897.0,3490.0
+held_out_0830,"Nyayo Estate, Nairobi","Runda, Nairobi",2892.0,0.3299,3090.4,2466.0,2179.0,3093.0,3049.0
+held_out_0830,"Nyayo Estate, Nairobi","South B, Nairobi",2086.0,0.0879,2144.8,1320.2,1276.0,2145.0,1779.0
+held_out_0830,"Nyayo Estate, Nairobi","South C, Nairobi",1928.0,0.2689,1985.5,1335.1,1245.0,2013.0,1580.0
+held_out_0830,"Nyayo Estate, Nairobi","Umoja, Nairobi",1438.0,0.3526,1439.0,1509.4,1441.0,1439.0,1635.0
+held_out_0830,"Nyayo Estate, Nairobi","Upper Hill, Nairobi",2366.0,0.159,2454.1,1468.8,1379.0,2470.0,1944.0
+held_out_0830,"Nyayo Estate, Nairobi","Westlands, Nairobi",2404.0,0.1878,2545.7,1569.2,1464.0,2564.0,2024.0
+held_out_0830,"Ongata Rongai, Kajiado County","Athi River, Machakos County",3698.0,0.2975,3893.7,3481.8,3170.0,3992.0,4218.0
+held_out_0830,"Ongata Rongai, Kajiado County","Buruburu, Nairobi",3132.0,0.2832,3236.9,2697.3,2394.0,3493.0,3465.0
+held_out_0830,"Ongata Rongai, Kajiado County","Dagoretti, Nairobi",3021.0,0.237,2993.4,2748.7,2576.0,3104.0,3305.0
+held_out_0830,"Ongata Rongai, Kajiado County","Donholm, Nairobi",3371.0,0.337,3385.2,3050.7,2596.0,3604.0,3945.0
+held_out_0830,"Ongata Rongai, Kajiado County","Embakasi, Nairobi",2553.0,0.2563,2665.0,2243.8,1996.0,2852.0,2963.0
+held_out_0830,"Ongata Rongai, Kajiado County","Imara Daima, Nairobi",2455.0,0.2302,2571.6,2053.1,1828.0,2762.0,2806.0
+held_out_0830,"Ongata Rongai, Kajiado County","Kahawa, Nairobi",4688.0,0.3995,4805.7,4317.8,3528.0,5110.0,5505.0
+held_out_0830,"Ongata Rongai, Kajiado County","Karen, Nairobi",1342.0,0.2849,1363.6,1422.2,1384.0,1361.0,1518.0
+held_out_0830,"Ongata Rongai, Kajiado County","Kasarani, Nairobi",3860.0,0.3108,3913.1,3303.0,2700.0,4296.0,4640.0
+held_out_0830,"Ongata Rongai, Kajiado County","Kawangware, Nairobi",2775.0,0.265,2818.9,2501.3,2267.0,2936.0,3151.0
+held_out_0830,"Ongata Rongai, Kajiado County","Kayole, Nairobi",3631.0,0.3127,3739.7,3491.1,3023.0,3926.0,4520.0
+held_out_0830,"Ongata Rongai, Kajiado County","Kilimani, Nairobi",2381.0,0.3139,2674.8,1939.7,1741.0,2695.0,2374.0
+held_out_0830,"Ongata Rongai, Kajiado County","Kitengela, Kajiado County",3858.0,0.2865,4063.7,3748.2,3282.0,4205.0,4909.0
+held_out_0830,"Ongata Rongai, Kajiado County","Langata, Nairobi",1171.0,0.2803,1210.9,1208.6,1134.0,1227.0,1400.0
+held_out_0830,"Ongata Rongai, Kajiado County","Lavington, Nairobi",2649.0,0.3014,3011.6,2175.0,1952.0,3040.0,2692.0
+held_out_0830,"Ongata Rongai, Kajiado County","Mlolongo, Machakos County",2941.0,0.2349,3087.9,2566.5,2373.0,3251.0,3197.0
+held_out_0830,"Ongata Rongai, Kajiado County","Nairobi CBD, Nairobi",2691.0,0.2522,2947.0,1952.1,1741.0,3136.0,2578.0
+held_out_0830,"Ongata Rongai, Kajiado County","Ngara, Nairobi",3185.0,0.2489,3384.3,2412.9,2160.0,3626.0,3176.0
+held_out_0830,"Ongata Rongai, Kajiado County","Nyayo Estate, Nairobi",3227.0,0.3052,3320.1,3033.6,2588.0,3511.0,4048.0
+held_out_0830,"Ongata Rongai, Kajiado County","Roysambu, Nairobi",3793.0,0.3056,3829.6,3237.6,2641.0,4218.0,4593.0
+held_out_0830,"Ongata Rongai, Kajiado County","Ruiru, Kiambu County",4571.0,0.3956,4549.9,4206.6,3324.0,4976.0,5555.0
+held_out_0830,"Ongata Rongai, Kajiado County","Runda, Nairobi",4041.0,0.3333,3939.4,3291.3,2833.0,4010.0,4208.0
+held_out_0830,"Ongata Rongai, Kajiado County","South B, Nairobi",2554.0,0.2062,2754.6,1941.9,1777.0,3027.0,2577.0
+held_out_0830,"Ongata Rongai, Kajiado County","South C, Nairobi",2602.0,0.2977,2873.9,2120.3,1916.0,2943.0,2602.0
+held_out_0830,"Ongata Rongai, Kajiado County","Umoja, Nairobi",3906.0,0.3439,3871.9,3487.2,3036.0,4065.0,4348.0
+held_out_0830,"Ongata Rongai, Kajiado County","Upper Hill, Nairobi",2731.0,0.2377,3048.6,2029.5,1841.0,3246.0,2634.0
+held_out_0830,"Ongata Rongai, Kajiado County","Westlands, Nairobi",3002.0,0.2524,3320.4,2292.0,2028.0,3505.0,3074.0
+held_out_0830,"Roysambu, Nairobi","Athi River, Machakos County",3149.0,0.2816,3337.9,2848.1,2569.0,3436.0,3560.0
+held_out_0830,"Roysambu, Nairobi","Buruburu, Nairobi",1501.0,0.2586,1573.5,1338.1,1171.0,1712.0,1817.0
+held_out_0830,"Roysambu, Nairobi","Dagoretti, Nairobi",3642.0,0.2109,3540.0,2637.6,2377.0,3879.0,3613.0
+held_out_0830,"Roysambu, Nairobi","Donholm, Nairobi",1271.0,0.3187,1403.8,1237.9,1018.0,1524.0,1708.0
+held_out_0830,"Roysambu, Nairobi","Embakasi, Nairobi",1991.0,0.2226,2075.1,1600.2,1352.0,2308.0,2467.0
+held_out_0830,"Roysambu, Nairobi","Imara Daima, Nairobi",2126.0,0.1978,2273.5,1574.4,1375.0,2531.0,2383.0
+held_out_0830,"Roysambu, Nairobi","Kahawa, Nairobi",1204.0,0.3979,1213.7,1235.8,1161.0,1227.0,1349.0
+held_out_0830,"Roysambu, Nairobi","Karen, Nairobi",3877.0,0.2663,3946.5,2932.2,2565.0,4110.0,3944.0
+held_out_0830,"Roysambu, Nairobi","Kasarani, Nairobi",338.0,0.2947,344.8,316.1,281.0,367.0,400.0
+held_out_0830,"Roysambu, Nairobi","Kawangware, Nairobi",3184.0,0.2442,3203.2,2144.0,1866.0,3499.0,3004.0
+held_out_0830,"Roysambu, Nairobi","Kayole, Nairobi",1757.0,0.2868,1860.3,1748.6,1561.0,1948.0,2215.0
+held_out_0830,"Roysambu, Nairobi","Kilimani, Nairobi",2560.0,0.3006,2793.2,1496.4,1286.0,2796.0,1986.0
+held_out_0830,"Roysambu, Nairobi","Kitengela, Kajiado County",3298.0,0.2703,3497.5,3104.1,2664.0,3649.0,4292.0
+held_out_0830,"Roysambu, Nairobi","Langata, Nairobi",3239.0,0.2599,3259.0,2471.2,2140.0,3502.0,3414.0
+held_out_0830,"Roysambu, Nairobi","Lavington, Nairobi",2543.0,0.287,2821.5,1545.5,1303.0,2822.0,2148.0
+held_out_0830,"Roysambu, Nairobi","Mlolongo, Machakos County",2489.0,0.2107,2576.4,1966.1,1774.0,2771.0,2686.0
+held_out_0830,"Roysambu, Nairobi","Nairobi CBD, Nairobi",2096.0,0.2278,2220.5,1075.3,943.0,2414.0,1524.0
+held_out_0830,"Roysambu, Nairobi","Ngara, Nairobi",1585.0,0.224,1643.5,829.0,782.0,1819.0,992.0
+held_out_0830,"Roysambu, Nairobi","Nyayo Estate, Nairobi",1402.0,0.2789,1506.2,1373.2,1200.0,1596.0,1821.0
+held_out_0830,"Roysambu, Nairobi","Ongata Rongai, Kajiado County",3863.0,0.3056,3791.6,3220.7,2698.0,4149.0,4408.0
+held_out_0830,"Roysambu, Nairobi","Ruiru, Kiambu County",1072.0,0.3935,1044.4,1177.1,967.0,1074.0,1501.0
+held_out_0830,"Roysambu, Nairobi","Runda, Nairobi",1318.0,0.3229,1320.0,1217.6,1092.0,1330.0,1481.0
+held_out_0830,"Roysambu, Nairobi","South B, Nairobi",2278.0,0.1705,2202.9,1298.6,1189.0,2530.0,1832.0
+held_out_0830,"Roysambu, Nairobi","South C, Nairobi",2550.0,0.2811,2708.5,1679.8,1501.0,2768.0,2137.0
+held_out_0830,"Roysambu, Nairobi","Umoja, Nairobi",1575.0,0.3282,1677.2,1556.3,1344.0,1760.0,1991.0
+held_out_0830,"Roysambu, Nairobi","Upper Hill, Nairobi",2290.0,0.2101,2398.7,1228.7,1095.0,2607.0,1731.0
+held_out_0830,"Roysambu, Nairobi","Westlands, Nairobi",1787.0,0.2279,1883.7,917.7,819.0,2026.0,1252.0
+held_out_0830,"Ruiru, Kiambu County","Athi River, Machakos County",3808.0,0.3702,3962.6,3734.1,3284.0,4082.0,4500.0
+held_out_0830,"Ruiru, Kiambu County","Buruburu, Nairobi",2217.0,0.3811,2234.2,2140.7,1819.0,2389.0,2663.0
+held_out_0830,"Ruiru, Kiambu County","Dagoretti, Nairobi",4290.0,0.294,4216.2,3415.6,3031.0,4605.0,4339.0
+held_out_0830,"Ruiru, Kiambu County","Donholm, Nairobi",1960.0,0.511,2052.4,2124.3,1669.0,2186.0,2560.0
+held_out_0830,"Ruiru, Kiambu County","Embakasi, Nairobi",2608.0,0.3556,2759.1,2539.9,2147.0,2981.0,3252.0
+held_out_0830,"Ruiru, Kiambu County","Imara Daima, Nairobi",2753.0,0.2976,2846.4,2354.3,2016.0,3122.0,3153.0
+held_out_0830,"Ruiru, Kiambu County","Kahawa, Nairobi",1357.0,0.5723,1319.2,1418.4,1257.0,1337.0,1539.0
+held_out_0830,"Ruiru, Kiambu County","Karen, Nairobi",4639.0,0.3576,4537.9,3726.3,3212.0,4767.0,4650.0
+held_out_0830,"Ruiru, Kiambu County","Kasarani, Nairobi",1107.0,0.4014,1057.0,1088.1,938.0,1101.0,1312.0
+held_out_0830,"Ruiru, Kiambu County","Kawangware, Nairobi",3832.0,0.328,3829.0,2916.7,2511.0,4175.0,3748.0
+held_out_0830,"Ruiru, Kiambu County","Kayole, Nairobi",2478.0,0.4803,2533.7,2634.7,2249.0,2630.0,3052.0
+held_out_0830,"Ruiru, Kiambu County","Kilimani, Nairobi",3214.0,0.3895,3414.9,2278.9,1926.0,3494.0,2832.0
+held_out_0830,"Ruiru, Kiambu County","Kitengela, Kajiado County",3968.0,0.35,4125.5,4024.8,3398.0,4287.0,5189.0
+held_out_0830,"Ruiru, Kiambu County","Langata, Nairobi",3902.0,0.3559,3904.7,3280.0,2797.0,4193.0,4154.0
+held_out_0830,"Ruiru, Kiambu County","Lavington, Nairobi",3194.0,0.3699,3416.7,2324.3,1944.0,3503.0,2972.0
+held_out_0830,"Ruiru, Kiambu County","Mlolongo, Machakos County",3149.0,0.2859,3205.6,2738.9,2441.0,3423.0,3483.0
+held_out_0830,"Ruiru, Kiambu County","Nairobi CBD, Nairobi",2792.0,0.3163,2820.5,1821.2,1583.0,3080.0,2336.0
+held_out_0830,"Ruiru, Kiambu County","Ngara, Nairobi",2276.0,0.3121,2305.7,1553.3,1415.0,2532.0,1858.0
+held_out_0830,"Ruiru, Kiambu County","Nyayo Estate, Nairobi",2107.0,0.4548,2170.9,2231.4,1853.0,2278.0,2685.0
+held_out_0830,"Ruiru, Kiambu County","Ongata Rongai, Kajiado County",4532.0,0.3956,4449.3,4090.9,3380.0,4821.0,5177.0
+held_out_0830,"Ruiru, Kiambu County","Roysambu, Nairobi",1092.0,0.3935,1060.3,1086.7,925.0,1112.0,1336.0
+held_out_0830,"Ruiru, Kiambu County","Runda, Nairobi",2322.0,0.4139,2440.0,2193.1,1893.0,2492.0,2618.0
+held_out_0830,"Ruiru, Kiambu County","South B, Nairobi",2994.0,0.2618,2869.0,2053.5,1836.0,3245.0,2667.0
+held_out_0830,"Ruiru, Kiambu County","South C, Nairobi",3123.0,0.3742,3317.2,2429.3,2140.0,3447.0,2913.0
+held_out_0830,"Ruiru, Kiambu County","Umoja, Nairobi",2299.0,0.5112,2345.1,2435.1,2019.0,2441.0,2833.0
+held_out_0830,"Ruiru, Kiambu County","Upper Hill, Nairobi",2985.0,0.2992,2989.5,1961.9,1736.0,3268.0,2491.0
+held_out_0830,"Ruiru, Kiambu County","Westlands, Nairobi",2464.0,0.317,2516.0,1637.3,1455.0,2723.0,2030.0
+held_out_0830,"Runda, Nairobi","Athi River, Machakos County",3394.0,0.313,3435.2,3072.8,2710.0,3413.0,3869.0
+held_out_0830,"Runda, Nairobi","Buruburu, Nairobi",2327.0,0.3035,2426.5,2105.9,1813.0,2420.0,2778.0
+held_out_0830,"Runda, Nairobi","Dagoretti, Nairobi",2615.0,0.254,2520.7,2351.5,2129.0,2510.0,3005.0
+held_out_0830,"Runda, Nairobi","Donholm, Nairobi",2070.0,0.3615,2152.9,2143.9,1786.0,2123.0,2776.0
+held_out_0830,"Runda, Nairobi","Embakasi, Nairobi",2245.0,0.2791,2267.2,1826.2,1518.0,2249.0,2622.0
+held_out_0830,"Runda, Nairobi","Imara Daima, Nairobi",2197.0,0.25,2222.5,1676.8,1393.0,2209.0,2528.0
+held_out_0830,"Runda, Nairobi","Kahawa, Nairobi",2341.0,0.4198,2379.6,2403.5,2155.0,2371.0,2747.0
+held_out_0830,"Runda, Nairobi","Karen, Nairobi",2832.0,0.3013,2906.9,2749.0,2373.0,2864.0,3621.0
+held_out_0830,"Runda, Nairobi","Kasarani, Nairobi",1473.0,0.3282,1506.6,1519.0,1331.0,1513.0,1904.0
+held_out_0830,"Runda, Nairobi","Kawangware, Nairobi",2262.0,0.281,2126.0,1855.7,1623.0,2117.0,2451.0
+held_out_0830,"Runda, Nairobi","Kayole, Nairobi",2587.0,0.3385,2704.1,2687.5,2367.0,2661.0,3314.0
+held_out_0830,"Runda, Nairobi","Kilimani, Nairobi",2137.0,0.3289,2074.7,1655.5,1304.0,2045.0,2373.0
+held_out_0830,"Runda, Nairobi","Kitengela, Kajiado County",3544.0,0.3012,3652.2,3337.8,2805.0,3627.0,4574.0
+held_out_0830,"Runda, Nairobi","Langata, Nairobi",3186.0,0.2975,3237.7,2641.9,2196.0,3222.0,3695.0
+held_out_0830,"Runda, Nairobi","Lavington, Nairobi",1753.0,0.316,1688.7,1393.3,1143.0,1666.0,1935.0
+held_out_0830,"Runda, Nairobi","Mlolongo, Machakos County",2628.0,0.2507,2665.6,2143.9,1912.0,2661.0,2837.0
+held_out_0830,"Runda, Nairobi","Nairobi CBD, Nairobi",1866.0,0.2694,1939.6,1221.8,999.0,1946.0,1826.0
+held_out_0830,"Runda, Nairobi","Ngara, Nairobi",1537.0,0.2662,1515.5,1042.9,950.0,1525.0,1299.0
+held_out_0830,"Runda, Nairobi","Nyayo Estate, Nairobi",2217.0,0.3299,2345.3,2289.6,1971.0,2308.0,2937.0
+held_out_0830,"Runda, Nairobi","Ongata Rongai, Kajiado County",3913.0,0.3333,3833.4,3405.6,2758.0,3902.0,4701.0
+held_out_0830,"Runda, Nairobi","Roysambu, Nairobi",1142.0,0.3229,1155.3,1213.7,1048.0,1160.0,1561.0
+held_out_0830,"Runda, Nairobi","Ruiru, Kiambu County",2217.0,0.4139,2199.8,2324.4,1956.0,2223.0,2846.0
+held_out_0830,"Runda, Nairobi","South B, Nairobi",2240.0,0.2259,2262.6,1434.9,1245.0,2270.0,2086.0
+held_out_0830,"Runda, Nairobi","South C, Nairobi",2230.0,0.3138,2241.2,1700.5,1430.0,2237.0,2292.0
+held_out_0830,"Runda, Nairobi","Umoja, Nairobi",2409.0,0.3673,2420.0,2487.0,2137.0,2378.0,3090.0
+held_out_0830,"Runda, Nairobi","Upper Hill, Nairobi",2060.0,0.2556,2130.2,1376.5,1151.0,2136.0,2033.0
+held_out_0830,"Runda, Nairobi","Westlands, Nairobi",1467.0,0.2697,1502.9,989.4,836.0,1509.0,1405.0
+held_out_0830,"South B, Nairobi","Athi River, Machakos County",1777.0,0.1787,1805.2,1856.5,1767.0,1799.0,2268.0
+held_out_0830,"South B, Nairobi","Buruburu, Nairobi",1007.0,0.1137,966.2,945.8,869.0,990.0,1545.0
+held_out_0830,"South B, Nairobi","Dagoretti, Nairobi",2208.0,0.0979,2141.9,1839.1,1748.0,2196.0,2678.0
+held_out_0830,"South B, Nairobi","Donholm, Nairobi",1264.0,0.1276,1250.0,1165.6,1042.0,1278.0,2011.0
+held_out_0830,"South B, Nairobi","Embakasi, Nairobi",640.0,0.0546,626.9,645.0,621.0,627.0,1060.0
+held_out_0830,"South B, Nairobi","Imara Daima, Nairobi",592.0,0.0605,560.9,493.7,457.0,560.0,1063.0
+held_out_0830,"South B, Nairobi","Kahawa, Nairobi",2539.0,0.2461,2444.0,2419.2,2101.0,2489.0,3394.0
+held_out_0830,"South B, Nairobi","Karen, Nairobi",1941.0,0.157,1983.6,1858.7,1727.0,1971.0,2566.0
+held_out_0830,"South B, Nairobi","Kasarani, Nairobi",1713.0,0.1759,1590.6,1488.8,1264.0,1688.0,2542.0
+held_out_0830,"South B, Nairobi","Kawangware, Nairobi",1825.0,0.1385,1813.4,1573.9,1449.0,1834.0,2351.0
+held_out_0830,"South B, Nairobi","Kayole, Nairobi",1800.0,0.0828,1696.4,1668.4,1592.0,1693.0,2515.0
+held_out_0830,"South B, Nairobi","Kilimani, Nairobi",1219.0,0.2013,1177.1,971.4,851.0,1160.0,1449.0
+held_out_0830,"South B, Nairobi","Kitengela, Kajiado County",1929.0,0.1748,2037.8,2054.7,1847.0,2045.0,3035.0
+held_out_0830,"South B, Nairobi","Langata, Nairobi",1483.0,0.144,1548.8,1333.8,1257.0,1560.0,1790.0
+held_out_0830,"South B, Nairobi","Lavington, Nairobi",1481.0,0.1912,1493.5,1131.5,990.0,1480.0,1730.0
+held_out_0830,"South B, Nairobi","Mlolongo, Machakos County",1011.0,0.1075,1014.1,999.0,967.0,1017.0,1265.0
+held_out_0830,"South B, Nairobi","Nairobi CBD, Nairobi",549.0,0.1124,520.0,359.2,332.0,519.0,574.0
+held_out_0830,"South B, Nairobi","Ngara, Nairobi",840.0,0.1082,774.5,656.1,608.0,773.0,1053.0
+held_out_0830,"South B, Nairobi","Nyayo Estate, Nairobi",1312.0,0.0879,1286.4,1297.4,1220.0,1286.0,2100.0
+held_out_0830,"South B, Nairobi","Ongata Rongai, Kajiado County",2115.0,0.2062,2116.8,1977.5,1775.0,2212.0,2757.0
+held_out_0830,"South B, Nairobi","Roysambu, Nairobi",1640.0,0.1705,1513.7,1427.6,1209.0,1612.0,2491.0
+held_out_0830,"South B, Nairobi","Ruiru, Kiambu County",2415.0,0.2618,2224.8,2317.9,1903.0,2342.0,3488.0
+held_out_0830,"South B, Nairobi","Runda, Nairobi",1946.0,0.2259,1970.0,1612.9,1383.0,1952.0,2401.0
+held_out_0830,"South B, Nairobi","South C, Nairobi",451.0,0.1733,475.1,463.7,442.0,471.0,567.0
+held_out_0830,"South B, Nairobi","Umoja, Nairobi",1725.0,0.1482,1700.7,1658.2,1525.0,1703.0,2424.0
+held_out_0830,"South B, Nairobi","Upper Hill, Nairobi",643.0,0.0897,584.7,464.5,445.0,583.0,663.0
+held_out_0830,"South B, Nairobi","Westlands, Nairobi",1072.0,0.1119,1032.2,700.7,616.0,1024.0,1373.0
+held_out_0830,"South C, Nairobi","Athi River, Machakos County",2204.0,0.2754,2229.2,2214.9,1989.0,2198.0,2809.0
+held_out_0830,"South C, Nairobi","Buruburu, Nairobi",1417.0,0.2527,1378.0,1295.4,1074.0,1366.0,1950.0
+held_out_0830,"South C, Nairobi","Dagoretti, Nairobi",2399.0,0.2101,2300.7,2092.3,1941.0,2292.0,2661.0
+held_out_0830,"South C, Nairobi","Donholm, Nairobi",1657.0,0.3033,1691.2,1607.9,1247.0,1652.0,2437.0
+held_out_0830,"South C, Nairobi","Embakasi, Nairobi",1075.0,0.2202,1055.1,977.7,806.0,1026.0,1586.0
+held_out_0830,"South C, Nairobi","Imara Daima, Nairobi",1024.0,0.1981,1000.1,857.9,680.0,973.0,1578.0
+held_out_0830,"South C, Nairobi","Kahawa, Nairobi",2640.0,0.3757,2532.3,2641.3,2189.0,2509.0,3393.0
+held_out_0830,"South C, Nairobi","Karen, Nairobi",1992.0,0.261,2159.1,2086.3,1830.0,2118.0,2812.0
+held_out_0830,"South C, Nairobi","Kasarani, Nairobi",1814.0,0.2865,1694.4,1691.7,1351.0,1708.0,2540.0
+held_out_0830,"South C, Nairobi","Kawangware, Nairobi",2017.0,0.2409,1891.7,1741.0,1622.0,1885.0,2116.0
+held_out_0830,"South C, Nairobi","Kayole, Nairobi",2197.0,0.2751,2206.1,2124.7,1813.0,2150.0,2946.0
+held_out_0830,"South C, Nairobi","Kilimani, Nairobi",1426.0,0.2931,1433.1,1079.8,937.0,1434.0,1424.0
+held_out_0830,"South C, Nairobi","Kitengela, Kajiado County",2356.0,0.2654,2476.0,2466.7,2070.0,2444.0,3565.0
+held_out_0830,"South C, Nairobi","Langata, Nairobi",1417.0,0.255,1554.0,1410.6,1278.0,1545.0,1798.0
+held_out_0830,"South C, Nairobi","Lavington, Nairobi",1640.0,0.2808,1542.2,1254.6,1076.0,1526.0,1712.0
+held_out_0830,"South C, Nairobi","Mlolongo, Machakos County",1445.0,0.2099,1431.3,1313.8,1187.0,1421.0,1791.0
+held_out_0830,"South C, Nairobi","Nairobi CBD, Nairobi",852.0,0.2256,784.6,517.4,417.0,780.0,862.0
+held_out_0830,"South C, Nairobi","Ngara, Nairobi",1250.0,0.2221,1162.7,962.7,821.0,1149.0,1459.0
+held_out_0830,"South C, Nairobi","Nyayo Estate, Nairobi",1744.0,0.2689,1748.8,1742.8,1405.0,1687.0,2661.0
+held_out_0830,"South C, Nairobi","Ongata Rongai, Kajiado County",2052.0,0.2977,2171.2,2086.3,1799.0,2198.0,2764.0
+held_out_0830,"South C, Nairobi","Roysambu, Nairobi",1741.0,0.2811,1616.2,1631.4,1296.0,1632.0,2489.0
+held_out_0830,"South C, Nairobi","Ruiru, Kiambu County",2517.0,0.3742,2325.0,2550.2,1990.0,2362.0,3487.0
+held_out_0830,"South C, Nairobi","Runda, Nairobi",1977.0,0.3138,1943.7,1721.8,1445.0,1912.0,2327.0
+held_out_0830,"South C, Nairobi","South B, Nairobi",486.0,0.1733,507.4,452.4,420.0,503.0,607.0
+held_out_0830,"South C, Nairobi","Umoja, Nairobi",2140.0,0.3122,2127.3,2100.2,1743.0,2076.0,2887.0
+held_out_0830,"South C, Nairobi","Upper Hill, Nairobi",935.0,0.2094,871.4,616.3,530.0,867.0,942.0
+held_out_0830,"South C, Nairobi","Westlands, Nairobi",1048.0,0.2256,952.6,805.8,702.0,939.0,1162.0
+held_out_0830,"Umoja, Nairobi","Athi River, Machakos County",3112.0,0.311,3193.9,2856.6,2600.0,3190.0,3425.0
+held_out_0830,"Umoja, Nairobi","Buruburu, Nairobi",1502.0,0.2905,1409.6,1350.9,1226.0,1440.0,1656.0
+held_out_0830,"Umoja, Nairobi","Dagoretti, Nairobi",4150.0,0.211,3931.9,3290.1,3039.0,4024.0,4229.0
+held_out_0830,"Umoja, Nairobi","Donholm, Nairobi",1022.0,0.4403,994.9,1064.6,962.0,998.0,1195.0
+held_out_0830,"Umoja, Nairobi","Embakasi, Nairobi",1952.0,0.2324,2048.8,1603.8,1383.0,2070.0,2333.0
+held_out_0830,"Umoja, Nairobi","Imara Daima, Nairobi",2088.0,0.1903,2312.1,1647.8,1475.0,2321.0,2383.0
+held_out_0830,"Umoja, Nairobi","Kahawa, Nairobi",2455.0,0.5497,2479.4,2721.0,2235.0,2506.0,3119.0
+held_out_0830,"Umoja, Nairobi","Karen, Nairobi",3673.0,0.291,3710.8,3334.1,3032.0,3700.0,4070.0
+held_out_0830,"Umoja, Nairobi","Kasarani, Nairobi",1629.0,0.3376,1645.9,1691.1,1395.0,1704.0,2272.0
+held_out_0830,"Umoja, Nairobi","Kawangware, Nairobi",3753.0,0.2583,3750.4,2883.1,2513.0,3816.0,3946.0
+held_out_0830,"Umoja, Nairobi","Kayole, Nairobi",609.0,0.381,602.9,620.1,590.0,603.0,669.0
+held_out_0830,"Umoja, Nairobi","Kilimani, Nairobi",3123.0,0.3367,3171.1,2297.7,1928.0,3185.0,3026.0
+held_out_0830,"Umoja, Nairobi","Kitengela, Kajiado County",3263.0,0.2925,3391.8,3118.6,2695.0,3419.0,4143.0
+held_out_0830,"Umoja, Nairobi","Langata, Nairobi",3225.0,0.2836,3262.7,2810.2,2606.0,3289.0,3326.0
+held_out_0830,"Umoja, Nairobi","Lavington, Nairobi",3184.0,0.3159,3376.7,2330.1,1947.0,3395.0,3160.0
+held_out_0830,"Umoja, Nairobi","Mlolongo, Machakos County",2450.0,0.2107,2497.1,1984.1,1805.0,2536.0,2655.0
+held_out_0830,"Umoja, Nairobi","Nairobi CBD, Nairobi",2502.0,0.2358,2489.1,1762.3,1586.0,2493.0,2334.0
+held_out_0830,"Umoja, Nairobi","Ngara, Nairobi",2261.0,0.2302,2411.5,1562.9,1417.0,2413.0,2051.0
+held_out_0830,"Umoja, Nairobi","Nyayo Estate, Nairobi",1361.0,0.3526,1361.2,1368.6,1230.0,1364.0,1623.0
+held_out_0830,"Umoja, Nairobi","Ongata Rongai, Kajiado County",3849.0,0.3439,3792.3,3571.3,3183.0,3933.0,4312.0
+held_out_0830,"Umoja, Nairobi","Roysambu, Nairobi",1556.0,0.3282,1571.1,1630.5,1342.0,1628.0,2221.0
+held_out_0830,"Umoja, Nairobi","Ruiru, Kiambu County",2330.0,0.5112,2284.8,2641.3,2036.0,2358.0,3220.0
+held_out_0830,"Umoja, Nairobi","Runda, Nairobi",2443.0,0.3673,2580.0,2302.1,2020.0,2567.0,2788.0
+held_out_0830,"Umoja, Nairobi","South B, Nairobi",2190.0,0.1482,2211.0,1669.7,1602.0,2219.0,2059.0
+held_out_0830,"Umoja, Nairobi","South C, Nairobi",2500.0,0.3122,2568.2,2017.1,1846.0,2580.0,2394.0
+held_out_0830,"Umoja, Nairobi","Upper Hill, Nairobi",2544.0,0.2099,2603.0,1877.8,1739.0,2609.0,2400.0
+held_out_0830,"Umoja, Nairobi","Westlands, Nairobi",2453.0,0.236,2597.4,1637.8,1457.0,2610.0,2223.0
+held_out_0830,"Upper Hill, Nairobi","Athi River, Machakos County",2128.0,0.2129,2134.9,2146.4,1997.0,2117.0,2699.0
+held_out_0830,"Upper Hill, Nairobi","Buruburu, Nairobi",1363.0,0.1662,1295.8,1220.0,1094.0,1302.0,1852.0
+held_out_0830,"Upper Hill, Nairobi","Dagoretti, Nairobi",1731.0,0.14,1731.7,1504.5,1390.0,1730.0,2208.0
+held_out_0830,"Upper Hill, Nairobi","Donholm, Nairobi",1614.0,0.1949,1599.5,1475.0,1266.0,1589.0,2338.0
+held_out_0830,"Upper Hill, Nairobi","Embakasi, Nairobi",998.0,0.12,958.3,942.9,868.0,945.0,1492.0
+held_out_0830,"Upper Hill, Nairobi","Imara Daima, Nairobi",983.0,0.1139,955.1,798.8,704.0,942.0,1537.0
+held_out_0830,"Upper Hill, Nairobi","Kahawa, Nairobi",2294.0,0.2904,2201.5,2337.1,1995.0,2206.0,3173.0
+held_out_0830,"Upper Hill, Nairobi","Karen, Nairobi",1851.0,0.1945,1939.4,1767.6,1549.0,1910.0,2673.0
+held_out_0830,"Upper Hill, Nairobi","Kasarani, Nairobi",1474.0,0.2154,1373.7,1407.9,1157.0,1405.0,2322.0
+held_out_0830,"Upper Hill, Nairobi","Kawangware, Nairobi",1348.0,0.1758,1382.7,1231.1,1091.0,1378.0,1888.0
+held_out_0830,"Upper Hill, Nairobi","Kayole, Nairobi",2143.0,0.159,2119.6,1992.9,1832.0,2093.0,2844.0
+held_out_0830,"Upper Hill, Nairobi","Kilimani, Nairobi",741.0,0.2331,718.9,583.9,486.0,704.0,906.0
+held_out_0830,"Upper Hill, Nairobi","Kitengela, Kajiado County",2279.0,0.2068,2373.6,2366.0,2077.0,2363.0,3475.0
+held_out_0830,"Upper Hill, Nairobi","Langata, Nairobi",1468.0,0.1845,1507.6,1391.1,1273.0,1502.0,1913.0
+held_out_0830,"Upper Hill, Nairobi","Lavington, Nairobi",1022.0,0.2224,1082.0,841.4,726.0,1070.0,1245.0
+held_out_0830,"Upper Hill, Nairobi","Mlolongo, Machakos County",1365.0,0.1455,1337.5,1268.9,1195.0,1334.0,1703.0
+held_out_0830,"Upper Hill, Nairobi","Nairobi CBD, Nairobi",343.0,0.1545,316.8,253.6,233.0,315.0,366.0
+held_out_0830,"Upper Hill, Nairobi","Ngara, Nairobi",848.0,0.1507,824.4,686.1,637.0,821.0,963.0
+held_out_0830,"Upper Hill, Nairobi","Nyayo Estate, Nairobi",1660.0,0.159,1631.1,1595.1,1412.0,1602.0,2564.0
+held_out_0830,"Upper Hill, Nairobi","Ongata Rongai, Kajiado County",2101.0,0.2377,2104.1,2089.2,1793.0,2155.0,3039.0
+held_out_0830,"Upper Hill, Nairobi","Roysambu, Nairobi",1399.0,0.2101,1302.2,1348.2,1103.0,1334.0,2270.0
+held_out_0830,"Upper Hill, Nairobi","Ruiru, Kiambu County",2170.0,0.2992,2011.7,2240.6,1799.0,2059.0,3275.0
+held_out_0830,"Upper Hill, Nairobi","Runda, Nairobi",1713.0,0.2556,1759.9,1518.6,1275.0,1732.0,2228.0
+held_out_0830,"Upper Hill, Nairobi","South B, Nairobi",607.0,0.0897,579.9,469.4,445.0,577.0,717.0
+held_out_0830,"Upper Hill, Nairobi","South C, Nairobi",939.0,0.2094,923.1,835.3,752.0,909.0,1150.0
+held_out_0830,"Upper Hill, Nairobi","Umoja, Nairobi",2087.0,0.2099,2035.3,1983.3,1770.0,2013.0,2786.0
+held_out_0830,"Upper Hill, Nairobi","Westlands, Nairobi",825.0,0.1543,760.2,610.8,509.0,743.0,1169.0
+held_out_0830,"Westlands, Nairobi","Athi River, Machakos County",2180.0,0.2284,2169.8,2188.3,2022.0,2150.0,2750.0
+held_out_0830,"Westlands, Nairobi","Buruburu, Nairobi",1704.0,0.1885,1627.7,1402.9,1205.0,1633.0,2255.0
+held_out_0830,"Westlands, Nairobi","Dagoretti, Nairobi",2103.0,0.1581,1999.5,1840.9,1704.0,1996.0,2570.0
+held_out_0830,"Westlands, Nairobi","Donholm, Nairobi",1476.0,0.2228,1566.0,1521.0,1275.0,1551.0,2379.0
+held_out_0830,"Westlands, Nairobi","Embakasi, Nairobi",1050.0,0.1465,992.6,942.6,839.0,977.0,1546.0
+held_out_0830,"Westlands, Nairobi","Imara Daima, Nairobi",1009.0,0.1361,945.4,830.6,717.0,930.0,1552.0
+held_out_0830,"Westlands, Nairobi","Kahawa, Nairobi",1812.0,0.3109,1797.5,1970.2,1747.0,1798.0,2465.0
+held_out_0830,"Westlands, Nairobi","Karen, Nairobi",2438.0,0.2112,2478.8,2177.1,1915.0,2450.0,3156.0
+held_out_0830,"Westlands, Nairobi","Kasarani, Nairobi",995.0,0.2331,980.4,1076.6,909.0,989.0,1628.0
+held_out_0830,"Westlands, Nairobi","Kawangware, Nairobi",1662.0,0.1923,1584.6,1368.2,1224.0,1580.0,1974.0
+held_out_0830,"Westlands, Nairobi","Kayole, Nairobi",1964.0,0.1895,2010.7,2042.4,1851.0,1976.0,2861.0
+held_out_0830,"Westlands, Nairobi","Kilimani, Nairobi",1012.0,0.2478,977.1,768.5,631.0,960.0,1186.0
+held_out_0830,"Westlands, Nairobi","Kitengela, Kajiado County",2332.0,0.2213,2410.2,2416.7,2102.0,2397.0,3524.0
+held_out_0830,"Westlands, Nairobi","Langata, Nairobi",1947.0,0.2023,1936.7,1662.6,1505.0,1931.0,2284.0
+held_out_0830,"Westlands, Nairobi","Lavington, Nairobi",1000.0,0.2368,1015.4,777.0,648.0,1002.0,1193.0
+held_out_0830,"Westlands, Nairobi","Mlolongo, Machakos County",1419.0,0.1621,1371.5,1306.9,1221.0,1367.0,1751.0
+held_out_0830,"Westlands, Nairobi","Nairobi CBD, Nairobi",722.0,0.1728,633.5,400.1,317.0,627.0,798.0
+held_out_0830,"Westlands, Nairobi","Ngara, Nairobi",674.0,0.1691,595.7,579.2,532.0,590.0,811.0
+held_out_0830,"Westlands, Nairobi","Nyayo Estate, Nairobi",1605.0,0.1878,1663.2,1636.5,1438.0,1634.0,2495.0
+held_out_0830,"Westlands, Nairobi","Ongata Rongai, Kajiado County",2575.0,0.2524,2513.2,2346.7,2039.0,2581.0,3258.0
+held_out_0830,"Westlands, Nairobi","Roysambu, Nairobi",918.0,0.2279,913.2,1019.5,855.0,921.0,1577.0
+held_out_0830,"Westlands, Nairobi","Ruiru, Kiambu County",1681.0,0.317,1634.8,1873.1,1552.0,1651.0,2565.0
+held_out_0830,"Westlands, Nairobi","Runda, Nairobi",1143.0,0.2697,1196.3,1084.3,922.0,1176.0,1524.0
+held_out_0830,"Westlands, Nairobi","South B, Nairobi",962.0,0.1119,882.8,628.8,561.0,876.0,1167.0
+held_out_0830,"Westlands, Nairobi","South C, Nairobi",1040.0,0.2256,974.2,863.1,758.0,958.0,1224.0
+held_out_0830,"Westlands, Nairobi","Umoja, Nairobi",1782.0,0.236,1814.9,1849.7,1605.0,1787.0,2642.0
+held_out_0830,"Westlands, Nairobi","Upper Hill, Nairobi",916.0,0.1543,833.5,555.1,472.0,826.0,1011.0
+held_out_1230,"Athi River, Machakos County","Buruburu, Nairobi",2866.0,0.223,2831.5,2515.1,2271.0,2940.0,3366.0
+held_out_1230,"Athi River, Machakos County","Dagoretti, Nairobi",4002.0,0.2479,4052.9,3621.8,3387.0,4041.0,4334.0
+held_out_1230,"Athi River, Machakos County","Donholm, Nairobi",2692.0,0.3059,2761.0,2503.2,2100.0,2757.0,3418.0
+held_out_1230,"Athi River, Machakos County","Embakasi, Nairobi",1899.0,0.2171,2013.5,1707.9,1496.0,2011.0,2472.0
+held_out_1230,"Athi River, Machakos County","Imara Daima, Nairobi",2001.0,0.2076,2123.6,1743.4,1548.0,2116.0,2489.0
+held_out_1230,"Athi River, Machakos County","Kahawa, Nairobi",4176.0,0.4006,4167.7,4170.7,3498.0,4140.0,5177.0
+held_out_1230,"Athi River, Machakos County","Karen, Nairobi",3594.0,0.2644,3731.9,3345.3,3064.0,3718.0,4128.0
+held_out_1230,"Athi River, Machakos County","Kasarani, Nairobi",3321.0,0.2529,3217.6,3084.2,2670.0,3364.0,4308.0
+held_out_1230,"Athi River, Machakos County","Kawangware, Nairobi",3571.0,0.2759,3961.6,3261.0,3061.0,3970.0,3786.0
+held_out_1230,"Athi River, Machakos County","Kayole, Nairobi",2997.0,0.289,3116.6,3028.7,2537.0,3070.0,4238.0
+held_out_1230,"Athi River, Machakos County","Kilimani, Nairobi",2935.0,0.3025,3335.3,2610.3,2436.0,3363.0,3012.0
+held_out_1230,"Athi River, Machakos County","Kitengela, Kajiado County",873.0,0.2555,832.9,860.3,684.0,838.0,1374.0
+held_out_1230,"Athi River, Machakos County","Langata, Nairobi",3130.0,0.2605,3306.8,2833.3,2640.0,3306.0,3382.0
+held_out_1230,"Athi River, Machakos County","Lavington, Nairobi",3135.0,0.3116,3565.9,2754.4,2492.0,3592.0,3334.0
+held_out_1230,"Athi River, Machakos County","Mlolongo, Machakos County",1634.0,0.2213,1782.7,1363.5,1271.0,1784.0,1689.0
+held_out_1230,"Athi River, Machakos County","Nairobi CBD, Nairobi",2481.0,0.2697,2824.7,2117.0,1916.0,2839.0,2661.0
+held_out_1230,"Athi River, Machakos County","Ngara, Nairobi",3062.0,0.2873,3241.9,2599.3,2333.0,3240.0,3260.0
+held_out_1230,"Athi River, Machakos County","Nyayo Estate, Nairobi",2543.0,0.2707,2686.2,2463.3,2103.0,2672.0,3434.0
+held_out_1230,"Athi River, Machakos County","Ongata Rongai, Kajiado County",3784.0,0.2906,3847.0,3552.1,3215.0,3950.0,4375.0
+held_out_1230,"Athi River, Machakos County","Roysambu, Nairobi",3274.0,0.2506,3121.6,3024.5,2611.0,3258.0,4261.0
+held_out_1230,"Athi River, Machakos County","Ruiru, Kiambu County",4089.0,0.3419,3854.2,3951.4,3295.0,4007.0,5215.0
+held_out_1230,"Athi River, Machakos County","Runda, Nairobi",3462.0,0.2942,3902.8,3191.0,2915.0,3904.0,3853.0
+held_out_1230,"Athi River, Machakos County","South B, Nairobi",2383.0,0.2076,2638.2,2047.6,1918.0,2643.0,2542.0
+held_out_1230,"Athi River, Machakos County","South C, Nairobi",2265.0,0.2781,2457.9,2012.0,1881.0,2464.0,2352.0
+held_out_1230,"Athi River, Machakos County","Umoja, Nairobi",3214.0,0.3223,3234.0,3097.8,2666.0,3208.0,4006.0
+held_out_1230,"Athi River, Machakos County","Upper Hill, Nairobi",2535.0,0.2363,2933.7,2154.8,2018.0,2955.0,2597.0
+held_out_1230,"Athi River, Machakos County","Westlands, Nairobi",2606.0,0.2952,2964.0,2303.5,2106.0,2989.0,2775.0
+held_out_1230,"Buruburu, Nairobi","Athi River, Machakos County",2576.0,0.223,2672.0,2366.1,2202.0,2763.0,2938.0
+held_out_1230,"Buruburu, Nairobi","Dagoretti, Nairobi",3096.0,0.1847,3059.1,2567.9,2422.0,3146.0,3212.0
+held_out_1230,"Buruburu, Nairobi","Donholm, Nairobi",705.0,0.2194,702.4,698.2,628.0,745.0,948.0
+held_out_1230,"Buruburu, Nairobi","Embakasi, Nairobi",1208.0,0.1012,1321.8,1093.1,994.0,1647.0,1973.0
+held_out_1230,"Buruburu, Nairobi","Imara Daima, Nairobi",1323.0,0.1133,1306.9,1090.2,1046.0,1446.0,1436.0
+held_out_1230,"Buruburu, Nairobi","Kahawa, Nairobi",2173.0,0.3802,2082.8,2279.3,1979.0,2105.0,2769.0
+held_out_1230,"Buruburu, Nairobi","Karen, Nairobi",2720.0,0.2068,2770.3,2481.6,2311.0,2844.0,3136.0
+held_out_1230,"Buruburu, Nairobi","Kasarani, Nairobi",1323.0,0.1843,1223.8,1285.7,1141.0,1299.0,1926.0
+held_out_1230,"Buruburu, Nairobi","Kawangware, Nairobi",2745.0,0.2247,2878.9,2329.9,2118.0,2942.0,3061.0
+held_out_1230,"Buruburu, Nairobi","Kayole, Nairobi",1218.0,0.1859,1223.0,1200.0,1145.0,1261.0,1441.0
+held_out_1230,"Buruburu, Nairobi","Kilimani, Nairobi",2018.0,0.2611,2298.8,1695.5,1519.0,2301.0,2195.0
+held_out_1230,"Buruburu, Nairobi","Kitengela, Kajiado County",2807.0,0.2032,2805.9,2570.2,2282.0,2985.0,3700.0
+held_out_1230,"Buruburu, Nairobi","Langata, Nairobi",2261.0,0.1979,2320.5,2020.5,1932.0,2439.0,2379.0
+held_out_1230,"Buruburu, Nairobi","Lavington, Nairobi",2250.0,0.2747,2566.9,1912.5,1665.0,2567.0,2566.0
+held_out_1230,"Buruburu, Nairobi","Mlolongo, Machakos County",1901.0,0.1562,1874.4,1501.2,1408.0,2016.0,2005.0
+held_out_1230,"Buruburu, Nairobi","Nairobi CBD, Nairobi",1355.0,0.2118,1614.8,1077.8,1003.0,1620.0,1356.0
+held_out_1230,"Buruburu, Nairobi","Ngara, Nairobi",1392.0,0.2352,1529.2,1080.9,995.0,1536.0,1360.0
+held_out_1230,"Buruburu, Nairobi","Nyayo Estate, Nairobi",898.0,0.1644,877.2,893.0,842.0,900.0,1152.0
+held_out_1230,"Buruburu, Nairobi","Ongata Rongai, Kajiado County",2906.0,0.2454,2876.1,2692.9,2476.0,3078.0,3360.0
+held_out_1230,"Buruburu, Nairobi","Roysambu, Nairobi",1269.0,0.1819,1162.3,1230.3,1087.0,1231.0,1875.0
+held_out_1230,"Buruburu, Nairobi","Ruiru, Kiambu County",2096.0,0.2989,1881.8,2107.3,1783.0,1956.0,2868.0
+held_out_1230,"Buruburu, Nairobi","Runda, Nairobi",1967.0,0.2508,2108.1,1944.0,1776.0,2161.0,2446.0
+held_out_1230,"Buruburu, Nairobi","South B, Nairobi",1120.0,0.1167,1265.2,929.0,910.0,1341.0,1073.0
+held_out_1230,"Buruburu, Nairobi","South C, Nairobi",1535.0,0.2253,1731.5,1280.8,1222.0,1758.0,1483.0
+held_out_1230,"Buruburu, Nairobi","Umoja, Nairobi",1189.0,0.2512,1158.3,1182.3,1119.0,1172.0,1371.0
+held_out_1230,"Buruburu, Nairobi","Upper Hill, Nairobi",1407.0,0.1643,1701.5,1160.9,1107.0,1727.0,1435.0
+held_out_1230,"Buruburu, Nairobi","Westlands, Nairobi",1474.0,0.2457,2117.0,1358.5,1201.0,2137.0,1842.0
+held_out_1230,"Dagoretti, Nairobi","Athi River, Machakos County",3641.0,0.2479,3562.3,3471.8,3245.0,3537.0,4160.0
+held_out_1230,"Dagoretti, Nairobi","Buruburu, Nairobi",3012.0,0.1847,3089.8,2566.0,2348.0,3191.0,3528.0
+held_out_1230,"Dagoretti, Nairobi","Donholm, Nairobi",3249.0,0.2633,3477.4,2932.4,2548.0,3455.0,4008.0
+held_out_1230,"Dagoretti, Nairobi","Embakasi, Nairobi",2427.0,0.1741,2395.9,2259.0,2123.0,2379.0,2904.0
+held_out_1230,"Dagoretti, Nairobi","Imara Daima, Nairobi",2277.0,0.1712,2314.3,2091.6,1955.0,2295.0,2753.0
+held_out_1230,"Dagoretti, Nairobi","Kahawa, Nairobi",3645.0,0.3705,3781.6,3613.3,3079.0,3734.0,4521.0
+held_out_1230,"Dagoretti, Nairobi","Karen, Nairobi",1927.0,0.2363,2066.0,1899.5,1706.0,2040.0,2525.0
+held_out_1230,"Dagoretti, Nairobi","Kasarani, Nairobi",2797.0,0.2216,2788.7,2554.1,2236.0,2922.0,3671.0
+held_out_1230,"Dagoretti, Nairobi","Kawangware, Nairobi",825.0,0.2494,876.5,792.4,743.0,872.0,941.0
+held_out_1230,"Dagoretti, Nairobi","Kayole, Nairobi",3520.0,0.2434,3557.3,3489.0,3111.0,3470.0,4664.0
+held_out_1230,"Dagoretti, Nairobi","Kilimani, Nairobi",1529.0,0.278,1656.7,1338.9,1196.0,1651.0,1710.0
+held_out_1230,"Dagoretti, Nairobi","Kitengela, Kajiado County",3866.0,0.2301,3756.6,3705.3,3359.0,3749.0,4864.0
+held_out_1230,"Dagoretti, Nairobi","Langata, Nairobi",2331.0,0.2308,2402.0,2136.4,2003.0,2396.0,2581.0
+held_out_1230,"Dagoretti, Nairobi","Lavington, Nairobi",1258.0,0.2885,1417.9,1209.5,1101.0,1410.0,1477.0
+held_out_1230,"Dagoretti, Nairobi","Mlolongo, Machakos County",2855.0,0.1933,2797.0,2623.3,2500.0,2786.0,3138.0
+held_out_1230,"Dagoretti, Nairobi","Nairobi CBD, Nairobi",1954.0,0.2411,2104.1,1598.6,1432.0,2102.0,2123.0
+held_out_1230,"Dagoretti, Nairobi","Ngara, Nairobi",2553.0,0.2595,2625.7,2077.6,1851.0,2613.0,2724.0
+held_out_1230,"Dagoretti, Nairobi","Nyayo Estate, Nairobi",3080.0,0.2261,3086.9,3003.6,2716.0,3039.0,3988.0
+held_out_1230,"Dagoretti, Nairobi","Ongata Rongai, Kajiado County",3022.0,0.2655,3032.6,2864.6,2588.0,3090.0,3630.0
+held_out_1230,"Dagoretti, Nairobi","Roysambu, Nairobi",2743.0,0.2195,2722.9,2502.2,2187.0,2852.0,3623.0
+held_out_1230,"Dagoretti, Nairobi","Ruiru, Kiambu County",3558.0,0.3116,3447.6,3405.8,2877.0,3592.0,4574.0
+held_out_1230,"Dagoretti, Nairobi","Runda, Nairobi",2456.0,0.2696,2753.5,2326.0,2147.0,2751.0,2811.0
+held_out_1230,"Dagoretti, Nairobi","South B, Nairobi",2192.0,0.1722,2443.2,1853.7,1691.0,2429.0,2636.0
+held_out_1230,"Dagoretti, Nairobi","South C, Nairobi",2349.0,0.2508,2482.2,2107.2,1960.0,2477.0,2547.0
+held_out_1230,"Dagoretti, Nairobi","Umoja, Nairobi",3567.0,0.2828,3757.9,3418.0,3064.0,3719.0,4316.0
+held_out_1230,"Dagoretti, Nairobi","Upper Hill, Nairobi",1768.0,0.2051,1914.4,1456.3,1337.0,1914.0,1919.0
+held_out_1230,"Dagoretti, Nairobi","Westlands, Nairobi",1997.0,0.2678,2180.5,1750.5,1585.0,2177.0,2203.0
+held_out_1230,"Donholm, Nairobi","Athi River, Machakos County",2464.0,0.3059,2740.2,2269.2,2048.0,2740.0,2771.0
+held_out_1230,"Donholm, Nairobi","Buruburu, Nairobi",847.0,0.2194,890.3,767.6,709.0,994.0,976.0
+held_out_1230,"Donholm, Nairobi","Dagoretti, Nairobi",3350.0,0.2633,3397.6,2878.3,2586.0,3385.0,3696.0
+held_out_1230,"Donholm, Nairobi","Embakasi, Nairobi",1097.0,0.2047,1495.6,1017.7,847.0,1605.0,1681.0
+held_out_1230,"Donholm, Nairobi","Imara Daima, Nairobi",1242.0,0.19,1675.2,1218.4,1059.0,1675.0,1898.0
+held_out_1230,"Donholm, Nairobi","Kahawa, Nairobi",2279.0,0.6348,2383.6,2588.1,1992.0,2387.0,2931.0
+held_out_1230,"Donholm, Nairobi","Karen, Nairobi",2986.0,0.2914,3082.9,2693.4,2323.0,3068.0,3594.0
+held_out_1230,"Donholm, Nairobi","Kasarani, Nairobi",1429.0,0.2747,1433.5,1410.8,1154.0,1586.0,2089.0
+held_out_1230,"Donholm, Nairobi","Kawangware, Nairobi",2994.0,0.3089,3381.4,2625.6,2276.0,3380.0,3408.0
+held_out_1230,"Donholm, Nairobi","Kayole, Nairobi",787.0,0.4237,781.6,807.6,722.0,776.0,924.0
+held_out_1230,"Donholm, Nairobi","Kilimani, Nairobi",2269.0,0.351,2723.0,1984.3,1694.0,2747.0,2521.0
+held_out_1230,"Donholm, Nairobi","Kitengela, Kajiado County",2696.0,0.2727,2871.2,2515.5,2129.0,2962.0,3546.0
+held_out_1230,"Donholm, Nairobi","Langata, Nairobi",2517.0,0.2868,2624.1,2186.4,1916.0,2650.0,2859.0
+held_out_1230,"Donholm, Nairobi","Lavington, Nairobi",2359.0,0.3628,2972.1,2089.2,1701.0,3005.0,2771.0
+held_out_1230,"Donholm, Nairobi","Mlolongo, Machakos County",1788.0,0.2181,2066.3,1423.6,1260.0,2079.0,2010.0
+held_out_1230,"Donholm, Nairobi","Nairobi CBD, Nairobi",1615.0,0.302,2020.4,1333.1,1173.0,2060.0,1703.0
+held_out_1230,"Donholm, Nairobi","Ngara, Nairobi",1516.0,0.3328,1949.4,1347.0,1164.0,1987.0,1714.0
+held_out_1230,"Donholm, Nairobi","Nyayo Estate, Nairobi",801.0,0.3523,876.4,800.9,698.0,887.0,990.0
+held_out_1230,"Donholm, Nairobi","Ongata Rongai, Kajiado County",3164.0,0.3318,3107.2,2918.5,2459.0,3300.0,3844.0
+held_out_1230,"Donholm, Nairobi","Roysambu, Nairobi",1375.0,0.2703,1365.1,1353.6,1100.0,1510.0,2038.0
+held_out_1230,"Donholm, Nairobi","Ruiru, Kiambu County",2201.0,0.4632,2093.8,2374.5,1796.0,2239.0,3045.0
+held_out_1230,"Donholm, Nairobi","Runda, Nairobi",2072.0,0.3369,2451.4,2011.2,1707.0,2450.0,2610.0
+held_out_1230,"Donholm, Nairobi","South B, Nairobi",1377.0,0.1909,1667.5,1147.0,1080.0,1681.0,1431.0
+held_out_1230,"Donholm, Nairobi","South C, Nairobi",1598.0,0.3145,1963.7,1399.1,1234.0,1978.0,1759.0
+held_out_1230,"Donholm, Nairobi","Umoja, Nairobi",1023.0,0.4874,993.0,1053.3,929.0,991.0,1184.0
+held_out_1230,"Donholm, Nairobi","Upper Hill, Nairobi",1662.0,0.2441,2138.5,1397.6,1277.0,2168.0,1771.0
+held_out_1230,"Donholm, Nairobi","Westlands, Nairobi",1582.0,0.3469,2401.4,1498.8,1214.0,2479.0,2035.0
+held_out_1230,"Embakasi, Nairobi","Athi River, Machakos County",1964.0,0.2171,2203.5,1792.4,1655.0,2203.0,2288.0
+held_out_1230,"Embakasi, Nairobi","Buruburu, Nairobi",1284.0,0.1012,1268.6,1050.9,996.0,1539.0,1539.0
+held_out_1230,"Embakasi, Nairobi","Dagoretti, Nairobi",2854.0,0.1741,3147.6,2575.6,2426.0,3143.0,3285.0
+held_out_1230,"Embakasi, Nairobi","Donholm, Nairobi",1043.0,0.2047,990.6,949.3,822.0,1019.0,1444.0
+held_out_1230,"Embakasi, Nairobi","Imara Daima, Nairobi",762.0,0.0896,1205.2,615.3,545.0,1205.0,1330.0
+held_out_1230,"Embakasi, Nairobi","Kahawa, Nairobi",2617.0,0.3994,2726.8,2655.0,2218.0,2731.0,3312.0
+held_out_1230,"Embakasi, Nairobi","Karen, Nairobi",2449.0,0.1987,2845.1,2285.9,2082.0,2839.0,3108.0
+held_out_1230,"Embakasi, Nairobi","Kasarani, Nairobi",1769.0,0.1724,1696.1,1565.0,1378.0,1929.0,2463.0
+held_out_1230,"Embakasi, Nairobi","Kawangware, Nairobi",2435.0,0.2189,2951.1,2251.1,2116.0,2960.0,2733.0
+held_out_1230,"Embakasi, Nairobi","Kayole, Nairobi",1099.0,0.1611,1137.5,1112.2,996.0,1126.0,1717.0
+held_out_1230,"Embakasi, Nairobi","Kilimani, Nairobi",1791.0,0.2593,2346.1,1605.5,1472.0,2379.0,1987.0
+held_out_1230,"Embakasi, Nairobi","Kitengela, Kajiado County",2187.0,0.196,2356.9,1993.7,1735.0,2449.0,3055.0
+held_out_1230,"Embakasi, Nairobi","Langata, Nairobi",1987.0,0.1882,2403.4,1798.5,1672.0,2436.0,2344.0
+held_out_1230,"Embakasi, Nairobi","Lavington, Nairobi",2008.0,0.2744,2576.6,1809.9,1625.0,2612.0,2299.0
+held_out_1230,"Embakasi, Nairobi","Mlolongo, Machakos County",1195.0,0.1438,1416.5,930.5,871.0,1426.0,1285.0
+held_out_1230,"Embakasi, Nairobi","Nairobi CBD, Nairobi",1346.0,0.204,1837.8,1084.5,957.0,1862.0,1582.0
+held_out_1230,"Embakasi, Nairobi","Ngara, Nairobi",1839.0,0.2302,2219.2,1548.8,1358.0,2223.0,2187.0
+held_out_1230,"Embakasi, Nairobi","Nyayo Estate, Nairobi",645.0,0.1371,649.7,640.3,597.0,655.0,913.0
+held_out_1230,"Embakasi, Nairobi","Ongata Rongai, Kajiado County",2635.0,0.2419,2847.6,2479.3,2210.0,3074.0,3323.0
+held_out_1230,"Embakasi, Nairobi","Roysambu, Nairobi",1712.0,0.1697,1629.4,1508.9,1325.0,1853.0,2409.0
+held_out_1230,"Embakasi, Nairobi","Ruiru, Kiambu County",2538.0,0.302,2381.2,2438.8,2019.0,2600.0,3409.0
+held_out_1230,"Embakasi, Nairobi","Runda, Nairobi",2324.0,0.248,2804.5,2218.0,2002.0,2804.0,2873.0
+held_out_1230,"Embakasi, Nairobi","South B, Nairobi",1232.0,0.0945,1646.4,1007.3,959.0,1654.0,1470.0
+held_out_1230,"Embakasi, Nairobi","South C, Nairobi",1123.0,0.2193,1515.8,1007.0,928.0,1528.0,1288.0
+held_out_1230,"Embakasi, Nairobi","Umoja, Nairobi",1591.0,0.2449,1567.7,1504.4,1357.0,1565.0,1959.0
+held_out_1230,"Embakasi, Nairobi","Upper Hill, Nairobi",1398.0,0.1504,1944.6,1134.9,1062.0,1969.0,1547.0
+held_out_1230,"Embakasi, Nairobi","Westlands, Nairobi",1455.0,0.2418,1973.5,1289.9,1148.0,2011.0,1735.0
+held_out_1230,"Imara Daima, Nairobi","Athi River, Machakos County",1722.0,0.2076,1509.9,1532.1,1425.0,1501.0,1941.0
+held_out_1230,"Imara Daima, Nairobi","Buruburu, Nairobi",1214.0,0.1133,1047.4,961.4,885.0,1134.0,1560.0
+held_out_1230,"Imara Daima, Nairobi","Dagoretti, Nairobi",2748.0,0.1712,2649.6,2438.6,2289.0,2627.0,3163.0
+held_out_1230,"Imara Daima, Nairobi","Donholm, Nairobi",1044.0,0.19,984.5,853.7,710.0,984.0,1466.0
+held_out_1230,"Imara Daima, Nairobi","Embakasi, Nairobi",262.0,0.0896,200.5,196.3,163.0,200.0,535.0
+held_out_1230,"Imara Daima, Nairobi","Kahawa, Nairobi",2546.0,0.3388,2360.6,2523.7,2108.0,2334.0,3335.0
+held_out_1230,"Imara Daima, Nairobi","Karen, Nairobi",2404.0,0.1917,2343.9,2216.6,2008.0,2317.0,3096.0
+held_out_1230,"Imara Daima, Nairobi","Kasarani, Nairobi",1699.0,0.1694,1445.9,1476.3,1271.0,1537.0,2483.0
+held_out_1230,"Imara Daima, Nairobi","Kawangware, Nairobi",2471.0,0.2091,2462.4,2151.1,1961.0,2442.0,2870.0
+held_out_1230,"Imara Daima, Nairobi","Kayole, Nairobi",1354.0,0.1596,1358.9,1334.3,1160.0,1319.0,2252.0
+held_out_1230,"Imara Daima, Nairobi","Kilimani, Nairobi",1687.0,0.2436,1806.4,1478.6,1330.0,1794.0,1940.0
+held_out_1230,"Imara Daima, Nairobi","Kitengela, Kajiado County",1946.0,0.1903,1721.0,1736.1,1502.0,1736.0,2732.0
+held_out_1230,"Imara Daima, Nairobi","Langata, Nairobi",1940.0,0.1826,1916.7,1731.3,1598.0,1913.0,2328.0
+held_out_1230,"Imara Daima, Nairobi","Lavington, Nairobi",1903.0,0.2572,2044.9,1600.3,1376.0,2020.0,2248.0
+held_out_1230,"Imara Daima, Nairobi","Mlolongo, Machakos County",953.0,0.1457,713.8,690.1,646.0,711.0,949.0
+held_out_1230,"Imara Daima, Nairobi","Nairobi CBD, Nairobi",1241.0,0.1959,1317.3,964.7,827.0,1297.0,1530.0
+held_out_1230,"Imara Daima, Nairobi","Ngara, Nairobi",1769.0,0.2176,1696.4,1413.3,1211.0,1645.0,2141.0
+held_out_1230,"Imara Daima, Nairobi","Nyayo Estate, Nairobi",907.0,0.1427,867.1,857.6,758.0,857.0,1456.0
+held_out_1230,"Imara Daima, Nairobi","Ongata Rongai, Kajiado County",2589.0,0.2289,2473.6,2403.1,2134.0,2563.0,3310.0
+held_out_1230,"Imara Daima, Nairobi","Roysambu, Nairobi",1642.0,0.1673,1375.7,1419.4,1216.0,1459.0,2432.0
+held_out_1230,"Imara Daima, Nairobi","Ruiru, Kiambu County",2469.0,0.2707,2099.2,2322.3,1910.0,2187.0,3433.0
+held_out_1230,"Imara Daima, Nairobi","Runda, Nairobi",2222.0,0.2342,2378.3,2062.3,1826.0,2368.0,2835.0
+held_out_1230,"Imara Daima, Nairobi","South B, Nairobi",1127.0,0.1064,1110.7,892.4,829.0,1094.0,1425.0
+held_out_1230,"Imara Daima, Nairobi","South C, Nairobi",1018.0,0.209,980.0,889.8,797.0,964.0,1241.0
+held_out_1230,"Imara Daima, Nairobi","Umoja, Nairobi",1567.0,0.2196,1421.5,1409.2,1248.0,1402.0,1982.0
+held_out_1230,"Imara Daima, Nairobi","Upper Hill, Nairobi",1294.0,0.1514,1393.2,1017.0,931.0,1386.0,1499.0
+held_out_1230,"Imara Daima, Nairobi","Westlands, Nairobi",1358.0,0.2272,1453.2,1158.4,1001.0,1418.0,1694.0
+held_out_1230,"Kahawa, Nairobi","Athi River, Machakos County",4565.0,0.4006,4711.1,4395.5,3938.0,4701.0,5080.0
+held_out_1230,"Kahawa, Nairobi","Buruburu, Nairobi",2960.0,0.3802,2981.8,2844.0,2560.0,3072.0,3307.0
+held_out_1230,"Kahawa, Nairobi","Dagoretti, Nairobi",4266.0,0.3705,5214.8,4221.1,3802.0,5233.0,4933.0
+held_out_1230,"Kahawa, Nairobi","Donholm, Nairobi",2721.0,0.6348,2850.2,2893.6,2408.0,2854.0,3173.0
+held_out_1230,"Kahawa, Nairobi","Embakasi, Nairobi",3246.0,0.3994,3625.9,3257.7,2891.0,3632.0,3809.0
+held_out_1230,"Kahawa, Nairobi","Imara Daima, Nairobi",3415.0,0.3388,3771.3,3083.5,2763.0,3773.0,3709.0
+held_out_1230,"Kahawa, Nairobi","Karen, Nairobi",4758.0,0.3944,5430.5,4454.6,3975.0,5443.0,5191.0
+held_out_1230,"Kahawa, Nairobi","Kasarani, Nairobi",1849.0,0.3938,1813.8,1784.1,1664.0,1856.0,1969.0
+held_out_1230,"Kahawa, Nairobi","Kawangware, Nairobi",3827.0,0.404,4769.5,3703.8,3280.0,4802.0,4329.0
+held_out_1230,"Kahawa, Nairobi","Kayole, Nairobi",3229.0,0.6238,3356.5,3440.8,2996.0,3312.0,3709.0
+held_out_1230,"Kahawa, Nairobi","Kilimani, Nairobi",3281.0,0.4373,4068.3,3052.8,2668.0,4142.0,3548.0
+held_out_1230,"Kahawa, Nairobi","Kitengela, Kajiado County",4780.0,0.3626,4854.0,4655.8,4039.0,4894.0,5740.0
+held_out_1230,"Kahawa, Nairobi","Langata, Nairobi",4409.0,0.3977,4900.7,4028.8,3544.0,4902.0,4763.0
+held_out_1230,"Kahawa, Nairobi","Lavington, Nairobi",3263.0,0.4432,4042.7,3064.9,2686.0,4136.0,3541.0
+held_out_1230,"Kahawa, Nairobi","Mlolongo, Machakos County",3840.0,0.3197,4067.1,3475.0,3194.0,4067.0,4073.0
+held_out_1230,"Kahawa, Nairobi","Nairobi CBD, Nairobi",2983.0,0.4077,3647.3,2596.2,2321.0,3745.0,2996.0
+held_out_1230,"Kahawa, Nairobi","Ngara, Nairobi",2468.0,0.4343,3080.8,2310.8,2144.0,3184.0,2528.0
+held_out_1230,"Kahawa, Nairobi","Nyayo Estate, Nairobi",2881.0,0.5533,2978.1,2999.9,2596.0,2967.0,3326.0
+held_out_1230,"Kahawa, Nairobi","Ongata Rongai, Kajiado County",5087.0,0.4209,5333.6,4852.6,4161.0,5539.0,5804.0
+held_out_1230,"Kahawa, Nairobi","Roysambu, Nairobi",1844.0,0.3889,1809.9,1790.8,1657.0,1853.0,2001.0
+held_out_1230,"Kahawa, Nairobi","Ruiru, Kiambu County",1369.0,0.5731,1271.2,1422.9,1251.0,1277.0,1551.0
+held_out_1230,"Kahawa, Nairobi","Runda, Nairobi",2972.0,0.4238,3163.6,2921.5,2632.0,3159.0,3315.0
+held_out_1230,"Kahawa, Nairobi","South B, Nairobi",3261.0,0.3334,3877.1,2835.4,2580.0,3921.0,3346.0
+held_out_1230,"Kahawa, Nairobi","South C, Nairobi",3423.0,0.4136,4074.2,3137.8,2883.0,4128.0,3499.0
+held_out_1230,"Kahawa, Nairobi","Umoja, Nairobi",3023.0,0.6412,3154.6,3231.7,2770.0,3125.0,3490.0
+held_out_1230,"Kahawa, Nairobi","Upper Hill, Nairobi",3159.0,0.3631,3859.5,2717.2,2479.0,3935.0,3135.0
+held_out_1230,"Kahawa, Nairobi","Westlands, Nairobi",2506.0,0.4468,3233.5,2383.0,2186.0,3379.0,2627.0
+held_out_1230,"Karen, Nairobi","Athi River, Machakos County",3349.0,0.2644,3344.7,3179.4,2969.0,3330.0,3765.0
+held_out_1230,"Karen, Nairobi","Buruburu, Nairobi",2670.0,0.2068,2707.8,2378.8,2195.0,2790.0,3084.0
+held_out_1230,"Karen, Nairobi","Dagoretti, Nairobi",1922.0,0.2363,2069.5,1810.9,1728.0,2069.0,2079.0
+held_out_1230,"Karen, Nairobi","Donholm, Nairobi",2906.0,0.2914,2941.5,2700.6,2383.0,2926.0,3473.0
+held_out_1230,"Karen, Nairobi","Embakasi, Nairobi",2140.0,0.1987,2174.1,1942.3,1797.0,2166.0,2528.0
+held_out_1230,"Karen, Nairobi","Imara Daima, Nairobi",2003.0,0.1917,2094.4,1773.8,1629.0,2084.0,2384.0
+held_out_1230,"Karen, Nairobi","Kahawa, Nairobi",4123.0,0.3944,4375.5,3942.6,3254.0,4343.0,5000.0
+held_out_1230,"Karen, Nairobi","Kasarani, Nairobi",3269.0,0.2405,3306.9,2835.7,2424.0,3528.0,4136.0
+held_out_1230,"Karen, Nairobi","Kawangware, Nairobi",1713.0,0.266,1902.5,1555.4,1415.0,1900.0,1943.0
+held_out_1230,"Karen, Nairobi","Kayole, Nairobi",3238.0,0.2727,3304.5,3178.3,2820.0,3249.0,4134.0
+held_out_1230,"Karen, Nairobi","Kilimani, Nairobi",1768.0,0.2941,2079.0,1514.8,1366.0,2100.0,1872.0
+held_out_1230,"Karen, Nairobi","Kitengela, Kajiado County",3577.0,0.2455,3546.3,3415.1,3064.0,3547.0,4494.0
+held_out_1230,"Karen, Nairobi","Langata, Nairobi",1254.0,0.249,1315.7,1234.0,1185.0,1314.0,1382.0
+held_out_1230,"Karen, Nairobi","Lavington, Nairobi",1768.0,0.3039,2052.6,1552.2,1396.0,2071.0,1910.0
+held_out_1230,"Karen, Nairobi","Mlolongo, Machakos County",2575.0,0.2094,2582.2,2291.2,2171.0,2578.0,2745.0
+held_out_1230,"Karen, Nairobi","Nairobi CBD, Nairobi",2013.0,0.2589,2455.1,1769.3,1630.0,2485.0,2168.0
+held_out_1230,"Karen, Nairobi","Ngara, Nairobi",2608.0,0.2773,2949.5,2209.8,1996.0,2972.0,2767.0
+held_out_1230,"Karen, Nairobi","Nyayo Estate, Nairobi",2790.0,0.2538,2852.2,2675.5,2391.0,2825.0,3512.0
+held_out_1230,"Karen, Nairobi","Ongata Rongai, Kajiado County",1354.0,0.2816,1379.8,1371.2,1329.0,1387.0,1479.0
+held_out_1230,"Karen, Nairobi","Roysambu, Nairobi",3220.0,0.2382,3237.6,2775.0,2365.0,3456.0,4086.0
+held_out_1230,"Karen, Nairobi","Ruiru, Kiambu County",4035.0,0.3329,3974.3,3717.2,3052.0,4214.0,5050.0
+held_out_1230,"Karen, Nairobi","Runda, Nairobi",3017.0,0.2855,2935.2,2646.1,2430.0,2926.0,3187.0
+held_out_1230,"Karen, Nairobi","South B, Nairobi",1970.0,0.1922,2364.2,1726.4,1617.0,2376.0,2186.0
+held_out_1230,"Karen, Nairobi","South C, Nairobi",2074.0,0.2679,2257.2,1836.0,1716.0,2264.0,2164.0
+held_out_1230,"Karen, Nairobi","Umoja, Nairobi",3439.0,0.3096,3410.0,3179.4,2828.0,3378.0,3963.0
+held_out_1230,"Karen, Nairobi","Upper Hill, Nairobi",2051.0,0.2234,2341.5,1638.6,1511.0,2362.0,2082.0
+held_out_1230,"Karen, Nairobi","Westlands, Nairobi",2491.0,0.2855,2823.9,2003.6,1758.0,2855.0,2618.0
+held_out_1230,"Kasarani, Nairobi","Athi River, Machakos County",3085.0,0.2529,3266.1,2838.5,2593.0,3446.0,3564.0
+held_out_1230,"Kasarani, Nairobi","Buruburu, Nairobi",1510.0,0.1843,1470.6,1310.4,1195.0,1721.0,1821.0
+held_out_1230,"Kasarani, Nairobi","Dagoretti, Nairobi",2840.0,0.2216,3599.2,2668.4,2398.0,3889.0,3618.0
+held_out_1230,"Kasarani, Nairobi","Donholm, Nairobi",1258.0,0.2747,1359.3,1225.3,1041.0,1533.0,1712.0
+held_out_1230,"Kasarani, Nairobi","Embakasi, Nairobi",1743.0,0.1724,1919.8,1564.9,1376.0,2318.0,2472.0
+held_out_1230,"Kasarani, Nairobi","Imara Daima, Nairobi",1949.0,0.1694,2151.0,1565.7,1398.0,2543.0,2388.0
+held_out_1230,"Kasarani, Nairobi","Kahawa, Nairobi",1306.0,0.3938,1286.5,1296.2,1221.0,1305.0,1412.0
+held_out_1230,"Kasarani, Nairobi","Karen, Nairobi",3316.0,0.2405,3812.6,2919.1,2593.0,4118.0,3949.0
+held_out_1230,"Kasarani, Nairobi","Kawangware, Nairobi",2500.0,0.2545,3256.3,2174.6,1890.0,3506.0,3008.0
+held_out_1230,"Kasarani, Nairobi","Kayole, Nairobi",1781.0,0.2521,1834.4,1745.1,1585.0,1958.0,2220.0
+held_out_1230,"Kasarani, Nairobi","Kilimani, Nairobi",1865.0,0.2853,2726.3,1501.9,1309.0,2804.0,1985.0
+held_out_1230,"Kasarani, Nairobi","Kitengela, Kajiado County",3312.0,0.2334,3390.6,3063.5,2688.0,3658.0,4297.0
+held_out_1230,"Kasarani, Nairobi","Langata, Nairobi",2955.0,0.2348,3155.6,2458.4,2164.0,3514.0,3418.0
+held_out_1230,"Kasarani, Nairobi","Lavington, Nairobi",1840.0,0.2963,2823.0,1571.0,1326.0,2830.0,2153.0
+held_out_1230,"Kasarani, Nairobi","Mlolongo, Machakos County",2418.0,0.1937,2519.3,1970.0,1797.0,2782.0,2690.0
+held_out_1230,"Kasarani, Nairobi","Nairobi CBD, Nairobi",1539.0,0.2459,2318.7,1105.2,967.0,2424.0,1529.0
+held_out_1230,"Kasarani, Nairobi","Ngara, Nairobi",1017.0,0.266,1804.7,856.1,805.0,1829.0,997.0
+held_out_1230,"Kasarani, Nairobi","Nyayo Estate, Nairobi",1422.0,0.2317,1465.2,1362.7,1223.0,1606.0,1826.0
+held_out_1230,"Kasarani, Nairobi","Ongata Rongai, Kajiado County",3603.0,0.2718,3679.3,3183.7,2725.0,4161.0,4413.0
+held_out_1230,"Kasarani, Nairobi","Roysambu, Nairobi",340.0,0.2225,323.4,309.1,282.0,356.0,404.0
+held_out_1230,"Kasarani, Nairobi","Ruiru, Kiambu County",1232.0,0.3253,1101.7,1199.7,1026.0,1154.0,1560.0
+held_out_1230,"Kasarani, Nairobi","Runda, Nairobi",1523.0,0.2761,1618.6,1406.0,1263.0,1701.0,1781.0
+held_out_1230,"Kasarani, Nairobi","South B, Nairobi",1842.0,0.1706,2206.1,1319.3,1213.0,2542.0,1836.0
+held_out_1230,"Kasarani, Nairobi","South C, Nairobi",1972.0,0.2562,2600.0,1682.3,1524.0,2775.0,2142.0
+held_out_1230,"Kasarani, Nairobi","Umoja, Nairobi",1570.0,0.2964,1654.3,1553.4,1367.0,1770.0,1996.0
+held_out_1230,"Kasarani, Nairobi","Upper Hill, Nairobi",1713.0,0.2066,2375.0,1246.5,1119.0,2617.0,1736.0
+held_out_1230,"Kasarani, Nairobi","Westlands, Nairobi",1089.0,0.275,2021.3,955.8,842.0,2036.0,1256.0
+held_out_1230,"Kawangware, Nairobi","Athi River, Machakos County",3301.0,0.2759,3160.7,3162.1,2910.0,3129.0,3824.0
+held_out_1230,"Kawangware, Nairobi","Buruburu, Nairobi",2618.0,0.2247,2601.4,2284.9,2040.0,2648.0,3130.0
+held_out_1230,"Kawangware, Nairobi","Dagoretti, Nairobi",823.0,0.2494,857.2,803.7,761.0,852.0,932.0
+held_out_1230,"Kawangware, Nairobi","Donholm, Nairobi",2838.0,0.3089,2950.0,2651.2,2224.0,2916.0,3607.0
+held_out_1230,"Kawangware, Nairobi","Embakasi, Nairobi",2090.0,0.2189,1995.4,1910.4,1725.0,1972.0,2572.0
+held_out_1230,"Kawangware, Nairobi","Imara Daima, Nairobi",1954.0,0.2091,1956.3,1767.7,1595.0,1933.0,2421.0
+held_out_1230,"Kawangware, Nairobi","Kahawa, Nairobi",3065.0,0.404,3048.1,3212.0,2726.0,2983.0,3929.0
+held_out_1230,"Kawangware, Nairobi","Karen, Nairobi",1607.0,0.266,1723.1,1611.7,1396.0,1693.0,2207.0
+held_out_1230,"Kawangware, Nairobi","Kasarani, Nairobi",2220.0,0.2545,2134.4,2189.4,1885.0,2180.0,3081.0
+held_out_1230,"Kawangware, Nairobi","Kayole, Nairobi",3429.0,0.292,3495.4,3324.9,2800.0,3398.0,4598.0
+held_out_1230,"Kawangware, Nairobi","Kilimani, Nairobi",955.0,0.3042,1037.5,912.2,813.0,1026.0,1139.0
+held_out_1230,"Kawangware, Nairobi","Kitengela, Kajiado County",3531.0,0.2569,3378.7,3396.2,3005.0,3365.0,4528.0
+held_out_1230,"Kawangware, Nairobi","Langata, Nairobi",2006.0,0.2622,2044.6,1854.0,1709.0,2036.0,2262.0
+held_out_1230,"Kawangware, Nairobi","Lavington, Nairobi",728.0,0.3133,795.0,678.4,612.0,791.0,824.0
+held_out_1230,"Kawangware, Nairobi","Mlolongo, Machakos County",2525.0,0.2225,2397.6,2263.4,2113.0,2383.0,2789.0
+held_out_1230,"Kawangware, Nairobi","Nairobi CBD, Nairobi",1641.0,0.2714,1805.4,1314.5,1124.0,1803.0,1826.0
+held_out_1230,"Kawangware, Nairobi","Ngara, Nairobi",1934.0,0.2891,1875.2,1734.4,1541.0,1830.0,2210.0
+held_out_1230,"Kawangware, Nairobi","Nyayo Estate, Nairobi",2740.0,0.2733,2732.7,2696.7,2333.0,2675.0,3664.0
+held_out_1230,"Kawangware, Nairobi","Ongata Rongai, Kajiado County",2646.0,0.2923,2701.0,2572.5,2258.0,2745.0,3334.0
+held_out_1230,"Kawangware, Nairobi","Roysambu, Nairobi",2163.0,0.2523,2062.7,2137.2,1836.0,2104.0,3030.0
+held_out_1230,"Kawangware, Nairobi","Ruiru, Kiambu County",2986.0,0.3445,2785.5,3031.3,2526.0,2838.0,3993.0
+held_out_1230,"Kawangware, Nairobi","Runda, Nairobi",1877.0,0.2959,2009.0,1840.5,1668.0,1997.0,2251.0
+held_out_1230,"Kawangware, Nairobi","South B, Nairobi",1873.0,0.2091,1873.1,1523.8,1381.0,1858.0,2064.0
+held_out_1230,"Kawangware, Nairobi","South C, Nairobi",2025.0,0.2798,1979.5,1810.1,1656.0,1960.0,2207.0
+held_out_1230,"Kawangware, Nairobi","Umoja, Nairobi",3142.0,0.3253,3339.0,3097.1,2657.0,3286.0,4010.0
+held_out_1230,"Kawangware, Nairobi","Upper Hill, Nairobi",1455.0,0.2378,1615.7,1170.3,1029.0,1615.0,1623.0
+held_out_1230,"Kawangware, Nairobi","Westlands, Nairobi",1420.0,0.2971,1451.0,1331.8,1185.0,1414.0,1679.0
+held_out_1230,"Kayole, Nairobi","Athi River, Machakos County",2834.0,0.289,3299.8,2655.7,2484.0,3309.0,3078.0
+held_out_1230,"Kayole, Nairobi","Buruburu, Nairobi",1339.0,0.1859,1333.8,1243.6,1196.0,1401.0,1452.0
+held_out_1230,"Kayole, Nairobi","Dagoretti, Nairobi",3707.0,0.2434,4141.7,3329.7,3086.0,4146.0,4087.0
+held_out_1230,"Kayole, Nairobi","Donholm, Nairobi",815.0,0.4237,743.2,805.6,734.0,737.0,903.0
+held_out_1230,"Kayole, Nairobi","Embakasi, Nairobi",1477.0,0.1611,2173.8,1389.9,1270.0,2177.0,2014.0
+held_out_1230,"Kayole, Nairobi","Imara Daima, Nairobi",1626.0,0.1596,2280.5,1500.9,1359.0,2282.0,2248.0
+held_out_1230,"Kayole, Nairobi","Kahawa, Nairobi",2720.0,0.6238,2739.0,3000.6,2461.0,2665.0,3326.0
+held_out_1230,"Kayole, Nairobi","Karen, Nairobi",3297.0,0.2727,3679.9,3254.1,3000.0,3663.0,3932.0
+held_out_1230,"Kayole, Nairobi","Kasarani, Nairobi",1872.0,0.2521,1783.5,1836.3,1621.0,1864.0,2475.0
+held_out_1230,"Kayole, Nairobi","Kawangware, Nairobi",3396.0,0.292,3773.8,3039.2,2770.0,3781.0,3692.0
+held_out_1230,"Kayole, Nairobi","Kilimani, Nairobi",2638.0,0.3363,3100.8,2383.1,2182.0,3151.0,2780.0
+held_out_1230,"Kayole, Nairobi","Kitengela, Kajiado County",3065.0,0.2567,3484.4,2875.8,2546.0,3528.0,3831.0
+held_out_1230,"Kayole, Nairobi","Langata, Nairobi",2831.0,0.2662,3248.8,2741.4,2575.0,3250.0,3200.0
+held_out_1230,"Kayole, Nairobi","Lavington, Nairobi",2760.0,0.3493,3325.6,2481.2,2171.0,3379.0,3059.0
+held_out_1230,"Kayole, Nairobi","Mlolongo, Machakos County",2056.0,0.1992,2545.2,1767.3,1689.0,2557.0,2082.0
+held_out_1230,"Kayole, Nairobi","Nairobi CBD, Nairobi",2103.0,0.2828,2416.4,1804.8,1660.0,2457.0,2172.0
+held_out_1230,"Kayole, Nairobi","Ngara, Nairobi",1940.0,0.3147,2357.8,1828.9,1663.0,2392.0,2190.0
+held_out_1230,"Kayole, Nairobi","Nyayo Estate, Nairobi",1134.0,0.3071,1075.5,1112.6,1073.0,1066.0,1202.0
+held_out_1230,"Kayole, Nairobi","Ongata Rongai, Kajiado County",3480.0,0.3163,3748.4,3478.7,3151.0,3895.0,4187.0
+held_out_1230,"Kayole, Nairobi","Roysambu, Nairobi",1816.0,0.2479,1720.7,1792.7,1585.0,1788.0,2423.0
+held_out_1230,"Kayole, Nairobi","Ruiru, Kiambu County",2639.0,0.4448,2442.3,2779.0,2263.0,2522.0,3423.0
+held_out_1230,"Kayole, Nairobi","Runda, Nairobi",2508.0,0.3219,2748.4,2484.6,2249.0,2738.0,2981.0
+held_out_1230,"Kayole, Nairobi","South B, Nairobi",1867.0,0.1621,2154.7,1624.3,1571.0,2180.0,1900.0
+held_out_1230,"Kayole, Nairobi","South C, Nairobi",1966.0,0.2968,2536.5,1833.2,1732.0,2587.0,2073.0
+held_out_1230,"Kayole, Nairobi","Umoja, Nairobi",605.0,0.4586,576.9,625.0,630.0,571.0,619.0
+held_out_1230,"Kayole, Nairobi","Upper Hill, Nairobi",2150.0,0.2214,2539.1,1868.4,1763.0,2575.0,2239.0
+held_out_1230,"Kayole, Nairobi","Westlands, Nairobi",1997.0,0.3293,2698.6,1921.1,1681.0,2773.0,2410.0
+held_out_1230,"Kilimani, Nairobi","Athi River, Machakos County",2916.0,0.3025,2709.4,2601.0,2284.0,2656.0,3332.0
+held_out_1230,"Kilimani, Nairobi","Buruburu, Nairobi",2130.0,0.2611,1964.7,1731.5,1408.0,1950.0,2647.0
+held_out_1230,"Kilimani, Nairobi","Dagoretti, Nairobi",1529.0,0.278,1527.4,1406.2,1233.0,1492.0,1856.0
+held_out_1230,"Kilimani, Nairobi","Donholm, Nairobi",2264.0,0.351,2335.6,2164.3,1590.0,2230.0,3226.0
+held_out_1230,"Kilimani, Nairobi","Embakasi, Nairobi",1598.0,0.2593,1538.1,1358.0,1100.0,1487.0,2095.0
+held_out_1230,"Kilimani, Nairobi","Imara Daima, Nairobi",1514.0,0.2436,1484.9,1218.7,977.0,1440.0,1969.0
+held_out_1230,"Kilimani, Nairobi","Kahawa, Nairobi",2566.0,0.4373,2548.2,2653.9,2137.0,2439.0,3319.0
+held_out_1230,"Kilimani, Nairobi","Karen, Nairobi",1692.0,0.2941,1730.7,1648.8,1390.0,1676.0,2270.0
+held_out_1230,"Kilimani, Nairobi","Kasarani, Nairobi",1718.0,0.2853,1620.4,1632.5,1299.0,1638.0,2468.0
+held_out_1230,"Kilimani, Nairobi","Kawangware, Nairobi",966.0,0.3042,1084.1,894.5,788.0,1078.0,1138.0
+held_out_1230,"Kilimani, Nairobi","Kayole, Nairobi",2866.0,0.3363,2713.0,2698.5,2154.0,2547.0,3773.0
+held_out_1230,"Kilimani, Nairobi","Kitengela, Kajiado County",3148.0,0.2823,2929.4,2839.1,2364.0,2878.0,4047.0
+held_out_1230,"Kilimani, Nairobi","Langata, Nairobi",1369.0,0.2916,1345.6,1280.3,1194.0,1334.0,1490.0
+held_out_1230,"Kilimani, Nairobi","Lavington, Nairobi",307.0,0.3376,361.4,257.3,206.0,362.0,358.0
+held_out_1230,"Kilimani, Nairobi","Mlolongo, Machakos County",2138.0,0.2497,1927.3,1689.3,1483.0,1900.0,2309.0
+held_out_1230,"Kilimani, Nairobi","Nairobi CBD, Nairobi",941.0,0.3001,887.5,690.2,520.0,856.0,1087.0
+held_out_1230,"Kilimani, Nairobi","Ngara, Nairobi",1387.0,0.3173,1272.1,1151.9,931.0,1209.0,1627.0
+held_out_1230,"Kilimani, Nairobi","Nyayo Estate, Nairobi",2399.0,0.3163,2273.7,2220.2,1699.0,2140.0,3347.0
+held_out_1230,"Kilimani, Nairobi","Ongata Rongai, Kajiado County",2022.0,0.318,1978.8,1946.6,1709.0,1981.0,2456.0
+held_out_1230,"Kilimani, Nairobi","Roysambu, Nairobi",1661.0,0.2829,1545.6,1575.3,1244.0,1562.0,2415.0
+held_out_1230,"Kilimani, Nairobi","Ruiru, Kiambu County",2487.0,0.3763,2261.8,2494.6,1938.0,2291.0,3417.0
+held_out_1230,"Kilimani, Nairobi","Runda, Nairobi",1758.0,0.3213,2072.0,1681.2,1393.0,2053.0,2290.0
+held_out_1230,"Kilimani, Nairobi","South B, Nairobi",1111.0,0.2427,1246.8,956.6,766.0,1210.0,1551.0
+held_out_1230,"Kilimani, Nairobi","South C, Nairobi",1400.0,0.3073,1390.9,1299.4,1111.0,1349.0,1724.0
+held_out_1230,"Kilimani, Nairobi","Umoja, Nairobi",2576.0,0.3652,2606.0,2600.3,2050.0,2468.0,3557.0
+held_out_1230,"Kilimani, Nairobi","Upper Hill, Nairobi",692.0,0.2683,622.9,535.5,473.0,612.0,706.0
+held_out_1230,"Kilimani, Nairobi","Westlands, Nairobi",939.0,0.3252,994.7,759.2,581.0,967.0,1129.0
+held_out_1230,"Kitengela, Kajiado County","Athi River, Machakos County",762.0,0.2555,776.8,728.9,654.0,781.0,947.0
+held_out_1230,"Kitengela, Kajiado County","Buruburu, Nairobi",2964.0,0.2032,2925.0,2573.8,2334.0,3127.0,3514.0
+held_out_1230,"Kitengela, Kajiado County","Dagoretti, Nairobi",4110.0,0.2301,4219.3,3700.1,3444.0,4217.0,4557.0
+held_out_1230,"Kitengela, Kajiado County","Donholm, Nairobi",2790.0,0.2727,2858.9,2554.6,2163.0,2944.0,3599.0
+held_out_1230,"Kitengela, Kajiado County","Embakasi, Nairobi",1994.0,0.196,2103.3,1774.6,1558.0,2184.0,2663.0
+held_out_1230,"Kitengela, Kajiado County","Imara Daima, Nairobi",2095.0,0.1903,2244.5,1810.6,1610.0,2288.0,2664.0
+held_out_1230,"Kitengela, Kajiado County","Kahawa, Nairobi",4275.0,0.3626,4291.3,4224.2,3565.0,4327.0,5383.0
+held_out_1230,"Kitengela, Kajiado County","Karen, Nairobi",3687.0,0.2455,3890.9,3408.3,3125.0,3892.0,4279.0
+held_out_1230,"Kitengela, Kajiado County","Kasarani, Nairobi",3418.0,0.2334,3297.6,3152.6,2737.0,3511.0,4518.0
+held_out_1230,"Kitengela, Kajiado County","Kawangware, Nairobi",3674.0,0.2569,4178.8,3344.5,3121.0,4181.0,3991.0
+held_out_1230,"Kitengela, Kajiado County","Kayole, Nairobi",3091.0,0.2567,3245.0,3069.7,2600.0,3275.0,4430.0
+held_out_1230,"Kitengela, Kajiado County","Kilimani, Nairobi",3032.0,0.2823,3549.2,2697.9,2498.0,3565.0,3206.0
+held_out_1230,"Kitengela, Kajiado County","Langata, Nairobi",3225.0,0.2411,3427.8,2899.9,2701.0,3481.0,3526.0
+held_out_1230,"Kitengela, Kajiado County","Lavington, Nairobi",3237.0,0.2915,3786.6,2824.6,2552.0,3808.0,3487.0
+held_out_1230,"Kitengela, Kajiado County","Mlolongo, Machakos County",1728.0,0.2064,1917.5,1441.0,1331.0,1954.0,1864.0
+held_out_1230,"Kitengela, Kajiado County","Nairobi CBD, Nairobi",2584.0,0.25,3012.2,2181.0,1975.0,3022.0,2799.0
+held_out_1230,"Kitengela, Kajiado County","Ngara, Nairobi",3159.0,0.2663,3422.9,2668.5,2395.0,3423.0,3422.0
+held_out_1230,"Kitengela, Kajiado County","Nyayo Estate, Nairobi",2640.0,0.2417,2783.4,2524.4,2166.0,2845.0,3649.0
+held_out_1230,"Kitengela, Kajiado County","Ongata Rongai, Kajiado County",3878.0,0.2711,3958.6,3617.0,3276.0,4128.0,4534.0
+held_out_1230,"Kitengela, Kajiado County","Roysambu, Nairobi",3372.0,0.2314,3229.2,3092.9,2678.0,3439.0,4471.0
+held_out_1230,"Kitengela, Kajiado County","Ruiru, Kiambu County",4187.0,0.3125,3971.2,4004.4,3361.0,4196.0,5420.0
+held_out_1230,"Kitengela, Kajiado County","Runda, Nairobi",3567.0,0.2747,4068.4,3268.4,2972.0,4098.0,4051.0
+held_out_1230,"Kitengela, Kajiado County","South B, Nairobi",2482.0,0.1907,2824.3,2111.7,1978.0,2826.0,2679.0
+held_out_1230,"Kitengela, Kajiado County","South C, Nairobi",2359.0,0.2583,2644.6,2090.9,1940.0,2647.0,2524.0
+held_out_1230,"Kitengela, Kajiado County","Umoja, Nairobi",3311.0,0.2886,3364.4,3154.7,2731.0,3398.0,4199.0
+held_out_1230,"Kitengela, Kajiado County","Upper Hill, Nairobi",2638.0,0.2184,3129.6,2232.8,2077.0,3138.0,2790.0
+held_out_1230,"Kitengela, Kajiado County","Westlands, Nairobi",2708.0,0.2736,3170.3,2379.8,2165.0,3189.0,2950.0
+held_out_1230,"Langata, Nairobi","Athi River, Machakos County",2968.0,0.2605,3116.6,2889.2,2697.0,3113.0,3435.0
+held_out_1230,"Langata, Nairobi","Buruburu, Nairobi",2270.0,0.1979,2434.4,2086.7,1921.0,2591.0,2758.0
+held_out_1230,"Langata, Nairobi","Dagoretti, Nairobi",2402.0,0.2308,2406.8,2231.1,2118.0,2400.0,2608.0
+held_out_1230,"Langata, Nairobi","Donholm, Nairobi",2503.0,0.2868,2682.0,2413.4,2110.0,2703.0,3168.0
+held_out_1230,"Langata, Nairobi","Embakasi, Nairobi",1750.0,0.1882,1936.8,1639.2,1505.0,1956.0,2218.0
+held_out_1230,"Langata, Nairobi","Imara Daima, Nairobi",1611.0,0.1826,1876.9,1491.3,1358.0,1875.0,2088.0
+held_out_1230,"Langata, Nairobi","Kahawa, Nairobi",3687.0,0.3977,4188.4,3696.1,3059.0,4184.0,4661.0
+held_out_1230,"Langata, Nairobi","Karen, Nairobi",1269.0,0.249,1286.5,1335.5,1267.0,1280.0,1542.0
+held_out_1230,"Langata, Nairobi","Kasarani, Nairobi",2840.0,0.2348,2971.1,2590.4,2216.0,3244.0,3811.0
+held_out_1230,"Langata, Nairobi","Kawangware, Nairobi",2057.0,0.2622,2219.9,1974.7,1798.0,2210.0,2472.0
+held_out_1230,"Langata, Nairobi","Kayole, Nairobi",2849.0,0.2662,3033.3,2881.2,2550.0,3014.0,3794.0
+held_out_1230,"Langata, Nairobi","Kilimani, Nairobi",1418.0,0.2916,1805.9,1370.5,1269.0,1821.0,1617.0
+held_out_1230,"Langata, Nairobi","Kitengela, Kajiado County",3197.0,0.2411,3311.9,3122.0,2792.0,3350.0,4161.0
+held_out_1230,"Langata, Nairobi","Lavington, Nairobi",1715.0,0.302,2169.9,1621.7,1484.0,2195.0,1940.0
+held_out_1230,"Langata, Nairobi","Mlolongo, Machakos County",2192.0,0.2031,2367.2,2006.1,1899.0,2367.0,2426.0
+held_out_1230,"Langata, Nairobi","Nairobi CBD, Nairobi",1573.0,0.2544,2192.7,1402.4,1276.0,2227.0,1773.0
+held_out_1230,"Langata, Nairobi","Ngara, Nairobi",2182.0,0.2737,2670.2,1884.0,1699.0,2700.0,2375.0
+held_out_1230,"Langata, Nairobi","Nyayo Estate, Nairobi",2391.0,0.2462,2618.8,2382.2,2115.0,2618.0,3200.0
+held_out_1230,"Langata, Nairobi","Ongata Rongai, Kajiado County",1186.0,0.2786,1205.9,1259.3,1159.0,1216.0,1519.0
+held_out_1230,"Langata, Nairobi","Roysambu, Nairobi",2785.0,0.2324,2905.4,2538.7,2168.0,3172.0,3763.0
+held_out_1230,"Langata, Nairobi","Ruiru, Kiambu County",3600.0,0.332,3740.1,3470.9,2857.0,4050.0,4706.0
+held_out_1230,"Langata, Nairobi","Runda, Nairobi",2971.0,0.2827,3273.9,2683.0,2363.0,3271.0,3495.0
+held_out_1230,"Langata, Nairobi","South B, Nairobi",1516.0,0.1834,2097.3,1395.9,1307.0,2110.0,1792.0
+held_out_1230,"Langata, Nairobi","South C, Nairobi",1684.0,0.2641,2045.0,1552.6,1448.0,2055.0,1844.0
+held_out_1230,"Langata, Nairobi","Umoja, Nairobi",3054.0,0.3066,3162.1,2882.4,2546.0,3154.0,3643.0
+held_out_1230,"Langata, Nairobi","Upper Hill, Nairobi",1619.0,0.217,2068.1,1478.6,1379.0,2081.0,1838.0
+held_out_1230,"Langata, Nairobi","Westlands, Nairobi",2109.0,0.2824,2584.2,1822.8,1565.0,2598.0,2478.0
+held_out_1230,"Lavington, Nairobi","Athi River, Machakos County",3016.0,0.3116,2884.7,2789.6,2430.0,2806.0,3584.0
+held_out_1230,"Lavington, Nairobi","Buruburu, Nairobi",2260.0,0.2747,2225.5,1920.6,1545.0,2187.0,2912.0
+held_out_1230,"Lavington, Nairobi","Dagoretti, Nairobi",1232.0,0.2885,1417.5,1225.5,1128.0,1411.0,1466.0
+held_out_1230,"Lavington, Nairobi","Donholm, Nairobi",2283.0,0.3628,2537.5,2295.5,1731.0,2415.0,3287.0
+held_out_1230,"Lavington, Nairobi","Embakasi, Nairobi",1797.0,0.2744,1722.5,1549.5,1251.0,1644.0,2339.0
+held_out_1230,"Lavington, Nairobi","Imara Daima, Nairobi",1709.0,0.2572,1673.3,1425.1,1129.0,1599.0,2280.0
+held_out_1230,"Lavington, Nairobi","Kahawa, Nairobi",2656.0,0.4432,2801.4,2819.1,2215.0,2657.0,3578.0
+held_out_1230,"Lavington, Nairobi","Karen, Nairobi",1633.0,0.3039,1840.6,1634.3,1366.0,1788.0,2249.0
+held_out_1230,"Lavington, Nairobi","Kasarani, Nairobi",1809.0,0.2963,1864.0,1777.3,1375.0,1855.0,2733.0
+held_out_1230,"Lavington, Nairobi","Kawangware, Nairobi",663.0,0.3133,731.6,658.0,606.0,726.0,772.0
+held_out_1230,"Lavington, Nairobi","Kayole, Nairobi",2800.0,0.3493,2913.0,2873.9,2293.0,2704.0,3956.0
+held_out_1230,"Lavington, Nairobi","Kilimani, Nairobi",384.0,0.3376,400.6,310.6,240.0,392.0,449.0
+held_out_1230,"Lavington, Nairobi","Kitengela, Kajiado County",3244.0,0.2915,3111.7,3033.4,2518.0,3028.0,4286.0
+held_out_1230,"Lavington, Nairobi","Langata, Nairobi",1755.0,0.302,1746.4,1586.2,1440.0,1727.0,1924.0
+held_out_1230,"Lavington, Nairobi","Mlolongo, Machakos County",2239.0,0.2605,2101.1,1873.6,1635.0,2058.0,2551.0
+held_out_1230,"Lavington, Nairobi","Nairobi CBD, Nairobi",1135.0,0.3099,1122.6,862.1,656.0,1086.0,1321.0
+held_out_1230,"Lavington, Nairobi","Ngara, Nairobi",1407.0,0.3265,1396.5,1223.7,987.0,1332.0,1712.0
+held_out_1230,"Lavington, Nairobi","Nyayo Estate, Nairobi",2439.0,0.3298,2456.3,2369.2,1855.0,2297.0,3414.0
+held_out_1230,"Lavington, Nairobi","Ongata Rongai, Kajiado County",2401.0,0.3264,2389.6,2272.7,1973.0,2377.0,2891.0
+held_out_1230,"Lavington, Nairobi","Roysambu, Nairobi",1752.0,0.2939,1788.4,1721.7,1322.0,1779.0,2682.0
+held_out_1230,"Lavington, Nairobi","Ruiru, Kiambu County",2577.0,0.3844,2504.9,2652.6,2016.0,2514.0,3672.0
+held_out_1230,"Lavington, Nairobi","Runda, Nairobi",1423.0,0.3295,1611.9,1428.8,1184.0,1576.0,1927.0
+held_out_1230,"Lavington, Nairobi","South B, Nairobi",1481.0,0.256,1484.5,1125.8,902.0,1441.0,1776.0
+held_out_1230,"Lavington, Nairobi","South C, Nairobi",1724.0,0.3166,1673.3,1461.7,1211.0,1623.0,2003.0
+held_out_1230,"Lavington, Nairobi","Umoja, Nairobi",2595.0,0.3757,2831.8,2713.9,2129.0,2671.0,3686.0
+held_out_1230,"Lavington, Nairobi","Upper Hill, Nairobi",1013.0,0.2797,1065.5,802.5,687.0,1060.0,1100.0
+held_out_1230,"Lavington, Nairobi","Westlands, Nairobi",958.0,0.3341,1037.3,802.1,610.0,1003.0,1185.0
+held_out_1230,"Mlolongo, Machakos County","Athi River, Machakos County",1241.0,0.2213,1197.7,1181.1,1057.0,1192.0,1618.0
+held_out_1230,"Mlolongo, Machakos County","Buruburu, Nairobi",2023.0,0.1562,1925.1,1759.7,1596.0,2025.0,2644.0
+held_out_1230,"Mlolongo, Machakos County","Dagoretti, Nairobi",3166.0,0.1933,3129.0,2901.5,2743.0,3115.0,3563.0
+held_out_1230,"Mlolongo, Machakos County","Donholm, Nairobi",1844.0,0.2181,1858.1,1715.7,1421.0,1865.0,2772.0
+held_out_1230,"Mlolongo, Machakos County","Embakasi, Nairobi",1072.0,0.1438,1095.8,994.1,854.0,1100.0,1828.0
+held_out_1230,"Mlolongo, Machakos County","Imara Daima, Nairobi",1169.0,0.1457,1213.9,1043.9,903.0,1206.0,1870.0
+held_out_1230,"Mlolongo, Machakos County","Kahawa, Nairobi",3353.0,0.3197,3232.7,3300.1,2825.0,3218.0,4311.0
+held_out_1230,"Mlolongo, Machakos County","Karen, Nairobi",2759.0,0.2094,2827.9,2607.7,2405.0,2814.0,3373.0
+held_out_1230,"Mlolongo, Machakos County","Kasarani, Nairobi",2506.0,0.1937,2297.8,2270.7,1984.0,2412.0,3464.0
+held_out_1230,"Mlolongo, Machakos County","Kawangware, Nairobi",2745.0,0.2225,2934.0,2557.6,2427.0,2931.0,3014.0
+held_out_1230,"Mlolongo, Machakos County","Kayole, Nairobi",2170.0,0.1992,2196.4,2210.0,1868.0,2161.0,3585.0
+held_out_1230,"Mlolongo, Machakos County","Kilimani, Nairobi",2108.0,0.2497,2344.1,1917.6,1803.0,2350.0,2262.0
+held_out_1230,"Mlolongo, Machakos County","Kitengela, Kajiado County",1452.0,0.2064,1409.7,1406.6,1163.0,1425.0,2343.0
+held_out_1230,"Mlolongo, Machakos County","Langata, Nairobi",2300.0,0.2031,2411.8,2127.6,2000.0,2411.0,2628.0
+held_out_1230,"Mlolongo, Machakos County","Lavington, Nairobi",2318.0,0.2605,2583.3,2042.1,1854.0,2584.0,2576.0
+held_out_1230,"Mlolongo, Machakos County","Nairobi CBD, Nairobi",1653.0,0.2131,1840.0,1403.1,1281.0,1839.0,1854.0
+held_out_1230,"Mlolongo, Machakos County","Ngara, Nairobi",2242.0,0.23,2223.9,1878.8,1698.0,2201.0,2484.0
+held_out_1230,"Mlolongo, Machakos County","Nyayo Estate, Nairobi",1713.0,0.186,1767.4,1702.2,1453.0,1760.0,2793.0
+held_out_1230,"Mlolongo, Machakos County","Ongata Rongai, Kajiado County",2946.0,0.238,2962.3,2802.5,2549.0,3050.0,3614.0
+held_out_1230,"Mlolongo, Machakos County","Roysambu, Nairobi",2452.0,0.1919,2230.5,2219.0,1935.0,2338.0,3415.0
+held_out_1230,"Mlolongo, Machakos County","Ruiru, Kiambu County",3273.0,0.2716,2955.5,3098.1,2625.0,3072.0,4367.0
+held_out_1230,"Mlolongo, Machakos County","Runda, Nairobi",2631.0,0.2421,2926.9,2479.6,2275.0,2924.0,3120.0
+held_out_1230,"Mlolongo, Machakos County","South B, Nairobi",1547.0,0.1473,1636.7,1351.9,1282.0,1632.0,1757.0
+held_out_1230,"Mlolongo, Machakos County","South C, Nairobi",1438.0,0.2229,1506.5,1320.3,1251.0,1504.0,1562.0
+held_out_1230,"Mlolongo, Machakos County","Umoja, Nairobi",2369.0,0.2371,2319.5,2309.0,1989.0,2300.0,3339.0
+held_out_1230,"Mlolongo, Machakos County","Upper Hill, Nairobi",1701.0,0.1792,1941.1,1464.0,1385.0,1947.0,1826.0
+held_out_1230,"Mlolongo, Machakos County","Westlands, Nairobi",1765.0,0.2375,1984.0,1596.4,1470.0,1982.0,2002.0
+held_out_1230,"Nairobi CBD, Nairobi","Athi River, Machakos County",2287.0,0.2697,2126.5,2163.7,1973.0,2078.0,2680.0
+held_out_1230,"Nairobi CBD, Nairobi","Buruburu, Nairobi",1333.0,0.2118,1217.3,1168.8,1019.0,1207.0,1726.0
+held_out_1230,"Nairobi CBD, Nairobi","Dagoretti, Nairobi",2180.0,0.2411,2142.6,1907.4,1653.0,2080.0,2708.0
+held_out_1230,"Nairobi CBD, Nairobi","Donholm, Nairobi",1559.0,0.302,1573.5,1498.8,1191.0,1494.0,2210.0
+held_out_1230,"Nairobi CBD, Nairobi","Embakasi, Nairobi",1075.0,0.204,955.0,927.8,788.0,906.0,1473.0
+held_out_1230,"Nairobi CBD, Nairobi","Imara Daima, Nairobi",993.0,0.1959,912.8,859.6,709.0,859.0,1478.0
+held_out_1230,"Nairobi CBD, Nairobi","Kahawa, Nairobi",2316.0,0.4077,2187.4,2275.7,1903.0,2093.0,2817.0
+held_out_1230,"Nairobi CBD, Nairobi","Karen, Nairobi",2348.0,0.2589,2334.0,2151.9,1827.0,2256.0,3082.0
+held_out_1230,"Nairobi CBD, Nairobi","Kasarani, Nairobi",1466.0,0.2459,1271.0,1288.8,1065.0,1287.0,1975.0
+held_out_1230,"Nairobi CBD, Nairobi","Kawangware, Nairobi",1835.0,0.2714,1778.6,1616.6,1362.0,1718.0,2300.0
+held_out_1230,"Nairobi CBD, Nairobi","Kayole, Nairobi",2060.0,0.2828,2103.9,2028.5,1757.0,2002.0,2717.0
+held_out_1230,"Nairobi CBD, Nairobi","Kilimani, Nairobi",1118.0,0.3001,1085.9,929.9,757.0,1047.0,1333.0
+held_out_1230,"Nairobi CBD, Nairobi","Kitengela, Kajiado County",2512.0,0.25,2374.8,2403.8,2053.0,2325.0,3456.0
+held_out_1230,"Nairobi CBD, Nairobi","Langata, Nairobi",1746.0,0.2544,1854.6,1628.0,1398.0,1818.0,2302.0
+held_out_1230,"Nairobi CBD, Nairobi","Lavington, Nairobi",1417.0,0.3099,1341.8,1120.1,892.0,1289.0,1628.0
+held_out_1230,"Nairobi CBD, Nairobi","Mlolongo, Machakos County",1520.0,0.2131,1320.8,1278.0,1170.0,1295.0,1677.0
+held_out_1230,"Nairobi CBD, Nairobi","Ngara, Nairobi",602.0,0.2834,515.0,454.8,399.0,500.0,596.0
+held_out_1230,"Nairobi CBD, Nairobi","Nyayo Estate, Nairobi",1715.0,0.2625,1665.1,1660.8,1387.0,1565.0,2430.0
+held_out_1230,"Nairobi CBD, Nairobi","Ongata Rongai, Kajiado County",2392.0,0.2873,2454.9,2317.3,1928.0,2463.0,3283.0
+held_out_1230,"Nairobi CBD, Nairobi","Roysambu, Nairobi",1412.0,0.2435,1205.0,1233.3,1011.0,1220.0,1924.0
+held_out_1230,"Nairobi CBD, Nairobi","Ruiru, Kiambu County",2239.0,0.3425,1919.1,2126.5,1707.0,1944.0,2932.0
+held_out_1230,"Nairobi CBD, Nairobi","Runda, Nairobi",1621.0,0.2913,1575.6,1397.0,1178.0,1544.0,1930.0
+held_out_1230,"Nairobi CBD, Nairobi","South B, Nairobi",681.0,0.1962,634.3,515.0,450.0,616.0,781.0
+held_out_1230,"Nairobi CBD, Nairobi","South C, Nairobi",1038.0,0.2736,979.5,885.2,758.0,948.0,1223.0
+held_out_1230,"Nairobi CBD, Nairobi","Umoja, Nairobi",2035.0,0.3206,2020.3,1994.3,1683.0,1923.0,2654.0
+held_out_1230,"Nairobi CBD, Nairobi","Upper Hill, Nairobi",522.0,0.2281,480.9,412.1,366.0,469.0,568.0
+held_out_1230,"Nairobi CBD, Nairobi","Westlands, Nairobi",870.0,0.292,766.0,664.3,509.0,707.0,1041.0
+held_out_1230,"Ngara, Nairobi","Athi River, Machakos County",2647.0,0.2873,2437.6,2401.5,2159.0,2378.0,3003.0
+held_out_1230,"Ngara, Nairobi","Buruburu, Nairobi",1190.0,0.2352,1078.6,1079.6,930.0,1059.0,1566.0
+held_out_1230,"Ngara, Nairobi","Dagoretti, Nairobi",2314.0,0.2595,2421.1,2114.5,1828.0,2355.0,2932.0
+held_out_1230,"Ngara, Nairobi","Donholm, Nairobi",1417.0,0.3328,1443.5,1408.1,1099.0,1350.0,2028.0
+held_out_1230,"Ngara, Nairobi","Embakasi, Nairobi",1430.0,0.2302,1271.7,1161.9,975.0,1210.0,1787.0
+held_out_1230,"Ngara, Nairobi","Imara Daima, Nairobi",1360.0,0.2176,1235.9,1033.2,852.0,1184.0,1685.0
+held_out_1230,"Ngara, Nairobi","Kahawa, Nairobi",1913.0,0.4343,1916.0,2002.8,1691.0,1824.0,2409.0
+held_out_1230,"Ngara, Nairobi","Karen, Nairobi",2640.0,0.2773,2729.0,2394.1,2004.0,2645.0,3411.0
+held_out_1230,"Ngara, Nairobi","Kasarani, Nairobi",1064.0,0.266,1011.2,1045.0,854.0,1015.0,1572.0
+held_out_1230,"Ngara, Nairobi","Kawangware, Nairobi",1900.0,0.2891,1943.3,1661.9,1426.0,1903.0,2242.0
+held_out_1230,"Ngara, Nairobi","Kayole, Nairobi",1916.0,0.3147,1975.3,1935.7,1660.0,1861.0,2536.0
+held_out_1230,"Ngara, Nairobi","Kilimani, Nairobi",1165.0,0.3173,1194.2,937.4,747.0,1167.0,1347.0
+held_out_1230,"Ngara, Nairobi","Kitengela, Kajiado County",2878.0,0.2663,2676.1,2643.0,2239.0,2610.0,3756.0
+held_out_1230,"Ngara, Nairobi","Langata, Nairobi",2028.0,0.2737,2068.5,1846.8,1586.0,2021.0,2539.0
+held_out_1230,"Ngara, Nairobi","Lavington, Nairobi",1247.0,0.3265,1253.0,1055.8,856.0,1209.0,1468.0
+held_out_1230,"Ngara, Nairobi","Mlolongo, Machakos County",1876.0,0.23,1643.3,1503.7,1356.0,1612.0,1998.0
+held_out_1230,"Ngara, Nairobi","Nairobi CBD, Nairobi",733.0,0.2834,634.1,486.0,395.0,619.0,716.0
+held_out_1230,"Ngara, Nairobi","Nyayo Estate, Nairobi",1607.0,0.2925,1607.9,1586.1,1312.0,1503.0,2249.0
+held_out_1230,"Ngara, Nairobi","Ongata Rongai, Kajiado County",2675.0,0.3046,2675.9,2591.4,2182.0,2668.0,3526.0
+held_out_1230,"Ngara, Nairobi","Roysambu, Nairobi",1010.0,0.2634,943.6,988.9,799.0,947.0,1520.0
+held_out_1230,"Ngara, Nairobi","Ruiru, Kiambu County",1836.0,0.3658,1664.2,1869.1,1496.0,1676.0,2516.0
+held_out_1230,"Ngara, Nairobi","Runda, Nairobi",1299.0,0.3083,1369.7,1186.7,1015.0,1348.0,1572.0
+held_out_1230,"Ngara, Nairobi","South B, Nairobi",846.0,0.2173,722.4,677.2,624.0,701.0,869.0
+held_out_1230,"Ngara, Nairobi","South C, Nairobi",1317.0,0.292,1192.4,1144.0,1010.0,1151.0,1469.0
+held_out_1230,"Ngara, Nairobi","Umoja, Nairobi",1837.0,0.35,1889.1,1898.8,1588.0,1778.0,2476.0
+held_out_1230,"Ngara, Nairobi","Upper Hill, Nairobi",870.0,0.2476,793.3,721.0,667.0,779.0,885.0
+held_out_1230,"Ngara, Nairobi","Westlands, Nairobi",567.0,0.3111,534.7,452.8,371.0,511.0,634.0
+held_out_1230,"Nyayo Estate, Nairobi","Athi River, Machakos County",2359.0,0.2707,2640.1,2149.4,1984.0,2641.0,2595.0
+held_out_1230,"Nyayo Estate, Nairobi","Buruburu, Nairobi",1473.0,0.1644,1500.2,1248.1,1171.0,1713.0,1640.0
+held_out_1230,"Nyayo Estate, Nairobi","Dagoretti, Nairobi",3232.0,0.2261,3600.3,2930.9,2739.0,3601.0,3588.0
+held_out_1230,"Nyayo Estate, Nairobi","Donholm, Nairobi",945.0,0.3523,893.5,960.3,918.0,892.0,1038.0
+held_out_1230,"Nyayo Estate, Nairobi","Embakasi, Nairobi",999.0,0.1371,1434.7,880.6,782.0,1500.0,1501.0
+held_out_1230,"Nyayo Estate, Nairobi","Imara Daima, Nairobi",1144.0,0.1427,1652.6,979.6,871.0,1653.0,1632.0
+held_out_1230,"Nyayo Estate, Nairobi","Kahawa, Nairobi",2810.0,0.5533,3043.2,2948.0,2393.0,3032.0,3396.0
+held_out_1230,"Nyayo Estate, Nairobi","Karen, Nairobi",2823.0,0.2538,3283.6,2652.1,2399.0,3279.0,3396.0
+held_out_1230,"Nyayo Estate, Nairobi","Kasarani, Nairobi",1962.0,0.2317,1981.1,1782.6,1553.0,2230.0,2544.0
+held_out_1230,"Nyayo Estate, Nairobi","Kawangware, Nairobi",2807.0,0.2733,3496.5,2589.3,2421.0,3525.0,3037.0
+held_out_1230,"Nyayo Estate, Nairobi","Kayole, Nairobi",1136.0,0.3071,1139.0,1150.1,1108.0,1131.0,1245.0
+held_out_1230,"Nyayo Estate, Nairobi","Kilimani, Nairobi",2170.0,0.3163,2859.4,1951.0,1797.0,2931.0,2284.0
+held_out_1230,"Nyayo Estate, Nairobi","Kitengela, Kajiado County",2586.0,0.2417,2790.6,2380.1,2065.0,2863.0,3369.0
+held_out_1230,"Nyayo Estate, Nairobi","Langata, Nairobi",2363.0,0.2462,2858.7,2155.5,1994.0,2859.0,2650.0
+held_out_1230,"Nyayo Estate, Nairobi","Lavington, Nairobi",2379.0,0.3298,3084.1,2150.3,1930.0,3165.0,2598.0
+held_out_1230,"Nyayo Estate, Nairobi","Mlolongo, Machakos County",1587.0,0.186,1881.8,1267.6,1196.0,1884.0,1581.0
+held_out_1230,"Nyayo Estate, Nairobi","Nairobi CBD, Nairobi",1717.0,0.2625,2295.2,1432.7,1275.0,2350.0,1876.0
+held_out_1230,"Nyayo Estate, Nairobi","Ngara, Nairobi",2030.0,0.2925,2678.1,1790.2,1572.0,2737.0,2318.0
+held_out_1230,"Nyayo Estate, Nairobi","Ongata Rongai, Kajiado County",3009.0,0.2971,3289.5,2866.8,2542.0,3510.0,3635.0
+held_out_1230,"Nyayo Estate, Nairobi","Roysambu, Nairobi",1906.0,0.2279,1914.7,1729.4,1504.0,2154.0,2493.0
+held_out_1230,"Nyayo Estate, Nairobi","Ruiru, Kiambu County",2729.0,0.4035,2660.5,2717.0,2194.0,2897.0,3490.0
+held_out_1230,"Nyayo Estate, Nairobi","Runda, Nairobi",2598.0,0.3028,3092.1,2442.5,2179.0,3093.0,3049.0
+held_out_1230,"Nyayo Estate, Nairobi","South B, Nairobi",1611.0,0.1459,2121.6,1349.4,1276.0,2145.0,1779.0
+held_out_1230,"Nyayo Estate, Nairobi","South C, Nairobi",1501.0,0.2768,1981.2,1337.7,1245.0,2013.0,1580.0
+held_out_1230,"Nyayo Estate, Nairobi","Umoja, Nairobi",1494.0,0.3902,1448.2,1516.7,1441.0,1439.0,1635.0
+held_out_1230,"Nyayo Estate, Nairobi","Upper Hill, Nairobi",1765.0,0.2037,2427.0,1494.1,1379.0,2470.0,1944.0
+held_out_1230,"Nyayo Estate, Nairobi","Westlands, Nairobi",1826.0,0.3062,2469.7,1635.5,1464.0,2564.0,2024.0
+held_out_1230,"Ongata Rongai, Kajiado County","Athi River, Machakos County",3635.0,0.2906,3876.8,3474.5,3170.0,3992.0,4218.0
+held_out_1230,"Ongata Rongai, Kajiado County","Buruburu, Nairobi",2937.0,0.2454,3124.4,2656.8,2394.0,3493.0,3465.0
+held_out_1230,"Ongata Rongai, Kajiado County","Dagoretti, Nairobi",3064.0,0.2655,3043.6,2769.5,2576.0,3104.0,3305.0
+held_out_1230,"Ongata Rongai, Kajiado County","Donholm, Nairobi",3173.0,0.3318,3372.9,3043.6,2596.0,3604.0,3945.0
+held_out_1230,"Ongata Rongai, Kajiado County","Embakasi, Nairobi",2424.0,0.2419,2627.7,2230.0,1996.0,2852.0,2963.0
+held_out_1230,"Ongata Rongai, Kajiado County","Imara Daima, Nairobi",2273.0,0.2289,2567.4,2051.8,1828.0,2762.0,2806.0
+held_out_1230,"Ongata Rongai, Kajiado County","Kahawa, Nairobi",4341.0,0.4209,4874.2,4360.2,3528.0,5110.0,5505.0
+held_out_1230,"Ongata Rongai, Kajiado County","Karen, Nairobi",1390.0,0.2816,1363.9,1421.7,1384.0,1361.0,1518.0
+held_out_1230,"Ongata Rongai, Kajiado County","Kasarani, Nairobi",3485.0,0.2718,3760.6,3227.2,2700.0,4296.0,4640.0
+held_out_1230,"Ongata Rongai, Kajiado County","Kawangware, Nairobi",2713.0,0.2923,2875.6,2525.4,2267.0,2936.0,3151.0
+held_out_1230,"Ongata Rongai, Kajiado County","Kayole, Nairobi",3517.0,0.3163,3748.0,3496.5,3023.0,3926.0,4520.0
+held_out_1230,"Ongata Rongai, Kajiado County","Kilimani, Nairobi",2074.0,0.318,2687.2,1942.3,1741.0,2695.0,2374.0
+held_out_1230,"Ongata Rongai, Kajiado County","Kitengela, Kajiado County",3859.0,0.2711,4021.5,3723.0,3282.0,4205.0,4909.0
+held_out_1230,"Ongata Rongai, Kajiado County","Langata, Nairobi",1209.0,0.2786,1210.5,1208.1,1134.0,1227.0,1400.0
+held_out_1230,"Ongata Rongai, Kajiado County","Lavington, Nairobi",2373.0,0.3264,3031.4,2193.6,1952.0,3040.0,2692.0
+held_out_1230,"Ongata Rongai, Kajiado County","Mlolongo, Machakos County",2851.0,0.238,3097.4,2569.1,2373.0,3251.0,3197.0
+held_out_1230,"Ongata Rongai, Kajiado County","Nairobi CBD, Nairobi",2235.0,0.2873,3115.0,1981.5,1741.0,3136.0,2578.0
+held_out_1230,"Ongata Rongai, Kajiado County","Ngara, Nairobi",2835.0,0.3046,3621.8,2469.5,2160.0,3626.0,3176.0
+held_out_1230,"Ongata Rongai, Kajiado County","Nyayo Estate, Nairobi",3077.0,0.2971,3300.8,3021.8,2588.0,3511.0,4048.0
+held_out_1230,"Ongata Rongai, Kajiado County","Roysambu, Nairobi",3439.0,0.2694,3688.7,3166.9,2641.0,4218.0,4593.0
+held_out_1230,"Ongata Rongai, Kajiado County","Ruiru, Kiambu County",4256.0,0.3614,4443.7,4130.2,3324.0,4976.0,5555.0
+held_out_1230,"Ongata Rongai, Kajiado County","Runda, Nairobi",3637.0,0.3098,3861.3,3258.9,2833.0,4010.0,4208.0
+held_out_1230,"Ongata Rongai, Kajiado County","South B, Nairobi",2192.0,0.2283,2859.7,1959.7,1777.0,3027.0,2577.0
+held_out_1230,"Ongata Rongai, Kajiado County","South C, Nairobi",2345.0,0.295,2865.0,2118.3,1916.0,2943.0,2602.0
+held_out_1230,"Ongata Rongai, Kajiado County","Umoja, Nairobi",3703.0,0.3467,3878.7,3490.9,3036.0,4065.0,4348.0
+held_out_1230,"Ongata Rongai, Kajiado County","Upper Hill, Nairobi",2280.0,0.255,3136.3,2043.2,1841.0,3246.0,2634.0
+held_out_1230,"Ongata Rongai, Kajiado County","Westlands, Nairobi",2782.0,0.3124,3490.5,2354.8,2028.0,3505.0,3074.0
+held_out_1230,"Roysambu, Nairobi","Athi River, Machakos County",3066.0,0.2506,3253.2,2817.4,2569.0,3436.0,3560.0
+held_out_1230,"Roysambu, Nairobi","Buruburu, Nairobi",1494.0,0.1819,1454.1,1288.5,1171.0,1712.0,1817.0
+held_out_1230,"Roysambu, Nairobi","Dagoretti, Nairobi",2821.0,0.2195,3587.4,2648.3,2377.0,3879.0,3613.0
+held_out_1230,"Roysambu, Nairobi","Donholm, Nairobi",1241.0,0.2703,1345.2,1204.5,1018.0,1524.0,1708.0
+held_out_1230,"Roysambu, Nairobi","Embakasi, Nairobi",1724.0,0.1697,1903.2,1541.2,1352.0,2308.0,2467.0
+held_out_1230,"Roysambu, Nairobi","Imara Daima, Nairobi",1934.0,0.1673,2134.8,1543.6,1375.0,2531.0,2383.0
+held_out_1230,"Roysambu, Nairobi","Kahawa, Nairobi",1250.0,0.3889,1212.5,1234.1,1161.0,1227.0,1349.0
+held_out_1230,"Roysambu, Nairobi","Karen, Nairobi",3299.0,0.2382,3800.8,2893.5,2565.0,4110.0,3944.0
+held_out_1230,"Roysambu, Nairobi","Kasarani, Nairobi",339.0,0.2225,329.1,307.5,281.0,367.0,400.0
+held_out_1230,"Roysambu, Nairobi","Kawangware, Nairobi",2483.0,0.2523,3247.1,2153.1,1866.0,3499.0,3004.0
+held_out_1230,"Roysambu, Nairobi","Kayole, Nairobi",1764.0,0.2479,1819.7,1723.1,1561.0,1948.0,2215.0
+held_out_1230,"Roysambu, Nairobi","Kilimani, Nairobi",1848.0,0.2829,2718.3,1484.0,1286.0,2796.0,1986.0
+held_out_1230,"Roysambu, Nairobi","Kitengela, Kajiado County",3294.0,0.2314,3377.4,3040.7,2664.0,3649.0,4292.0
+held_out_1230,"Roysambu, Nairobi","Langata, Nairobi",2935.0,0.2324,3140.4,2436.1,2140.0,3502.0,3414.0
+held_out_1230,"Roysambu, Nairobi","Lavington, Nairobi",1823.0,0.2939,2815.0,1551.3,1303.0,2822.0,2148.0
+held_out_1230,"Roysambu, Nairobi","Mlolongo, Machakos County",2398.0,0.1919,2505.0,1949.0,1774.0,2771.0,2686.0
+held_out_1230,"Roysambu, Nairobi","Nairobi CBD, Nairobi",1520.0,0.2435,2308.6,1084.5,943.0,2414.0,1524.0
+held_out_1230,"Roysambu, Nairobi","Ngara, Nairobi",1000.0,0.2634,1795.1,837.3,782.0,1819.0,992.0
+held_out_1230,"Roysambu, Nairobi","Nyayo Estate, Nairobi",1405.0,0.2279,1450.2,1341.5,1200.0,1596.0,1821.0
+held_out_1230,"Roysambu, Nairobi","Ongata Rongai, Kajiado County",3583.0,0.2694,3662.0,3158.7,2698.0,4149.0,4408.0
+held_out_1230,"Roysambu, Nairobi","Ruiru, Kiambu County",1175.0,0.3217,1030.3,1138.8,967.0,1074.0,1501.0
+held_out_1230,"Roysambu, Nairobi","Runda, Nairobi",1242.0,0.2738,1285.3,1198.5,1092.0,1330.0,1481.0
+held_out_1230,"Roysambu, Nairobi","South B, Nairobi",1825.0,0.1685,2191.0,1297.3,1189.0,2530.0,1832.0
+held_out_1230,"Roysambu, Nairobi","South C, Nairobi",1956.0,0.2538,2591.2,1662.4,1501.0,2768.0,2137.0
+held_out_1230,"Roysambu, Nairobi","Umoja, Nairobi",1553.0,0.292,1640.5,1532.9,1344.0,1760.0,1991.0
+held_out_1230,"Roysambu, Nairobi","Upper Hill, Nairobi",1693.0,0.2044,2363.3,1225.0,1095.0,2607.0,1731.0
+held_out_1230,"Roysambu, Nairobi","Westlands, Nairobi",1072.0,0.2723,2011.4,936.9,819.0,2026.0,1252.0
+held_out_1230,"Ruiru, Kiambu County","Athi River, Machakos County",3827.0,0.3419,3910.8,3699.7,3284.0,4082.0,4500.0
+held_out_1230,"Ruiru, Kiambu County","Buruburu, Nairobi",2257.0,0.2989,2144.6,2071.2,1819.0,2389.0,2663.0
+held_out_1230,"Ruiru, Kiambu County","Dagoretti, Nairobi",3569.0,0.3116,4287.2,3438.6,3031.0,4605.0,4339.0
+held_out_1230,"Ruiru, Kiambu County","Donholm, Nairobi",2009.0,0.4632,2016.5,2081.7,1669.0,2186.0,2560.0
+held_out_1230,"Ruiru, Kiambu County","Embakasi, Nairobi",2507.0,0.302,2666.9,2480.7,2147.0,2981.0,3252.0
+held_out_1230,"Ruiru, Kiambu County","Imara Daima, Nairobi",2669.0,0.2707,2771.5,2323.8,2016.0,3122.0,3153.0
+held_out_1230,"Ruiru, Kiambu County","Kahawa, Nairobi",1394.0,0.5731,1319.2,1418.6,1257.0,1337.0,1539.0
+held_out_1230,"Ruiru, Kiambu County","Karen, Nairobi",4055.0,0.3329,4446.3,3690.7,3212.0,4767.0,4650.0
+held_out_1230,"Ruiru, Kiambu County","Kasarani, Nairobi",1147.0,0.3253,1034.4,1059.7,938.0,1101.0,1312.0
+held_out_1230,"Ruiru, Kiambu County","Kawangware, Nairobi",3134.0,0.3445,3895.1,2937.1,2511.0,4175.0,3748.0
+held_out_1230,"Ruiru, Kiambu County","Kayole, Nairobi",2527.0,0.4448,2512.7,2606.2,2249.0,2630.0,3052.0
+held_out_1230,"Ruiru, Kiambu County","Kilimani, Nairobi",2597.0,0.3763,3364.5,2266.9,1926.0,3494.0,2832.0
+held_out_1230,"Ruiru, Kiambu County","Kitengela, Kajiado County",4051.0,0.3125,4047.6,3957.7,3398.0,4287.0,5189.0
+held_out_1230,"Ruiru, Kiambu County","Langata, Nairobi",3681.0,0.332,3830.3,3247.6,2797.0,4193.0,4154.0
+held_out_1230,"Ruiru, Kiambu County","Lavington, Nairobi",2579.0,0.3844,3474.5,2339.2,1944.0,3503.0,2972.0
+held_out_1230,"Ruiru, Kiambu County","Mlolongo, Machakos County",3137.0,0.2716,3167.1,2724.0,2441.0,3423.0,3483.0
+held_out_1230,"Ruiru, Kiambu County","Nairobi CBD, Nairobi",2257.0,0.3425,2922.7,1840.9,1583.0,3080.0,2336.0
+held_out_1230,"Ruiru, Kiambu County","Ngara, Nairobi",1754.0,0.3658,2458.8,1577.0,1415.0,2532.0,1858.0
+held_out_1230,"Ruiru, Kiambu County","Nyayo Estate, Nairobi",2175.0,0.4035,2135.0,2188.7,1853.0,2278.0,2685.0
+held_out_1230,"Ruiru, Kiambu County","Ongata Rongai, Kajiado County",4337.0,0.3614,4356.7,4029.3,3380.0,4821.0,5177.0
+held_out_1230,"Ruiru, Kiambu County","Roysambu, Nairobi",1144.0,0.3217,1035.6,1057.2,925.0,1112.0,1336.0
+held_out_1230,"Ruiru, Kiambu County","Runda, Nairobi",2272.0,0.3649,2375.2,2157.5,1893.0,2492.0,2618.0
+held_out_1230,"Ruiru, Kiambu County","South B, Nairobi",2574.0,0.2685,2895.7,2059.1,1836.0,3245.0,2667.0
+held_out_1230,"Ruiru, Kiambu County","South C, Nairobi",2686.0,0.3504,3242.2,2410.8,2140.0,3447.0,2913.0
+held_out_1230,"Ruiru, Kiambu County","Umoja, Nairobi",2319.0,0.4789,2324.5,2408.8,2019.0,2441.0,2833.0
+held_out_1230,"Ruiru, Kiambu County","Upper Hill, Nairobi",2434.0,0.3008,2996.1,1963.1,1736.0,3268.0,2491.0
+held_out_1230,"Ruiru, Kiambu County","Westlands, Nairobi",1810.0,0.3765,2715.2,1671.5,1455.0,2723.0,2030.0
+held_out_1230,"Runda, Nairobi","Athi River, Machakos County",3225.0,0.2942,3423.3,3051.0,2710.0,3413.0,3869.0
+held_out_1230,"Runda, Nairobi","Buruburu, Nairobi",2294.0,0.2508,2336.6,2055.0,1813.0,2420.0,2778.0
+held_out_1230,"Runda, Nairobi","Dagoretti, Nairobi",2288.0,0.2696,2530.9,2365.2,2129.0,2510.0,3005.0
+held_out_1230,"Runda, Nairobi","Donholm, Nairobi",2046.0,0.3369,2128.9,2119.5,1786.0,2123.0,2776.0
+held_out_1230,"Runda, Nairobi","Embakasi, Nairobi",2014.0,0.248,2251.8,1791.8,1518.0,2249.0,2622.0
+held_out_1230,"Runda, Nairobi","Imara Daima, Nairobi",1932.0,0.2342,2216.0,1658.8,1393.0,2209.0,2528.0
+held_out_1230,"Runda, Nairobi","Kahawa, Nairobi",2333.0,0.4238,2382.1,2405.9,2155.0,2371.0,2747.0
+held_out_1230,"Runda, Nairobi","Karen, Nairobi",2935.0,0.2855,2890.8,2729.3,2373.0,2864.0,3621.0
+held_out_1230,"Runda, Nairobi","Kasarani, Nairobi",1506.0,0.2761,1478.8,1489.2,1331.0,1513.0,1904.0
+held_out_1230,"Runda, Nairobi","Kawangware, Nairobi",1848.0,0.2959,2132.7,1868.0,1623.0,2117.0,2451.0
+held_out_1230,"Runda, Nairobi","Kayole, Nairobi",2563.0,0.3219,2688.8,2671.8,2367.0,2661.0,3314.0
+held_out_1230,"Runda, Nairobi","Kilimani, Nairobi",1773.0,0.3213,2071.4,1647.4,1304.0,2045.0,2373.0
+held_out_1230,"Runda, Nairobi","Kitengela, Kajiado County",3453.0,0.2747,3605.4,3290.9,2805.0,3627.0,4574.0
+held_out_1230,"Runda, Nairobi","Langata, Nairobi",2958.0,0.2827,3228.1,2619.8,2196.0,3222.0,3695.0
+held_out_1230,"Runda, Nairobi","Lavington, Nairobi",1388.0,0.3295,1693.5,1403.9,1143.0,1666.0,1935.0
+held_out_1230,"Runda, Nairobi","Mlolongo, Machakos County",2454.0,0.2421,2663.6,2136.0,1912.0,2661.0,2837.0
+held_out_1230,"Runda, Nairobi","Nairobi CBD, Nairobi",1543.0,0.2913,1936.2,1239.9,999.0,1946.0,1826.0
+held_out_1230,"Runda, Nairobi","Ngara, Nairobi",1221.0,0.3083,1503.1,1057.6,950.0,1525.0,1299.0
+held_out_1230,"Runda, Nairobi","Nyayo Estate, Nairobi",2212.0,0.3028,2321.4,2263.5,1971.0,2308.0,2937.0
+held_out_1230,"Runda, Nairobi","Ongata Rongai, Kajiado County",3607.0,0.3098,3757.5,3359.9,2758.0,3902.0,4701.0
+held_out_1230,"Runda, Nairobi","Roysambu, Nairobi",1166.0,0.2738,1139.0,1188.5,1048.0,1160.0,1561.0
+held_out_1230,"Runda, Nairobi","Ruiru, Kiambu County",2256.0,0.3649,2171.0,2280.7,1956.0,2223.0,2846.0
+held_out_1230,"Runda, Nairobi","South B, Nairobi",1886.0,0.2336,2260.9,1441.4,1245.0,2270.0,2086.0
+held_out_1230,"Runda, Nairobi","South C, Nairobi",1954.0,0.2987,2240.1,1687.5,1430.0,2237.0,2292.0
+held_out_1230,"Runda, Nairobi","Umoja, Nairobi",2357.0,0.3513,2403.1,2471.8,2137.0,2378.0,3090.0
+held_out_1230,"Runda, Nairobi","Upper Hill, Nairobi",1716.0,0.2595,2129.7,1379.9,1151.0,2136.0,2033.0
+held_out_1230,"Runda, Nairobi","Westlands, Nairobi",1069.0,0.316,1496.7,1015.8,836.0,1509.0,1405.0
+held_out_1230,"South B, Nairobi","Athi River, Machakos County",1921.0,0.2076,1821.5,1871.0,1767.0,1799.0,2268.0
+held_out_1230,"South B, Nairobi","Buruburu, Nairobi",1072.0,0.1167,968.7,947.9,869.0,990.0,1545.0
+held_out_1230,"South B, Nairobi","Dagoretti, Nairobi",2244.0,0.1722,2229.0,1908.2,1748.0,2196.0,2678.0
+held_out_1230,"South B, Nairobi","Donholm, Nairobi",1299.0,0.1909,1317.6,1227.0,1042.0,1278.0,2011.0
+held_out_1230,"South B, Nairobi","Embakasi, Nairobi",712.0,0.0945,645.0,662.5,621.0,627.0,1060.0
+held_out_1230,"South B, Nairobi","Imara Daima, Nairobi",631.0,0.1064,585.4,521.5,457.0,560.0,1063.0
+held_out_1230,"South B, Nairobi","Kahawa, Nairobi",2681.0,0.3334,2558.1,2532.1,2101.0,2489.0,3394.0
+held_out_1230,"South B, Nairobi","Karen, Nairobi",2021.0,0.1922,2007.9,1888.2,1727.0,1971.0,2566.0
+held_out_1230,"South B, Nairobi","Kasarani, Nairobi",1833.0,0.1706,1580.8,1482.0,1264.0,1688.0,2542.0
+held_out_1230,"South B, Nairobi","Kawangware, Nairobi",1900.0,0.2091,1872.0,1637.6,1449.0,1834.0,2351.0
+held_out_1230,"South B, Nairobi","Kayole, Nairobi",1797.0,0.1621,1767.2,1741.6,1592.0,1693.0,2515.0
+held_out_1230,"South B, Nairobi","Kilimani, Nairobi",1186.0,0.2427,1191.2,996.2,851.0,1160.0,1449.0
+held_out_1230,"South B, Nairobi","Kitengela, Kajiado County",2145.0,0.1907,2056.3,2073.6,1847.0,2045.0,3035.0
+held_out_1230,"South B, Nairobi","Langata, Nairobi",1472.0,0.1834,1569.2,1354.7,1257.0,1560.0,1790.0
+held_out_1230,"South B, Nairobi","Lavington, Nairobi",1468.0,0.256,1512.5,1179.5,990.0,1480.0,1730.0
+held_out_1230,"South B, Nairobi","Mlolongo, Machakos County",1153.0,0.1473,1026.3,1010.9,967.0,1017.0,1265.0
+held_out_1230,"South B, Nairobi","Nairobi CBD, Nairobi",554.0,0.1962,525.1,379.5,332.0,519.0,574.0
+held_out_1230,"South B, Nairobi","Ngara, Nairobi",943.0,0.2173,808.6,704.7,608.0,773.0,1053.0
+held_out_1230,"South B, Nairobi","Nyayo Estate, Nairobi",1350.0,0.1459,1338.1,1348.4,1220.0,1286.0,2100.0
+held_out_1230,"South B, Nairobi","Ongata Rongai, Kajiado County",2124.0,0.2283,2153.5,1999.2,1775.0,2212.0,2757.0
+held_out_1230,"South B, Nairobi","Roysambu, Nairobi",1776.0,0.1685,1510.1,1425.0,1209.0,1612.0,2491.0
+held_out_1230,"South B, Nairobi","Ruiru, Kiambu County",2602.0,0.2685,2233.2,2328.6,1903.0,2342.0,3488.0
+held_out_1230,"South B, Nairobi","Runda, Nairobi",1980.0,0.2336,1974.3,1620.8,1383.0,1952.0,2401.0
+held_out_1230,"South B, Nairobi","South C, Nairobi",495.0,0.209,479.0,468.1,442.0,471.0,567.0
+held_out_1230,"South B, Nairobi","Umoja, Nairobi",1777.0,0.219,1761.4,1721.9,1525.0,1703.0,2424.0
+held_out_1230,"South B, Nairobi","Upper Hill, Nairobi",590.0,0.1531,590.1,478.4,445.0,583.0,663.0
+held_out_1230,"South B, Nairobi","Westlands, Nairobi",1103.0,0.2266,1076.2,787.6,616.0,1024.0,1373.0
+held_out_1230,"South C, Nairobi","Athi River, Machakos County",2308.0,0.2781,2231.3,2217.0,1989.0,2198.0,2809.0
+held_out_1230,"South C, Nairobi","Buruburu, Nairobi",1420.0,0.2253,1351.5,1271.3,1074.0,1366.0,1950.0
+held_out_1230,"South C, Nairobi","Dagoretti, Nairobi",2290.0,0.2508,2319.3,2121.6,1941.0,2292.0,2661.0
+held_out_1230,"South C, Nairobi","Donholm, Nairobi",1644.0,0.3145,1703.2,1621.3,1247.0,1652.0,2437.0
+held_out_1230,"South C, Nairobi","Embakasi, Nairobi",1096.0,0.2193,1054.5,977.1,806.0,1026.0,1586.0
+held_out_1230,"South C, Nairobi","Imara Daima, Nairobi",1014.0,0.209,1008.0,867.7,680.0,973.0,1578.0
+held_out_1230,"South C, Nairobi","Kahawa, Nairobi",2573.0,0.4136,2584.6,2687.0,2189.0,2509.0,3393.0
+held_out_1230,"South C, Nairobi","Karen, Nairobi",2046.0,0.2679,2165.2,2093.1,1830.0,2118.0,2812.0
+held_out_1230,"South C, Nairobi","Kasarani, Nairobi",1726.0,0.2562,1658.1,1655.7,1351.0,1708.0,2540.0
+held_out_1230,"South C, Nairobi","Kawangware, Nairobi",1945.0,0.2798,1903.2,1760.2,1622.0,1885.0,2116.0
+held_out_1230,"South C, Nairobi","Kayole, Nairobi",2144.0,0.2968,2228.2,2149.3,1813.0,2150.0,2946.0
+held_out_1230,"South C, Nairobi","Kilimani, Nairobi",1245.0,0.3073,1432.9,1086.7,937.0,1434.0,1424.0
+held_out_1230,"South C, Nairobi","Kitengela, Kajiado County",2533.0,0.2583,2465.6,2456.2,2070.0,2444.0,3565.0
+held_out_1230,"South C, Nairobi","Langata, Nairobi",1420.0,0.2641,1557.0,1415.3,1278.0,1545.0,1798.0
+held_out_1230,"South C, Nairobi","Lavington, Nairobi",1473.0,0.3166,1550.6,1277.4,1076.0,1526.0,1712.0
+held_out_1230,"South C, Nairobi","Mlolongo, Machakos County",1541.0,0.2229,1437.2,1321.6,1187.0,1421.0,1791.0
+held_out_1230,"South C, Nairobi","Nairobi CBD, Nairobi",740.0,0.2736,789.4,538.8,417.0,780.0,862.0
+held_out_1230,"South C, Nairobi","Ngara, Nairobi",1296.0,0.292,1189.3,1007.3,821.0,1149.0,1459.0
+held_out_1230,"South C, Nairobi","Nyayo Estate, Nairobi",1736.0,0.2768,1758.6,1752.7,1405.0,1687.0,2661.0
+held_out_1230,"South C, Nairobi","Ongata Rongai, Kajiado County",2073.0,0.295,2167.7,2083.6,1799.0,2198.0,2764.0
+held_out_1230,"South C, Nairobi","Roysambu, Nairobi",1669.0,0.2538,1585.1,1598.8,1296.0,1632.0,2489.0
+held_out_1230,"South C, Nairobi","Ruiru, Kiambu County",2495.0,0.3504,2303.7,2514.5,1990.0,2362.0,3487.0
+held_out_1230,"South C, Nairobi","Runda, Nairobi",1811.0,0.2987,1935.3,1708.4,1445.0,1912.0,2327.0
+held_out_1230,"South C, Nairobi","South B, Nairobi",558.0,0.209,511.7,459.1,420.0,503.0,607.0
+held_out_1230,"South C, Nairobi","Umoja, Nairobi",2124.0,0.3316,2148.6,2122.3,1743.0,2076.0,2887.0
+held_out_1230,"South C, Nairobi","Upper Hill, Nairobi",793.0,0.2388,874.0,628.4,530.0,867.0,942.0
+held_out_1230,"South C, Nairobi","Westlands, Nairobi",936.0,0.3002,972.7,840.1,702.0,939.0,1162.0
+held_out_1230,"Umoja, Nairobi","Athi River, Machakos County",3066.0,0.3223,3197.6,2865.9,2600.0,3190.0,3425.0
+held_out_1230,"Umoja, Nairobi","Buruburu, Nairobi",1396.0,0.2512,1384.7,1334.0,1226.0,1440.0,1656.0
+held_out_1230,"Umoja, Nairobi","Dagoretti, Nairobi",3557.0,0.2828,4037.4,3375.5,3039.0,4024.0,4229.0
+held_out_1230,"Umoja, Nairobi","Donholm, Nairobi",1083.0,0.4874,1000.1,1075.6,962.0,998.0,1195.0
+held_out_1230,"Umoja, Nairobi","Embakasi, Nairobi",1720.0,0.2449,2071.8,1615.6,1383.0,2070.0,2333.0
+held_out_1230,"Umoja, Nairobi","Imara Daima, Nairobi",1870.0,0.2196,2323.1,1674.4,1475.0,2321.0,2383.0
+held_out_1230,"Umoja, Nairobi","Kahawa, Nairobi",2519.0,0.6412,2555.7,2801.9,2235.0,2506.0,3119.0
+held_out_1230,"Umoja, Nairobi","Karen, Nairobi",3513.0,0.3096,3720.2,3353.4,3032.0,3700.0,4070.0
+held_out_1230,"Umoja, Nairobi","Kasarani, Nairobi",1672.0,0.2964,1615.3,1654.9,1395.0,1704.0,2272.0
+held_out_1230,"Umoja, Nairobi","Kawangware, Nairobi",3229.0,0.3253,3825.5,2979.1,2513.0,3816.0,3946.0
+held_out_1230,"Umoja, Nairobi","Kayole, Nairobi",635.0,0.4586,611.1,626.2,590.0,603.0,669.0
+held_out_1230,"Umoja, Nairobi","Kilimani, Nairobi",2586.0,0.3652,3164.9,2328.9,1928.0,3185.0,3026.0
+held_out_1230,"Umoja, Nairobi","Kitengela, Kajiado County",3295.0,0.2886,3382.6,3113.0,2695.0,3419.0,4143.0
+held_out_1230,"Umoja, Nairobi","Langata, Nairobi",3050.0,0.3066,3289.6,2826.8,2606.0,3289.0,3326.0
+held_out_1230,"Umoja, Nairobi","Lavington, Nairobi",2568.0,0.3757,3357.8,2402.7,1947.0,3395.0,3160.0
+held_out_1230,"Umoja, Nairobi","Mlolongo, Machakos County",2395.0,0.2371,2538.2,2006.5,1805.0,2536.0,2655.0
+held_out_1230,"Umoja, Nairobi","Nairobi CBD, Nairobi",2156.0,0.3206,2471.8,1825.8,1586.0,2493.0,2334.0
+held_out_1230,"Umoja, Nairobi","Ngara, Nairobi",1742.0,0.35,2355.4,1638.9,1417.0,2413.0,2051.0
+held_out_1230,"Umoja, Nairobi","Nyayo Estate, Nairobi",1402.0,0.3902,1376.2,1383.4,1230.0,1364.0,1623.0
+held_out_1230,"Umoja, Nairobi","Ongata Rongai, Kajiado County",3702.0,0.3467,3797.2,3574.4,3183.0,3933.0,4312.0
+held_out_1230,"Umoja, Nairobi","Roysambu, Nairobi",1615.0,0.292,1545.8,1598.7,1342.0,1628.0,2221.0
+held_out_1230,"Umoja, Nairobi","Ruiru, Kiambu County",2443.0,0.4789,2269.1,2603.0,2036.0,2358.0,3220.0
+held_out_1230,"Umoja, Nairobi","Runda, Nairobi",2312.0,0.3513,2574.8,2289.8,2020.0,2567.0,2788.0
+held_out_1230,"Umoja, Nairobi","South B, Nairobi",1920.0,0.219,2206.0,1702.1,1602.0,2219.0,2059.0
+held_out_1230,"Umoja, Nairobi","South C, Nairobi",2212.0,0.3316,2563.3,2027.7,1846.0,2580.0,2394.0
+held_out_1230,"Umoja, Nairobi","Upper Hill, Nairobi",2203.0,0.2663,2588.5,1915.0,1739.0,2609.0,2400.0
+held_out_1230,"Umoja, Nairobi","Westlands, Nairobi",1799.0,0.3636,2534.8,1735.5,1457.0,2610.0,2223.0
+held_out_1230,"Upper Hill, Nairobi","Athi River, Machakos County",2281.0,0.2363,2151.7,2162.9,1997.0,2117.0,2699.0
+held_out_1230,"Upper Hill, Nairobi","Buruburu, Nairobi",1364.0,0.1643,1293.5,1218.6,1094.0,1302.0,1852.0
+held_out_1230,"Upper Hill, Nairobi","Dagoretti, Nairobi",1775.0,0.2051,1767.8,1557.7,1390.0,1730.0,2208.0
+held_out_1230,"Upper Hill, Nairobi","Donholm, Nairobi",1590.0,0.2441,1644.6,1527.7,1266.0,1589.0,2338.0
+held_out_1230,"Upper Hill, Nairobi","Embakasi, Nairobi",1062.0,0.1504,976.7,961.8,868.0,945.0,1492.0
+held_out_1230,"Upper Hill, Nairobi","Imara Daima, Nairobi",988.0,0.1514,979.8,830.1,704.0,942.0,1537.0
+held_out_1230,"Upper Hill, Nairobi","Kahawa, Nairobi",2398.0,0.3631,2297.2,2422.7,1995.0,2206.0,3173.0
+held_out_1230,"Upper Hill, Nairobi","Karen, Nairobi",1939.0,0.2234,1965.8,1800.1,1549.0,1910.0,2673.0
+held_out_1230,"Upper Hill, Nairobi","Kasarani, Nairobi",1551.0,0.2066,1364.9,1397.7,1157.0,1405.0,2322.0
+held_out_1230,"Upper Hill, Nairobi","Kawangware, Nairobi",1429.0,0.2378,1420.7,1280.5,1091.0,1378.0,1888.0
+held_out_1230,"Upper Hill, Nairobi","Kayole, Nairobi",2091.0,0.2214,2173.3,2056.1,1832.0,2093.0,2844.0
+held_out_1230,"Upper Hill, Nairobi","Kilimani, Nairobi",713.0,0.2683,727.5,598.7,486.0,704.0,906.0
+held_out_1230,"Upper Hill, Nairobi","Kitengela, Kajiado County",2507.0,0.2184,2389.8,2382.4,2077.0,2363.0,3475.0
+held_out_1230,"Upper Hill, Nairobi","Langata, Nairobi",1427.0,0.217,1523.7,1411.9,1273.0,1502.0,1913.0
+held_out_1230,"Upper Hill, Nairobi","Lavington, Nairobi",1012.0,0.2797,1094.0,871.1,726.0,1070.0,1245.0
+held_out_1230,"Upper Hill, Nairobi","Mlolongo, Machakos County",1515.0,0.1792,1351.9,1286.0,1195.0,1334.0,1703.0
+held_out_1230,"Upper Hill, Nairobi","Nairobi CBD, Nairobi",331.0,0.2281,321.1,263.3,233.0,315.0,366.0
+held_out_1230,"Upper Hill, Nairobi","Ngara, Nairobi",929.0,0.2476,840.2,717.7,637.0,821.0,963.0
+held_out_1230,"Upper Hill, Nairobi","Nyayo Estate, Nairobi",1702.0,0.2037,1680.7,1646.7,1412.0,1602.0,2564.0
+held_out_1230,"Upper Hill, Nairobi","Ongata Rongai, Kajiado County",2080.0,0.255,2126.7,2110.7,1793.0,2155.0,3039.0
+held_out_1230,"Upper Hill, Nairobi","Roysambu, Nairobi",1494.0,0.2044,1296.8,1341.6,1103.0,1334.0,2270.0
+held_out_1230,"Upper Hill, Nairobi","Ruiru, Kiambu County",2322.0,0.3008,2012.9,2243.0,1799.0,2059.0,3275.0
+held_out_1230,"Upper Hill, Nairobi","Runda, Nairobi",1745.0,0.2595,1762.3,1522.3,1275.0,1732.0,2228.0
+held_out_1230,"Upper Hill, Nairobi","South B, Nairobi",587.0,0.1531,589.5,486.6,445.0,577.0,717.0
+held_out_1230,"Upper Hill, Nairobi","South C, Nairobi",944.0,0.2388,931.6,847.1,752.0,909.0,1150.0
+held_out_1230,"Upper Hill, Nairobi","Umoja, Nairobi",2067.0,0.2663,2088.8,2040.6,1770.0,2013.0,2786.0
+held_out_1230,"Upper Hill, Nairobi","Westlands, Nairobi",829.0,0.2563,809.6,678.2,509.0,743.0,1169.0
+held_out_1230,"Westlands, Nairobi","Athi River, Machakos County",2443.0,0.2952,2220.1,2236.9,2022.0,2150.0,2750.0
+held_out_1230,"Westlands, Nairobi","Buruburu, Nairobi",1736.0,0.2457,1675.1,1463.0,1205.0,1633.0,2255.0
+held_out_1230,"Westlands, Nairobi","Dagoretti, Nairobi",1987.0,0.2678,2073.8,1935.9,1704.0,1996.0,2570.0
+held_out_1230,"Westlands, Nairobi","Donholm, Nairobi",1486.0,0.3469,1695.8,1658.0,1275.0,1551.0,2379.0
+held_out_1230,"Westlands, Nairobi","Embakasi, Nairobi",1224.0,0.2418,1054.3,1009.9,839.0,977.0,1546.0
+held_out_1230,"Westlands, Nairobi","Imara Daima, Nairobi",1142.0,0.2272,1009.3,906.7,717.0,930.0,1552.0
+held_out_1230,"Westlands, Nairobi","Kahawa, Nairobi",1873.0,0.4468,1927.0,2067.8,1747.0,1798.0,2465.0
+held_out_1230,"Westlands, Nairobi","Karen, Nairobi",2478.0,0.2855,2542.7,2269.4,1915.0,2450.0,3156.0
+held_out_1230,"Westlands, Nairobi","Kasarani, Nairobi",1024.0,0.275,1001.0,1106.7,909.0,989.0,1628.0
+held_out_1230,"Westlands, Nairobi","Kawangware, Nairobi",1662.0,0.2971,1635.1,1446.8,1224.0,1580.0,1974.0
+held_out_1230,"Westlands, Nairobi","Kayole, Nairobi",2007.0,0.3293,2157.3,2183.6,1851.0,1976.0,2861.0
+held_out_1230,"Westlands, Nairobi","Kilimani, Nairobi",1035.0,0.3252,998.6,811.5,631.0,960.0,1186.0
+held_out_1230,"Westlands, Nairobi","Kitengela, Kajiado County",2674.0,0.2736,2485.0,2491.1,2102.0,2397.0,3524.0
+held_out_1230,"Westlands, Nairobi","Langata, Nairobi",2172.0,0.2824,1971.6,1725.0,1505.0,1931.0,2284.0
+held_out_1230,"Westlands, Nairobi","Lavington, Nairobi",1008.0,0.3341,1038.0,830.1,648.0,1002.0,1193.0
+held_out_1230,"Westlands, Nairobi","Mlolongo, Machakos County",1667.0,0.2375,1405.6,1346.9,1221.0,1367.0,1751.0
+held_out_1230,"Westlands, Nairobi","Nairobi CBD, Nairobi",761.0,0.292,657.2,457.4,317.0,627.0,798.0
+held_out_1230,"Westlands, Nairobi","Ngara, Nairobi",740.0,0.3111,632.5,618.8,532.0,590.0,811.0
+held_out_1230,"Westlands, Nairobi","Nyayo Estate, Nairobi",1649.0,0.3062,1784.4,1761.6,1438.0,1634.0,2495.0
+held_out_1230,"Westlands, Nairobi","Ongata Rongai, Kajiado County",2818.0,0.3124,2603.8,2419.8,2039.0,2581.0,3258.0
+held_out_1230,"Westlands, Nairobi","Roysambu, Nairobi",969.0,0.2723,933.4,1051.6,855.0,921.0,1577.0
+held_out_1230,"Westlands, Nairobi","Ruiru, Kiambu County",1796.0,0.3765,1650.4,1933.4,1552.0,1651.0,2565.0
+held_out_1230,"Westlands, Nairobi","Runda, Nairobi",1098.0,0.316,1217.1,1112.3,922.0,1176.0,1524.0
+held_out_1230,"Westlands, Nairobi","South B, Nairobi",1107.0,0.2266,919.5,698.3,561.0,876.0,1167.0
+held_out_1230,"Westlands, Nairobi","South C, Nairobi",1167.0,0.3002,998.2,897.9,758.0,958.0,1224.0
+held_out_1230,"Westlands, Nairobi","Umoja, Nairobi",1796.0,0.3636,1953.1,1982.0,1605.0,1787.0,2642.0
+held_out_1230,"Westlands, Nairobi","Upper Hill, Nairobi",942.0,0.2563,854.9,610.2,472.0,826.0,1011.0

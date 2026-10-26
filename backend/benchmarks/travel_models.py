@@ -155,7 +155,7 @@ def compare(seeds: int, out: Path) -> str:
     _write(out / "results.csv", runs)
     _write(out / "cross_evaluation.csv", crosses)
     snaps = snap_distances(morning_wave_120(), rf_travel.zones)
-    text = _summary(runs, crosses, snaps)
+    text = _summary(runs, crosses, snaps, matrix_note(rf_travel.matrix))
     (out / "summary.md").write_text(text + "\n", encoding="utf-8")
     return text
 
@@ -210,10 +210,19 @@ def _write(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def _summary(runs: list[dict], crosses: list[dict], snaps: list[float]) -> str:
+def matrix_note(matrix: zone_matrix.ZoneMatrix) -> str:
+    """Which zone matrix model the pickup-to-pickup legs came from."""
+    if matrix.has_morning_anchor:
+        return "**Zone matrix:** three anchors, 05:00 / 07:30 / 18:00 (#106)."
+    return (
+        "**Zone matrix:** two anchors, 05:00 / 18:00 (#105): pickup-to-pickup legs carry its "
+        "-14% morning bias."
+    )
+
+
+def _summary(runs: list[dict], crosses: list[dict], snaps: list[float], note: str) -> str:
     lines = [
-        "**Interim zone matrix:** pickup-to-pickup legs carry the known -14% morning bias (#106);",
-        "re-run after #106.",
+        note,
         "",
         "Cross-evaluation: the haversine plan driven under RF travel.",
         "",
