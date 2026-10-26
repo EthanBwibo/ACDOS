@@ -14,10 +14,8 @@ import math
 from dataclasses import dataclass, field
 
 from app.solver.problem import Pickup, Point, Problem, Vehicle
+from app.solver.weights import REPORT_BUFFER_SEC  # noqa: F401 (crew default, re-exported)
 
-# Latest departure aims to have everyone at JKIA this long before the earliest
-# report time on board, as slack for traffic the travel time function missed.
-REPORT_BUFFER_SEC = 900.0
 # The departure search stops once the latest start is known to within this.
 DEPARTURE_TOLERANCE_SEC = 60.0
 # The departure search (_latest_start) settles in one step when travel time does
@@ -48,7 +46,8 @@ class Stop:
     pickup_index: int
     arrival: float
     departure: float
-    # Seconds past the pickup's deadline at the destination; 0 when on time.
+    # Seconds past the pickup's deadline at the destination, plus seconds
+    # past its due time at the stop (#99, Solomon only); 0 when on time.
     lateness: float
 
 
@@ -73,6 +72,9 @@ class _Partial:
     # Earliest deadline among the pickups split() keeps on time. Pickups
     # already late are left out, or they would block every later stop.
     earliest_deadline: float
+    # When service started at the last stop, after any wait for its ready
+    # time; checked against its due time (#99).
+    service_start: float = -math.inf
 
 
 def _start(vehicle: Vehicle) -> _Partial:
@@ -84,12 +86,15 @@ def _add(
 ) -> _Partial:
     drive = problem.travel_time(partial.position, pickup.location, partial.clock)
     arrival = partial.clock + drive
+    if problem.stop_windows:
+        arrival = max(arrival, pickup.ready)  # early: wait for the window to open
     deadline = min(partial.earliest_deadline, pickup.deadline)
     return _Partial(
         load=partial.load + pickup.demand,
         clock=arrival + pickup.service_sec,
         position=pickup.location,
         earliest_deadline=deadline if track_deadline else partial.earliest_deadline,
+        service_start=arrival,
     )
 
 
@@ -106,7 +111,12 @@ def _drive(
     building a _Partial for every stop cost as much as the driving (#85).
     When travel time ignores departure, the legs come from Problem.legs, a
     table built once, instead of a call per leg (#88).
+
+    With stop windows (#99) the times are when service starts, after any wait,
+    and _drive_with_windows does the driving; crew never take that path.
     """
+    if problem.stop_windows:
+        return _drive_with_windows(problem, vehicle_index, route, start)
     pickups = problem.pickups
     arrivals = []
     clock = start
@@ -129,6 +139,36 @@ def _drive(
         clock = arrival + pickup.service_sec
         position = pickup.location
     return arrivals, clock + travel_time(position, problem.destination, clock)
+
+
+def _drive_with_windows(
+    problem: Problem, vehicle_index: int, route: list[int], start: float
+) -> tuple[list[float], float]:
+    """_drive for pickups with stop windows: a vehicle that arrives before a
+    pickup's ready time waits there, so service starts at the later of the
+    two. Kept apart so the crew loop in _drive is untouched by #99."""
+    pickups = problem.pickups
+    starts = []
+    clock = start
+    legs = problem.legs
+    if legs is not None:
+        row = legs.from_start[vehicle_index]
+        for i in route:
+            service_start = max(clock + row[i], pickups[i].ready)
+            starts.append(service_start)
+            clock = service_start + pickups[i].service_sec
+            row = legs.between[i]
+        return starts, clock + row[legs.destination]
+
+    travel_time = problem.travel_time
+    position = problem.vehicles[vehicle_index].start
+    for i in route:
+        pickup = pickups[i]
+        service_start = max(clock + travel_time(position, pickup.location, clock), pickup.ready)
+        starts.append(service_start)
+        clock = service_start + pickup.service_sec
+        position = pickup.location
+    return starts, clock + travel_time(position, problem.destination, clock)
 
 
 def _latest_start(
@@ -179,12 +219,20 @@ def _latest_start(
 
 
 def route_times(
-    problem: Problem, vehicle_index: int, route: list[int], buffer_sec: float = REPORT_BUFFER_SEC
+    problem: Problem, vehicle_index: int, route: list[int], buffer_sec: float | None = None
 ) -> tuple[float, list[float], float]:
-    """When a non-empty route leaves (latest departure), reaches each stop and
-    reaches the destination; all route_evaluation needs, without building
-    Stops."""
-    start = _latest_start(problem, vehicle_index, route, buffer_sec)
+    """When a non-empty route leaves, reaches each stop and reaches the
+    destination; all route_evaluation needs, without building Stops.
+
+    It leaves as the problem's weights say: latest departure for crew,
+    available_from for Solomon (#99). buffer_sec defaults to the weights' too.
+    """
+    if problem.weights.latest_departure:
+        if buffer_sec is None:
+            buffer_sec = problem.weights.report_buffer_sec
+        start = _latest_start(problem, vehicle_index, route, buffer_sec)
+    else:
+        start = problem.vehicles[vehicle_index].available_from
     arrivals, end = _drive(problem, vehicle_index, route, start)
     return start, arrivals, end
 
@@ -193,22 +241,31 @@ def schedule_route(
     problem: Problem,
     vehicle_index: int,
     route: list[int],
-    latest_departure: bool = True,
-    buffer_sec: float = REPORT_BUFFER_SEC,
+    latest_departure: bool | None = None,
+    buffer_sec: float | None = None,
 ) -> RouteSchedule:
     """Times for one route.
 
-    By default the vehicle leaves as late as it can (see _latest_start), so
-    crew are not collected hours early to wait at JKIA. latest_departure=False
+    For crew the vehicle leaves as late as it can (see _latest_start), so crew
+    are not collected hours early to wait at JKIA. latest_departure=False
     leaves at available_from instead. Either way lateness is the same: the
-    start only moves later when the route then still arrives in time.
+    start only moves later when the route then still arrives in time. Both
+    arguments default to the problem's weights (#99); Solomon problems leave
+    at available_from, the standard VRPTW schedule. The departure search only
+    looks at the destination, so stop windows should always go with
+    latest_departure=False, as in the SOLOMON weights.
 
     Everyone on board arrives at the destination together, so a pickup is late
     when that shared arrival is after its deadline, not when it is collected.
+    With stop windows, starting service after its due time is late as well.
     """
     if not route:
         return RouteSchedule(vehicle_index, (), 0, None, None)
 
+    if latest_departure is None:
+        latest_departure = problem.weights.latest_departure
+    if buffer_sec is None:
+        buffer_sec = problem.weights.report_buffer_sec
     if latest_departure:
         start = _latest_start(problem, vehicle_index, route, buffer_sec)
     else:
@@ -219,7 +276,7 @@ def schedule_route(
             pickup_index=i,
             arrival=arrival,
             departure=arrival + problem.pickups[i].service_sec,
-            lateness=max(0.0, end - problem.pickups[i].deadline),
+            lateness=_stop_lateness(problem, i, arrival, end),
         )
         for i, arrival in zip(route, arrivals, strict=True)
     )
@@ -230,13 +287,23 @@ def schedule_route(
 def schedule(
     problem: Problem,
     individual: Individual,
-    latest_departure: bool = True,
-    buffer_sec: float = REPORT_BUFFER_SEC,
+    latest_departure: bool | None = None,
+    buffer_sec: float | None = None,
 ) -> list[RouteSchedule]:
     return [
         schedule_route(problem, v, route, latest_departure, buffer_sec)
         for v, route in enumerate(individual.routes)
     ]
+
+
+def _stop_lateness(problem: Problem, i: int, service_start: float, end: float) -> float:
+    """Pickup i's lateness: past its deadline at the destination, plus (with
+    stop windows) past its due time at the stop."""
+    pickup = problem.pickups[i]
+    late = max(0.0, end - pickup.deadline)
+    if problem.stop_windows:
+        late += max(0.0, service_start - pickup.due)
+    return late
 
 
 def split(problem: Problem, tour: list[int]) -> Individual:
@@ -303,7 +370,12 @@ class RouteBuilder:
         candidate = _add(problem, partial, pickup)
         if candidate.load > vehicle.capacity:
             return False
-        if _destination_arrival(problem, candidate) > candidate.earliest_deadline:
+        # Appending at the end never moves an earlier stop, so only the new
+        # stop's due time (#99) and the shared arrival need checking.
+        if (
+            _destination_arrival(problem, candidate) > candidate.earliest_deadline
+            or candidate.service_start > pickup.due
+        ):
             if self.routes[w]:
                 return False
             # First stop and late even so: accept it, but leave its deadline
@@ -354,7 +426,10 @@ def late_even_alone(problem: Problem, pickup: Pickup) -> bool:
     even driving it alone: a lost cause."""
     for vehicle in problem.vehicles:
         alone = _add(problem, _start(vehicle), pickup)
-        if _destination_arrival(problem, alone) <= pickup.deadline:
+        if (
+            _destination_arrival(problem, alone) <= pickup.deadline
+            and alone.service_start <= pickup.due
+        ):
             return False
     return True
 

@@ -6,7 +6,8 @@ Route by route, for vehicles in index order:
 - Start with the unrouted pickup that has the earliest report time (the most
   urgent), as in Solomon's (1987) time-oriented nearest neighbour. Plain
   nearest-first, ignoring report times, would be a strawman baseline for a
-  problem driven by deadlines.
+  problem driven by deadlines. On Solomon's instances (#99) the most urgent
+  is the earliest due time at the stop (problem.urgency), as in Solomon's.
 - Then keep adding the nearest unrouted pickup, by travel time from where the
   vehicle is at the time it leaves there (so it uses the Random Forest once
   #23 lands), skipping any that would overfill the vehicle or make someone
@@ -19,7 +20,7 @@ without using up a vehicle of their own.
 """
 
 from app.solver.individual import Individual, RouteBuilder, late_even_alone
-from app.solver.problem import Problem
+from app.solver.problem import Problem, urgency
 
 
 def nearest_neighbour(problem: Problem) -> Individual:
@@ -29,7 +30,7 @@ def nearest_neighbour(problem: Problem) -> Individual:
     """
     pickups = problem.pickups
     builder = RouteBuilder(problem)
-    by_report_time = sorted(range(len(pickups)), key=lambda i: (pickups[i].deadline, i))
+    by_report_time = sorted(range(len(pickups)), key=lambda i: (urgency(pickups[i]), i))
     lost_causes = [i for i in by_report_time if late_even_alone(problem, pickups[i])]
     unrouted = [i for i in by_report_time if i not in lost_causes]
 

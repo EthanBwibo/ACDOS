@@ -19,15 +19,7 @@ every call taking out crew it cannot help.
 import math
 import random
 
-from app.solver.fitness import (
-    BUFFER_WEIGHT,
-    LATE_CREW_WEIGHT,
-    LATENESS_WEIGHT,
-    RIDE_WEIGHT,
-    RouteCostCache,
-    cached_route_cost,
-    route_evaluation,
-)
+from app.solver.fitness import RouteCostCache, cached_route_cost, route_evaluation
 from app.solver.individual import Individual
 from app.solver.problem import Problem
 
@@ -74,16 +66,17 @@ def unavoidable_costs(problem: Problem) -> list[float]:
     arrive before their buffer starts; positive for lost causes and crew who
     can only arrive inside their buffer. Built once per Problem.
     """
+    w = problem.weights
     floor = []
     for i in range(len(problem.pickups)):
         alone = (route_evaluation(problem, w, [i]) for w in range(len(problem.vehicles)))
         floor.append(
             min(
                 (
-                    LATENESS_WEIGHT * e.lateness_sec
-                    + LATE_CREW_WEIGHT * e.late_crew
-                    + BUFFER_WEIGHT * e.buffer_used_sec
-                    + RIDE_WEIGHT * e.ride_excess_sec
+                    w.lateness * e.lateness_sec
+                    + w.late_crew * e.late_crew
+                    + w.buffer * e.buffer_used_sec
+                    + w.ride * e.ride_excess_sec
                     for e in alone
                 ),
                 default=0.0,
