@@ -252,8 +252,8 @@ def schedule_route(
     start only moves later when the route then still arrives in time. Both
     arguments default to the problem's weights (#99); Solomon problems leave
     at available_from, the standard VRPTW schedule. The departure search only
-    looks at the destination, so stop windows should always go with
-    latest_departure=False, as in the SOLOMON weights.
+    looks at the destination, so Problem refuses a due time at a stop with
+    weights that use latest departure; ready times alone are allowed.
 
     Everyone on board arrives at the destination together, so a pickup is late
     when that shared arrival is after its deadline, not when it is collected.

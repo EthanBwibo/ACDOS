@@ -109,8 +109,9 @@ def test_solomon_routes_leave_when_the_depot_opens():
     assert route_times(problem, 0, [0])[0] == 0
     assert schedule_route(problem, 0, [0]).start == 0
     # Crew weights on the same kind of route leave as late as they can: back
-    # by 1000 - 900 buffer = 100 after a 20 round trip, so at 80.
-    crew_weights = plane_problem([customer("A", 0, 10)], weights=CREW)
+    # by 1000 - 900 buffer = 100 after a 20 round trip, so at 80. (No due
+    # time: crew weights refuse one, see the tests below.)
+    crew_weights = plane_problem([customer("A", 0, 10, due=math.inf)], weights=CREW)
     assert route_times(crew_weights, 0, [0])[0] == 80
 
 
@@ -180,6 +181,28 @@ def test_crew_problems_have_no_stop_windows_and_no_distance_term():
     assert problem.leg_lengths is None
     individual = nearest_neighbour(problem)
     assert route_evaluation(problem, 0, individual.routes[0]).distance == 0
+
+
+def test_a_due_time_with_latest_departure_is_rejected():
+    # Latest departure works back from the destination deadline only, so it
+    # could leave late enough to miss A's due time without noticing.
+    with pytest.raises(ValueError, match="latest departure"):
+        plane_problem([customer("A", 0, 10, due=500)], weights=CREW)
+
+
+def test_ready_times_alone_are_allowed_with_latest_departure():
+    # A opens at 50 and the depot deadline is 1000; with the 900 buffer the
+    # route must be back by 100. Whenever it leaves (as late as 80), service
+    # starts at 50 or later and it is back by 100. Waiting only delays, so the
+    # search handles it like any other delay.
+    problem = plane_problem([customer("A", 0, 10, ready=50, due=math.inf)], weights=CREW)
+
+    route = schedule_route(problem, 0, [0])
+
+    assert problem.stop_windows
+    assert route.stops[0].arrival >= 50
+    assert route.destination_arrival <= 100
+    assert assert_feasible(problem, Individual([[0]])) == {}
 
 
 def test_ready_after_due_is_rejected():

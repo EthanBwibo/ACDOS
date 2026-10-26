@@ -122,6 +122,16 @@ class Problem:
             raise ValueError("pickup demand must be above 0")
         if any(p.ready > p.due for p in self.pickups):
             raise ValueError("pickup ready must not be after due")
+        if self.weights.latest_departure and any(math.isfinite(p.due) for p in self.pickups):
+            # The departure search (individual._latest_start) works back from
+            # the deadline at the destination only, so leaving late could push
+            # a stop past its due time unnoticed. A ready time alone is safe:
+            # the search accounts for the wait like any other delay.
+            raise ValueError(
+                "a pickup has a due time at its stop, but these weights use latest "
+                "departure, which only looks at the destination deadline: use "
+                "weights with latest_departure=False, such as SOLOMON"
+            )
         # The dataclass is frozen, hence object.__setattr__ below.
         object.__setattr__(
             self,
