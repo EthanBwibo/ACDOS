@@ -68,6 +68,13 @@ def comparison_label(no_best_known: bool, solver_feasible: bool, checker_feasibl
     return "infeasible"
 
 
+def distance_gap_pct(distance: float, best_known: float) -> float:
+    """Percentage gap to the best-known distance, from the distance rounded to
+    2 decimals as the best-knowns are: a run matching the best-known gives
+    0.00, not -0.00 from the unrounded total falling just below it."""
+    return round(100 * (round(distance, 2) - best_known) / best_known, 2)
+
+
 def run_one(
     name: str,
     seed: int,
@@ -104,9 +111,7 @@ def run_one(
         "best_known_vehicles": best.vehicles if best and not instance.truncated else "",
         "best_known_distance": best.distance if best and not instance.truncated else "",
         "vehicle_gap": check.vehicles - best.vehicles if compared else "",
-        "distance_gap_pct": (
-            round(100 * (check.distance - best.distance) / best.distance, 2) if compared else ""
-        ),
+        "distance_gap_pct": distance_gap_pct(check.distance, best.distance) if compared else "",
         "comparison": comparison,
     }
 

@@ -9,7 +9,13 @@ from app.solver.ga import solve
 from app.solver.individual import Individual
 from app.solver.weights import SOLOMON
 from benchmarks import solomon
-from benchmarks.solomon_harness import comparison_label, expand, run_one, summary
+from benchmarks.solomon_harness import (
+    comparison_label,
+    distance_gap_pct,
+    expand,
+    run_one,
+    summary,
+)
 from tests.solver_checks import assert_feasible
 
 # A three-customer instance in Solomon's format, small enough to check by hand.
@@ -191,6 +197,13 @@ def test_comparison_label():
     assert comparison_label(False, True, True) == "compared"
     assert comparison_label(False, True, False) == "infeasible"
     assert comparison_label(False, False, True) == "infeasible"
+
+
+def test_distance_gap_is_taken_at_two_decimals():
+    # C101 seed 1 in the 60 s run: 828.9368... unrounded, best-known 828.94.
+    assert str(distance_gap_pct(828.9368, 828.94)) == "0.0"
+    # (900 - 828.94) / 828.94 = 8.572...%
+    assert distance_gap_pct(900.0, 828.94) == 8.57
 
 
 def test_expand_turns_groups_into_instances():
