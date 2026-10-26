@@ -208,6 +208,7 @@ def test_ties_in_detour_go_to_the_lowest_positions(monkeypatch):
     problem = map_problem([(0.0, 0.1 * k) for k in range(1, 6)], capacities=[14])
     object.__setattr__(problem, "travel_time", lambda o, d, t: 600.0)
     object.__setattr__(problem, "legs", problem._leg_table())
+    object.__setattr__(problem, "detour_legs", problem.legs)
 
     assert _positions_worth_costing(problem, [0, 1, 2, 3], 0, 4) == [0, 1]
 
