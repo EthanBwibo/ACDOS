@@ -10,13 +10,16 @@ Adapted to many-to-one from Ropke and Pisinger (R&P):
   it is fixed input, so the matrix is built once per Problem.
 - R&P's vehicle-compatibility term is dropped: any vehicle can take any crew
   member.
+- On Solomon's instances (#99) the time term compares due times at the stop
+  (problem.urgency), where R&P compare the times service starts in the
+  current solution. A fixed time keeps the matrix built once per Problem.
 """
 
 import math
 import random
 
 from app.solver.individual import Individual
-from app.solver.problem import Problem, haversine_km
+from app.solver.problem import Problem, urgency
 from app.solver.removal import take_out
 
 # R&P's relatedness weights (phi, chi, psi). Sensitivity run against 9/9/2 is
@@ -34,12 +37,14 @@ def relatedness_matrix(problem: Problem) -> list[list[float]]:
     R = phi * distance + chi * report-time gap + psi * demand gap, each term
     divided by its largest value so it lies in [0, 1].
 
-    Distance is straight-line (haversine): there are no road times between
-    pickups, only from each zone to JKIA.
+    Distance is straight-line (Problem.distance, haversine for crew): there
+    are no road times between pickups, only from each zone to JKIA. The time
+    is urgency(): the report time for crew, the due time on Solomon's
+    instances.
     """
     pickups = problem.pickups
-    distance = [[haversine_km(a.location, b.location) for b in pickups] for a in pickups]
-    report_gap = [[_report_gap(a.deadline, b.deadline) for b in pickups] for a in pickups]
+    distance = [[problem.distance(a.location, b.location) for b in pickups] for a in pickups]
+    report_gap = [[_report_gap(urgency(a), urgency(b)) for b in pickups] for a in pickups]
     demand_gap = [[abs(a.demand - b.demand) for b in pickups] for a in pickups]
 
     distance, report_gap, demand_gap = (_normalise(m) for m in (distance, report_gap, demand_gap))

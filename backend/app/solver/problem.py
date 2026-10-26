@@ -10,11 +10,28 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from app.solver.weights import CREW, FitnessWeights
+
 
 @dataclass(frozen=True)
 class Point:
     lat: float
     lon: float
+
+
+def haversine_km(origin: Point, dest: Point) -> float:
+    """Straight-line (great-circle) distance in km.
+
+    Haversine instead of PostGIS because the solver uses it in memory, inside
+    loops that run thousands of times per generation, where a database round
+    trip per pair would be far too slow.
+    """
+    earth_radius_km = 6371.0
+    lat1, lat2 = math.radians(origin.lat), math.radians(dest.lat)
+    dlat = lat2 - lat1
+    dlon = math.radians(dest.lon - origin.lon)
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    return 2 * earth_radius_km * math.asin(math.sqrt(a))
 
 
 # JKIA terminal, the single destination (docs/schema.md: a backend constant
@@ -38,6 +55,12 @@ class Pickup:
     demand: int = 1
     # Time spent at the stop for boarding.
     service_sec: float = 0.0
+    # Window on the start of service at the stop (#99), for Solomon's
+    # instances: a vehicle arriving before ready waits; starting after due is
+    # late. Crew have none (-inf, inf): only their report time at the
+    # destination matters.
+    ready: float = -math.inf
+    due: float = math.inf
 
 
 @dataclass(frozen=True)
@@ -52,7 +75,8 @@ class Vehicle:
 
 @dataclass(frozen=True)
 class LegTable:
-    """Every leg time a route can use, for travel time that ignores departure.
+    """Every leg time a route can use, for travel time that ignores departure
+    (Problem.legs); or every leg length (Problem.leg_lengths, #99).
 
     Locations are numbered: pickups by their index, the destination after
     them. between[a][b] is the time from location a to b; from_start[v][b]
@@ -70,9 +94,22 @@ class Problem:
     vehicles: tuple[Vehicle, ...]
     travel_time: TravelTimeFn
     destination: Point = JKIA
+    # What the fitness charges for (#99): crew transport by default.
+    weights: FitnessWeights = CREW
+    # Length of the straight line between two places: Shaw relatedness, and
+    # the distance term D when weights.distance is above 0.
+    distance: Callable[[Point, Point], float] = field(
+        default=haversine_km, compare=False, repr=False
+    )
     # Built in __post_init__ when travel time ignores departure; None
     # otherwise (the Random Forest, whose legs change with the hour).
     legs: LegTable | None = field(default=None, init=False, compare=False, repr=False)
+    # Every leg's length by Problem.distance, laid out as legs. Built only
+    # when weights.distance is above 0, so crew solves never pay for it.
+    leg_lengths: LegTable | None = field(default=None, init=False, compare=False, repr=False)
+    # True when any pickup has a finite stop window. Scheduling takes the
+    # window-aware path only then, so crew solves run exactly as before.
+    stop_windows: bool = field(default=False, init=False, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if len({p.id for p in self.pickups}) != len(self.pickups):
@@ -83,20 +120,39 @@ class Problem:
             raise ValueError("vehicle capacity must be above 0")
         if any(p.demand <= 0 for p in self.pickups):
             raise ValueError("pickup demand must be above 0")
+        if any(p.ready > p.due for p in self.pickups):
+            raise ValueError("pickup ready must not be after due")
+        # The dataclass is frozen, hence object.__setattr__ below.
+        object.__setattr__(
+            self,
+            "stop_windows",
+            any(math.isfinite(p.ready) or math.isfinite(p.due) for p in self.pickups),
+        )
         if getattr(self.travel_time, "ignores_departure_time", False):
             # A memo made here lives as long as this Problem, so it cannot
-            # grow across solves (#85). The dataclass is frozen, hence setattr.
+            # grow across solves (#85).
             object.__setattr__(self, "travel_time", _remember_legs(self.travel_time))
             object.__setattr__(self, "legs", self._leg_table())
+        if self.weights.distance > 0:
+            object.__setattr__(self, "leg_lengths", self._leg_table(self.distance))
 
-    def _leg_table(self) -> LegTable:
-        """All leg times, computed once: the solver reads them millions of
-        times per solve, and a list lookup is cheaper than any call (#88)."""
+    def _leg_table(self, leg: Callable[[Point, Point], float] | None = None) -> LegTable:
+        """Every leg, computed once: the solver reads them millions of times
+        per solve, and a list lookup is cheaper than any call (#88).
+
+        By travel time (departure ignored) unless leg gives another measure,
+        such as Problem.distance for leg_lengths.
+        """
+        if leg is None:
+            travel = self.travel_time
+
+            def leg(a: Point, b: Point) -> float:
+                return travel(a, b, 0.0)
+
         places = [p.location for p in self.pickups] + [self.destination]
-        travel = self.travel_time
         return LegTable(
-            between=tuple(tuple(travel(a, b, 0.0) for b in places) for a in places),
-            from_start=tuple(tuple(travel(v.start, b, 0.0) for b in places) for v in self.vehicles),
+            between=tuple(tuple(leg(a, b) for b in places) for a in places),
+            from_start=tuple(tuple(leg(v.start, b) for b in places) for v in self.vehicles),
             destination=len(self.pickups),
         )
 
@@ -127,19 +183,12 @@ def _remember_legs(travel_time: TravelTimeFn) -> TravelTimeFn:
     return remembered
 
 
-def haversine_km(origin: Point, dest: Point) -> float:
-    """Straight-line (great-circle) distance in km.
-
-    Haversine instead of PostGIS because the solver uses it in memory, inside
-    loops that run thousands of times per generation, where a database round
-    trip per pair would be far too slow.
-    """
-    earth_radius_km = 6371.0
-    lat1, lat2 = math.radians(origin.lat), math.radians(dest.lat)
-    dlat = lat2 - lat1
-    dlon = math.radians(dest.lon - origin.lon)
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-    return 2 * earth_radius_km * math.asin(math.sqrt(a))
+def urgency(pickup: Pickup) -> float:
+    """The time that makes a pickup urgent: the due time at its stop when it
+    has one (Solomon), else its report time. Orders the nearest-neighbour
+    seeds and is Shaw's time term; for crew it is the report time, as before
+    #99."""
+    return pickup.due if math.isfinite(pickup.due) else pickup.deadline
 
 
 def haversine_travel_time(speed_kmh: float) -> TravelTimeFn:

@@ -1,6 +1,9 @@
 """Feasibility check shared by every solver test (CLAUDE.md: every pickup
 visited once, capacity respected, every deadline met or explicitly reported).
 
+Stop windows (#99) are checked the same way: a vehicle early at a stop waits
+for its ready time, and starting service after its due time counts as late.
+
 Takes only each route's start time from schedule() and recomputes the rest on
 its own, so a bug in the solver's timing cannot hide behind the same bug in the
 check.
@@ -39,17 +42,29 @@ def assert_feasible(problem: Problem, individual: Individual) -> dict[str, float
             f"vehicle {vehicle.id} leaves at {start}, before it is available "
             f"at {vehicle.available_from}"
         )
+        if not problem.weights.latest_departure:
+            assert start == vehicle.available_from, (
+                f"vehicle {vehicle.id} should leave at {vehicle.available_from}, leaves at {start}"
+            )
         clock, position = start, vehicle.start
+        service_starts = {}
         for i in route:
             pickup = problem.pickups[i]
-            clock += problem.travel_time(position, pickup.location, clock) + pickup.service_sec
+            clock += problem.travel_time(position, pickup.location, clock)
+            # Early: wait for the stop window to open (ready is -inf for crew).
+            clock = max(clock, pickup.ready)
+            service_starts[i] = clock
+            clock += pickup.service_sec
             position = pickup.location
         end = clock + problem.travel_time(position, problem.destination, clock)
 
         for i in route:
             pickup = problem.pickups[i]
-            if end > pickup.deadline:
-                late[pickup.id] = end - pickup.deadline
+            seconds_late = max(0.0, end - pickup.deadline) + max(
+                0.0, service_starts[i] - pickup.due
+            )
+            if seconds_late > 0:
+                late[pickup.id] = seconds_late
 
     reported = {
         problem.pickups[stop.pickup_index].id: stop.lateness

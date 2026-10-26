@@ -2,9 +2,14 @@
 
     cost = UNASSIGNED_WEIGHT * U + LATENESS_WEIGHT * L + LATE_CREW_WEIGHT * K_late
            + BUFFER_WEIGHT * B + RIDE_WEIGHT * R + VEHICLE_WEIGHT * K
-           + TIME_WEIGHT * (T + W)
+           + TIME_WEIGHT * (T + W) + (distance weight) * D
 
-Computed on the latest-departure schedule, so a vehicle leaves as late as it
+The weights come from the Problem (weights.py, #99). The names above are the
+crew profile, CREW; its distance weight is 0, since driving already costs
+through T. The Solomon profile (SOLOMON) turns the buffer, ride and time terms
+off and charges D, the total distance: the benchmark objective of #13.
+
+For crew, computed on the latest-departure schedule, so a vehicle leaves as late as it
 can and W measures report-time spread on a route, not an early start.
 
 The weights are tiers. Each higher term outweighs any realistic total of the
@@ -19,43 +24,34 @@ arrive just in time (#89). R charges each crew member's ride beyond
 MAX_RIDE_SEC, the soft form of the maximum ride time constraint in
 dial-a-ride problems (Cordeau and Laporte, 2003).
 
+With stop windows (Solomon), starting service after a pickup's due time is
+lateness too: it adds to L and makes the pickup count in K_late.
+
 Every term except U belongs to one route, so the cost is U plus a sum over
 routes (route_evaluation). Insertion operators re-cost only the route they
 change.
 """
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from app.solver.individual import REPORT_BUFFER_SEC, Individual, route_times
+from app.solver.individual import Individual, route_times
 from app.solver.problem import Problem
 
-# Per crew member left without a vehicle. One outweighs about 278 h of total
-# lateness (1e10 / 10,000 / 3600).
-UNASSIGNED_WEIGHT = 1e10
-# Per second past report time, per crew member. One minute late (600,000)
-# outweighs about 10 vehicles plus about 150 h of T + W.
-LATENESS_WEIGHT = 10_000.0
-# Per crew member who is late at all, on top of their seconds late: equal to
-# 30 min of lateness. Each late crew member is a separate flight-delay risk, so
-# making an on-time crew member late must cost more than adding the same
-# seconds to someone already late. At 6,000,000 (10 min), #12's lost-cause
-# instance tied exactly between the two (#75); sensitivity run planned (#14).
-LATE_CREW_WEIGHT = 18_000_000.0
-# Per second of buffer eaten, per crew member. The whole 15 min buffer
-# (90,000) costs about 25 vehicles, and still less than a minute late.
-BUFFER_WEIGHT = 100.0
-# A crew member's ride (JKIA arrival minus arrival at their stop) is free up to
-# 90 min; each second beyond costs RIDE_WEIGHT, the buffer's tier: 15 min over
-# (90,000) costs about 25 vehicles and less than a minute late. Both are in the
-# #14 sensitivity runs.
-MAX_RIDE_SEC = 5400.0
-RIDE_WEIGHT = 100.0
-# Per vehicle used: worth 1 h of T + W. Sensitivity check at 1,800 and 7,200
-# planned for the results chapter.
-VEHICLE_WEIGHT = 3_600.0
-# Per second of vehicle time (T) or crew waiting beyond the buffer (W).
-TIME_WEIGHT = 1.0
+# The crew weights, under the names used before #99. Their values and reasons
+# are in weights.py.
+from app.solver.weights import (  # noqa: F401 (re-exported)
+    BUFFER_WEIGHT,
+    CREW,
+    LATE_CREW_WEIGHT,
+    LATENESS_WEIGHT,
+    MAX_RIDE_SEC,
+    RIDE_WEIGHT,
+    TIME_WEIGHT,
+    UNASSIGNED_WEIGHT,
+    VEHICLE_WEIGHT,
+    FitnessWeights,
+)
 
 
 @dataclass(frozen=True)
@@ -70,17 +66,25 @@ class Evaluation:
     vehicles_used: int  # K: routes that are not empty
     travel_sec: float  # T: sum of route durations, start to destination
     waiting_sec: float  # W: sum of crew waiting at JKIA beyond the buffer
+    # D: sum of leg lengths (Problem.distance), not counting waiting or
+    # service. Only computed when the weights charge for it, so 0 for crew.
+    distance: float = 0.0
+    # The weights the cost uses: the Problem's.
+    weights: FitnessWeights = field(default=CREW, compare=False, repr=False)
 
     @property
     def cost(self) -> float:
+        w = self.weights
         return (
-            UNASSIGNED_WEIGHT * self.unassigned
-            + LATENESS_WEIGHT * self.lateness_sec
-            + LATE_CREW_WEIGHT * self.late_crew
-            + BUFFER_WEIGHT * self.buffer_used_sec
-            + RIDE_WEIGHT * self.ride_excess_sec
-            + VEHICLE_WEIGHT * self.vehicles_used
-            + TIME_WEIGHT * (self.travel_sec + self.waiting_sec)
+            w.unassigned * self.unassigned
+            + w.lateness * self.lateness_sec
+            + w.late_crew * self.late_crew
+            + w.buffer * self.buffer_used_sec
+            + w.ride * self.ride_excess_sec
+            + w.vehicle * self.vehicles_used
+            + w.time * (self.travel_sec + self.waiting_sec)
+            # Last, so for crew (0 * 0) the sum above is unchanged to the bit.
+            + w.distance * self.distance
         )
 
 
@@ -88,13 +92,15 @@ def route_evaluation(
     problem: Problem,
     vehicle_index: int,
     route: list[int],
-    buffer_sec: float = REPORT_BUFFER_SEC,
+    buffer_sec: float | None = None,
 ) -> Evaluation:
     """The terms for one route; unassigned is always 0.
 
     Works from the route's times alone, not schedule_route's Stops: the
     operators cost hundreds of thousands of routes per solve (#85).
+    buffer_sec defaults to the problem's weights.
     """
+    weights = problem.weights
     if not route:
         return Evaluation(
             unassigned=0,
@@ -105,8 +111,13 @@ def route_evaluation(
             vehicles_used=0,
             travel_sec=0.0,
             waiting_sec=0.0,
+            weights=weights,
         )
 
+    if buffer_sec is None:
+        buffer_sec = weights.report_buffer_sec
+    max_ride_sec = weights.max_ride_sec
+    stop_windows = problem.stop_windows
     start, arrivals, end = route_times(problem, vehicle_index, route, buffer_sec)
     lateness = buffer_used = waiting = ride_excess = 0.0
     late_crew = 0
@@ -114,6 +125,9 @@ def route_evaluation(
         deadline = problem.pickups[i].deadline
         # Everyone on board arrives together, as Stop.lateness counts it.
         late = max(0.0, end - deadline)
+        if stop_windows:
+            # arrival is when service starts (after any wait), see _drive.
+            late += max(0.0, arrival - problem.pickups[i].due)
         # When this crew member would ideally arrive: report time minus buffer.
         ideal = deadline - buffer_sec
         lateness += late
@@ -126,7 +140,7 @@ def route_evaluation(
         if math.isfinite(deadline):
             waiting += max(0.0, ideal - end)
         # In the van from the moment it reaches their stop until JKIA.
-        ride_excess += max(0.0, end - arrival - MAX_RIDE_SEC)
+        ride_excess += max(0.0, end - arrival - max_ride_sec)
 
     return Evaluation(
         unassigned=0,
@@ -137,7 +151,21 @@ def route_evaluation(
         vehicles_used=1,
         travel_sec=end - start,
         waiting_sec=waiting,
+        distance=_route_distance(problem, vehicle_index, route) if weights.distance > 0 else 0.0,
+        weights=weights,
     )
+
+
+def _route_distance(problem: Problem, vehicle_index: int, route: list[int]) -> float:
+    """D for one route: start, each stop in order, then the destination, by
+    the leg lengths built when the Problem was (Problem.leg_lengths)."""
+    lengths = problem.leg_lengths
+    row = lengths.from_start[vehicle_index]
+    total = 0.0
+    for i in route:
+        total += row[i]
+        row = lengths.between[i]
+    return total + row[lengths.destination]
 
 
 # Route cost by (vehicle index, route), so an operator costs each route once
@@ -156,7 +184,7 @@ def cached_route_cost(
 
 
 def evaluate(
-    problem: Problem, individual: Individual, buffer_sec: float = REPORT_BUFFER_SEC
+    problem: Problem, individual: Individual, buffer_sec: float | None = None
 ) -> Evaluation:
     routes = [
         route_evaluation(problem, v, route, buffer_sec) for v, route in enumerate(individual.routes)
@@ -170,6 +198,8 @@ def evaluate(
         vehicles_used=sum(r.vehicles_used for r in routes),
         travel_sec=sum(r.travel_sec for r in routes),
         waiting_sec=sum(r.waiting_sec for r in routes),
+        distance=sum(r.distance for r in routes),
+        weights=problem.weights,
     )
 
 

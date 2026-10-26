@@ -18,9 +18,13 @@ how much longer the route gets; but the ride-time term (#89) also depends on
 who rides past the new stop, and a route already arriving late can trade
 waiting for lateness, so the cheapest detour is not always the cheapest
 position. Hence two positions, measured in #88, not one.
+
+With stop windows (Solomon, #99) every position is costed: a vehicle that
+waits for a ready time can absorb a detour, so a longer detour is not always
+a later route, and the shortlist's premise does not hold.
 """
 
-from app.solver.fitness import UNASSIGNED_WEIGHT, RouteCostCache, cached_route_cost
+from app.solver.fitness import RouteCostCache, cached_route_cost
 from app.solver.individual import Individual
 from app.solver.problem import Problem
 
@@ -43,7 +47,7 @@ def insertion_cost(
 
     None if it would overfill the vehicle. Lateness does not rule a position
     out: its cost does the deciding. The fitness also drops by
-    UNASSIGNED_WEIGHT, since i is no longer unassigned; that part is the same
+    the unassigned weight, since i is no longer unassigned; that part is the same
     for every position, so it is left out here.
     """
     route = routes[v]
@@ -71,11 +75,12 @@ def _best_position(
 
 
 def _positions_worth_costing(problem: Problem, route: list[int], v: int, i: int) -> list[int]:
-    """Every position, or with a leg table only the FULLY_COSTED_POSITIONS with
-    the smallest detour (lowest position on a tie), in route order."""
+    """Every position, or with a leg table and no stop windows only the
+    FULLY_COSTED_POSITIONS with the smallest detour (lowest position on a
+    tie), in route order."""
     positions = len(route) + 1
     legs = problem.legs
-    if legs is None or positions <= FULLY_COSTED_POSITIONS:
+    if legs is None or problem.stop_windows or positions <= FULLY_COSTED_POSITIONS:
         return list(range(positions))
     before = [legs.from_start[v]] + [legs.between[j] for j in route]  # rows of prev stops
     after = route + [legs.destination]
@@ -114,7 +119,7 @@ def greedy_insertion(problem: Problem, individual: Individual) -> Individual:
         cost, i, v, k = min(candidates)
         # Inserting must lower the total, which by the tiers it always does
         # when there is room; checked so the rule matches the fitness exactly.
-        if cost >= UNASSIGNED_WEIGHT:
+        if cost >= problem.weights.unassigned:
             break
 
         routes[v].insert(k, i)
