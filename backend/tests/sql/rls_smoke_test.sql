@@ -1,5 +1,6 @@
--- Checks the RLS policies (011, helpers moved to private by 012) and the
--- pickup_events confirmation index, by impersonating each role.
+-- Checks the RLS policies (011, helpers moved to private by 012), the
+-- pickup_events confirmation index, and one live route node per pickup (018),
+-- by impersonating each role.
 -- Seed data is inserted as the superuser, which bypasses RLS.
 -- Any failed assert stops psql (ON_ERROR_STOP) and fails CI.
 
@@ -59,6 +60,30 @@ insert into public.route_nodes (id, route_id, pickup_request_id, seq_order, esti
     ('60000000-0000-0000-0000-0000000000a0', '50000000-0000-0000-0000-0000000000a0',
      '40000000-0000-0000-0000-00000000000f', 1, '2026-11-01T04:20:00Z');
 
+-- The superseded route held crew C too, at an earlier ETA: an old plan for C,
+-- replaced by the active route above (018). Its nodes are superseded.
+insert into public.route_nodes
+    (id, route_id, pickup_request_id, seq_order, estimated_arrival, superseded_at) values
+    ('60000000-0000-0000-0000-0000000000c0', '50000000-0000-0000-0000-0000000000a0',
+     '40000000-0000-0000-0000-00000000000c', 2, '2026-11-01T03:30:00Z', '2026-10-31T20:00:00Z');
+update public.route_nodes set superseded_at = '2026-10-31T20:00:00Z'
+where id = '60000000-0000-0000-0000-0000000000a0';
+
+-- Only one live node per pickup: a second one for crew C is refused.
+do $$
+begin
+    insert into public.route_nodes (route_id, pickup_request_id, seq_order, estimated_arrival)
+    values ('50000000-0000-0000-0000-00000000000b', '40000000-0000-0000-0000-00000000000c', 2,
+            '2026-11-01T04:15:00Z');
+    raise exception 'a pickup got two live route nodes';
+exception when unique_violation then
+    null; -- expected: route_nodes_live_pickup_request_id_key
+end $$;
+
+-- How crew E came out of the latest job (017).
+insert into public.optimization_job_pickups (optimization_job_id, pickup_request_id, outcome, late_sec)
+values ('30000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-00000000000e', 'late', 120);
+
 set role authenticated;
 
 -- Driver A ---------------------------------------------------------------
@@ -69,7 +94,9 @@ do $$
 begin
     assert (select count(*) from public.vehicles) = 1, 'driver A should see 1 vehicle';
     assert (select count(*) from public.routes) = 2, 'driver A should see the 2 routes of vehicle A';
-    assert (select count(*) from public.route_nodes) = 2, 'driver A should see the 2 stops of vehicle A';
+    assert (select count(*) from public.route_nodes) = 3, 'driver A should see the 3 stops of vehicle A';
+    assert (select count(*) from public.optimization_job_pickups) = 0,
+        'driver A should see no job outcomes';
     assert (select count(*) from public.trip_records) = 0, 'driver A should see no trip records';
 end $$;
 
@@ -129,7 +156,8 @@ end $$;
 -- Crew C ------------------------------------------------------------------
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
 
--- Sees their own pickup and its ETA; not the ETA of crew E or F.
+-- Sees their own pickup and its live ETA; not the ETA it replaced (018), nor
+-- the ETA of crew E or F.
 do $$
 begin
     assert (select count(*) from public.pickup_requests) = 1, 'crew C should see 1 pickup request';
@@ -141,6 +169,8 @@ begin
     assert (select count(*) from public.routes) = 0, 'crew C should see no routes';
     assert (select count(*) from public.vehicles) = 0, 'crew C should see no vehicles';
     assert (select count(*) from public.profiles) = 1, 'crew C should see only their own profile';
+    assert (select count(*) from public.optimization_job_pickups) = 0,
+        'crew C should see no job outcomes';
 end $$;
 
 -- Dispatcher D ------------------------------------------------------------
@@ -148,6 +178,9 @@ set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
 do $$
 begin
     assert (select count(*) from public.routes) = 3, 'dispatcher should see 3 routes';
+    assert (select count(*) from public.route_nodes) = 4, 'dispatcher should see 4 route nodes';
+    assert (select count(*) from public.optimization_job_pickups) = 1,
+        'dispatcher should see the job outcome';
     assert (select count(*) from public.pickup_requests) = 3, 'dispatcher should see 3 requests';
     assert (select count(*) from public.crew_members) = 3, 'dispatcher should see 3 crew members';
     assert (select count(*) from public.pickup_events) = 2, 'dispatcher should see 2 events';
