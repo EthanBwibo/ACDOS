@@ -55,7 +55,7 @@ def seeded():
     now = datetime.now(UTC)
 
     async def seed(conn):
-        pickups = []
+        crew, pickups = [], []
         for n, (lat, lon) in enumerate(CREW):
             point = f"SRID=4326;POINT({lon} {lat})"
             crew_id = await conn.fetchval(
@@ -66,6 +66,7 @@ def seeded():
                 f"test-{RUN} crew {n}",
                 point,
             )
+            crew.append(crew_id)
             pickups.append(
                 await conn.fetchval(
                     """
@@ -86,11 +87,13 @@ def seeded():
             )
             for v in range(2)
         ]
-        return pickups, vehicles
+        return crew, pickups, vehicles
 
-    pickups, vehicles = db(seed)
+    crew, pickups, vehicles = db(seed)
     yield pickups, vehicles
 
+    # Deletes only this run's rows: the jobs made under this run's keys and
+    # their routes, and the ids seeded above. Never a whole table.
     async def clean(conn):
         async with conn.transaction():
             jobs = await conn.fetch(
@@ -114,9 +117,7 @@ def seeded():
             )
             await conn.execute("delete from public.optimization_jobs where id = any($1)", job_ids)
             await conn.execute("delete from public.pickup_requests where id = any($1)", pickups)
-            await conn.execute(
-                "delete from public.crew_members where name like $1", f"test-{RUN} crew %"
-            )
+            await conn.execute("delete from public.crew_members where id = any($1)", crew)
             await conn.execute("delete from public.vehicles where id = any($1)", vehicles)
 
     db(clean)
