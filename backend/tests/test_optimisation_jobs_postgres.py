@@ -129,7 +129,9 @@ def seeded():
 
 
 @pytest.fixture
-def client(monkeypatch):
+def client(monkeypatch, seeded):
+    # Depends on seeded so the app shuts down (its solver tasks cancelled)
+    # before seeded's cleanup runs: no job can write after the rows go.
     monkeypatch.setattr(settings, "database_url", DATABASE_URL)
     monkeypatch.setattr(settings, "travel_model", "haversine")
     monkeypatch.setattr(settings, "solve_time_limit_sec", 1.0)
