@@ -52,13 +52,37 @@ class KeyedJob:
     created: bool = False
 
 
-class DepartedRouteError(Exception):
-    """A requested pickup is on a route that has already left: re-planning
-    it is #113's job, not this API's."""
+@dataclass(frozen=True)
+class RouteConflicts:
+    """Why a request cannot replace the plan its pickups are on now."""
 
-    def __init__(self, pickup_ids: list[UUID]) -> None:
-        super().__init__(f"pickups on departed routes: {sorted(map(str, pickup_ids))}")
-        self.pickup_ids = pickup_ids
+    # Requested pickups on a route that has departed or is in progress:
+    # re-planning those is #113's job.
+    departed: list[UUID]
+    # Pickups NOT requested that share an active route with requested ones.
+    # Replacing the route would leave them on a superseded route, so the
+    # request must include them or leave the route alone. A partial re-plan
+    # that keeps a route running is #113's job too.
+    left_behind: list[UUID]
+
+    def __bool__(self) -> bool:
+        return bool(self.departed or self.left_behind)
+
+    def detail(self) -> dict[str, list[str]]:
+        """The 409 body: only the lists that are not empty."""
+        lists = {
+            "pickup_request_ids_on_departed_routes": self.departed,
+            "pickup_request_ids_left_behind": self.left_behind,
+        }
+        return {key: sorted(map(str, ids)) for key, ids in lists.items() if ids}
+
+
+class RouteConflictError(Exception):
+    """The plan changed while the job queued or ran (see RouteConflicts)."""
+
+    def __init__(self, conflicts: RouteConflicts) -> None:
+        super().__init__(f"route conflicts: {conflicts.detail()}")
+        self.conflicts = conflicts
 
 
 class JobStore(Protocol):
@@ -68,7 +92,7 @@ class JobStore(Protocol):
 
     async def vehicles(self, ids: list[UUID]) -> dict[UUID, StoredVehicle]: ...
 
-    async def on_departed_routes(self, pickup_ids: list[UUID], now: datetime) -> list[UUID]: ...
+    async def route_conflicts(self, pickup_ids: list[UUID], now: datetime) -> RouteConflicts: ...
 
     async def create_job(
         self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType
@@ -108,6 +132,17 @@ _LIVE_NODES = """
     where n.pickup_request_id = any($1::uuid[])
       and n.superseded_at is null
       and r.status in ('active', 'completed')
+"""
+
+# Active routes holding a live node of a requested pickup ($1): the routes a
+# job over $1 replaces.
+_REPLACED_ROUTES = """
+    select n.route_id
+    from public.route_nodes n
+    join public.routes r on r.id = n.route_id
+    where n.pickup_request_id = any($1::uuid[])
+      and n.superseded_at is null
+      and r.status = 'active'
 """
 
 # Straight-line length of a route ($1): depot ($2, $3) to each stop in turn,
@@ -171,8 +206,8 @@ class PostgresJobStore:
         )
         return {r["id"]: StoredVehicle(r["id"], r["capacity"]) for r in rows}
 
-    async def on_departed_routes(self, pickup_ids: list[UUID], now: datetime) -> list[UUID]:
-        return await _on_departed_routes(self._pool, pickup_ids, now)
+    async def route_conflicts(self, pickup_ids: list[UUID], now: datetime) -> RouteConflicts:
+        return await _route_conflicts(self._pool, pickup_ids, now)
 
     async def create_job(
         self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType
@@ -208,29 +243,36 @@ class PostgresJobStore:
         requested = routed + [UUID(i) for i in outcome.unassigned]
         async with self._pool.acquire() as conn, conn.transaction():
             # The API checked this when the job was accepted; a route may
-            # have left while the job queued or ran.
-            departed = await _on_departed_routes(conn, requested, now)
-            if departed:
-                raise DepartedRouteError(departed)
+            # have left, or another job changed the plan, while it queued or
+            # ran.
+            conflicts = await _route_conflicts(conn, requested, now)
+            if conflicts:
+                raise RouteConflictError(conflicts)
 
-            # Replace the requested pickups' current plan: their nodes are
-            # superseded, and so are the routes those nodes were on.
+            # Replace the routes the requested pickups are on now. Every live
+            # node of those routes is superseded, not only the requested
+            # ones, so a superseded route never keeps a live node (the check
+            # above makes them the same nodes; this keeps it so regardless).
+            # A requested pickup's live node on a route that is no longer
+            # active is superseded too, so the new node cannot collide with
+            # it on the one-live-node index.
             old_routes = await conn.fetch(
-                """
+                f"""
                 update public.route_nodes n
                 set superseded_at = $2
-                from public.routes r
-                where r.id = n.route_id
-                  and n.pickup_request_id = any($1::uuid[])
-                  and n.superseded_at is null
-                  and r.status = 'active'
+                where n.superseded_at is null
+                  and (n.route_id in ({_REPLACED_ROUTES})
+                       or n.pickup_request_id = any($1::uuid[]))
                 returning n.route_id
                 """,
                 requested,
                 now,
             )
             await conn.execute(
-                "update public.routes set status = 'superseded' where id = any($1::uuid[])",
+                """
+                update public.routes set status = 'superseded'
+                where id = any($1::uuid[]) and status = 'active'
+                """,
                 list({r["route_id"] for r in old_routes}),
             )
 
@@ -382,16 +424,30 @@ class PostgresJobStore:
         return result
 
 
-async def _on_departed_routes(
+async def _route_conflicts(
     conn: asyncpg.Pool | asyncpg.Connection, pickup_ids: list[UUID], now: datetime
-) -> list[UUID]:
-    rows = await conn.fetch(
+) -> RouteConflicts:
+    departed = await conn.fetch(
         f"select n.pickup_request_id {_LIVE_NODES} and ({_DEPARTED_ROUTE}) "
         "order by n.pickup_request_id",
         pickup_ids,
         now,
     )
-    return [r["pickup_request_id"] for r in rows]
+    left_behind = await conn.fetch(
+        f"""
+        select distinct other.pickup_request_id
+        from public.route_nodes other
+        where other.route_id in ({_REPLACED_ROUTES})
+          and other.superseded_at is null
+          and not other.pickup_request_id = any($1::uuid[])
+        order by other.pickup_request_id
+        """,
+        pickup_ids,
+    )
+    return RouteConflicts(
+        [r["pickup_request_id"] for r in departed],
+        [r["pickup_request_id"] for r in left_behind],
+    )
 
 
 async def connect(database_url: str) -> asyncpg.Pool:

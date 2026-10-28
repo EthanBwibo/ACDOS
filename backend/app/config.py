@@ -1,6 +1,8 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.solver.problem import JKIA
+
 
 class Settings(BaseSettings):
     """Runtime configuration, read from environment variables or backend/.env."""
@@ -26,10 +28,11 @@ class Settings(BaseSettings):
     # lines at 30 km/h, for tests.
     travel_model: str = "rf"
     # Where every vehicle starts. vehicles has no location column
-    # (docs/schema.md), so one depot until re-planning (#113) starts vans
-    # from where they are.
-    depot_lat: float = Field(default=-1.30, ge=-90, le=90)
-    depot_lon: float = Field(default=36.80, ge=-180, le=180)
+    # (docs/schema.md), so one base for all until re-planning (#113) starts
+    # vans from where they are. JKIA by default: the vans are based there, so
+    # routes run JKIA -> pickups -> JKIA. Override with a base coordinate.
+    depot_lat: float = Field(default=JKIA.lat, ge=-90, le=90)
+    depot_lon: float = Field(default=JKIA.lon, ge=-180, le=180)
 
 
 settings = Settings()

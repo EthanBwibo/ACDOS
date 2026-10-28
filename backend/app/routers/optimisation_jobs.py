@@ -7,7 +7,9 @@ Order of checks on POST, so a rejected request never creates a job row:
 1. Idempotency-Key already used: same body, the job it started; a different
    body, 422.
 2. Every id exists, and no pickup is past assigned: else 422.
-3. No pickup is on a route that has departed: else 409 (#113 re-plans those).
+3. No pickup is on a route that has departed, and no active route the
+   request replaces carries a pickup the request leaves out: else 409 with
+   the ids. #113 handles both, and re-plans that keep a route running.
 4. Create the job (queued) and hand it to the runner.
 
 Who may call this (dispatchers only) is #52.
@@ -104,12 +106,9 @@ async def create_job(
     if any(problems.values()):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, problems)
 
-    departed = await store.on_departed_routes(body.pickup_request_ids, job_runner.now())
-    if departed:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            {"pickup_request_ids_on_departed_routes": sorted(map(str, departed))},
-        )
+    conflicts = await store.route_conflicts(body.pickup_request_ids, job_runner.now())
+    if conflicts:
+        raise HTTPException(status.HTTP_409_CONFLICT, conflicts.detail())
 
     job = await store.create_job(idempotency_key, body_hash, body.trigger_type)
     if not job.created:

@@ -189,6 +189,18 @@ def test_pickup_on_a_departed_route_is_a_conflict(client, store):
     assert store.jobs == {}
 
 
+def test_leaving_a_route_mate_behind_is_a_conflict(client, store):
+    first, second, *rest = store.stored_pickups
+    # first and second share an active route; the request leaves second out.
+    store.route_mates = {first: {second}, second: {first}}
+
+    response = post(client, body(store, pickup_request_ids=[str(first), *map(str, rest)]))
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == {"pickup_request_ids_left_behind": [str(second)]}
+    assert store.jobs == {}
+
+
 def test_without_a_database_the_job_endpoints_are_unavailable(monkeypatch):
     monkeypatch.setattr(settings, "database_url", None)
     with TestClient(app) as client:

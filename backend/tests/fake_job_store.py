@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from app.jobs.store import KeyedJob, StoredPickup, StoredVehicle
+from app.jobs.store import KeyedJob, RouteConflicts, StoredPickup, StoredVehicle
 from app.jobs.worker import SolveOutcome
 from app.models.schemas import (
     LatePickup,
@@ -36,6 +36,8 @@ class InMemoryJobStore:
     stored_vehicles: dict[UUID, StoredVehicle] = field(default_factory=dict)
     # Pickups on a route that has left.
     departed: set[UUID] = field(default_factory=set)
+    # Pickup -> the other pickups on its active route.
+    route_mates: dict[UUID, set[UUID]] = field(default_factory=dict)
     jobs: dict[UUID, FakeJob] = field(default_factory=dict)
 
     async def job_for_key(self, idempotency_key: str) -> KeyedJob | None:
@@ -50,8 +52,12 @@ class InMemoryJobStore:
     async def vehicles(self, ids: list[UUID]) -> dict[UUID, StoredVehicle]:
         return {i: self.stored_vehicles[i] for i in ids if i in self.stored_vehicles}
 
-    async def on_departed_routes(self, pickup_ids: list[UUID], now: datetime) -> list[UUID]:
-        return sorted(i for i in pickup_ids if i in self.departed)
+    async def route_conflicts(self, pickup_ids: list[UUID], now: datetime) -> RouteConflicts:
+        mates = set().union(*(self.route_mates.get(i, set()) for i in pickup_ids))
+        return RouteConflicts(
+            sorted(i for i in pickup_ids if i in self.departed),
+            sorted(mates - set(pickup_ids)),
+        )
 
     async def create_job(
         self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType

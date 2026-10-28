@@ -226,6 +226,51 @@ def test_second_job_supersedes_the_first_and_leaves_one_live_node_per_pickup(cli
     assert client.get(f"/optimisation-jobs/{first['id']}").json()["routes"] == first["routes"]
 
 
+def live_nodes(pickups) -> list:
+    async def read(conn):
+        return await conn.fetch(
+            """
+            select n.pickup_request_id, r.optimization_job_id, r.status
+            from public.route_nodes n join public.routes r on r.id = n.route_id
+            where n.pickup_request_id = any($1) and n.superseded_at is null
+            """,
+            pickups,
+        )
+
+    return db(read)
+
+
+def job_count(key) -> int:
+    async def count(conn):
+        return await conn.fetchval(
+            "select count(*) from public.optimization_jobs where idempotency_key = $1",
+            f"test-{RUN}-{key}",
+        )
+
+    return db(count)
+
+
+def test_partial_replan_of_a_route_is_a_conflict_and_a_full_one_succeeds(client, seeded):
+    pickups, vehicles = seeded
+    p1, p2 = pickups[:2]
+    # One van with room for both: P1 and P2 share its route.
+    first = run_job(client, [p1, p2], vehicles[:1], "pair")
+    assert len(first["routes"]) == 1 and len(first["routes"][0]["nodes"]) == 2
+
+    # P1 alone would leave P2 on a superseded route.
+    partial = post(client, [p1], vehicles[:1], "p1-only")
+    assert partial.status_code == 409
+    assert partial.json()["detail"] == {"pickup_request_ids_left_behind": [str(p2)]}
+    assert job_count("p1-only") == 0
+
+    # Both together replace the route: one live node each, on the new job's.
+    second = run_job(client, [p1, p2], vehicles[:1], "pair-again")
+    live = live_nodes([p1, p2])
+    assert sorted(n["pickup_request_id"] for n in live) == sorted([p1, p2])
+    assert all(str(n["optimization_job_id"]) == second["id"] for n in live)
+    assert all(n["status"] == "active" for n in live)
+
+
 def test_pickup_on_a_departed_route_is_a_conflict_and_creates_no_job(client, seeded):
     pickups, vehicles = seeded
     first = run_job(client, pickups, vehicles, "before")
@@ -238,11 +283,4 @@ def test_pickup_on_a_departed_route_is_a_conflict_and_creates_no_job(client, see
 
     assert response.status_code == 409
     assert set(response.json()["detail"]["pickup_request_ids_on_departed_routes"]) == routed
-
-    async def count(conn):
-        return await conn.fetchval(
-            "select count(*) from public.optimization_jobs where idempotency_key = $1",
-            f"test-{RUN}-after",
-        )
-
-    assert db(count) == 0
+    assert job_count("after") == 0
