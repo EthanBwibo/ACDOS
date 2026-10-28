@@ -32,6 +32,11 @@ android {
     }
 }
 
+// Room writes each schema version as JSON here; committed, so schema changes show in review.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
@@ -41,6 +46,8 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
