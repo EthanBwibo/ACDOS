@@ -1,7 +1,8 @@
 """Smoke run of the optimisation job API (#51) against the live database.
 
-Not part of the app. Run from backend/, with DATABASE_URL in backend/.env:
-    python -m benchmarks.job_api_smoke
+Not part of the app. Windows only (it stops uvicorn with Ctrl+Break). Run
+from backend/, with DATABASE_URL in backend/.env:
+    python -u -m benchmarks.job_api_smoke
 
 Starts uvicorn (--workers 1) with the default settings: the Random Forest,
 the 15 s limit, vans based at JKIA. Then POSTs one job and polls it, as the
@@ -19,6 +20,7 @@ who reports in 25 minutes and so cannot be on time.
 import asyncio
 import csv
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -30,6 +32,7 @@ import asyncpg
 import httpx
 
 from app.config import settings
+from app.jobs.processes import Process
 
 ZONES_CSV = Path(__file__).resolve().parents[2] / "data" / "pickup_zones.csv"
 PORT = 8051
@@ -192,9 +195,13 @@ def main() -> None:
     crew, pickups, vans = asyncio.run(seed(now))
     print(f"seeded {len(crew)} crew, {len(pickups)} pickups, {len(vans)} vans")
     server = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "app.main:app", "--workers", "1", "--port", str(PORT)],
+        [sys.executable, "-m", "uvicorn", "app.main:app", "--workers", "1", "--port", str(PORT)]
+        + ["--no-access-log"],
         env=os.environ | {"PYTHONUNBUFFERED": "1"},
+        # Its own process group, so Ctrl+Break can stop it gracefully below.
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
     )
+    solvers: list[Process] = []
     try:
         wait_for_server(server)
         body = {
@@ -239,11 +246,58 @@ def main() -> None:
         print("late:", [(p["pickup_request_id"][:8], p["late_sec"]) for p in result["late"]])
         print("unassigned:", [p[:8] for p in result["unassigned"]])
         print("rows:", asyncio.run(check_rows(job_id, pickups)))
+        # Held open now, while they run, so their exit can be checked after.
+        solvers = [Process(pid) for pid in solver_pids(server.pid)]
+        print("solver processes under uvicorn:", [p.pid for p in solvers])
     finally:
-        server.terminate()
-        server.wait(timeout=30)
+        stop(server)
         asyncio.run(clean(crew, pickups, vans))
         print(f"cleaned up run test-{RUN}")
+    outlived = [p.pid for p in solvers if not p.wait(timeout_sec=15)]
+    print("solver processes still running 15 s after uvicorn stopped:", outlived)
+    assert not outlived, f"solver processes outlived uvicorn: {outlived}"
+
+
+def stop(server: subprocess.Popen) -> None:
+    """Ctrl+Break to uvicorn's process group: uvicorn shuts down gracefully,
+    running the app's shutdown, which stops the solver pool. terminate() on
+    Windows kills it outright instead, skipping all of that."""
+    server.send_signal(signal.CTRL_BREAK_EVENT)
+    try:
+        server.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        server.kill()
+        server.wait()
+        raise
+
+
+def solver_pids(root: int) -> list[int]:
+    """Solver (pool) processes anywhere under root. On Windows a venv's
+    python.exe is a launcher, so uvicorn itself is a child of root and its
+    solver processes are grandchildren."""
+    listing = subprocess.run(
+        [
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance Win32_Process | ForEach-Object "
+            '{ "$($_.ProcessId)`t$($_.ParentProcessId)`t$($_.CommandLine)" }',
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    rows = [line.split("\t", 2) for line in listing.splitlines() if line.count("\t") >= 2]
+    children: dict[int, list[tuple[int, str]]] = {}
+    for pid, parent, command in rows:
+        children.setdefault(int(parent), []).append((int(pid), command))
+    found, todo = [], [root]
+    while todo:
+        for pid, command in children.get(todo.pop(), []):
+            todo.append(pid)
+            if "spawn_main" in command:
+                found.append(pid)
+    return found
 
 
 if __name__ == "__main__":
