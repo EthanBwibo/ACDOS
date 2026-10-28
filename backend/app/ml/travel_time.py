@@ -32,10 +32,17 @@ no cache outlives its solve (#85):
   falls between whole hours.
 - Points: the zone of each Point object, and the straight line between two
   points in the same zone.
+
+Speed (#109): the function also offers leg_function(origin, dest), one
+function of the departure time per pair, with all of the above looked up
+once. Problem builds one per pair of its places (Problem.timed_legs) and the
+solver's route timing calls those, which is exact: they compute the same
+numbers in the same order.
 """
 
 import csv
 import math
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -124,10 +131,67 @@ def rf_travel_time(
             same_zone_hours[o] = per_km
         return _between(per_km, hour) * km(origin, dest)
 
+    def leg_function(origin: Point, dest: Point) -> Callable[[float], float]:
+        """travel_time(origin, dest, depart_sec) for one pair, with the snapping, the
+        kind of leg and the cache lookups done once, here, instead of on
+        every call (#109). Problem builds one per pair of places
+        (Problem.timed_legs); the solver calls them millions of times.
+
+        Each returns exactly what travel_time returns: the same arithmetic in
+        the same order, with _between and ZoneMatrix.leg_at written out."""
+        o = snapped(origin)[0]
+        d, to_destination = snapped(dest)
+        if to_destination:
+            rf = rf_hours[o]
+
+            def to_jkia(depart_sec: float) -> float:
+                x = (start_hour + depart_sec / 3600) % HOURS_PER_WEEK - 0.5  # RF knots at h:30
+                k = math.floor(x)
+                frac = x - k
+                return rf[k % HOURS_PER_WEEK] * (1 - frac) + rf[(k + 1) % HOURS_PER_WEEK] * frac
+
+            return to_jkia
+        if o != d:
+            travel_time(origin, dest, 0.0)  # fills congestion_hours for the pair
+            values = congestion_hours[(o, d)]
+            off, peak, anchor = matrix.leg_endpoints(o, d)
+
+            def between_zones(depart_sec: float) -> float:
+                x = (start_hour + depart_sec / 3600) % HOURS_PER_WEEK
+                k = math.floor(x)
+                frac = x - k
+                c = (
+                    values[k % HOURS_PER_WEEK] * (1 - frac)
+                    + values[(k + 1) % HOURS_PER_WEEK] * frac
+                )
+                # ZoneMatrix.leg_at, including its line outside [0, 1].
+                if anchor is None or c < 0 or c > 1:
+                    return off + c * (peak - off)
+                morning, c_m = anchor
+                if c <= c_m:
+                    return off + c / c_m * (morning - off)
+                return morning + (c - c_m) / (1 - c_m) * (peak - morning)
+
+            return between_zones
+        travel_time(origin, dest, 0.0)  # fills same_zone_hours for the zone
+        per_km = same_zone_hours[o]
+        distance = km(origin, dest)
+
+        def within_zone(depart_sec: float) -> float:
+            x = (start_hour + depart_sec / 3600) % HOURS_PER_WEEK
+            k = math.floor(x)
+            frac = x - k
+            return (
+                per_km[k % HOURS_PER_WEEK] * (1 - frac) + per_km[(k + 1) % HOURS_PER_WEEK] * frac
+            ) * distance
+
+        return within_zone
+
     # Lets Problem build a table of legs at time 0 to rank insertion positions
     # by (insertion._positions_worth_costing); the full costing still uses
     # the times at the real departure.
     travel_time.ranks_detours_at_start = True  # type: ignore[attr-defined]
+    travel_time.leg_function = leg_function  # type: ignore[attr-defined]
     return travel_time
 
 

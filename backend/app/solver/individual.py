@@ -110,7 +110,9 @@ def _drive(
     A plain loop rather than _add: it runs millions of times per solve, and
     building a _Partial for every stop cost as much as the driving (#85).
     When travel time ignores departure, the legs come from Problem.legs, a
-    table built once, instead of a call per leg (#88).
+    table built once, instead of a call per leg (#88). For the Random Forest
+    each leg is still a call, but to a function built for that leg
+    (Problem.timed_legs, #109).
 
     With stop windows (#99) the times are when service starts, after any wait,
     and _drive_with_windows does the driving; crew never take that path.
@@ -129,6 +131,18 @@ def _drive(
             clock = arrival + pickups[i].service_sec
             row = legs.between[i]
         return arrivals, clock + row[legs.destination]
+
+    timed = problem.timed_legs
+    if timed is not None:
+        # The same loop with one call per leg to a function built for that
+        # leg (#109), instead of travel_time with two Points.
+        row = timed.from_start[vehicle_index]
+        for i in route:
+            arrival = clock + row[i](clock)
+            arrivals.append(arrival)
+            clock = arrival + pickups[i].service_sec
+            row = timed.between[i]
+        return arrivals, clock + row[timed.destination](clock)
 
     travel_time = problem.travel_time
     position = problem.vehicles[vehicle_index].start

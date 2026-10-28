@@ -76,15 +76,16 @@ class Vehicle:
 @dataclass(frozen=True)
 class LegTable:
     """Every leg time a route can use, for travel time that ignores departure
-    (Problem.legs); or every leg length (Problem.leg_lengths, #99).
+    (Problem.legs); or every leg length (Problem.leg_lengths, #99); or, in
+    Problem.timed_legs (#109), every leg as a function of the departure time.
 
     Locations are numbered: pickups by their index, the destination after
     them. between[a][b] is the time from location a to b; from_start[v][b]
     from vehicle v's start to b.
     """
 
-    between: tuple[tuple[float, ...], ...]
-    from_start: tuple[tuple[float, ...], ...]
+    between: tuple[tuple, ...]
+    from_start: tuple[tuple, ...]
     destination: int  # index of the destination in the rows
 
 
@@ -109,6 +110,10 @@ class Problem:
     # ranks_detours_at_start (the Random Forest, #104), the legs at time 0.
     # None: every position is costed.
     detour_legs: LegTable | None = field(default=None, init=False, compare=False, repr=False)
+    # For time-dependent travel that offers leg_function (the Random Forest,
+    # #109): laid out as legs, but each entry is a function of the departure
+    # time, with the leg's lookups done once. Not built with stop windows.
+    timed_legs: LegTable | None = field(default=None, init=False, compare=False, repr=False)
     # Every leg's length by Problem.distance, laid out as legs. Built only
     # when weights.distance is above 0, so crew solves never pay for it.
     leg_lengths: LegTable | None = field(default=None, init=False, compare=False, repr=False)
@@ -149,12 +154,16 @@ class Problem:
             object.__setattr__(self, "travel_time", _remember_legs(self.travel_time))
             object.__setattr__(self, "legs", self._leg_table())
             object.__setattr__(self, "detour_legs", self.legs)
-        elif getattr(self.travel_time, "ranks_detours_at_start", False) and not self.stop_windows:
-            object.__setattr__(self, "detour_legs", self._leg_table())
+        elif not self.stop_windows:
+            if getattr(self.travel_time, "ranks_detours_at_start", False):
+                object.__setattr__(self, "detour_legs", self._leg_table())
+            leg_function = getattr(self.travel_time, "leg_function", None)
+            if leg_function is not None:
+                object.__setattr__(self, "timed_legs", self._leg_table(leg_function))
         if self.weights.distance > 0:
             object.__setattr__(self, "leg_lengths", self._leg_table(self.distance))
 
-    def _leg_table(self, leg: Callable[[Point, Point], float] | None = None) -> LegTable:
+    def _leg_table(self, leg: Callable[[Point, Point], object] | None = None) -> LegTable:
         """Every leg, computed once: the solver reads them millions of times
         per solve, and a list lookup is cheaper than any call (#88).
 
