@@ -10,10 +10,14 @@ vans may start leaving the depot.
 """
 
 import math
+import os
 import random
+import threading
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
+from app.jobs.processes import Process
 from app.ml import journey_time, zone_matrix
 from app.ml.travel_time import load_zone_points, rf_travel_time
 from app.solver.ga import solve
@@ -125,9 +129,44 @@ def init(model: str) -> None:
     it starts. Loading the RF and predicting its week of hours takes seconds,
     and every job in the process needs the same ones, so they are kept."""
     global _rf_inputs
+    _exit_with(os.getppid())
     if model == "rf":
         grid = journey_time.predict_grid(journey_time.load_or_train())
         _rf_inputs = (grid, zone_matrix.load(), load_zone_points())
+
+
+PARENT_CHECK_SEC = 2.0
+
+
+def _exit_with(parent_pid: int) -> None:
+    """Exit this solver process when the API process that started it dies.
+
+    A graceful shutdown stops the pool itself (main.lifespan). A hard kill
+    (a crash, Task Manager) skips that, and the pool's processes would run on
+    without a parent, holding memory and any pipe they inherited. The next
+    startup still fails the jobs they had (fail_unfinished); this makes the
+    processes go too. A daemon thread, so it never keeps the process alive.
+    """
+    if os.name == "nt":
+        # os.getppid() keeps returning a dead parent's PID on Windows, so
+        # wait on a handle to the parent instead. Opening it fails if the
+        # parent is already gone.
+        try:
+            parent = Process(parent_pid)
+        except OSError:
+            os._exit(0)
+
+        def watch() -> None:
+            parent.wait()
+            os._exit(0)
+    else:
+        # The parent's death re-parents this process, which changes getppid().
+        def watch() -> None:
+            while os.getppid() == parent_pid:
+                time.sleep(PARENT_CHECK_SEC)
+            os._exit(0)
+
+    threading.Thread(target=watch, name="exit-with-parent", daemon=True).start()
 
 
 def outcome(problem: Problem, best: Individual, epoch: datetime) -> SolveOutcome:
