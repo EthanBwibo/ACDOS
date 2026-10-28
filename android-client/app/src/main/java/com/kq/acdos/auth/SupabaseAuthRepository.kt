@@ -12,14 +12,14 @@ import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * [AuthRepository] on supabase-kt. Token refresh is supabase-kt's: on a network
@@ -32,10 +32,7 @@ class SupabaseAuthRepository(
 ) : AuthRepository {
 
     @Serializable
-    private data class ProfileRow(
-        val role: String,
-        @SerialName("full_name") val fullName: String
-    )
+    private data class ProfileRow(val role: String, @SerialName("full_name") val fullName: String)
 
     override suspend fun storedSessionUserId(): String? =
         sessionManager.loadSessionOrNull()?.user?.id

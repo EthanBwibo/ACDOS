@@ -51,9 +51,12 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             _state.value = when (val result = auth.signIn(email.trim(), password)) {
                 SignInResult.Success -> LoginState.SignedIn
+
                 SignInResult.InvalidCredentials ->
                     LoginState.Error(R.string.login_error_credentials)
+
                 SignInResult.NetworkError -> LoginState.Error(R.string.login_error_network)
+
                 is SignInResult.Rejected ->
                     LoginState.Error(R.string.login_error_rejected, result.message)
             }
