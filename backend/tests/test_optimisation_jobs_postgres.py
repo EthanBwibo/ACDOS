@@ -89,7 +89,12 @@ def seeded():
         ]
         return crew, pickups, vehicles
 
-    crew, pickups, vehicles = db(seed)
+    async def seed_all_or_nothing(conn):
+        # A seed that fails part way rolls back, since cleanup would not run.
+        async with conn.transaction():
+            return await seed(conn)
+
+    crew, pickups, vehicles = db(seed_all_or_nothing)
     yield pickups, vehicles
 
     # Deletes only this run's rows: the jobs made under this run's keys and
