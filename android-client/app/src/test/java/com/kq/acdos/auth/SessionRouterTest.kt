@@ -166,6 +166,15 @@ class SessionRouterTest {
     }
 
     @Test
+    fun sessionEndedByServer_clearsCachedNameAndRole() = runTest {
+        val cache = FakeCache(Profile(USER, AppRole.CREW, "Test User"))
+
+        SessionRouter(FakeAuth(), cache).onSessionEnded()
+
+        assertNull(cache.stored)
+    }
+
+    @Test
     fun appRole_readsOnlyKnownValues() {
         assertEquals(AppRole.DRIVER, AppRole.fromDb("driver"))
         assertEquals(AppRole.CREW, AppRole.fromDb("crew"))

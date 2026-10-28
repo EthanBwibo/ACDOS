@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -31,21 +32,20 @@ abstract class PlaceholderHomeActivity(@StringRes private val roleLabel: Int) :
             intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()
         findViewById<TextView>(R.id.role).setText(roleLabel)
 
+        // Sign-out only ends the session; the collector below does the navigating.
         val signOut = findViewById<Button>(R.id.sign_out)
         signOut.setOnClickListener {
             signOut.isEnabled = false
-            lifecycleScope.launch {
-                container.sessionRouter.signOut()
-                openLogin()
-            }
+            lifecycleScope.launch { container.sessionRouter.signOut() }
         }
 
-        // Also leave if supabase-kt ends the session, e.g. the server revoked the refresh token.
+        // The one place this screen leaves for sign-in: after Sign out, or when
+        // supabase-kt ends the session itself (the server rejected the refresh token).
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                container.authRepository.sessionEnded.collect {
-                    if (!isFinishing) openLogin()
-                }
+                container.authRepository.sessionEnded.first()
+                container.sessionRouter.onSessionEnded()
+                openLogin()
             }
         }
     }

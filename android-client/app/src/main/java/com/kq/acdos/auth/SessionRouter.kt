@@ -54,4 +54,12 @@ class SessionRouter(private val auth: AuthRepository, private val cache: Profile
         auth.signOut()
         cache.clear()
     }
+
+    /**
+     * The session ended without the user signing out here, e.g. the server
+     * rejected the refresh token. The cached name and role go with it.
+     */
+    suspend fun onSessionEnded() {
+        cache.clear()
+    }
 }

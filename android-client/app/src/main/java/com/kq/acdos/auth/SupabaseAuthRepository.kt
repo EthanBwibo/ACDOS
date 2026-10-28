@@ -22,6 +22,36 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
+ * Runs [signIn] and maps how it failed. Kept outside [SupabaseAuthRepository]
+ * so the mapping is unit tested without a SupabaseClient. Anything unexpected
+ * (a Ktor timeout, a malformed response) counts as a network error, so the
+ * user can try again; cancellation is never swallowed.
+ */
+internal suspend fun runSignIn(
+    onNetworkError: (Throwable) -> Unit = {},
+    signIn: suspend () -> Unit
+): SignInResult = try {
+    signIn()
+    SignInResult.Success
+} catch (e: AuthRestException) {
+    if (e.errorCode == AuthErrorCode.InvalidCredentials) {
+        SignInResult.InvalidCredentials
+    } else {
+        SignInResult.Rejected(e.errorDescription)
+    }
+} catch (e: HttpRequestException) {
+    onNetworkError(e)
+    SignInResult.NetworkError
+} catch (e: RestException) {
+    SignInResult.Rejected(e.description ?: e.error)
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    onNetworkError(e)
+    SignInResult.NetworkError
+}
+
+/**
  * [AuthRepository] on supabase-kt. Token refresh is supabase-kt's: on a network
  * or 5xx error it keeps the session and retries every retryDelay; it clears the
  * session only when the server rejects the refresh token (4xx).
@@ -37,24 +67,13 @@ class SupabaseAuthRepository(
     override suspend fun storedSessionUserId(): String? =
         sessionManager.loadSessionOrNull()?.user?.id
 
-    override suspend fun signIn(email: String, password: String): SignInResult = try {
-        client.auth.signInWith(Email) {
-            this.email = email
-            this.password = password
+    override suspend fun signIn(email: String, password: String): SignInResult =
+        runSignIn(onNetworkError = { Log.w(TAG, "Sign-in could not reach Supabase", it) }) {
+            client.auth.signInWith(Email) {
+                this.email = email
+                this.password = password
+            }
         }
-        SignInResult.Success
-    } catch (e: AuthRestException) {
-        if (e.errorCode == AuthErrorCode.InvalidCredentials) {
-            SignInResult.InvalidCredentials
-        } else {
-            SignInResult.Rejected(e.errorDescription)
-        }
-    } catch (e: HttpRequestException) {
-        Log.w(TAG, "Sign-in could not reach Supabase", e)
-        SignInResult.NetworkError
-    } catch (e: RestException) {
-        SignInResult.Rejected(e.description ?: e.error)
-    }
 
     override suspend fun fetchProfile(): ProfileResult {
         // Wait for supabase-kt to load (and maybe refresh) the stored session.
