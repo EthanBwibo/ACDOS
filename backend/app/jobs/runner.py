@@ -10,6 +10,7 @@ then completed or failed.
 
 import asyncio
 import logging
+import multiprocessing
 from collections.abc import Callable
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import UTC, datetime
@@ -29,8 +30,20 @@ _tasks: set[asyncio.Task] = set()
 
 
 def solver_pool(size: int, travel_model: str) -> ProcessPoolExecutor:
-    """Each process loads the travel model once when it starts (worker.init)."""
-    return ProcessPoolExecutor(max_workers=size, initializer=worker.init, initargs=(travel_model,))
+    """Each process loads the travel model once when it starts (worker.init).
+
+    Spawn on every platform, Windows' only method. Then a solver process's
+    parent is always the API process, which worker._exit_with relies on: with
+    Linux's default (forkserver since Python 3.14) it would be the fork
+    server instead. Spawn also never forks the API process, which runs
+    threads (the event loop, asyncpg), where fork is unsafe.
+    """
+    return ProcessPoolExecutor(
+        max_workers=size,
+        mp_context=multiprocessing.get_context("spawn"),
+        initializer=worker.init,
+        initargs=(travel_model,),
+    )
 
 
 class JobRunner:
