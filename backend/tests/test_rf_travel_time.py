@@ -137,9 +137,13 @@ def test_problem_ranks_detours_by_the_legs_at_time_0(travel, monkeypatch):
         problem.vehicles[0].start, JKIA, 0.0
     )
 
-    # As measured in #104: every position by default...
+    # Two of the five positions by default, as chosen in #109...
+    shortlist = insertion._positions_worth_costing(problem, [0, 1, 2, 3], 0, 4)
+    assert len(shortlist) == 2 and set(shortlist) <= {0, 1, 2, 3, 4}
+    # ...every position with None...
+    monkeypatch.setattr(insertion, "TIME_DEPENDENT_FULLY_COSTED_POSITIONS", None)
     assert insertion._positions_worth_costing(problem, [0, 1, 2, 3], 0, 4) == [0, 1, 2, 3, 4]
-    # ...and a shortlist of its own size when one is set.
+    # ...and a shortlist of its own size, not FULLY_COSTED_POSITIONS's.
     monkeypatch.setattr(insertion, "FULLY_COSTED_POSITIONS", 1)
     monkeypatch.setattr(insertion, "TIME_DEPENDENT_FULLY_COSTED_POSITIONS", 3)
     assert len(insertion._positions_worth_costing(problem, [0, 1, 2, 3], 0, 4)) == 3

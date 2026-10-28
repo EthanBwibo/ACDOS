@@ -22,9 +22,15 @@ position. Hence two positions, measured in #88, not one.
 With travel time that depends on departure (the Random Forest, #104), the
 ranking uses the legs at time 0 (Problem.detour_legs) while the full costing
 uses the real departure times. A detour that is shortest at 03:00 need not
-be shortest at 07:00, so this is an approximation. Measured in #104, neither
-2 nor 3 positions chose what costing every position chose, so for now every
-position is costed (TIME_DEPENDENT_FULLY_COSTED_POSITIONS is None).
+be shortest at 07:00, so this is an approximation: unlike #88's shortlist, it
+changes the plan (#104). It is kept because it pays in a fixed time. Measured
+in #109 on morning_wave_120 under RF travel, 120 s per run: 2 positions gave
+a cheaper plan than costing every position on every clean seed (4 of 4);
+the fifth seed, unclean on timing, gave the same order. That was from about
+77 generations against 34. At the same number of generations (34) the two
+were level (2 cheaper on 4 of 5 seeds, but the mean paired difference was
+smaller than its spread), so the gain is the extra generations. 3 positions did not
+beat 2 on either measure. Hence TIME_DEPENDENT_FULLY_COSTED_POSITIONS = 2.
 
 With stop windows (Solomon, #99) every position is costed: a vehicle that
 waits for a ready time can absorb a detour, so a longer detour is not always
@@ -41,11 +47,11 @@ from app.solver.problem import Problem
 # of the ride-time term. 2 is the faster of the two exact-in-practice settings.
 FULLY_COSTED_POSITIONS = 2
 # The same when positions are ranked by the legs at time 0 (Problem.detour_legs
-# for time-dependent travel, #104); None costs every position. On
-# morning_wave_120 under RF travel, 3 generations with 2 or 3 positions chose a
-# different plan from costing every position for each of 3 seeds, though 2.4
-# times faster. Whether that speed buys a better plan in a fixed time is #14's.
-TIME_DEPENDENT_FULLY_COSTED_POSITIONS: int | None = None
+# for time-dependent travel, #104); None costs every position. Not exact here:
+# it changes the plan. Chosen in #109 by cost in equal time (120 s, seeds
+# compared pairwise): 2 beat None on every clean seed and 3 did not beat 2
+# (docs/results/109-rf-solver-speed).
+TIME_DEPENDENT_FULLY_COSTED_POSITIONS: int | None = 2
 
 
 def insertion_cost(
