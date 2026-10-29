@@ -1,5 +1,7 @@
 package com.kq.acdos.auth
 
+import com.kq.acdos.data.local.UserDataStore
+
 /** Where the app goes after start-up or sign-in. */
 sealed interface Destination {
     data object Login : Destination
@@ -15,9 +17,15 @@ sealed interface Destination {
 
 /**
  * Decides the destination from the stored session and profiles.role.
- * The role is never chosen by the user.
+ * The role is never chosen by the user. Whenever the session ends, the cached
+ * profile and the user's local data ([userData]) go with it, so the next user
+ * on this phone sees none of it.
  */
-class SessionRouter(private val auth: AuthRepository, private val cache: ProfileCache) {
+class SessionRouter(
+    private val auth: AuthRepository,
+    private val cache: ProfileCache,
+    private val userData: UserDataStore
+) {
 
     /**
      * On a cold start with a stored session, a cached profile for that user is
@@ -42,7 +50,7 @@ class SessionRouter(private val auth: AuthRepository, private val cache: Profile
         }
 
         ProfileResult.NoSession -> {
-            cache.clear()
+            clearLocalData()
             Destination.Login
         }
 
@@ -52,14 +60,21 @@ class SessionRouter(private val auth: AuthRepository, private val cache: Profile
 
     suspend fun signOut() {
         auth.signOut()
-        cache.clear()
+        clearLocalData()
     }
 
     /**
      * The session ended without the user signing out here, e.g. the server
-     * rejected the refresh token. The cached name and role go with it.
+     * rejected the refresh token. Also runs after [signOut], since the Home
+     * screen calls it whenever the session ends; clearing twice is harmless.
      */
     suspend fun onSessionEnded() {
+        clearLocalData()
+    }
+
+    /** Unsynced pickup events are kept: see UserDataDao.clearUserData. */
+    private suspend fun clearLocalData() {
         cache.clear()
+        userData.clearUserData()
     }
 }

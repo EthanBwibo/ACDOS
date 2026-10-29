@@ -6,6 +6,7 @@ import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
 import com.kq.acdos.auth.SharedPreferencesSessionManager
 import com.kq.acdos.auth.SupabaseAuthRepository
+import com.kq.acdos.data.local.AcdosDatabase
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -41,10 +42,13 @@ class AppContainer(context: Context) {
         SupabaseAuthRepository(client, sessionManager)
     }
 
+    val database: AcdosDatabase by lazy { AcdosDatabase.build(appContext) }
+
     val sessionRouter: SessionRouter by lazy {
         SessionRouter(
             authRepository,
-            SharedPreferencesProfileCache(prefs(SharedPreferencesProfileCache.PREFS_NAME))
+            SharedPreferencesProfileCache(prefs(SharedPreferencesProfileCache.PREFS_NAME)),
+            database.userDataDao()
         )
     }
 

@@ -4,9 +4,17 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 
+/**
+ * The signed-in user's local data, as SessionRouter sees it: an interface so
+ * its tests can use a fake instead of Room.
+ */
+fun interface UserDataStore {
+    suspend fun clearUserData()
+}
+
 /** What leaves the device when the user signs out. */
 @Dao
-interface UserDataDao {
+interface UserDataDao : UserDataStore {
     /**
      * Deletes the cached route and stops (crew names and pickup points), the
      * crew pickup, notices and presets, and outbox events already uploaded.
@@ -14,7 +22,7 @@ interface UserDataDao {
      * their own driver signs in again (see PendingPickupEventDao.pending).
      */
     @Transaction
-    suspend fun clearUserData() {
+    override suspend fun clearUserData() {
         deleteRoutes()
         deleteCrewPickups()
         deleteNotices()
