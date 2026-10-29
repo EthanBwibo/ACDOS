@@ -35,6 +35,8 @@ abstract class AcdosDatabase : RoomDatabase() {
 
     abstract fun pendingPickupEventDao(): PendingPickupEventDao
 
+    abstract fun userDataDao(): UserDataDao
+
     companion object {
         private const val NAME = "acdos.db"
 

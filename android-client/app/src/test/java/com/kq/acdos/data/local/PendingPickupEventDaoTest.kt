@@ -30,20 +30,31 @@ class PendingPickupEventDaoTest {
 
     private val t0 = Instant.parse("2026-11-01T03:40:00Z")
 
-    private fun event(key: String, minutes: Long) = PendingPickupEventEntity(
-        idempotencyKey = key,
-        routeNodeId = "n-$key",
-        eventType = PickupEventType.PICKUP_CONFIRMED,
-        exceptionType = null,
-        confirmedAt = t0.plusSeconds(60 * minutes)
-    )
+    private fun event(key: String, minutes: Long, driver: String = DRIVER_A) =
+        PendingPickupEventEntity(
+            idempotencyKey = key,
+            driverId = driver,
+            routeNodeId = "n-$key",
+            eventType = PickupEventType.PICKUP_CONFIRMED,
+            exceptionType = null,
+            confirmedAt = t0.plusSeconds(60 * minutes)
+        )
 
     @Test
     fun pending_isOldestFirst() = runTest {
         dao.insert(event("late", 5))
         dao.insert(event("early", 1))
 
-        assertEquals(listOf("early", "late"), dao.pending().map { it.idempotencyKey })
+        assertEquals(listOf("early", "late"), dao.pending(DRIVER_A).map { it.idempotencyKey })
+    }
+
+    @Test
+    fun pending_isOnlyThatDriversEvents() = runTest {
+        dao.insert(event("a1", 1, DRIVER_A))
+        dao.insert(event("b1", 2, DRIVER_B))
+
+        assertEquals(listOf("a1"), dao.pending(DRIVER_A).map { it.idempotencyKey })
+        assertEquals(listOf("b1"), dao.pending(DRIVER_B).map { it.idempotencyKey })
     }
 
     @Test
@@ -53,7 +64,7 @@ class PendingPickupEventDaoTest {
 
         dao.markSynced("k1", t0.plusSeconds(3600))
 
-        assertEquals(listOf("k2"), dao.pending().map { it.idempotencyKey })
+        assertEquals(listOf("k2"), dao.pending(DRIVER_A).map { it.idempotencyKey })
     }
 
     @Test
@@ -62,14 +73,14 @@ class PendingPickupEventDaoTest {
 
         dao.markConflict("k1", "stop_already_confirmed")
 
-        assertEquals(emptyList<PendingPickupEventEntity>(), dao.pending())
+        assertEquals(emptyList<PendingPickupEventEntity>(), dao.pending(DRIVER_A))
         val conflict = dao.observeConflicts().first().single()
         assertEquals("stop_already_confirmed", conflict.conflict)
         assertNull(conflict.syncedAt)
     }
 
     @Test
-    fun exception_roundTripsItsType() = runTest {
+    fun exception_roundTripsItsTypeAndDriver() = runTest {
         dao.insert(
             event("k1", 1).copy(
                 eventType = PickupEventType.EXCEPTION,
@@ -77,11 +88,12 @@ class PendingPickupEventDaoTest {
             )
         )
 
-        val stored = dao.pending().single()
+        val stored = dao.pending(DRIVER_A).single()
 
         assertEquals(PickupEventType.EXCEPTION, stored.eventType)
         assertEquals(PickupExceptionType.NO_SHOW, stored.exceptionType)
         assertEquals(t0.plusSeconds(60), stored.confirmedAt)
+        assertEquals(DRIVER_A, stored.driverId)
     }
 
     @Test
@@ -93,5 +105,10 @@ class PendingPickupEventDaoTest {
         } catch (expected: SQLiteConstraintException) {
             // the key is the primary key
         }
+    }
+
+    private companion object {
+        const val DRIVER_A = "00000000-0000-0000-0000-00000000000a"
+        const val DRIVER_B = "00000000-0000-0000-0000-00000000000b"
     }
 }

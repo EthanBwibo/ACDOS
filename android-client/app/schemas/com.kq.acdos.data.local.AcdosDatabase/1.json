@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7c91c4a29b91106df671df36f22bd8b5",
+    "identityHash": "5c2340f430079111fa8d36e32505389a",
     "entities": [
       {
         "tableName": "driver_route",
@@ -241,11 +241,17 @@
       },
       {
         "tableName": "pickup_event_outbox",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idempotency_key` TEXT NOT NULL, `route_node_id` TEXT NOT NULL, `event_type` TEXT NOT NULL, `exception_type` TEXT, `confirmed_at` INTEGER NOT NULL, `synced_at` INTEGER, `conflict` TEXT, PRIMARY KEY(`idempotency_key`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idempotency_key` TEXT NOT NULL, `driver_id` TEXT NOT NULL, `route_node_id` TEXT NOT NULL, `event_type` TEXT NOT NULL, `exception_type` TEXT, `confirmed_at` INTEGER NOT NULL, `synced_at` INTEGER, `conflict` TEXT, PRIMARY KEY(`idempotency_key`))",
         "fields": [
           {
             "fieldPath": "idempotencyKey",
             "columnName": "idempotency_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driverId",
+            "columnName": "driver_id",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -291,21 +297,22 @@
         },
         "indices": [
           {
-            "name": "index_pickup_event_outbox_synced_at_conflict",
+            "name": "index_pickup_event_outbox_driver_id_synced_at_conflict",
             "unique": false,
             "columnNames": [
+              "driver_id",
               "synced_at",
               "conflict"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_pickup_event_outbox_synced_at_conflict` ON `${TABLE_NAME}` (`synced_at`, `conflict`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pickup_event_outbox_driver_id_synced_at_conflict` ON `${TABLE_NAME}` (`driver_id`, `synced_at`, `conflict`)"
           }
         ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7c91c4a29b91106df671df36f22bd8b5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5c2340f430079111fa8d36e32505389a')"
     ]
   }
 }
