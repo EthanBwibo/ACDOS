@@ -1,7 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
+
+// Supabase project URL and publishable key come from local.properties (not in git),
+// or from environment variables. CI builds without them: the app then shows
+// "not configured" instead of signing in.
+val localProperties = Properties().apply {
+    providers.fileContents(rootProject.layout.projectDirectory.file("local.properties"))
+        .asText.orNull?.let { load(it.reader()) }
+}
+
+fun supabaseSetting(property: String, env: String): String =
+    localProperties.getProperty(property) ?: providers.environmentVariable(env).orNull ?: ""
 
 android {
     namespace = "com.kq.acdos"
@@ -17,6 +31,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val supabaseUrl = supabaseSetting("supabase.url", "SUPABASE_URL")
+        val supabaseKey = supabaseSetting("supabase.publishableKey", "SUPABASE_PUBLISHABLE_KEY")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabaseKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -64,4 +87,11 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     testImplementation(libs.kotlinx.coroutines.test)
     kspTest(libs.moshi.kotlin.codegen)
+    // Supabase Auth (sign-in, token refresh) and PostgREST (reading profiles.role).
+    // Only used behind auth.AuthRepository; the FastAPI client (#26) stays on Retrofit.
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(platform(libs.ktor.bom))
+    implementation(libs.ktor.client.okhttp)
 }

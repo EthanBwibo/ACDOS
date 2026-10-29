@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">ACDOS</string>
+
+    <string name="action_retry">Retry</string>
+    <string name="action_sign_out">Sign out</string>
+
+    <string name="startup_profile_unavailable">Signed in, but your account details could not be loaded. Check your connection and retry.</string>
+    <string name="startup_not_configured">This build has no Supabase URL or key. Add supabase.url and supabase.publishableKey to local.properties.</string>
+
+    <string name="login_title">Sign in</string>
+    <string name="login_email">Email</string>
+    <string name="login_password">Password</string>
+    <string name="login_sign_in">Sign in</string>
+    <string name="login_error_empty">Enter your email and password.</string>
+    <string name="login_error_credentials">Wrong email or password.</string>
+    <string name="login_error_network">No connection to the server. Check your network and try again.</string>
+    <string name="login_error_rejected">Sign-in was refused.</string>
+    <string name="login_error_not_set_up">This account is not set up yet. Contact the dispatcher.</string>
+
+    <string name="role_driver">Driver</string>
+    <string name="role_crew">Crew</string>
+    <string name="role_dispatcher">Dispatcher</string>
 </resources>

@@ -188,6 +188,54 @@ begin
 end $$;
 insert into public.vehicles (plate_number, capacity) values ('KDC 003C', 7);
 
+-- profiles.role is read-only to every signed-in user (#30) -----------------
+-- The app routes on profiles.role, so no client may change it. profiles has
+-- only SELECT policies: UPDATE and DELETE match no rows, INSERT is refused.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+do $$
+declare
+    changed int;
+begin
+    update public.profiles set role = 'dispatcher'
+    where id = '00000000-0000-0000-0000-00000000000c';
+    get diagnostics changed = row_count;
+    assert changed = 0, 'crew C changed their own role';
+
+    delete from public.profiles where id = '00000000-0000-0000-0000-00000000000c';
+    get diagnostics changed = row_count;
+    assert changed = 0, 'crew C deleted their own profile';
+end $$;
+do $$
+begin
+    insert into public.profiles (id, role, full_name)
+    values ('00000000-0000-0000-0000-00000000000c', 'dispatcher', 'Crew C');
+    raise exception 'crew C inserted a profile';
+exception when insufficient_privilege then
+    null; -- expected: blocked by RLS
+end $$;
+
+-- Not even the dispatcher: roles are set with the service role (scripts/seed_test_accounts.py).
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+do $$
+declare
+    changed int;
+begin
+    update public.profiles set role = 'dispatcher'
+    where id = '00000000-0000-0000-0000-00000000000a';
+    get diagnostics changed = row_count;
+    assert changed = 0, 'the dispatcher changed driver A''s role';
+end $$;
+
+reset role;
+do $$
+begin
+    assert (select role from public.profiles where id = '00000000-0000-0000-0000-00000000000c') = 'crew',
+        'crew C''s role changed';
+    assert (select role from public.profiles where id = '00000000-0000-0000-0000-00000000000a') = 'driver',
+        'driver A''s role changed';
+end $$;
+set role authenticated;
+
 -- Not signed in -----------------------------------------------------------
 reset request.jwt.claim.sub;
 do $$
