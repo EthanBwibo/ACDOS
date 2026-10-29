@@ -86,7 +86,7 @@ class PickupEventOutboxTest {
 
         assertEquals(0, outbox.uploadPending())
         assertTrue(pending().isEmpty())
-        assertTrue(db.pendingPickupEventDao().observeConflicts().first().isEmpty())
+        assertTrue(db.pendingPickupEventDao().observeConflicts(DRIVER_A).first().isEmpty())
     }
 
     @Test
@@ -99,7 +99,7 @@ class PickupEventOutboxTest {
         assertEquals(0, outbox.uploadPending())
 
         assertEquals(listOf("n1"), uploader.uploaded)
-        val conflict = db.pendingPickupEventDao().observeConflicts().first().single()
+        val conflict = db.pendingPickupEventDao().observeConflicts(DRIVER_A).first().single()
         assertEquals(PickupEventOutbox.CONFLICT_ALREADY_CONFIRMED, conflict.conflict)
     }
 
@@ -119,7 +119,7 @@ class PickupEventOutboxTest {
 
         assertEquals(listOf("n1", "n2"), uploader.uploaded)
         assertTrue(pending().isEmpty())
-        val conflict = db.pendingPickupEventDao().observeConflicts().first().single()
+        val conflict = db.pendingPickupEventDao().observeConflicts(DRIVER_A).first().single()
         assertEquals("route_node_not_found", conflict.conflict)
     }
 

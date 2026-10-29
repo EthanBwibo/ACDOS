@@ -71,7 +71,13 @@ interface PendingPickupEventDao {
     @Query("UPDATE pickup_event_outbox SET conflict = :reason WHERE idempotency_key = :key")
     suspend fun markConflict(key: String, reason: String)
 
-    /** Conflicts for the driver to see, e.g. a stop someone else already confirmed. */
-    @Query("SELECT * FROM pickup_event_outbox WHERE conflict IS NOT NULL ORDER BY confirmed_at")
-    fun observeConflicts(): Flow<List<PendingPickupEventEntity>>
+    /**
+     * [driverId]'s conflicts to show them, e.g. a stop someone else already
+     * confirmed. Another driver on the same phone does not see them.
+     */
+    @Query(
+        "SELECT * FROM pickup_event_outbox WHERE driver_id = :driverId " +
+            "AND conflict IS NOT NULL ORDER BY confirmed_at"
+    )
+    fun observeConflicts(driverId: String): Flow<List<PendingPickupEventEntity>>
 }

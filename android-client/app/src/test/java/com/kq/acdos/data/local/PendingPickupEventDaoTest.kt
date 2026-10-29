@@ -74,9 +74,22 @@ class PendingPickupEventDaoTest {
         dao.markConflict("k1", "stop_already_confirmed")
 
         assertEquals(emptyList<PendingPickupEventEntity>(), dao.pending(DRIVER_A))
-        val conflict = dao.observeConflicts().first().single()
+        val conflict = dao.observeConflicts(DRIVER_A).first().single()
         assertEquals("stop_already_confirmed", conflict.conflict)
         assertNull(conflict.syncedAt)
+    }
+
+    @Test
+    fun conflicts_areOnlyThatDriversConflicts() = runTest {
+        dao.insert(event("a1", 1, DRIVER_A))
+        dao.insert(event("b1", 2, DRIVER_B))
+        dao.markConflict("a1", "stop_already_confirmed")
+        dao.markConflict("b1", "route_node_not_found")
+
+        val seenByB = dao.observeConflicts(DRIVER_B).first().map { it.idempotencyKey }
+
+        assertEquals(listOf("b1"), seenByB)
+        assertEquals(listOf("a1"), dao.observeConflicts(DRIVER_A).first().map { it.idempotencyKey })
     }
 
     @Test

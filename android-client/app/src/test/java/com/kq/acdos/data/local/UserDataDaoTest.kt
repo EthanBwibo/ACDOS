@@ -65,7 +65,7 @@ class UserDataDaoTest {
         assertEquals(listOf("pending"), outbox.pending(DRIVER).map { it.idempotencyKey })
         assertEquals(
             listOf("conflicted"),
-            outbox.observeConflicts().first().map { it.idempotencyKey }
+            outbox.observeConflicts(DRIVER).first().map { it.idempotencyKey }
         )
     }
 
