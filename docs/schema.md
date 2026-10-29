@@ -13,10 +13,11 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | profiles | id UUID; role TEXT; full_name TEXT; created_at TIMESTAMPTZ | PK id, FK to auth.users; role in (dispatcher, driver, crew) |
 | crew_members | id UUID; profile_id UUID; name TEXT; role TEXT; home_location GEOGRAPHY(Point, 4326); created_at TIMESTAMPTZ | PK id; FK profile_id to profiles, nullable and unique |
 | vehicles | id UUID; assigned_driver_id UUID; plate_number TEXT; capacity INT; status TEXT; created_at TIMESTAMPTZ | PK id; FK assigned_driver_id to profiles; plate_number unique; capacity above 0; status in (available, in_service, broken_down) |
-| optimization_jobs | id UUID; triggered_at TIMESTAMPTZ; trigger_type TEXT; status TEXT; created_at TIMESTAMPTZ | PK id; trigger_type in (scheduled, flight_delay, standby_activation, vehicle_breakdown); status in (running, completed, failed) |
+| optimization_jobs | id UUID; triggered_at TIMESTAMPTZ; trigger_type TEXT; status TEXT; idempotency_key TEXT; request_hash TEXT; error TEXT; finished_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; trigger_type in (scheduled, flight_delay, standby_activation, vehicle_breakdown); status in (queued, running, completed, failed), default queued; idempotency_key unique, null for jobs not made through the API; error and finished_at null until the job fails or completes |
+| optimization_job_pickups | id UUID; optimization_job_id UUID; pickup_request_id UUID; outcome TEXT; late_sec INT; created_at TIMESTAMPTZ | PK id; FK optimization_job_id, pickup_request_id; optimization_job_id and pickup_request_id unique together; outcome in (on_time, late, unassigned); late_sec at least 0, null exactly when unassigned |
 | pickup_requests | id UUID; crew_member_id UUID; pickup_location GEOGRAPHY(Point, 4326); report_time TIMESTAMPTZ; request_type TEXT; status TEXT; created_at TIMESTAMPTZ | PK id; FK crew_member_id; request_type in (rostered, standby); status in (pending, assigned, picked_up, missed, cancelled); spatial index on pickup_location |
 | routes | id UUID; vehicle_id UUID; optimization_job_id UUID; total_distance_km NUMERIC; status TEXT; created_at TIMESTAMPTZ | PK id; FK vehicle_id, optimization_job_id; status in (active, completed, superseded) |
-| route_nodes | id UUID; route_id UUID; pickup_request_id UUID; seq_order INT; estimated_arrival TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK route_id, pickup_request_id (unique); route_id and seq_order unique together |
+| route_nodes | id UUID; route_id UUID; pickup_request_id UUID; seq_order INT; estimated_arrival TIMESTAMPTZ; superseded_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK route_id, pickup_request_id; pickup_request_id unique among nodes with superseded_at null (partial unique index); route_id and seq_order unique together; superseded_at null until a later job re-plans the pickup |
 | pickup_events | id UUID; route_node_id UUID; driver_id UUID; event_type TEXT; exception_type TEXT; confirmed_at TIMESTAMPTZ; synced_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id, driver_id to profiles; event_type in (pickup_confirmed, exception); exception_type in (no_show, vehicle_issue, traffic_delay) or null; idempotency_key unique; at most one pickup_confirmed per route_node_id (partial unique index); synced_at null until synchronised |
 | trip_records | id UUID; route_node_id UUID; vehicle_id UUID; crew_count INT; pickup_timestamp TIMESTAMPTZ; scheduled_report_time TIMESTAMPTZ; actual_arrival TIMESTAMPTZ; actual_duration_sec INT; day_of_week SMALLINT; route_corridor TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id (unique), vehicle_id; day_of_week 0 = Monday to 6 = Sunday (see Conventions) |
 
@@ -43,7 +44,9 @@ tables above.
 
 - crew_members 1 to many pickup_requests
 - vehicles 1 to many routes; optimization_jobs 1 to many routes; routes 1 to many route_nodes
-- pickup_requests 1 to at most 1 route_nodes
+- pickup_requests 1 to many route_nodes, at most 1 not superseded (the live plan)
+- optimization_jobs 1 to many optimization_job_pickups, one per pickup the job was asked to
+  place; pickup_requests 1 to many optimization_job_pickups
 - route_nodes 1 to many pickup_events: any number of exceptions, at most one `pickup_confirmed`
 - route_nodes 1 to at most 1 trip_records (completed leg, feeds Random Forest retraining)
 - A driver reaches their route through the vehicle: vehicles.assigned_driver_id
@@ -65,7 +68,7 @@ for every client path, not only a backstop behind FastAPI.
 - **Dispatcher, validation data:** read `travel_time_observations`. No client writes it: only
   the Edge Function, with the service role.
 - **Crew:** read their own pickup requests and notices; read the `route_nodes` for their own
-  pickup requests (their ETA); set `acknowledged_at` on their own notices; insert their own crew
+  pickup requests that are not superseded (their current ETA); set `acknowledged_at` on their own notices; insert their own crew
   messages; register their own device tokens.
 
 Policies get the caller's role and any cross-table lookup through `SECURITY DEFINER` functions

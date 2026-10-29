@@ -1,10 +1,11 @@
 """The solver's travel time from the RF and the zone matrix (#104)."""
 
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
+from app.jobs import worker
 from app.ml import journey_time, travel_time, zone_matrix
 from app.ml.journey_time import HourlyGrid
 from app.solver import insertion
@@ -246,6 +247,23 @@ def test_route_timing_calls_the_leg_functions_not_travel_time(travel):
 
     assert calls == []
     assert end > arrivals[-1] > arrivals[0] > 3600.0
+
+
+def test_job_api_problems_get_the_leg_functions(travel, matrix, monkeypatch):
+    # The job API (#51) builds its Problem in the solver process
+    # (worker.build_problem); it must get #109's leg functions like any other.
+    monkeypatch.setattr(worker, "_rf_inputs", (grid(), matrix, ZONES))
+    epoch = TUESDAY_0300.replace(tzinfo=worker.EAT)
+    pickup = worker.PickupInput("p0", ZONES["B"], epoch + timedelta(hours=3))
+    job = worker.SolveInput(
+        (pickup,), (worker.VehicleInput("v0", 14),), JKIA, epoch, 1.0, "rf", seed=0
+    )
+
+    problem = worker.build_problem(job)
+
+    assert problem.timed_legs is not None
+    # The worker's RF is the one from these inputs at this epoch.
+    assert problem.timed_legs.from_start[0][0](900) == travel(JKIA, ZONES["B"], 900)
 
 
 def test_no_leg_functions_with_stop_windows_or_without_the_offer(travel):

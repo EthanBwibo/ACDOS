@@ -51,9 +51,16 @@ class OptimizationTriggerType(StrEnum):
 
 
 class OptimizationJobStatus(StrEnum):
+    QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class JobPickupOutcome(StrEnum):
+    ON_TIME = "on_time"
+    LATE = "late"
+    UNASSIGNED = "unassigned"
 
 
 class PickupRequestType(StrEnum):
@@ -121,6 +128,22 @@ class OptimizationJob(BaseModel):
     triggered_at: datetime
     trigger_type: OptimizationTriggerType
     status: OptimizationJobStatus
+    idempotency_key: str | None = None  # null for jobs not made through the API
+    request_hash: str | None = None
+    error: str | None = None  # why a failed job failed
+    finished_at: datetime | None = None
+    created_at: datetime
+
+
+class OptimizationJobPickup(BaseModel):
+    """How one pickup request came out of one job; the only record of
+    unassigned pickups, which have no route node."""
+
+    id: UUID
+    optimization_job_id: UUID
+    pickup_request_id: UUID
+    outcome: JobPickupOutcome
+    late_sec: int | None = Field(default=None, ge=0)  # null when unassigned
     created_at: datetime
 
 
@@ -149,6 +172,7 @@ class RouteNode(BaseModel):
     pickup_request_id: UUID
     seq_order: int
     estimated_arrival: datetime
+    superseded_at: datetime | None = None  # set when a later job re-plans the pickup
     created_at: datetime
 
 
@@ -178,3 +202,51 @@ class TripRecord(BaseModel):
     day_of_week: int = Field(ge=0, le=6)  # 0 = Monday, as datetime.weekday()
     route_corridor: str
     created_at: datetime
+
+
+# Optimisation job API (#51). Shaped for the dispatcher's screen over 2G/3G:
+# ids and times only; names and addresses come from tables the app reads
+# already.
+
+
+class OptimisationJobCreate(BaseModel):
+    trigger_type: OptimizationTriggerType
+    pickup_request_ids: list[UUID] = Field(min_length=1)
+    vehicle_ids: list[UUID] = Field(min_length=1)
+
+
+class OptimisationJobAccepted(BaseModel):
+    """202 body. No status: a retried POST gets the same job back, which may
+    have moved on from queued; GET says where it is."""
+
+    id: UUID
+
+
+class PlannedNode(BaseModel):
+    pickup_request_id: UUID
+    seq_order: int
+    estimated_arrival: datetime  # at the pickup
+
+
+class PlannedRoute(BaseModel):
+    vehicle_id: UUID
+    total_distance_km: float
+    nodes: list[PlannedNode]
+
+
+class LatePickup(BaseModel):
+    pickup_request_id: UUID
+    late_sec: int  # past report_time at JKIA
+
+
+class OptimisationJobResult(BaseModel):
+    """A job and, once completed, its plan. Every requested pickup is in a
+    route; the late ones are also in late, and the rest in unassigned, so a
+    missed deadline is always listed, never left to be noticed."""
+
+    id: UUID
+    status: OptimizationJobStatus
+    error: str | None = None
+    routes: list[PlannedRoute] = []
+    late: list[LatePickup] = []
+    unassigned: list[UUID] = []

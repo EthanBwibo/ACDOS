@@ -52,8 +52,15 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --workers 1
 ```
+
+The optimisation job API needs `DATABASE_URL` in `backend/.env`: Supabase's session pooler
+(port 5432), as the `postgres` role. Keep `--workers 1`. On startup the backend marks any
+job still `queued` or `running` as failed, since its solver process died with the last run.
+That is only true with one uvicorn process: a second one would fail the first one's live
+jobs. Solves run in a pool of `SOLVER_POOL_SIZE` processes (default 2), so one uvicorn
+worker does not block on them.
 
 ### Android
 Open `android-client/` in Android Studio. Gradle sync will pull Room, KSP, coroutines, and

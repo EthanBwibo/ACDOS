@@ -17,12 +17,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The job API tests (#51) write to Postgres, so this job has its own
+  # PostGIS with the migrations applied, set up as in the migrations job.
   backend:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          # Throwaway container reachable only from this job: no password,
+          # so the workflow holds no credential for scanners to flag.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGDATABASE: acdos_ci
     steps:
       - uses: actions/checkout@v7
 
@@ -41,8 +60,24 @@ jobs:
       - name: Ruff format check
         run: ruff format --check .
 
+      - name: Install psql if the runner lacks it
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+
+      - name: Database with the migrations
+        run: |
+          createdb --maintenance-db=postgres -T template0 acdos_ci
+          psql -v ON_ERROR_STOP=1 -q -f tests/sql/supabase_stubs.sql
+          for f in migrations/*.sql; do
+            if grep -q '^-- supabase-only' "$f"; then continue; fi
+            psql -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      # DATABASE_URL set, so the Postgres job API tests run rather than skip.
+      # -rs prints the reason for any skip, so a skip cannot pass unseen.
       - name: Pytest
-        run: pytest
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/acdos_ci
+        run: pytest -rs
 
   # Applies backend/migrations in order to a throwaway PostGIS database, then
   # checks the RLS policies role by role. Supabase itself is never touched.

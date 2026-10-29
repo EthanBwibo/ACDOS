@@ -1,8 +1,44 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.config import settings
-from app.routers import health
+from app.jobs import store
+from app.jobs.runner import JobRunner, solver_pool
+from app.routers import health, optimisation_jobs
+from app.solver.problem import Point
 
-app = FastAPI(title=settings.app_name)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Tests install their own runner; without a database there is none, and
+    # the job endpoints answer 503.
+    if getattr(app.state, "job_runner", None) is not None or not settings.database_url:
+        yield
+        return
+    db = await store.connect(settings.database_url)
+    pool = solver_pool(settings.solver_pool_size, settings.travel_model)
+    try:
+        depot = Point(settings.depot_lat, settings.depot_lon)
+        job_store = store.PostgresJobStore(db, depot)
+        # Safe only with one uvicorn process (README: --workers 1).
+        await job_store.fail_unfinished()
+        app.state.job_runner = JobRunner(
+            job_store,
+            pool,
+            settings.solver_pool_size,
+            depot=depot,
+            time_limit_sec=settings.solve_time_limit_sec,
+            travel_model=settings.travel_model,
+        )
+        yield
+    finally:
+        app.state.job_runner = None
+        pool.shutdown(wait=False, cancel_futures=True)
+        await db.close()
+
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.include_router(health.router)
+app.include_router(optimisation_jobs.router)
