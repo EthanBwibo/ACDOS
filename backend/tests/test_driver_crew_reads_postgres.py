@@ -9,7 +9,8 @@ so what is tested is what the app does: verify the token, look up the role,
 switch to the caller, and let RLS filter.
 
 Seeded world (fresh ids each run, deleted afterwards by id):
-- driver A drives van VA: active route rA (crew F then crew C), an older
+- driver A drives van VA: active route rA (crew F then crew C, plus a
+  superseded stop for crew E that a live route never shows), an older
   superseded route rA_old that held crew C, and four more active routes
   later in the day (for pagination);
 - driver B drives van VB: active route rB (crew E);
@@ -47,8 +48,9 @@ ZONES_CSV = Path(__file__).resolve().parents[2] / "data" / "pickup_zones.csv"
 KEY = SigningKey("test-key")
 NOW = datetime.now(UTC)
 
-# Pickup points: near Westlands, Kilimani and South B.
-POINTS = {"C": (-1.2675, 36.8120), "E": (-1.2921, 36.7870), "F": (-1.3100, 36.8340)}
+# Pickup points: near Westlands, Kilimani and South B. C has 6 decimals, so
+# the driver's 5-decimal rounding shows.
+POINTS = {"C": (-1.267512, 36.812034), "E": (-1.2921, 36.7870), "F": (-1.3100, 36.8340)}
 
 
 def db(query):
@@ -182,6 +184,9 @@ def world():
                     [
                         (p["F"], timedelta(hours=1), False),
                         (p["C"], timedelta(hours=1, minutes=20), False),
+                        # Replaced on a route still active: no live route
+                        # should show it (#51 never leaves one; nothing stops it).
+                        (p["E"], timedelta(hours=1, minutes=30), True),
                     ],
                 ),
                 "B": await route(vb, "active", [(p["E"], timedelta(hours=1, minutes=5), False)]),
@@ -457,3 +462,50 @@ def test_reads_run_as_the_caller_and_leave_the_connection_clean(world):
     assert profile == reads.Profile("crew", world["rows"]["crew"][0])
     assert (inside["who"], inside["uid"]) == ("authenticated", user)
     assert after["who"] == "postgres" and not after["sub"]
+
+
+def test_the_sql_filters_hold_without_rls(world):
+    # The reads repeat the caller filter in SQL as a second check. Run as
+    # postgres, which bypasses RLS, the filters alone must keep everyone
+    # else's rows out.
+    users, crew = world["users"], world["rows"]["crew"]
+
+    async def read(conn):
+        return (
+            await reads.current_route(conn, users["A"]),
+            await reads.route_page(conn, users["B"], None, 50),
+            await reads.next_pickup(conn, crew[0], NOW),
+        )
+
+    route_a, page_b, pickup_c = db(read)
+    assert [s.crew_name for s in route_a.stops] == ["Crew F", "Crew C"]  # not E's superseded stop
+    assert [i.route_id for i in page_b.items] == [world["routes"]["B"]]
+    assert pickup_c.pickup_request_id == world["pickups"]["C"]
+
+
+def test_drivers_see_no_pickup_or_crew_behind_a_superseded_stop(world):
+    # Crew E's superseded stop sits on driver A's active route. Through the
+    # driver helper (fixed in 021), A must not read E's pickup or name.
+    async def visible(conn):
+        return (
+            await conn.fetchval(
+                "select count(*) from public.pickup_requests where id = $1",
+                world["pickups"]["E"],
+            ),
+            await conn.fetchval("select count(*) from public.crew_members where name = 'Crew E'"),
+        )
+
+    driver = world["users"]["A"]
+    assert with_policy_changed("select 1", driver, visible) == (0, 0)
+    helper_before_021 = """
+        create or replace function private.driver_active_pickup_request_ids()
+        returns setof uuid language sql stable security definer set search_path = ''
+        as $$
+            select n.pickup_request_id
+            from public.route_nodes n
+            join public.routes r on r.id = n.route_id
+            join public.vehicles v on v.id = r.vehicle_id
+            where r.status = 'active' and v.assigned_driver_id = auth.uid();
+        $$
+    """
+    assert with_policy_changed(helper_before_021, driver, visible) == (1, 1)
