@@ -298,6 +298,8 @@ def test_a_driver_without_a_route_gets_null(client, world):
 def test_the_schedule_is_paginated_without_gaps_or_repeats(client, world):
     seen, cursor, pages = [], None, 0
     while True:
+        # Bounded: a cursor that never moves on must fail here, not hang.
+        assert pages < 10, "the schedule never reached its last page"
         params = {"limit": 2} | ({"cursor": cursor} if cursor else {})
         page = client.get("/drivers/me/routes", headers=as_user(world, "A"), params=params).json()
         pages += 1
