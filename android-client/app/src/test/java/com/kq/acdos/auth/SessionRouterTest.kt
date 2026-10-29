@@ -5,8 +5,6 @@ import com.kq.acdos.ui.DispatcherHomeActivity
 import com.kq.acdos.ui.DriverHomeActivity
 import com.kq.acdos.ui.homeActivityFor
 import java.io.IOException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,46 +14,10 @@ import org.junit.Test
 
 /** Role routing after sign-in and on a cold start, with a fake Supabase. */
 class SessionRouterTest {
+    private val userData = FakeUserData()
 
-    private class FakeAuth(
-        var storedUserId: String? = USER,
-        var profileResult: ProfileResult = ProfileResult.Missing
-    ) : AuthRepository {
-        var signOutCalls = 0
-        var fetchCalls = 0
-
-        override suspend fun storedSessionUserId() = storedUserId
-
-        override suspend fun signIn(email: String, password: String) = SignInResult.Success
-
-        override suspend fun fetchProfile(): ProfileResult {
-            fetchCalls++
-            return profileResult
-        }
-
-        override suspend fun signOut() {
-            signOutCalls++
-            storedUserId = null
-        }
-
-        override val sessionEnded: Flow<Unit> = emptyFlow()
-
-        override suspend fun accessToken(): String? = null
-
-        override suspend fun refreshAccessToken(): String? = null
-    }
-
-    private class FakeCache(var stored: Profile? = null) : ProfileCache {
-        override suspend fun get(userId: String) = stored?.takeIf { it.userId == userId }
-
-        override suspend fun put(profile: Profile) {
-            stored = profile
-        }
-
-        override suspend fun clear() {
-            stored = null
-        }
-    }
+    private fun router(auth: FakeAuth, cache: FakeCache = FakeCache()) =
+        SessionRouter(auth, cache, userData)
 
     private fun found(role: AppRole) = ProfileResult.Found(Profile(USER, role, "Test User"))
 
@@ -64,7 +26,7 @@ class SessionRouterTest {
         val auth = FakeAuth(profileResult = found(AppRole.DRIVER))
         val cache = FakeCache()
 
-        val destination = SessionRouter(auth, cache).resolveProfile()
+        val destination = router(auth, cache).resolveProfile()
 
         assertEquals(Destination.Home(Profile(USER, AppRole.DRIVER, "Test User")), destination)
         assertEquals(DriverHomeActivity::class.java, homeActivityFor(AppRole.DRIVER))
@@ -75,7 +37,7 @@ class SessionRouterTest {
     fun crew_opensCrewHome() = runTest {
         val auth = FakeAuth(profileResult = found(AppRole.CREW))
 
-        val destination = SessionRouter(auth, FakeCache()).resolveProfile()
+        val destination = router(auth).resolveProfile()
 
         assertEquals(AppRole.CREW, (destination as Destination.Home).profile.role)
         assertEquals(CrewHomeActivity::class.java, homeActivityFor(AppRole.CREW))
@@ -85,7 +47,7 @@ class SessionRouterTest {
     fun dispatcher_opensDispatcherHome() = runTest {
         val auth = FakeAuth(profileResult = found(AppRole.DISPATCHER))
 
-        val destination = SessionRouter(auth, FakeCache()).resolveProfile()
+        val destination = router(auth).resolveProfile()
 
         assertEquals(AppRole.DISPATCHER, (destination as Destination.Home).profile.role)
         assertEquals(DispatcherHomeActivity::class.java, homeActivityFor(AppRole.DISPATCHER))
@@ -96,7 +58,7 @@ class SessionRouterTest {
         val auth = FakeAuth(profileResult = ProfileResult.Missing)
         val cache = FakeCache(Profile(USER, AppRole.DRIVER, "Stale"))
 
-        val destination = SessionRouter(auth, cache).resolveProfile()
+        val destination = router(auth, cache).resolveProfile()
 
         assertEquals(Destination.AccountNotSetUp, destination)
         assertEquals(1, auth.signOutCalls)
@@ -107,7 +69,7 @@ class SessionRouterTest {
     fun networkError_keepsSessionAndOffersRetry() = runTest {
         val auth = FakeAuth(profileResult = ProfileResult.NetworkError(IOException("offline")))
 
-        val destination = SessionRouter(auth, FakeCache()).resolveProfile()
+        val destination = router(auth).resolveProfile()
 
         assertEquals(Destination.Retry, destination)
         assertEquals(0, auth.signOutCalls)
@@ -119,7 +81,7 @@ class SessionRouterTest {
         val auth = FakeAuth(profileResult = ProfileResult.NetworkError(IOException("offline")))
         val cache = FakeCache(Profile(USER, AppRole.CREW, "Test User"))
 
-        val destination = SessionRouter(auth, cache).onColdStart()
+        val destination = router(auth, cache).onColdStart()
 
         assertEquals(Destination.Home(Profile(USER, AppRole.CREW, "Test User")), destination)
         assertEquals(0, auth.fetchCalls)
@@ -129,7 +91,7 @@ class SessionRouterTest {
     fun coldStartWithoutCache_readsProfile() = runTest {
         val auth = FakeAuth(profileResult = found(AppRole.DRIVER))
 
-        val destination = SessionRouter(auth, FakeCache()).onColdStart()
+        val destination = router(auth).onColdStart()
 
         assertTrue(destination is Destination.Home)
         assertEquals(1, auth.fetchCalls)
@@ -140,7 +102,7 @@ class SessionRouterTest {
         val auth = FakeAuth(profileResult = ProfileResult.NetworkError(IOException("offline")))
         val cache = FakeCache(Profile("someone-else", AppRole.DISPATCHER, "Other"))
 
-        val destination = SessionRouter(auth, cache).onColdStart()
+        val destination = router(auth, cache).onColdStart()
 
         assertEquals(Destination.Retry, destination)
     }
@@ -149,7 +111,7 @@ class SessionRouterTest {
     fun coldStartWithoutSession_opensLogin() = runTest {
         val auth = FakeAuth(storedUserId = null)
 
-        assertEquals(Destination.Login, SessionRouter(auth, FakeCache()).onColdStart())
+        assertEquals(Destination.Login, router(auth).onColdStart())
         assertEquals(0, auth.fetchCalls)
     }
 
@@ -159,7 +121,7 @@ class SessionRouterTest {
 
         val auth = FakeAuth(profileResult = ProfileResult.NoSession)
 
-        val destination = SessionRouter(auth, cache).resolveProfile()
+        val destination = router(auth, cache).resolveProfile()
 
         assertEquals(Destination.Login, destination)
         assertNull(cache.stored)
@@ -169,9 +131,51 @@ class SessionRouterTest {
     fun sessionEndedByServer_clearsCachedNameAndRole() = runTest {
         val cache = FakeCache(Profile(USER, AppRole.CREW, "Test User"))
 
-        SessionRouter(FakeAuth(), cache).onSessionEnded()
+        router(FakeAuth(), cache).onSessionEnded()
 
         assertNull(cache.stored)
+    }
+
+    @Test
+    fun signOut_clearsUserData() = runTest {
+        val auth = FakeAuth()
+        val cache = FakeCache(Profile(USER, AppRole.DRIVER, "Test User"))
+
+        router(auth, cache).signOut()
+
+        assertEquals(1, auth.signOutCalls)
+        assertNull(cache.stored)
+        assertEquals(1, userData.clearCalls)
+    }
+
+    @Test
+    fun sessionEndedByServer_clearsUserData() = runTest {
+        router(FakeAuth()).onSessionEnded()
+
+        assertEquals(1, userData.clearCalls)
+    }
+
+    @Test
+    fun noProfilesRow_clearsUserData() = runTest {
+        router(FakeAuth(profileResult = ProfileResult.Missing)).resolveProfile()
+
+        assertEquals(1, userData.clearCalls)
+    }
+
+    @Test
+    fun sessionGone_clearsUserData() = runTest {
+        router(FakeAuth(profileResult = ProfileResult.NoSession)).resolveProfile()
+
+        assertEquals(1, userData.clearCalls)
+    }
+
+    @Test
+    fun networkError_keepsUserData() = runTest {
+        val auth = FakeAuth(profileResult = ProfileResult.NetworkError(IOException("offline")))
+
+        router(auth).resolveProfile()
+
+        assertEquals(0, userData.clearCalls)
     }
 
     @Test
@@ -181,9 +185,5 @@ class SessionRouterTest {
         assertEquals(AppRole.DISPATCHER, AppRole.fromDb("dispatcher"))
         assertNull(AppRole.fromDb("pilot"))
         assertFalse(AppRole.entries.any { AppRole.fromDb(it.dbValue.uppercase()) != null })
-    }
-
-    private companion object {
-        const val USER = "00000000-0000-0000-0000-00000000000a"
     }
 }
