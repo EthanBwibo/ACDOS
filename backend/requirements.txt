@@ -6,6 +6,12 @@ pydantic==2.13.5
 pydantic-settings==2.15.0
 # Postgres driver for the optimisation job API (#51).
 asyncpg==0.32.0
+# Checking Supabase access tokens (ES256) for the driver and crew endpoints
+# (#52), and what PyJWT's crypto extra pulls in.
+PyJWT==2.15.1
+cryptography==50.0.2
+cffi==2.1.1
+pycparser==3.12
 # Random Forest journey time model (app/ml/journey_time.py, #103), and what
 # scikit-learn pulls in, pinned at the versions it resolved to.
 scikit-learn==1.9.1
