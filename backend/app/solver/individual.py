@@ -110,7 +110,9 @@ def _drive(
     A plain loop rather than _add: it runs millions of times per solve, and
     building a _Partial for every stop cost as much as the driving (#85).
     When travel time ignores departure, the legs come from Problem.legs, a
-    table built once, instead of a call per leg (#88).
+    table built once, instead of a call per leg (#88). For the Random Forest
+    each leg is still a call, but to a function built for that leg
+    (Problem.timed_legs, #109).
 
     With stop windows (#99) the times are when service starts, after any wait,
     and _drive_with_windows does the driving; crew never take that path.
@@ -129,6 +131,18 @@ def _drive(
             clock = arrival + pickups[i].service_sec
             row = legs.between[i]
         return arrivals, clock + row[legs.destination]
+
+    timed = problem.timed_legs
+    if timed is not None:
+        # The same loop with one call per leg to a function built for that
+        # leg (#109), instead of travel_time with two Points.
+        row = timed.from_start[vehicle_index]
+        for i in route:
+            arrival = clock + row[i](clock)
+            arrivals.append(arrival)
+            clock = arrival + pickups[i].service_sec
+            row = timed.between[i]
+        return arrivals, clock + row[timed.destination](clock)
 
     travel_time = problem.travel_time
     position = problem.vehicles[vehicle_index].start
@@ -173,7 +187,7 @@ def _drive_with_windows(
 
 def _latest_start(
     problem: Problem, vehicle_index: int, route: list[int], buffer_sec: float
-) -> float:
+) -> tuple[float, list[float] | None, float | None]:
     """Latest start that has everyone at the destination buffer_sec before the
     earliest report time on board, never before available_from.
 
@@ -191,17 +205,22 @@ def _latest_start(
     latest such start, but it still arrives in time. An RF predicting by whole
     hour is not FIFO at hour boundaries, which is why #23 interpolates between
     hours.
+
+    Returns the start with the arrivals and destination arrival of the drive
+    that set it (#109): the search has already driven the route from there,
+    and driving it again would give the same floats. None for both when it
+    never drove (no report time on board).
     """
     report = min(problem.pickups[i].deadline for i in route)
     target = report - buffer_sec
     lo = problem.vehicles[vehicle_index].available_from
     if math.isinf(target):
-        return lo  # no report time to work back from
-    end_lo = _drive(problem, vehicle_index, route, lo)[1]
+        return lo, None, None  # no report time to work back from
+    arrivals_lo, end_lo = _drive(problem, vehicle_index, route, lo)
     if end_lo > target:
         # Out of reach even leaving now (a lost cause on board, or on time only
         # inside the buffer): leave as early as possible.
-        return lo
+        return lo, arrivals_lo, end_lo
 
     hi = report
     guess = lo + (target - end_lo)
@@ -209,13 +228,36 @@ def _latest_start(
         if target - end_lo <= DEPARTURE_TOLERANCE_SEC or hi - lo <= DEPARTURE_TOLERANCE_SEC:
             break
         start = guess if lo < guess < hi else (lo + hi) / 2
-        end = _drive(problem, vehicle_index, route, start)[1]
+        arrivals, end = _drive(problem, vehicle_index, route, start)
         if end <= target:
-            lo, end_lo = start, end
+            lo, arrivals_lo, end_lo = start, arrivals, end
         else:
             hi = start
         guess = start + (target - end)
-    return lo
+    return lo, arrivals_lo, end_lo
+
+
+def _timed_route(
+    problem: Problem,
+    vehicle_index: int,
+    route: list[int],
+    latest_departure: bool,
+    buffer_sec: float,
+) -> tuple[float, list[float], float]:
+    """Start, arrival at each stop and at the destination: how route_times
+    and schedule_route both time a route, so the two cannot drift apart.
+
+    With latest departure, the drive the search ended on is reused rather
+    than driven again (#109); it is a third of all driving on the RF path.
+    """
+    if latest_departure:
+        start, arrivals, end = _latest_start(problem, vehicle_index, route, buffer_sec)
+        if arrivals is not None:
+            return start, arrivals, end
+    else:
+        start = problem.vehicles[vehicle_index].available_from
+    arrivals, end = _drive(problem, vehicle_index, route, start)
+    return start, arrivals, end
 
 
 def route_times(
@@ -227,14 +269,9 @@ def route_times(
     It leaves as the problem's weights say: latest departure for crew,
     available_from for Solomon (#99). buffer_sec defaults to the weights' too.
     """
-    if problem.weights.latest_departure:
-        if buffer_sec is None:
-            buffer_sec = problem.weights.report_buffer_sec
-        start = _latest_start(problem, vehicle_index, route, buffer_sec)
-    else:
-        start = problem.vehicles[vehicle_index].available_from
-    arrivals, end = _drive(problem, vehicle_index, route, start)
-    return start, arrivals, end
+    if buffer_sec is None:
+        buffer_sec = problem.weights.report_buffer_sec
+    return _timed_route(problem, vehicle_index, route, problem.weights.latest_departure, buffer_sec)
 
 
 def schedule_route(
@@ -266,11 +303,7 @@ def schedule_route(
         latest_departure = problem.weights.latest_departure
     if buffer_sec is None:
         buffer_sec = problem.weights.report_buffer_sec
-    if latest_departure:
-        start = _latest_start(problem, vehicle_index, route, buffer_sec)
-    else:
-        start = problem.vehicles[vehicle_index].available_from
-    arrivals, end = _drive(problem, vehicle_index, route, start)
+    start, arrivals, end = _timed_route(problem, vehicle_index, route, latest_departure, buffer_sec)
     stops = tuple(
         Stop(
             pickup_index=i,

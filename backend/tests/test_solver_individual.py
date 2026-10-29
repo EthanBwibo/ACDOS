@@ -8,6 +8,8 @@ from app.solver.individual import (
     REPORT_BUFFER_SEC,
     Individual,
     _drive,
+    _latest_start,
+    route_times,
     schedule,
     schedule_route,
     split,
@@ -385,7 +387,8 @@ def counting(travel_time):
 def test_departure_search_is_exact_in_one_step_when_travel_time_ignores_departure():
     # Two legs of 600 s, report at 10000: the latest start is exactly 7900.
     # One drive from available_from shows 7900 s of slack; the next tries
-    # 7900 and lands exactly on target. Then the final schedule: 3 drives.
+    # 7900 and lands exactly on target. The schedule reuses that drive
+    # (#109): 2 drives.
     travel = counting(every_leg_takes(600))
     pickup = Pickup("p0", Point(-1.28, 36.81), deadline=10000)
     problem = Problem((pickup,), (Vehicle("v0", 14, DEPOT),), travel)
@@ -394,7 +397,7 @@ def test_departure_search_is_exact_in_one_step_when_travel_time_ignores_departur
 
     assert route.start == 7900
     assert route.destination_arrival == 10000 - REPORT_BUFFER_SEC
-    assert travel.calls == 2 * 3
+    assert travel.calls == 2 * 2
 
 
 def test_departure_search_stops_at_the_step_cap_still_on_time(monkeypatch):
@@ -412,9 +415,67 @@ def test_departure_search_stops_at_the_step_cap_still_on_time(monkeypatch):
 
     route = schedule_route(problem, 0, [0])
 
-    # Two legs per drive: the reachability check, 1 step, the final schedule.
-    assert travel.calls == 2 * (1 + 1 + 1)
+    # Two legs per drive: the reachability check and 1 step; the schedule
+    # reuses the drive that set the start (#109).
+    assert travel.calls == 2 * (1 + 1)
     assert route.destination_arrival <= 7000 - REPORT_BUFFER_SEC
+
+
+def rush_hour(origin, dest, depart_sec):
+    return 600.0 if depart_sec < 5000 else 1800.0
+
+
+def every_branch():
+    """Problems that take each branch of _latest_start: no report time on
+    board, out of reach from available_from, and a search of several steps
+    whose last try was late (so it differs from the start returned)."""
+    no_report = make_problem([math.inf], capacities=[14])
+    out_of_reach = make_problem([0, 20000], capacities=[14])
+    search = Problem(
+        (Pickup("p0", Point(-1.28, 36.81), deadline=7000, service_sec=30),),
+        (Vehicle("v0", 14, DEPOT, available_from=100),),
+        rush_hour,
+    )
+    return [("no report time", no_report, [0]), ("out of reach", out_of_reach, [0, 1]),
+            ("search", search, [0])]  # fmt: skip
+
+
+@pytest.mark.parametrize("case", range(3))
+def test_reusing_the_search_drive_times_routes_as_driving_again(case):
+    # #109: route_times and schedule_route reuse the drive the departure
+    # search ended on. They must give what driving again from that start
+    # gives, to the bit, on every branch of the search.
+    name, problem, route = every_branch()[case]
+    start = _latest_start(problem, 0, route, REPORT_BUFFER_SEC)[0]
+    arrivals, end = _drive(problem, 0, route, start)
+
+    assert route_times(problem, 0, route) == (start, arrivals, end), name
+    scheduled = schedule_route(problem, 0, route)
+    assert scheduled.start == start
+    assert [s.arrival for s in scheduled.stops] == arrivals
+    assert scheduled.destination_arrival == end
+
+
+def test_the_search_returns_the_drive_of_the_start_it_returns():
+    # In the search case the last try is late, so the drive returned must be
+    # lo's, not the last one tried.
+    _, problem, route = every_branch()[2]
+    start, arrivals, end = _latest_start(problem, 0, route, REPORT_BUFFER_SEC)
+    assert (arrivals, end) == _drive(problem, 0, route, start)
+    assert end <= 7000 - REPORT_BUFFER_SEC
+
+    _, no_report, route = every_branch()[0]
+    assert _latest_start(no_report, 0, route, REPORT_BUFFER_SEC)[1:] == (None, None)
+
+
+def test_an_out_of_reach_route_is_driven_once():
+    # The reachability drive already is the schedule: leave at once.
+    travel = counting(every_leg_takes(600))
+    pickups = (Pickup("p0", Point(-1.28, 36.81), 0), Pickup("p1", Point(-1.28, 36.82), 20000))
+    problem = Problem(pickups, (Vehicle("v0", 14, DEPOT),), travel)
+
+    assert route_times(problem, 0, [0, 1])[0] == 0
+    assert travel.calls == 3  # one drive of three legs
 
 
 @pytest.mark.parametrize("seed", range(20))

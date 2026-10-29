@@ -1,0 +1,71 @@
+cProfile, seed 1, 120 s: 2 generations (inflated by profiling), cost 685,074
+
+## Top 25 by tottime
+         89648682 function calls (89643878 primitive calls) in 118.890 seconds
+
+   Ordered by: internal time
+   List reduced from 145 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  5649079   24.120    0.000   78.267    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:109(travel_time)
+ 11298158   14.846    0.000   25.194    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:95(snapped)
+ 20954342   12.715    0.000   12.715    0.000 {method 'get' of 'dict' objects}
+   810225   10.955    0.000   91.105    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:105(_drive)
+  3867910   10.364    0.000   13.284    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\zone_matrix.py:180(leg_at)
+   266257    9.889    0.000  111.591    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\fitness.py:91(route_evaluation)
+  5649079    7.509    0.000    9.332    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:134(_between)
+ 13218522    5.005    0.000    5.005    0.000 {built-in method builtins.id}
+   266120    2.307    0.000   65.535    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:174(_latest_start)
+  4820458    2.291    0.000    2.291    0.000 {method 'append' of 'list' objects}
+  6584405    2.288    0.000    2.324    0.000 {built-in method builtins.max}
+   258142    2.254    0.000  115.606    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:51(insertion_cost)
+   519405    2.046    0.000  112.945    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\fitness.py:176(cached_route_cost)
+   960182    1.885    0.000    3.402    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:102(km)
+  5649079    1.823    0.000    1.823    0.000 {built-in method math.floor}
+1924911/1920111    1.649    0.000    2.777    0.000 {built-in method builtins.min}
+   259031    1.060    0.000    1.740    0.000 {built-in method builtins.sum}
+   266120    0.882    0.000   96.274    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:221(route_times)
+  1912202    0.730    0.000    0.730    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:195(<genexpr>)
+  1611674    0.673    0.000    0.673    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:67(<genexpr>)
+    47725    0.666    0.000  116.526    0.002 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:75(_best_position)
+       37    0.635    0.017  117.210    3.168 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:114(greedy_insertion)
+  1718276    0.600    0.000    0.600    0.000 {built-in method math.isfinite}
+   261861    0.532    0.000    0.532    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\fitness.py:75(cost)
+   352520    0.232    0.000    0.232    0.000 {built-in method math.isinf}
+
+
+
+## Top 25 by cumtime
+         89648682 function calls (89643878 primitive calls) in 118.890 seconds
+
+   Ordered by: cumulative time
+   List reduced from 145 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001  120.943  120.943 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\benchmarks\rf_speed.py:68(timed_solve)
+        1    0.001    0.001  120.198  120.198 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\ga.py:117(solve)
+       37    0.001    0.000  119.605    3.233 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\ga.py:179(_iterate)
+       37    0.001    0.000  118.683    3.208 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\mutation.py:159(__call__)
+       37    0.062    0.002  118.680    3.208 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\mutation.py:94(_destroy_and_repair)
+       37    0.635    0.017  117.210    3.168 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:114(greedy_insertion)
+    47725    0.666    0.000  116.526    0.002 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:75(_best_position)
+   258142    2.254    0.000  115.606    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\insertion.py:51(insertion_cost)
+   519405    2.046    0.000  112.945    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\fitness.py:176(cached_route_cost)
+   266257    9.889    0.000  111.591    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\fitness.py:91(route_evaluation)
+   266120    0.882    0.000   96.274    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:221(route_times)
+   810225   10.955    0.000   91.105    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:105(_drive)
+  5649079   24.120    0.000   78.267    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:109(travel_time)
+   266120    2.307    0.000   65.535    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\solver\individual.py:174(_latest_start)
+ 11298158   14.846    0.000   25.194    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:95(snapped)
+  3867910   10.364    0.000   13.284    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\zone_matrix.py:180(leg_at)
+ 20954342   12.715    0.000   12.715    0.000 {method 'get' of 'dict' objects}
+  5649079    7.509    0.000    9.332    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:134(_between)
+ 13218522    5.005    0.000    5.005    0.000 {built-in method builtins.id}
+   960182    1.885    0.000    3.402    0.000 C:\Users\enbwi\AndroidStudioProjects\ACDOS\backend\app\ml\travel_time.py:102(km)
+1924911/1920111    1.649    0.000    2.777    0.000 {built-in method builtins.min}
+  6584405    2.288    0.000    2.324    0.000 {built-in method builtins.max}
+  4820458    2.291    0.000    2.291    0.000 {method 'append' of 'list' objects}
+  5649079    1.823    0.000    1.823    0.000 {built-in method math.floor}
+   259031    1.060    0.000    1.740    0.000 {built-in method builtins.sum}
+
+

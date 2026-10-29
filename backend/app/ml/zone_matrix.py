@@ -188,6 +188,18 @@ class ZoneMatrix:
             return off + c / c_m * (morning - off)
         return morning + (c - c_m) / (1 - c_m) * (peak - morning)
 
+    def leg_endpoints(
+        self, origin: str, dest: str
+    ) -> tuple[float, float, tuple[float, float] | None]:
+        """What leg_at needs for one pair: off-peak and peak seconds, and
+        (morning seconds, c_m) or None. For callers that map many c values
+        for the same pair (travel_time.rf_travel_time's leg functions)."""
+        return (
+            self._off[(origin, dest)],
+            self._peak[(origin, dest)],
+            self._morning.get((origin, dest)),
+        )
+
     def morning_congestion(self, origin: str, dest: str) -> float | None:
         """c_m for a pair, or None when it keeps the two-anchor line."""
         anchor = self._morning.get((origin, dest))
