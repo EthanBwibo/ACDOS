@@ -1,6 +1,7 @@
 -- Checks the RLS policies (011, helpers moved to private by 012), the
--- pickup_events confirmation index, and one live route node per pickup (018),
--- by impersonating each role.
+-- pickup_events confirmation index, one live route node per pickup (018),
+-- pickup zones (019), crew reading their own route and van (020) and drivers
+-- reading only live stops (021), by impersonating each role.
 -- Seed data is inserted as the superuser, which bypasses RLS.
 -- Any failed assert stops psql (ON_ERROR_STOP) and fails CI.
 
@@ -89,12 +90,15 @@ set role authenticated;
 -- Driver A ---------------------------------------------------------------
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 
--- Sees their own vehicle and its routes (active and superseded), not B's.
+-- Sees their own vehicle and its routes (active and superseded), not B's,
+-- and only the live stops (021): the superseded route's two stops are hidden.
 do $$
 begin
     assert (select count(*) from public.vehicles) = 1, 'driver A should see 1 vehicle';
     assert (select count(*) from public.routes) = 2, 'driver A should see the 2 routes of vehicle A';
-    assert (select count(*) from public.route_nodes) = 3, 'driver A should see the 3 stops of vehicle A';
+    assert (select count(*) from public.route_nodes) = 1, 'driver A should see the 1 live stop of vehicle A';
+    assert (select id from public.route_nodes) = '60000000-0000-0000-0000-00000000000a',
+        'driver A should see the live stop for crew C, not the superseded ones';
     assert (select count(*) from public.optimization_job_pickups) = 0,
         'driver A should see no job outcomes';
     assert (select count(*) from public.trip_records) = 0, 'driver A should see no trip records';
@@ -166,8 +170,14 @@ begin
     assert (select count(*) from public.route_nodes) = 1, 'crew C should see 1 route node';
     assert (select estimated_arrival from public.route_nodes) = '2026-11-01T03:40:00Z',
         'crew C should see only their own ETA';
-    assert (select count(*) from public.routes) = 0, 'crew C should see no routes';
-    assert (select count(*) from public.vehicles) = 0, 'crew C should see no vehicles';
+    -- The route and van of their live stop (020): which van is coming. Not
+    -- the superseded route, nor driver B's.
+    assert (select count(*) from public.routes) = 1, 'crew C should see 1 route';
+    assert (select id from public.routes) = '50000000-0000-0000-0000-00000000000a',
+        'crew C should see only the route of their live stop';
+    assert (select count(*) from public.vehicles) = 1, 'crew C should see 1 vehicle';
+    assert (select plate_number from public.vehicles) = 'KDA 001A',
+        'crew C should see only the van coming for them';
     assert (select count(*) from public.profiles) = 1, 'crew C should see only their own profile';
     assert (select count(*) from public.optimization_job_pickups) = 0,
         'crew C should see no job outcomes';
@@ -220,6 +230,43 @@ begin
     raise exception 'anon was able to call private.current_app_role()';
 exception when insufficient_privilege then
     null; -- expected: no access to the private schema
+end $$;
+reset role;
+
+-- The crew helpers added in 020: authenticated only, like 012's.
+do $$
+begin
+    assert has_function_privilege('authenticated', 'private.crew_live_route_ids()', 'execute')
+        and has_function_privilege('authenticated', 'private.crew_live_vehicle_ids()', 'execute'),
+        'authenticated must be able to call the 020 helpers';
+    assert not has_function_privilege('anon', 'private.crew_live_route_ids()', 'execute')
+        and not has_function_privilege('anon', 'private.crew_live_vehicle_ids()', 'execute'),
+        'anon must not be able to call the 020 helpers';
+end $$;
+
+-- Pickup zones (019) ------------------------------------------------------
+-- Reference data: every signed-in user reads all 28; nobody writes; anon
+-- reads nothing.
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+do $$
+begin
+    assert (select count(*) from public.pickup_zones) = 28, 'crew C should see the 28 zones';
+end $$;
+do $$
+begin
+    insert into public.pickup_zones (label, location)
+    values ('Nowhere', 'SRID=4326;POINT(36.8 -1.3)');
+    raise exception 'a signed-in user inserted a pickup zone';
+exception when insufficient_privilege then
+    null; -- expected: no write grant
+end $$;
+reset request.jwt.claim.sub;
+reset role;
+set role anon;
+do $$
+begin
+    assert (select count(*) from public.pickup_zones) = 0, 'anon should see no zones';
 end $$;
 reset role;
 

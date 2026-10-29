@@ -40,6 +40,17 @@ tables above.
 |---|---|---|
 | travel_time_observations | id UUID; logged_at_utc TIMESTAMPTZ; logged_at_eat TIMESTAMP; day_of_week TEXT; hour_eat SMALLINT; minute_eat SMALLINT; zone TEXT; origin_lat DOUBLE PRECISION; origin_lon DOUBLE PRECISION; element_status TEXT; distance_m INT; duration_sec INT; duration_in_traffic_sec INT; run_id TEXT; created_at TIMESTAMPTZ | PK id; run_id and zone unique together; hour_eat 0 to 23, minute_eat 0 to 59; distance and durations null unless element_status is OK; index on logged_at_utc |
 
+## Reference data (not in the Chapter 4 ERD)
+
+The 28 pickup zones (#52), so a stop can be labelled with its nearest zone in SQL. Copied
+unchanged from `data/pickup_zones.csv`, which stays the source the Random Forest loads; a test
+checks the two match exactly. No links to other tables: a pickup's zone is the nearest one by
+`ST_Distance`.
+
+| Table | Columns | Keys and constraints |
+|---|---|---|
+| pickup_zones | id UUID; label TEXT; location GEOGRAPHY(Point, 4326); created_at TIMESTAMPTZ | PK id; label unique |
+
 ## Relationships
 
 - crew_members 1 to many pickup_requests
@@ -62,14 +73,16 @@ for every client path, not only a backstop behind FastAPI.
 
 - **Everyone:** read their own `profiles` row. Dispatchers read all profiles.
 - **Dispatcher:** read and write on operational tables; read crew messages and notice status.
-- **Driver:** read the route of their assigned vehicle; read the `pickup_requests` and
-  `crew_members` rows linked to route nodes on an **active** route of that vehicle (who to pick
-  up and where); insert pickup events.
+- **Driver:** read the route of their assigned vehicle and its route nodes that are not
+  superseded; read the `pickup_requests` and `crew_members` rows linked to route nodes on an
+  **active** route of that vehicle (who to pick up and where); insert pickup events.
 - **Dispatcher, validation data:** read `travel_time_observations`. No client writes it: only
   the Edge Function, with the service role.
 - **Crew:** read their own pickup requests and notices; read the `route_nodes` for their own
-  pickup requests that are not superseded (their current ETA); set `acknowledged_at` on their own notices; insert their own crew
-  messages; register their own device tokens.
+  pickup requests that are not superseded (their current ETA), and the `routes` and `vehicles`
+  rows of those nodes (which van is coming); set `acknowledged_at` on their own notices; insert
+  their own crew messages; register their own device tokens.
+- **Every signed-in user:** read `pickup_zones`. No client writes it.
 
 Policies get the caller's role and any cross-table lookup through `SECURITY DEFINER` functions
 (`private.current_app_role()` and similar), never through a subquery on a table that has its
@@ -98,9 +111,9 @@ and `PUBLIC` may not.
 
 ## Not in the table
 
-- Pickup zones are not a table. `data/pickup_zones.csv` feeds the Random Forest only;
-  pickups store their own `pickup_location`. `route_corridor` is a text column on
-  `trip_records`.
+- Pickups store their own `pickup_location`, not a zone. The zones are a reference table
+  (`pickup_zones`, above) only for labels; `data/pickup_zones.csv` remains the source the
+  Random Forest loads. `route_corridor` is a text column on `trip_records`.
 - The JKIA terminal coordinate is described as a singleton reference record but has no
   table in Table 4.1. Until decided otherwise it is a backend configuration constant
   (-1.3192, 36.9278).
