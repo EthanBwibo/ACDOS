@@ -20,4 +20,20 @@
     <string name="role_driver">Driver</string>
     <string name="role_crew">Crew</string>
     <string name="role_dispatcher">Dispatcher</string>
+
+    <string name="action_cancel">Cancel</string>
+    <string name="action_navigate">Navigate</string>
+    <string name="tab_route">Route</string>
+    <string name="tab_schedule">Schedule</string>
+    <string name="tab_sync">Sync</string>
+    <string name="coming_soon">Coming soon</string>
+    <string name="route_none">No route assigned</string>
+    <string name="route_updated">Updated %1$s</string>
+    <string name="route_pickup_at">Pickup %1$s</string>
+    <string name="route_zone_unknown">Pickup point</string>
+    <string name="route_no_maps_app">No maps app on this phone.</string>
+    <plurals name="sign_out_unsynced">
+        <item quantity="one">%d pickup confirmation hasn\'t uploaded yet. It\'ll upload next time you sign in.</item>
+        <item quantity="other">%d pickup confirmations haven\'t uploaded yet. They\'ll upload next time you sign in.</item>
+    </plurals>
 </resources>

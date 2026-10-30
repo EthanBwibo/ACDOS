@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tab_route"
+        android:icon="@drawable/ic_tab_route"
+        android:title="@string/tab_route" />
+    <item
+        android:id="@+id/tab_schedule"
+        android:icon="@drawable/ic_tab_schedule"
+        android:title="@string/tab_schedule" />
+    <item
+        android:id="@+id/tab_sync"
+        android:icon="@drawable/ic_tab_sync"
+        android:title="@string/tab_sync" />
+</menu>

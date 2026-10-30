@@ -29,7 +29,7 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".ui.DriverHomeActivity"
+            android:name=".ui.driver.DriverHomeActivity"
             android:exported="false" />
         <activity
             android:name=".ui.CrewHomeActivity"

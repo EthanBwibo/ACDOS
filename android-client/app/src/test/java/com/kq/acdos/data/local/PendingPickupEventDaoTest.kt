@@ -58,6 +58,20 @@ class PendingPickupEventDaoTest {
     }
 
     @Test
+    fun countPending_isThatDriversEventsStillToUpload() = runTest {
+        dao.insert(event("a-pending", 1, DRIVER_A))
+        dao.insert(event("a-synced", 2, DRIVER_A))
+        dao.insert(event("a-conflict", 3, DRIVER_A))
+        dao.insert(event("b-pending", 4, DRIVER_B))
+        dao.markSynced("a-synced", t0)
+        dao.markConflict("a-conflict", "stop_already_confirmed")
+
+        assertEquals(1, dao.countPending(DRIVER_A))
+        assertEquals(1, dao.countPending(DRIVER_B))
+        assertEquals(0, dao.countPending("someone-else"))
+    }
+
+    @Test
     fun markSynced_removesFromPending() = runTest {
         dao.insert(event("k1", 1))
         dao.insert(event("k2", 2))
