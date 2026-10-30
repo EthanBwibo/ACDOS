@@ -40,18 +40,17 @@ class RouteStateTest {
 
     private fun route(id: String, plate: String) = RouteEntity(id, plate, t0)
 
-    private fun stop(node: String, route: String, seq: Int, eta: Instant? = null) =
-        RouteStopEntity(
-            routeNodeId = node,
-            routeId = route,
-            seqOrder = seq,
-            crewName = "Crew $node",
-            zoneLabel = if (seq == 1) "Westlands, Nairobi" else null,
-            scheduledPickup = t0.plusSeconds(600L * seq),
-            eta = eta,
-            pickupLat = -1.2675,
-            pickupLon = 36.81202
-        )
+    private fun stop(node: String, route: String, seq: Int, eta: Instant? = null) = RouteStopEntity(
+        routeNodeId = node,
+        routeId = route,
+        seqOrder = seq,
+        crewName = "Crew $node",
+        zoneLabel = if (seq == 1) "Westlands, Nairobi" else null,
+        scheduledPickup = t0.plusSeconds(600L * seq),
+        eta = eta,
+        pickupLat = -1.2675,
+        pickupLon = 36.81202
+    )
 
     @Test
     fun noCachedRoute_isNoRoute() = runTest {
