@@ -6,15 +6,15 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// Supabase project URL and publishable key come from local.properties (not in git),
-// or from environment variables. CI builds without them: the app then shows
+// Supabase project URL, publishable key and the API base URL come from local.properties
+// (not in git), or from environment variables. CI builds without them: the app then shows
 // "not configured" instead of signing in.
 val localProperties = Properties().apply {
     providers.fileContents(rootProject.layout.projectDirectory.file("local.properties"))
         .asText.orNull?.let { load(it.reader()) }
 }
 
-fun supabaseSetting(property: String, env: String): String =
+fun localSetting(property: String, env: String): String =
     localProperties.getProperty(property) ?: providers.environmentVariable(env).orNull ?: ""
 
 android {
@@ -32,10 +32,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val supabaseUrl = supabaseSetting("supabase.url", "SUPABASE_URL")
-        val supabaseKey = supabaseSetting("supabase.publishableKey", "SUPABASE_PUBLISHABLE_KEY")
+        val supabaseUrl = localSetting("supabase.url", "SUPABASE_URL")
+        val supabaseKey = localSetting("supabase.publishableKey", "SUPABASE_PUBLISHABLE_KEY")
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabaseKey\"")
+        val apiBaseUrl = localSetting("api.baseUrl", "API_BASE_URL")
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildFeatures {
@@ -77,6 +79,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.moshi)
+    implementation(libs.okhttp)
+    testImplementation(libs.okhttp.mockwebserver)
     // Moshi adapters generated at compile time (KSP), so no kotlin-reflect in the APK
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)
