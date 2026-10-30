@@ -2,23 +2,30 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.auth import JwksKeys, fetch_jwks, issuer
 from app.config import settings
 from app.jobs import store
 from app.jobs.runner import JobRunner, solver_pool
-from app.routers import health, optimisation_jobs
+from app.routers import health, me, optimisation_jobs
 from app.solver.problem import Point
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Token checking needs only the project URL (public keys). Tests install
+    # their own keys; without a URL the #52 endpoints answer 503.
+    if getattr(app.state, "jwt_keys", None) is None and settings.supabase_url:
+        app.state.jwt_keys = JwksKeys(fetch_jwks(settings.supabase_url))
+        app.state.jwt_issuer = issuer(settings.supabase_url)
     # Tests install their own runner; without a database there is none, and
-    # the job endpoints answer 503.
+    # the endpoints that need one answer 503.
     if getattr(app.state, "job_runner", None) is not None or not settings.database_url:
         yield
         return
     db = await store.connect(settings.database_url)
     pool = solver_pool(settings.solver_pool_size, settings.travel_model)
     try:
+        app.state.db = db  # also read by the #52 endpoints (app/reads.py)
         depot = Point(settings.depot_lat, settings.depot_lon)
         job_store = store.PostgresJobStore(db, depot)
         # Safe only with one uvicorn process (README: --workers 1).
@@ -34,6 +41,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         app.state.job_runner = None
+        app.state.db = None
         pool.shutdown(wait=False, cancel_futures=True)
         await db.close()
 
@@ -42,3 +50,4 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.include_router(health.router)
 app.include_router(optimisation_jobs.router)
+app.include_router(me.router)

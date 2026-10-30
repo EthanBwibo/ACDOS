@@ -28,6 +28,7 @@ TABLE_MODELS: dict[str, type[BaseModel]] = {
     "route_nodes": schemas.RouteNode,
     "pickup_events": schemas.PickupEvent,
     "trip_records": schemas.TripRecord,
+    "pickup_zones": schemas.PickupZone,
 }
 
 # (table, column) -> enum that must hold exactly the CHECK constraint's values

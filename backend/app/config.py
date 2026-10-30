@@ -10,7 +10,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_name: str = "ACDOS Backend"
-    supabase_url: str | None = None
+    # The ACDOS project. Not a secret: the app ships it too. The backend
+    # reads the project's public signing keys from it to check access tokens
+    # (#52); without it, the endpoints that need a token answer 503.
+    supabase_url: str | None = "https://yqqczlvhwlznvaezfpcl.supabase.co"
     supabase_service_key: str | None = None
 
     # Postgres connection for the optimisation job API (#51), for example

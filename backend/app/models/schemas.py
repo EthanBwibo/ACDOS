@@ -204,6 +204,15 @@ class TripRecord(BaseModel):
     created_at: datetime
 
 
+class PickupZone(BaseModel):
+    """One of the 28 pickup zones of data/pickup_zones.csv (#52)."""
+
+    id: UUID
+    label: str
+    location: GeoPoint
+    created_at: datetime
+
+
 # Optimisation job API (#51). Shaped for the dispatcher's screen over 2G/3G:
 # ids and times only; names and addresses come from tables the app reads
 # already.
@@ -250,3 +259,59 @@ class OptimisationJobResult(BaseModel):
     routes: list[PlannedRoute] = []
     late: list[LatePickup] = []
     unassigned: list[UUID] = []
+
+
+# Driver and crew read endpoints (#52). Only what each screen shows, for
+# 2G/3G. Times: scheduled_pickup is the live plan's time at the stop; eta
+# stays null until live tracking can estimate it from the road.
+
+
+class DriverStop(BaseModel):
+    route_node_id: UUID  # what a pickup confirmation refers to
+    seq_order: int
+    crew_name: str
+    zone_label: str | None  # nearest pickup zone; null only without zones
+    scheduled_pickup: datetime
+    eta: datetime | None = None
+    # For the driver's navigation, rounded to 5 decimal places (about 1 m).
+    # The only coordinates in these endpoints; crew get none.
+    lat: float
+    lon: float
+
+
+class DriverRoute(BaseModel):
+    route_id: UUID
+    status: RouteStatus
+    vehicle_plate: str
+    stops: list[DriverStop]
+
+
+class DriverRouteResponse(BaseModel):
+    route: DriverRoute | None  # null when the driver has no active route
+
+
+class RouteSummary(BaseModel):
+    route_id: UUID
+    status: RouteStatus
+    vehicle_plate: str
+    first_pickup: datetime
+    stop_count: int
+    total_distance_km: float
+
+
+class RouteSummaryPage(BaseModel):
+    items: list[RouteSummary]
+    next_cursor: str | None  # pass as ?cursor= for the next page; null on the last
+
+
+class CrewPickup(BaseModel):
+    pickup_request_id: UUID
+    status: PickupRequestStatus
+    report_time: datetime  # the deadline at JKIA
+    scheduled_pickup: datetime | None  # null until a route plans the pickup
+    eta: datetime | None = None
+    vehicle_plate: str | None  # null until a route plans the pickup
+
+
+class CrewPickupResponse(BaseModel):
+    pickup: CrewPickup | None  # null when nothing is coming up
