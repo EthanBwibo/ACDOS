@@ -32,17 +32,31 @@ interface OptimisationJobsApi {
 // DTOs mirror backend/app/models/schemas.py field for field. Ids stay strings.
 
 enum class OptimizationTriggerTypeDto {
-    @Json(name = "scheduled") SCHEDULED,
-    @Json(name = "flight_delay") FLIGHT_DELAY,
-    @Json(name = "standby_activation") STANDBY_ACTIVATION,
-    @Json(name = "vehicle_breakdown") VEHICLE_BREAKDOWN
+    @Json(name = "scheduled")
+    SCHEDULED,
+
+    @Json(name = "flight_delay")
+    FLIGHT_DELAY,
+
+    @Json(name = "standby_activation")
+    STANDBY_ACTIVATION,
+
+    @Json(name = "vehicle_breakdown")
+    VEHICLE_BREAKDOWN
 }
 
 enum class OptimizationJobStatusDto {
-    @Json(name = "queued") QUEUED,
-    @Json(name = "running") RUNNING,
-    @Json(name = "completed") COMPLETED,
-    @Json(name = "failed") FAILED
+    @Json(name = "queued")
+    QUEUED,
+
+    @Json(name = "running")
+    RUNNING,
+
+    @Json(name = "completed")
+    COMPLETED,
+
+    @Json(name = "failed")
+    FAILED
 }
 
 @JsonClass(generateAdapter = true)

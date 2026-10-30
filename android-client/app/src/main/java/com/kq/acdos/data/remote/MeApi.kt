@@ -29,17 +29,31 @@ interface MeApi {
 // DTOs mirror backend/app/models/schemas.py field for field. Ids stay strings.
 
 enum class RouteStatusDto {
-    @Json(name = "active") ACTIVE,
-    @Json(name = "completed") COMPLETED,
-    @Json(name = "superseded") SUPERSEDED
+    @Json(name = "active")
+    ACTIVE,
+
+    @Json(name = "completed")
+    COMPLETED,
+
+    @Json(name = "superseded")
+    SUPERSEDED
 }
 
 enum class PickupRequestStatusDto {
-    @Json(name = "pending") PENDING,
-    @Json(name = "assigned") ASSIGNED,
-    @Json(name = "picked_up") PICKED_UP,
-    @Json(name = "missed") MISSED,
-    @Json(name = "cancelled") CANCELLED
+    @Json(name = "pending")
+    PENDING,
+
+    @Json(name = "assigned")
+    ASSIGNED,
+
+    @Json(name = "picked_up")
+    PICKED_UP,
+
+    @Json(name = "missed")
+    MISSED,
+
+    @Json(name = "cancelled")
+    CANCELLED
 }
 
 @JsonClass(generateAdapter = true)
