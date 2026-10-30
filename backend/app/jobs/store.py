@@ -69,7 +69,8 @@ class RouteConflicts:
         return bool(self.departed or self.left_behind)
 
     def detail(self) -> dict[str, list[str]]:
-        """The 409 body: only the lists that are not empty."""
+        """For a failed job's error text: only the lists that are not empty.
+        The API's 409 bodies are built in routers/optimisation_jobs.py."""
         lists = {
             "pickup_request_ids_on_departed_routes": self.departed,
             "pickup_request_ids_left_behind": self.left_behind,

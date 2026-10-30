@@ -3,13 +3,17 @@
 POST accepts a job and answers 202 straight away; the solve runs in a
 solver process (app/jobs/runner.py) and the client polls GET.
 
-Order of checks on POST, so a rejected request never creates a job row:
+Order of checks on POST, so a rejected request never creates a job row.
+Each error is one ErrorBody (app/errors.py) with one code; when a request
+has several problems, the first in this order is reported:
 1. Idempotency-Key already used: same body, the job it started; a different
-   body, 422.
-2. Every id exists, and no pickup is past assigned: else 422.
-3. No pickup is on a route that has departed, and no active route the
-   request replaces carries a pickup the request leaves out: else 409 with
-   the ids. #113 handles both, and re-plans that keep a route running.
+   body, 422 idempotency_key_reused.
+2. An id listed twice: 422 duplicate_ids. An id that doesn't exist: 422
+   unknown_ids. A pickup past assigned: 422 not_plannable.
+3. A pickup on a route that has departed: 409 departed_routes. An active
+   route the request replaces carrying a pickup the request leaves out: 409
+   left_behind_on_route. #113 handles both, and re-plans that keep a route
+   running.
 4. Create the job (queued) and hand it to the runner.
 
 Who may call this (dispatchers only) is #52.
@@ -20,8 +24,9 @@ import json
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Header, Request, status
 
+from app.errors import ApiError, ErrorCode, errors
 from app.jobs.runner import JobRunner
 from app.jobs.worker import PickupInput, VehicleInput
 from app.models.schemas import (
@@ -41,7 +46,9 @@ PLANNABLE = {PickupRequestStatus.PENDING, PickupRequestStatus.ASSIGNED}
 def runner(request: Request) -> JobRunner:
     job_runner = getattr(request.app.state, "job_runner", None)
     if job_runner is None:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "DATABASE_URL is not set")
+        raise ApiError(
+            status.HTTP_503_SERVICE_UNAVAILABLE, ErrorCode.UNAVAILABLE, "DATABASE_URL is not set"
+        )
     return job_runner
 
 
@@ -58,22 +65,46 @@ def request_hash(body: OptimisationJobCreate) -> str:
 
 def _accepted_or_422(job_id: UUID, stored_hash: str, body_hash: str) -> OptimisationJobAccepted:
     if stored_hash != body_hash:
-        raise HTTPException(
+        raise ApiError(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
+            ErrorCode.IDEMPOTENCY_KEY_REUSED,
             "this Idempotency-Key was used with a different request body",
         )
     return OptimisationJobAccepted(id=job_id)
 
 
-def _repeated(ids: list[UUID]) -> list[str]:
-    return sorted({str(i) for i in ids if ids.count(i) > 1})
+def _repeated(ids: list[UUID]) -> list[UUID]:
+    return sorted({i for i in ids if ids.count(i) > 1}, key=str)
 
 
-@router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=OptimisationJobAccepted)
+def _422(code: ErrorCode, detail: str, **ids: list[UUID]) -> ApiError:
+    return ApiError(
+        status.HTTP_422_UNPROCESSABLE_CONTENT, code, detail, **{k: v for k, v in ids.items() if v}
+    )
+
+
+@router.post(
+    "",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=OptimisationJobAccepted,
+    responses=errors(
+        {
+            409: [ErrorCode.DEPARTED_ROUTES, ErrorCode.LEFT_BEHIND_ON_ROUTE],
+            422: [
+                ErrorCode.VALIDATION_FAILED,
+                ErrorCode.IDEMPOTENCY_KEY_REUSED,
+                ErrorCode.DUPLICATE_IDS,
+                ErrorCode.UNKNOWN_IDS,
+                ErrorCode.NOT_PLANNABLE,
+            ],
+            503: [ErrorCode.UNAVAILABLE],
+        }
+    ),
+)
 async def create_job(
     request: Request,
     body: OptimisationJobCreate,
-    idempotency_key: Annotated[str, Header(min_length=1, max_length=200)],
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
 ) -> OptimisationJobAccepted:
     job_runner = runner(request)
     store = job_runner.store
@@ -83,32 +114,50 @@ async def create_job(
     if existing is not None:
         return _accepted_or_422(existing.id, existing.request_hash, body_hash)
 
-    repeated = {
-        "pickup_request_ids": _repeated(body.pickup_request_ids),
-        "vehicle_ids": _repeated(body.vehicle_ids),
-    }
-    if any(repeated.values()):
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, {"listed_more_than_once": repeated}
+    pickups_twice, vehicles_twice = _repeated(body.pickup_request_ids), _repeated(body.vehicle_ids)
+    if pickups_twice or vehicles_twice:
+        raise _422(
+            ErrorCode.DUPLICATE_IDS,
+            "these ids are listed more than once",
+            pickup_request_ids=pickups_twice,
+            vehicle_ids=vehicles_twice,
         )
 
     pickups = await store.pickups(body.pickup_request_ids)
     vehicles = await store.vehicles(body.vehicle_ids)
-    problems = {
-        "unknown_pickup_request_ids": sorted(
-            str(i) for i in body.pickup_request_ids if i not in pickups
-        ),
-        "unknown_vehicle_ids": sorted(str(i) for i in body.vehicle_ids if i not in vehicles),
-        "pickup_request_ids_not_plannable": sorted(
-            str(p.id) for p in pickups.values() if p.status not in PLANNABLE
-        ),
-    }
-    if any(problems.values()):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, problems)
+    unknown_pickups = [i for i in body.pickup_request_ids if i not in pickups]
+    unknown_vehicles = [i for i in body.vehicle_ids if i not in vehicles]
+    if unknown_pickups or unknown_vehicles:
+        raise _422(
+            ErrorCode.UNKNOWN_IDS,
+            "these ids do not exist",
+            pickup_request_ids=unknown_pickups,
+            vehicle_ids=unknown_vehicles,
+        )
+    done = [p.id for p in pickups.values() if p.status not in PLANNABLE]
+    if done:
+        raise _422(
+            ErrorCode.NOT_PLANNABLE,
+            "these pickups are past assigned (picked up, missed or cancelled)",
+            pickup_request_ids=done,
+        )
 
     conflicts = await store.route_conflicts(body.pickup_request_ids, job_runner.now())
-    if conflicts:
-        raise HTTPException(status.HTTP_409_CONFLICT, conflicts.detail())
+    if conflicts.departed:
+        raise ApiError(
+            status.HTTP_409_CONFLICT,
+            ErrorCode.DEPARTED_ROUTES,
+            "these pickups are on a route that has departed; re-planning them is #113",
+            pickup_request_ids=conflicts.departed,
+        )
+    if conflicts.left_behind:
+        raise ApiError(
+            status.HTTP_409_CONFLICT,
+            ErrorCode.LEFT_BEHIND_ON_ROUTE,
+            "these pickups share an active route with requested ones: include them, "
+            "or leave the route alone",
+            pickup_request_ids=conflicts.left_behind,
+        )
 
     job = await store.create_job(idempotency_key, body_hash, body.trigger_type)
     if not job.created:
@@ -125,9 +174,19 @@ async def create_job(
     return OptimisationJobAccepted(id=job.id)
 
 
-@router.get("/{job_id}", response_model=OptimisationJobResult)
+@router.get(
+    "/{job_id}",
+    response_model=OptimisationJobResult,
+    responses=errors(
+        {
+            404: [ErrorCode.NOT_FOUND],
+            422: [ErrorCode.VALIDATION_FAILED],
+            503: [ErrorCode.UNAVAILABLE],
+        }
+    ),
+)
 async def get_job(request: Request, job_id: UUID) -> OptimisationJobResult:
     result = await runner(request).store.result(job_id)
     if result is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "no such optimisation job")
+        raise ApiError(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "no such optimisation job")
     return result

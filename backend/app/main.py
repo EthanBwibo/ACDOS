@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app import errors
 from app.auth import JwksKeys, fetch_jwks, issuer
 from app.config import settings
 from app.jobs import store
@@ -46,7 +47,10 @@ async def lifespan(app: FastAPI):
         await db.close()
 
 
-app = FastAPI(title=settings.app_name, lifespan=lifespan)
+# A constant, not a setting: the title is part of the committed contract
+# (docs/openapi.json, #122), which must not depend on the environment.
+app = FastAPI(title="ACDOS Backend", lifespan=lifespan)
+errors.install(app)
 
 app.include_router(health.router)
 app.include_router(optimisation_jobs.router)

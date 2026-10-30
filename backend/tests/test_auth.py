@@ -12,6 +12,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from app import errors
 from app.auth import REFETCH_AFTER_SEC, CallerDep
 from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
 
@@ -20,6 +21,7 @@ KEY = SigningKey("key-1")
 
 def make_client(jwks: FakeJwks, clock=time.monotonic) -> TestClient:
     app = FastAPI()
+    errors.install(app)
     app.state.jwt_keys = jwks.source(clock)
     app.state.jwt_issuer = ISSUER
 
@@ -56,6 +58,7 @@ def test_no_usable_token_is_401(client, headers):
     response = client.get("/whoami", headers=headers)
     assert response.status_code == 401
     assert response.headers["WWW-Authenticate"] == "Bearer"
+    assert response.json()["code"] == "unauthorized"
 
 
 @pytest.mark.parametrize(
@@ -150,9 +153,12 @@ def test_unknown_kids_refetch_at_most_once_per_interval():
 
 def test_without_keys_configured_the_endpoints_are_unavailable():
     app = FastAPI()
+    errors.install(app)
 
     @app.get("/whoami")
     async def whoami(caller: CallerDep) -> dict:
         return {}
 
-    assert TestClient(app).get("/whoami", headers=bearer(KEY.token(uuid4()))).status_code == 503
+    response = TestClient(app).get("/whoami", headers=bearer(KEY.token(uuid4())))
+    assert response.status_code == 503
+    assert response.json()["code"] == "unavailable"
