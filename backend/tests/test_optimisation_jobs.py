@@ -140,12 +140,16 @@ def test_same_idempotency_key_with_a_different_body_is_refused(client, store):
 
 
 def test_unknown_job_id_returns_404(client):
-    assert client.get(f"/optimisation-jobs/{uuid4()}").status_code == 404
+    response = client.get(f"/optimisation-jobs/{uuid4()}")
+    assert response.status_code == 404
+    assert response.json()["code"] == "not_found"
 
 
 def test_missing_idempotency_key_is_refused(client, store):
     response = client.post("/optimisation-jobs", json=body(store))
     assert response.status_code == 422
+    assert response.json()["code"] == "validation_failed"
+    assert "Idempotency-Key" in response.json()["detail"]
     assert store.jobs == {}
 
 
@@ -158,9 +162,10 @@ def test_unknown_ids_are_listed_and_create_no_job(client, store):
     response = post(client, request)
 
     assert response.status_code == 422
-    detail = response.json()["detail"]
-    assert detail["unknown_pickup_request_ids"] == [str(missing_pickup)]
-    assert detail["unknown_vehicle_ids"] == [str(missing_vehicle)]
+    error = response.json()
+    assert error["code"] == "unknown_ids"
+    assert error["pickup_request_ids"] == [str(missing_pickup)]
+    assert error["vehicle_ids"] == [str(missing_vehicle)]
     assert store.jobs == {}
 
 
@@ -172,7 +177,9 @@ def test_pickups_past_assigned_are_refused(client, store, status):
     response = post(client, body(store))
 
     assert response.status_code == 422
-    assert response.json()["detail"]["pickup_request_ids_not_plannable"] == [str(done.id)]
+    error = response.json()
+    assert (error["code"], error["pickup_request_ids"]) == ("not_plannable", [str(done.id)])
+    assert "vehicle_ids" not in error  # id lists only when the error is about them
     assert store.jobs == {}
 
 
@@ -183,9 +190,9 @@ def test_pickup_on_a_departed_route_is_a_conflict(client, store):
     response = post(client, body(store))
 
     assert response.status_code == 409
-    assert response.json()["detail"] == {
-        "pickup_request_ids_on_departed_routes": [str(on_the_road)]
-    }
+    error = response.json()
+    assert set(error) == {"code", "detail", "pickup_request_ids"}
+    assert (error["code"], error["pickup_request_ids"]) == ("departed_routes", [str(on_the_road)])
     assert store.jobs == {}
 
 
@@ -197,7 +204,8 @@ def test_leaving_a_route_mate_behind_is_a_conflict(client, store):
     response = post(client, body(store, pickup_request_ids=[str(first), *map(str, rest)]))
 
     assert response.status_code == 409
-    assert response.json()["detail"] == {"pickup_request_ids_left_behind": [str(second)]}
+    error = response.json()
+    assert (error["code"], error["pickup_request_ids"]) == ("left_behind_on_route", [str(second)])
     assert store.jobs == {}
 
 

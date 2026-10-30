@@ -20,7 +20,10 @@ from typing import Annotated
 from uuid import UUID
 
 import jwt
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from app.errors import ApiError, ErrorCode
 
 ALGORITHMS = ["ES256"]
 AUDIENCE = "authenticated"
@@ -89,22 +92,43 @@ def issuer(supabase_url: str) -> str:
     return f"{supabase_url}/auth/v1"
 
 
-def _unauthorized(detail: str) -> HTTPException:
-    return HTTPException(
-        status.HTTP_401_UNAUTHORIZED, detail, headers={"WWW-Authenticate": "Bearer"}
+def _unauthorized(detail: str) -> ApiError:
+    return ApiError(
+        status.HTTP_401_UNAUTHORIZED,
+        ErrorCode.UNAUTHORIZED,
+        detail,
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
 
-async def caller(request: Request) -> Caller:
+# Reads the Authorization header and declares the scheme in the OpenAPI
+# contract (bearerAuth, JWT) on every route that depends on caller. With
+# auto_error=False it never answers by itself (FastAPI's default would be
+# 403): a missing header or another scheme gives None, and caller answers
+# 401 like any other bad token.
+bearer = HTTPBearer(
+    auto_error=False,
+    scheme_name="bearerAuth",
+    bearerFormat="JWT",
+    description="The Supabase session access token.",
+)
+
+
+async def caller(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> Caller:
     """The verified caller, or 401. Every #52 endpoint depends on this."""
     keys: JwksKeys | None = getattr(request.app.state, "jwt_keys", None)
     expected_issuer: str | None = getattr(request.app.state, "jwt_issuer", None)
     if keys is None or expected_issuer is None:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "SUPABASE_URL is not set")
+        raise ApiError(
+            status.HTTP_503_SERVICE_UNAVAILABLE, ErrorCode.UNAVAILABLE, "SUPABASE_URL is not set"
+        )
 
-    scheme, _, token = request.headers.get("Authorization", "").partition(" ")
-    if scheme.lower() != "bearer" or not token:
+    if credentials is None or not credentials.credentials:
         raise _unauthorized("missing bearer token")
+    token = credentials.credentials
     try:
         kid = jwt.get_unverified_header(token).get("kid")
     except jwt.InvalidTokenError as error:

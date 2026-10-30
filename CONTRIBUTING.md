@@ -50,6 +50,19 @@ git config core.hooksPath .githooks
 - Delete the branch after merge.
 - Link the PR to its milestone issue.
 
+## API contract
+
+`docs/openapi.json` is the backend's API contract, which the Android client is built against
+(#122). After changing a route or any request, response or error model, regenerate it and
+commit it with the change:
+
+```bash
+cd backend && python -m app.contract --write
+```
+
+`pytest` fails while the committed file is stale, and so does CI. `python -m app.contract
+--check` gives the same answer without running the tests.
+
 ## Issue labels
 
 - `type:feature`, `type:bug`, `type:chore`, `type:docs`, `type:test`

@@ -268,7 +268,8 @@ def test_partial_replan_of_a_route_is_a_conflict_and_a_full_one_succeeds(client,
     # P1 alone would leave P2 on a superseded route.
     partial = post(client, [p1], vehicles[:1], "p1-only")
     assert partial.status_code == 409
-    assert partial.json()["detail"] == {"pickup_request_ids_left_behind": [str(p2)]}
+    assert partial.json()["code"] == "left_behind_on_route"
+    assert partial.json()["pickup_request_ids"] == [str(p2)]
     assert job_count("p1-only") == 0
 
     # Both together replace the route: one live node each, on the new job's.
@@ -290,5 +291,6 @@ def test_pickup_on_a_departed_route_is_a_conflict_and_creates_no_job(client, see
     response = post(client, pickups, vehicles, "after")
 
     assert response.status_code == 409
-    assert set(response.json()["detail"]["pickup_request_ids_on_departed_routes"]) == routed
+    assert response.json()["code"] == "departed_routes"
+    assert set(response.json()["pickup_request_ids"]) == routed
     assert job_count("after") == 0
