@@ -1,0 +1,978 @@
+{
+  "components": {
+    "schemas": {
+      "CrewPickup": {
+        "properties": {
+          "eta": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta"
+          },
+          "pickup_request_id": {
+            "format": "uuid",
+            "title": "Pickup Request Id",
+            "type": "string"
+          },
+          "report_time": {
+            "format": "date-time",
+            "title": "Report Time",
+            "type": "string"
+          },
+          "scheduled_pickup": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled Pickup"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PickupRequestStatus"
+          },
+          "vehicle_plate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Plate"
+          }
+        },
+        "required": [
+          "pickup_request_id",
+          "status",
+          "report_time",
+          "scheduled_pickup",
+          "vehicle_plate"
+        ],
+        "title": "CrewPickup",
+        "type": "object"
+      },
+      "CrewPickupResponse": {
+        "properties": {
+          "pickup": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CrewPickup"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "pickup"
+        ],
+        "title": "CrewPickupResponse",
+        "type": "object"
+      },
+      "DriverRoute": {
+        "properties": {
+          "route_id": {
+            "format": "uuid",
+            "title": "Route Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RouteStatus"
+          },
+          "stops": {
+            "items": {
+              "$ref": "#/components/schemas/DriverStop"
+            },
+            "title": "Stops",
+            "type": "array"
+          },
+          "vehicle_plate": {
+            "title": "Vehicle Plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "route_id",
+          "status",
+          "vehicle_plate",
+          "stops"
+        ],
+        "title": "DriverRoute",
+        "type": "object"
+      },
+      "DriverRouteResponse": {
+        "properties": {
+          "route": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverRoute"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "route"
+        ],
+        "title": "DriverRouteResponse",
+        "type": "object"
+      },
+      "DriverStop": {
+        "properties": {
+          "crew_name": {
+            "title": "Crew Name",
+            "type": "string"
+          },
+          "eta": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "route_node_id": {
+            "format": "uuid",
+            "title": "Route Node Id",
+            "type": "string"
+          },
+          "scheduled_pickup": {
+            "format": "date-time",
+            "title": "Scheduled Pickup",
+            "type": "string"
+          },
+          "seq_order": {
+            "title": "Seq Order",
+            "type": "integer"
+          },
+          "zone_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Label"
+          }
+        },
+        "required": [
+          "route_node_id",
+          "seq_order",
+          "crew_name",
+          "zone_label",
+          "scheduled_pickup",
+          "lat",
+          "lon"
+        ],
+        "title": "DriverStop",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "pickup_request_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Pickup Request Ids",
+            "type": "array"
+          },
+          "vehicle_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Vehicle Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "detail"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorCode": {
+        "enum": [
+          "unauthorized",
+          "forbidden",
+          "not_found",
+          "method_not_allowed",
+          "unavailable",
+          "validation_failed",
+          "idempotency_key_reused",
+          "duplicate_ids",
+          "unknown_ids",
+          "not_plannable",
+          "departed_routes",
+          "left_behind_on_route"
+        ],
+        "title": "ErrorCode",
+        "type": "string"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "LatePickup": {
+        "properties": {
+          "late_sec": {
+            "title": "Late Sec",
+            "type": "integer"
+          },
+          "pickup_request_id": {
+            "format": "uuid",
+            "title": "Pickup Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pickup_request_id",
+          "late_sec"
+        ],
+        "title": "LatePickup",
+        "type": "object"
+      },
+      "OptimisationJobAccepted": {
+        "description": "202 body. No status: a retried POST gets the same job back, which may\nhave moved on from queued; GET says where it is.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "OptimisationJobAccepted",
+        "type": "object"
+      },
+      "OptimisationJobCreate": {
+        "properties": {
+          "pickup_request_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Pickup Request Ids",
+            "type": "array"
+          },
+          "trigger_type": {
+            "$ref": "#/components/schemas/OptimizationTriggerType"
+          },
+          "vehicle_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Vehicle Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "trigger_type",
+          "pickup_request_ids",
+          "vehicle_ids"
+        ],
+        "title": "OptimisationJobCreate",
+        "type": "object"
+      },
+      "OptimisationJobResult": {
+        "description": "A job and, once completed, its plan. Every requested pickup is in a\nroute; the late ones are also in late, and the rest in unassigned, so a\nmissed deadline is always listed, never left to be noticed.",
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "late": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/LatePickup"
+            },
+            "title": "Late",
+            "type": "array"
+          },
+          "routes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PlannedRoute"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OptimizationJobStatus"
+          },
+          "unassigned": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Unassigned",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "OptimisationJobResult",
+        "type": "object"
+      },
+      "OptimizationJobStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "completed",
+          "failed"
+        ],
+        "title": "OptimizationJobStatus",
+        "type": "string"
+      },
+      "OptimizationTriggerType": {
+        "enum": [
+          "scheduled",
+          "flight_delay",
+          "standby_activation",
+          "vehicle_breakdown"
+        ],
+        "title": "OptimizationTriggerType",
+        "type": "string"
+      },
+      "PickupRequestStatus": {
+        "enum": [
+          "pending",
+          "assigned",
+          "picked_up",
+          "missed",
+          "cancelled"
+        ],
+        "title": "PickupRequestStatus",
+        "type": "string"
+      },
+      "PlannedNode": {
+        "properties": {
+          "estimated_arrival": {
+            "format": "date-time",
+            "title": "Estimated Arrival",
+            "type": "string"
+          },
+          "pickup_request_id": {
+            "format": "uuid",
+            "title": "Pickup Request Id",
+            "type": "string"
+          },
+          "seq_order": {
+            "title": "Seq Order",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pickup_request_id",
+          "seq_order",
+          "estimated_arrival"
+        ],
+        "title": "PlannedNode",
+        "type": "object"
+      },
+      "PlannedRoute": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "total_distance_km": {
+            "title": "Total Distance Km",
+            "type": "number"
+          },
+          "vehicle_id": {
+            "format": "uuid",
+            "title": "Vehicle Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "total_distance_km",
+          "nodes"
+        ],
+        "title": "PlannedRoute",
+        "type": "object"
+      },
+      "RouteStatus": {
+        "enum": [
+          "active",
+          "completed",
+          "superseded"
+        ],
+        "title": "RouteStatus",
+        "type": "string"
+      },
+      "RouteSummary": {
+        "properties": {
+          "first_pickup": {
+            "format": "date-time",
+            "title": "First Pickup",
+            "type": "string"
+          },
+          "route_id": {
+            "format": "uuid",
+            "title": "Route Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RouteStatus"
+          },
+          "stop_count": {
+            "title": "Stop Count",
+            "type": "integer"
+          },
+          "total_distance_km": {
+            "title": "Total Distance Km",
+            "type": "number"
+          },
+          "vehicle_plate": {
+            "title": "Vehicle Plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "route_id",
+          "status",
+          "vehicle_plate",
+          "first_pickup",
+          "stop_count",
+          "total_distance_km"
+        ],
+        "title": "RouteSummary",
+        "type": "object"
+      },
+      "RouteSummaryPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RouteSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "RouteSummaryPage",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "description": "The Supabase session access token.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "title": "ACDOS Backend",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/crew/me/pickup": {
+      "get": {
+        "operationId": "my_pickup_crew_me_pickup_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewPickupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "My Pickup",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/drivers/me/route": {
+      "get": {
+        "operationId": "my_route_drivers_me_route_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverRouteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "My Route",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/drivers/me/routes": {
+      "get": {
+        "operationId": "my_routes_drivers_me_routes_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteSummaryPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "My Routes",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/optimisation-jobs": {
+      "post": {
+        "operationId": "create_job_optimisation_jobs_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptimisationJobCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimisationJobAccepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Conflict: departed_routes, left_behind_on_route",
+            "x-error-codes": [
+              "departed_routes",
+              "left_behind_on_route"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused, duplicate_ids, unknown_ids, not_plannable",
+            "x-error-codes": [
+              "validation_failed",
+              "idempotency_key_reused",
+              "duplicate_ids",
+              "unknown_ids",
+              "not_plannable"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "summary": "Create Job",
+        "tags": [
+          "optimisation jobs"
+        ]
+      }
+    },
+    "/optimisation-jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_optimisation_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimisationJobResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "summary": "Get Job",
+        "tags": [
+          "optimisation jobs"
+        ]
+      }
+    }
+  }
+}
