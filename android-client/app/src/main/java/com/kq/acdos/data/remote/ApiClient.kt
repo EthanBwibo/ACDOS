@@ -6,6 +6,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -13,14 +14,15 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 /**
  * Timestamps from the backend are ISO 8601 and may carry fractional seconds
- * (2026-10-30T06:50:34.037197Z). OffsetDateTime.parse accepts an optional
+ * (2026-10-30T06:50:34.037197Z). ISO_OFFSET_DATE_TIME accepts an optional
  * fraction and both "Z" and "+03:00" on every Android version. Instant.parse
  * accepts the fraction too, but offsets other than "Z" only from Java 12 on,
  * which older Android versions (minSdk 26) don't have.
  */
 object InstantAdapter {
     @FromJson
-    fun fromJson(value: String): Instant = OffsetDateTime.parse(value).toInstant()
+    fun fromJson(value: String): Instant =
+        OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toInstant()
 
     @ToJson
     fun toJson(value: Instant): String = value.toString()
