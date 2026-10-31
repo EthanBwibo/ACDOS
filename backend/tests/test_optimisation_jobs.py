@@ -205,17 +205,74 @@ def test_pickup_on_a_departed_route_is_a_conflict(client, store):
     assert store.jobs == {}
 
 
-def test_leaving_a_route_mate_behind_is_a_conflict(client, store):
-    first, second, *rest = store.stored_pickups
-    # first and second share an active route; the request leaves second out.
+def test_a_replan_takes_the_whole_route_of_a_requested_pickup(client, store):
+    first, second, third, *_ = store.stored_pickups
+    # first and second share an active route; the request names first only.
     store.route_mates = {first: {second}, second: {first}}
 
-    response = post(client, body(store, pickup_request_ids=[str(first), *map(str, rest)]))
+    accepted = post(client, body(store, pickup_request_ids=[str(first), str(third)]))
+
+    assert accepted.status_code == 202
+    result = wait_for_job(client, accepted.json()["id"])
+    assert result["status"] == "completed", result["error"]
+    planned = {n["pickup_request_id"] for r in result["routes"] for n in r["nodes"]}
+    planned |= set(result["unassigned"])
+    assert planned == {str(first), str(second), str(third)}
+
+
+def test_every_route_has_its_planned_departure_and_arrival(client, store):
+    accepted = post(client, body(store))
+    result = wait_for_job(client, accepted.json()["id"])
+    assert result["routes"]
+    for route in result["routes"]:
+        departure = datetime.fromisoformat(route["planned_departure"])
+        arrival = datetime.fromisoformat(route["planned_arrival"])
+        first_stop = min(datetime.fromisoformat(n["estimated_arrival"]) for n in route["nodes"])
+        # Leaves the depot before its first stop, reaches JKIA after its last.
+        assert EPOCH <= departure < first_stop
+        assert arrival > max(datetime.fromisoformat(n["estimated_arrival"]) for n in route["nodes"])
+
+
+def test_a_van_on_the_road_is_a_conflict(client, store):
+    van = next(iter(store.stored_vehicles))
+    store.on_the_road.add(van)
+
+    response = post(client, body(store))
 
     assert response.status_code == 409
     error = response.json()
-    assert (error["code"], error["pickup_request_ids"]) == ("left_behind_on_route", [str(second)])
+    assert set(error) == {"code", "detail", "vehicle_ids"}
+    assert (error["code"], error["vehicle_ids"]) == ("vehicles_on_departed_routes", [str(van)])
     assert store.jobs == {}
+
+
+def test_a_broken_down_van_is_refused(client, store):
+    van = next(iter(store.stored_vehicles.values()))
+    store.stored_vehicles[van.id] = StoredVehicle(van.id, van.capacity, "broken_down")
+
+    response = post(client, body(store))
+
+    assert response.status_code == 422
+    error = response.json()
+    assert set(error) == {"code", "detail", "vehicle_ids"}
+    assert (error["code"], error["vehicle_ids"]) == ("not_plannable", [str(van.id)])
+    assert store.jobs == {}
+
+
+@pytest.mark.parametrize(
+    ("trigger", "breakdown"),
+    [("vehicle_breakdown", True), ("flight_delay", False), ("scheduled", False)],
+)
+def test_only_a_vehicle_breakdown_replan_frees_a_broken_vans_route(
+    client, store, trigger, breakdown
+):
+    accepted = post(client, body(store, trigger_type=trigger))
+    result = wait_for_job(client, accepted.json()["id"])
+
+    assert result["status"] == "completed", result["error"]
+    # Used when the job is accepted, and passed on to its commit.
+    assert store.breakdown_asked == [breakdown]
+    assert store.jobs[UUID(result["id"])].breakdown is breakdown
 
 
 def test_without_a_database_the_job_endpoints_are_unavailable(monkeypatch):

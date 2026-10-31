@@ -28,6 +28,8 @@ class FakeJob:
     status: OptimizationJobStatus = OptimizationJobStatus.QUEUED
     error: str | None = None
     outcome: SolveOutcome | None = None
+    # complete()'s breakdown flag: True for a vehicle_breakdown re-plan.
+    breakdown: bool | None = None
 
 
 @dataclass
@@ -36,8 +38,12 @@ class InMemoryJobStore:
     stored_vehicles: dict[UUID, StoredVehicle] = field(default_factory=dict)
     # Pickups on a route that has left.
     departed: set[UUID] = field(default_factory=set)
-    # Pickup -> the other pickups on its active route.
+    # Pickup -> the other plannable pickups on its active route.
     route_mates: dict[UUID, set[UUID]] = field(default_factory=dict)
+    # Vans on a route that has left.
+    on_the_road: set[UUID] = field(default_factory=set)
+    # The breakdown flag of each route_conflicts call, in order.
+    breakdown_asked: list[bool] = field(default_factory=list)
     jobs: dict[UUID, FakeJob] = field(default_factory=dict)
     # profiles.role by user id (#127).
     roles: dict[UUID, str] = field(default_factory=dict)
@@ -57,11 +63,15 @@ class InMemoryJobStore:
     async def vehicles(self, ids: list[UUID]) -> dict[UUID, StoredVehicle]:
         return {i: self.stored_vehicles[i] for i in ids if i in self.stored_vehicles}
 
-    async def route_conflicts(self, pickup_ids: list[UUID], now: datetime) -> RouteConflicts:
+    async def route_conflicts(
+        self, pickup_ids: list[UUID], vehicle_ids: list[UUID], now: datetime, breakdown: bool
+    ) -> RouteConflicts:
+        self.breakdown_asked.append(breakdown)
         mates = set().union(*(self.route_mates.get(i, set()) for i in pickup_ids))
         return RouteConflicts(
             sorted(i for i in pickup_ids if i in self.departed),
             sorted(mates - set(pickup_ids)),
+            on_the_road=sorted(i for i in vehicle_ids if i in self.on_the_road),
         )
 
     async def create_job(
@@ -77,8 +87,11 @@ class InMemoryJobStore:
     async def mark_running(self, job_id: UUID) -> None:
         self.jobs[job_id].status = OptimizationJobStatus.RUNNING
 
-    async def complete(self, job_id: UUID, outcome: SolveOutcome, now: datetime) -> None:
+    async def complete(
+        self, job_id: UUID, outcome: SolveOutcome, now: datetime, breakdown: bool
+    ) -> None:
         self.jobs[job_id].outcome = outcome
+        self.jobs[job_id].breakdown = breakdown
         self.jobs[job_id].status = OptimizationJobStatus.COMPLETED
 
     async def fail(self, job_id: UUID, error: str) -> None:
@@ -99,6 +112,8 @@ class InMemoryJobStore:
             PlannedRoute(
                 vehicle_id=UUID(route.vehicle_id),
                 total_distance_km=0.0,  # PostGIS's job; not modelled here
+                planned_departure=route.departure,
+                planned_arrival=route.arrival,
                 nodes=[
                     PlannedNode(
                         pickup_request_id=UUID(stop.pickup_id),

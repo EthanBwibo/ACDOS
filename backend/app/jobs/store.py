@@ -2,16 +2,22 @@
 
 JobStore is what the API and the runner need. PostgresJobStore is the real
 one; tests use an in-memory one (tests/fake_job_store.py) for the API and
-run this one against Postgres (tests/test_job_store_postgres.py).
+run this one against Postgres (tests/test_optimisation_jobs_postgres.py).
 
 The backend connects as the postgres role, which bypasses RLS: the API
 checks requests itself. Every name is schema-qualified, PostGIS included
 (extensions, migration 000), so nothing depends on the connection's
 search_path.
+
+Re-planning (#113): a job replaces whole routes that have not departed. A
+departed route stays as it is, and its van stays out of new plans until it
+is due back at JKIA. The one exception is a van that broke down: in a
+vehicle_breakdown re-plan, its route's pickups not yet collected may go to
+other vans.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Protocol
 from uuid import UUID
 
@@ -41,6 +47,7 @@ class StoredPickup:
 class StoredVehicle:
     id: UUID
     capacity: int
+    status: str = "available"
 
 
 @dataclass(frozen=True)
@@ -54,26 +61,41 @@ class KeyedJob:
 
 @dataclass(frozen=True)
 class RouteConflicts:
-    """Why a request cannot replace the plan its pickups are on now."""
+    """Why a set of pickups and vans cannot replace the plan as it is now.
 
-    # Requested pickups on a route that has departed or is in progress:
-    # re-planning those is #113's job.
+    The API asks before it accepts a job; the store asks again when the job
+    commits, since the plan may have changed while it queued or ran.
+    """
+
+    # Pickups on a route that has departed (_DEPARTED_ROUTE), which a re-plan
+    # never touches; except, in a vehicle_breakdown re-plan, the route of a
+    # broken-down van (_FIXED_ROUTE).
     departed: list[UUID]
-    # Pickups NOT requested that share an active route with requested ones.
-    # Replacing the route would leave them on a superseded route, so the
-    # request must include them or leave the route alone. A partial re-plan
-    # that keeps a route running is #113's job too.
-    left_behind: list[UUID]
+    # Plannable pickups NOT in the set that share a route the set replaces.
+    # The API adds them to the job, so a re-plan takes whole routes; at
+    # commit, one here means a pickup joined such a route meanwhile.
+    left_behind: list[UUID] = ()
+    # Pickups in the set past assigned (picked up, missed, cancelled). The
+    # API refuses these itself; at commit, one here was collected while the
+    # job ran, e.g. by the van it was re-planned away from (migration 025).
+    not_plannable: list[UUID] = ()
+    # Vans on the road (_ON_THE_ROAD): away from the depot, crew on board.
+    on_the_road: list[UUID] = ()
+    # Vans broken down.
+    broken_down: list[UUID] = ()
 
     def __bool__(self) -> bool:
-        return bool(self.departed or self.left_behind)
+        return bool(self.detail())
 
     def detail(self) -> dict[str, list[str]]:
         """For a failed job's error text: only the lists that are not empty.
-        The API's 409 bodies are built in routers/optimisation_jobs.py."""
+        The API's error bodies are built in routers/optimisation_jobs.py."""
         lists = {
             "pickup_request_ids_on_departed_routes": self.departed,
             "pickup_request_ids_left_behind": self.left_behind,
+            "pickup_request_ids_not_plannable": self.not_plannable,
+            "vehicle_ids_on_departed_routes": self.on_the_road,
+            "vehicle_ids_broken_down": self.broken_down,
         }
         return {key: sorted(map(str, ids)) for key, ids in lists.items() if ids}
 
@@ -95,7 +117,9 @@ class JobStore(Protocol):
 
     async def vehicles(self, ids: list[UUID]) -> dict[UUID, StoredVehicle]: ...
 
-    async def route_conflicts(self, pickup_ids: list[UUID], now: datetime) -> RouteConflicts: ...
+    async def route_conflicts(
+        self, pickup_ids: list[UUID], vehicle_ids: list[UUID], now: datetime, breakdown: bool
+    ) -> RouteConflicts: ...
 
     async def create_job(
         self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType
@@ -103,7 +127,9 @@ class JobStore(Protocol):
 
     async def mark_running(self, job_id: UUID) -> None: ...
 
-    async def complete(self, job_id: UUID, outcome: SolveOutcome, now: datetime) -> None: ...
+    async def complete(
+        self, job_id: UUID, outcome: SolveOutcome, now: datetime, breakdown: bool
+    ) -> None: ...
 
     async def fail(self, job_id: UUID, error: str) -> None: ...
 
@@ -112,23 +138,31 @@ class JobStore(Protocol):
     async def result(self, job_id: UUID) -> OptimisationJobResult | None: ...
 
 
-# A route has departed once a pickup on it is recorded (confirmed or an
-# exception), once the time for its first stop has passed, or once it is
-# completed. Before that it can still be replaced. $2 is now.
+# A route has departed once its van was due to leave the depot, once a
+# pickup on it is recorded (confirmed or an exception: the van left early),
+# or once it is completed. Before that it can still be replaced. $2 is now.
 _DEPARTED_ROUTE = """
     r.status = 'completed'
+    or r.planned_departure <= $2
     or exists (
         select 1 from public.route_nodes rn
         join public.pickup_events e on e.route_node_id = rn.id
         where rn.route_id = r.id
     )
-    or (
-        select min(rn.estimated_arrival) from public.route_nodes rn
-        where rn.route_id = r.id and rn.superseded_at is null
-    ) <= $2
 """
 
-# Live nodes of the requested pickups ($1) on routes still in use.
+# A departed route stays as it is, except in a vehicle_breakdown re-plan
+# ($3) when its van has broken down: then its pickups not yet collected may
+# be re-planned onto other vans.
+_FIXED_ROUTE = f"""
+    ({_DEPARTED_ROUTE})
+    and not ($3::boolean and exists (
+        select 1 from public.vehicles v
+        where v.id = r.vehicle_id and v.status = 'broken_down'
+    ))
+"""
+
+# Live nodes of the pickups ($1) on routes still in use.
 _LIVE_NODES = """
     from public.route_nodes n
     join public.routes r on r.id = n.route_id
@@ -137,8 +171,8 @@ _LIVE_NODES = """
       and r.status in ('active', 'completed')
 """
 
-# Active routes holding a live node of a requested pickup ($1): the routes a
-# job over $1 replaces.
+# Active routes holding a live node of a pickup in $1: the routes a job over
+# $1 replaces.
 _REPLACED_ROUTES = """
     select n.route_id
     from public.route_nodes n
@@ -146,6 +180,26 @@ _REPLACED_ROUTES = """
     where n.pickup_request_id = any($1::uuid[])
       and n.superseded_at is null
       and r.status = 'active'
+"""
+
+# Vans ($1) on the road at $2: an active route of theirs has departed and
+# is not yet due back at JKIA plus the grace period ($3). A completed route
+# is not active, so its van is free again.
+_ON_THE_ROAD = """
+    select distinct r.vehicle_id
+    from public.routes r
+    where r.vehicle_id = any($1::uuid[])
+      and r.status = 'active'
+      and (
+          r.planned_departure <= $2
+          or exists (
+              select 1 from public.route_nodes rn
+              join public.pickup_events e on e.route_node_id = rn.id
+              where rn.route_id = r.id
+          )
+      )
+      and $2 < r.planned_arrival + $3::interval
+    order by r.vehicle_id
 """
 
 # Straight-line length of a route ($1): depot ($2, $3) to each stop in turn,
@@ -176,9 +230,10 @@ _ROUTE_LENGTH_KM = """
 
 
 class PostgresJobStore:
-    def __init__(self, pool: asyncpg.Pool, depot: Point) -> None:
+    def __init__(self, pool: asyncpg.Pool, depot: Point, van_return_grace: timedelta) -> None:
         self._pool = pool
         self._depot = depot
+        self._grace = van_return_grace
 
     async def profile_role(self, user_id: UUID) -> str | None:
         """profiles.role of a verified caller (#127), or None without a
@@ -211,12 +266,16 @@ class PostgresJobStore:
 
     async def vehicles(self, ids: list[UUID]) -> dict[UUID, StoredVehicle]:
         rows = await self._pool.fetch(
-            "select id, capacity from public.vehicles where id = any($1::uuid[])", ids
+            "select id, capacity, status from public.vehicles where id = any($1::uuid[])", ids
         )
-        return {r["id"]: StoredVehicle(r["id"], r["capacity"]) for r in rows}
+        return {r["id"]: StoredVehicle(r["id"], r["capacity"], r["status"]) for r in rows}
 
-    async def route_conflicts(self, pickup_ids: list[UUID], now: datetime) -> RouteConflicts:
-        return await _route_conflicts(self._pool, pickup_ids, now)
+    async def route_conflicts(
+        self, pickup_ids: list[UUID], vehicle_ids: list[UUID], now: datetime, breakdown: bool
+    ) -> RouteConflicts:
+        return await _route_conflicts(
+            self._pool, pickup_ids, vehicle_ids, now, breakdown, self._grace
+        )
 
     async def create_job(
         self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType
@@ -245,42 +304,68 @@ class PostgresJobStore:
             "update public.optimization_jobs set status = 'running' where id = $1", job_id
         )
 
-    async def complete(self, job_id: UUID, outcome: SolveOutcome, now: datetime) -> None:
+    async def complete(
+        self, job_id: UUID, outcome: SolveOutcome, now: datetime, breakdown: bool
+    ) -> None:
         """Write the plan and complete the job in one transaction, so a job is
         never completed without its routes, and a failure leaves nothing."""
         routed = [UUID(s.pickup_id) for route in outcome.routes for s in route.stops]
         requested = routed + [UUID(i) for i in outcome.unassigned]
+        vans = [UUID(route.vehicle_id) for route in outcome.routes]
         async with self._pool.acquire() as conn, conn.transaction():
-            # The API checked this when the job was accepted; a route may
-            # have left, or another job changed the plan, while it queued or
-            # ran.
-            conflicts = await _route_conflicts(conn, requested, now)
+            # Lock the job's pickups before checking them. A pickup event's
+            # status change (023) then either waits for this transaction,
+            # and 025 drops the node written here, or this waits for it and
+            # the check below sees the pickup collected. Either way a pickup
+            # collected while the job ran never keeps a new live node.
+            await conn.execute(
+                """
+                select 1 from public.pickup_requests
+                where id = any($1::uuid[]) order by id for update
+                """,
+                requested,
+            )
+            # The API checked this when the job was accepted. While the job
+            # queued or ran, a route may have left, a van may have left or
+            # broken down, a pickup may have been collected (and 025 taken it
+            # off its route), or another job may have changed the plan.
+            conflicts = await _route_conflicts(conn, requested, vans, now, breakdown, self._grace)
             if conflicts:
                 raise RouteConflictError(conflicts)
 
-            # Replace the routes the requested pickups are on now. Every live
-            # node of those routes is superseded, not only the requested
-            # ones, so a superseded route never keeps a live node (the check
-            # above makes them the same nodes; this keeps it so regardless).
-            # A requested pickup's live node on a route that is no longer
-            # active is superseded too, so the new node cannot collide with
-            # it on the one-live-node index.
+            # Supersede the job's pickups' live nodes, and every other live
+            # node of the routes they are on, so those routes are replaced
+            # whole. The pickups left on such a route are past assigned (the
+            # check above found no plannable ones): they get no new node.
+            # Except a node with an event of its own, which only a broken-down
+            # van's route can have here: what that van collected (or found
+            # missing) keeps its node, as the record of what happened.
             old_routes = await conn.fetch(
                 f"""
                 update public.route_nodes n
                 set superseded_at = $2
                 where n.superseded_at is null
-                  and (n.route_id in ({_REPLACED_ROUTES})
-                       or n.pickup_request_id = any($1::uuid[]))
+                  and (n.pickup_request_id = any($1::uuid[])
+                       or (n.route_id in ({_REPLACED_ROUTES})
+                           and not exists (
+                               select 1 from public.pickup_events e
+                               where e.route_node_id = n.id
+                           )))
                 returning n.route_id
                 """,
                 requested,
                 now,
             )
+            # A replaced route with no live node left is superseded; a
+            # broken-down van's route that keeps a collected pickup stays.
             await conn.execute(
                 """
-                update public.routes set status = 'superseded'
-                where id = any($1::uuid[]) and status = 'active'
+                update public.routes r set status = 'superseded'
+                where r.id = any($1::uuid[]) and r.status = 'active'
+                  and not exists (
+                      select 1 from public.route_nodes n
+                      where n.route_id = r.id and n.superseded_at is null
+                  )
                 """,
                 list({r["route_id"] for r in old_routes}),
             )
@@ -288,12 +373,16 @@ class PostgresJobStore:
             for route in outcome.routes:
                 route_id = await conn.fetchval(
                     """
-                    insert into public.routes (vehicle_id, optimization_job_id, total_distance_km)
-                    values ($1, $2, 0)
+                    insert into public.routes
+                        (vehicle_id, optimization_job_id, total_distance_km,
+                         planned_departure, planned_arrival)
+                    values ($1, $2, 0, $3, $4)
                     returning id
                     """,
                     UUID(route.vehicle_id),
                     job_id,
+                    route.departure,
+                    route.arrival,
                 )
                 await conn.executemany(
                     """
@@ -387,6 +476,7 @@ class PostgresJobStore:
         nodes = await self._pool.fetch(
             """
             select r.id as route_id, r.vehicle_id, r.total_distance_km,
+                r.planned_departure, r.planned_arrival,
                 n.pickup_request_id, n.seq_order, n.estimated_arrival
             from public.routes r
             join public.route_nodes n on n.route_id = r.id
@@ -402,6 +492,8 @@ class PostgresJobStore:
                 PlannedRoute(
                     vehicle_id=n["vehicle_id"],
                     total_distance_km=float(n["total_distance_km"]),
+                    planned_departure=n["planned_departure"],
+                    planned_arrival=n["planned_arrival"],
                     nodes=[],
                 ),
             )
@@ -434,28 +526,56 @@ class PostgresJobStore:
 
 
 async def _route_conflicts(
-    conn: asyncpg.Pool | asyncpg.Connection, pickup_ids: list[UUID], now: datetime
+    conn: asyncpg.Pool | asyncpg.Connection,
+    pickup_ids: list[UUID],
+    vehicle_ids: list[UUID],
+    now: datetime,
+    breakdown: bool,
+    grace: timedelta,
 ) -> RouteConflicts:
     departed = await conn.fetch(
-        f"select n.pickup_request_id {_LIVE_NODES} and ({_DEPARTED_ROUTE}) "
+        f"select n.pickup_request_id {_LIVE_NODES} and ({_FIXED_ROUTE}) "
         "order by n.pickup_request_id",
         pickup_ids,
         now,
+        breakdown,
     )
     left_behind = await conn.fetch(
         f"""
         select distinct other.pickup_request_id
         from public.route_nodes other
+        join public.pickup_requests p on p.id = other.pickup_request_id
         where other.route_id in ({_REPLACED_ROUTES})
           and other.superseded_at is null
           and not other.pickup_request_id = any($1::uuid[])
+          and p.status in ('pending', 'assigned')
         order by other.pickup_request_id
         """,
         pickup_ids,
     )
+    not_plannable = await conn.fetch(
+        """
+        select id from public.pickup_requests
+        where id = any($1::uuid[]) and status not in ('pending', 'assigned')
+        order by id
+        """,
+        pickup_ids,
+    )
+    on_the_road = await conn.fetch(_ON_THE_ROAD, vehicle_ids, now, grace)
+    broken_down = await conn.fetch(
+        """
+        select id from public.vehicles
+        where id = any($1::uuid[]) and status = 'broken_down'
+        order by id
+        """,
+        vehicle_ids,
+    )
     return RouteConflicts(
         [r["pickup_request_id"] for r in departed],
         [r["pickup_request_id"] for r in left_behind],
+        [r["id"] for r in not_plannable],
+        [r["vehicle_id"] for r in on_the_road],
+        [r["id"] for r in broken_down],
     )
 
 

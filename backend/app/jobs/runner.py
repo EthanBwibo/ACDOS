@@ -19,6 +19,7 @@ from uuid import UUID
 from app.jobs import worker
 from app.jobs.store import JobStore
 from app.jobs.worker import PickupInput, SolveInput, VehicleInput
+from app.models.schemas import OptimizationTriggerType
 from app.solver.problem import Point
 
 logger = logging.getLogger(__name__)
@@ -70,14 +71,22 @@ class JobRunner:
         self.now = now
 
     def submit(
-        self, job_id: UUID, pickups: tuple[PickupInput, ...], vehicles: tuple[VehicleInput, ...]
+        self,
+        job_id: UUID,
+        pickups: tuple[PickupInput, ...],
+        vehicles: tuple[VehicleInput, ...],
+        trigger_type: OptimizationTriggerType,
     ) -> None:
-        task = asyncio.create_task(self._run(job_id, pickups, vehicles))
+        task = asyncio.create_task(self._run(job_id, pickups, vehicles, trigger_type))
         _tasks.add(task)
         task.add_done_callback(_tasks.discard)
 
     async def _run(
-        self, job_id: UUID, pickups: tuple[PickupInput, ...], vehicles: tuple[VehicleInput, ...]
+        self,
+        job_id: UUID,
+        pickups: tuple[PickupInput, ...],
+        vehicles: tuple[VehicleInput, ...],
+        trigger_type: OptimizationTriggerType,
     ) -> None:
         try:
             async with self._slots:
@@ -97,7 +106,12 @@ class JobRunner:
                 )
                 loop = asyncio.get_running_loop()
                 outcome = await loop.run_in_executor(self._pool, worker.run, job)
-                await self.store.complete(job_id, outcome, self.now())
+                await self.store.complete(
+                    job_id,
+                    outcome,
+                    self.now(),
+                    breakdown=trigger_type == OptimizationTriggerType.VEHICLE_BREAKDOWN,
+                )
         except Exception as error:
             logger.exception("optimisation job %s failed", job_id)
             await self.store.fail(job_id, f"{type(error).__name__}: {error}")
