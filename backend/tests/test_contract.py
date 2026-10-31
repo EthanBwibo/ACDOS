@@ -39,7 +39,14 @@ BACKEND = Path(__file__).resolve().parents[1]
 SPEC = json.loads(contract.openapi_json())
 KEY = SigningKey("contract-key")
 NOW = datetime(2026, 11, 2, tzinfo=UTC)
-TOKEN_ROUTES = {"/drivers/me/route", "/drivers/me/routes", "/crew/me/pickup"}
+TOKEN_ROUTES = {
+    "/drivers/me/route",
+    "/drivers/me/routes",
+    "/crew/me/pickup",
+    "/optimisation-jobs",
+    "/optimisation-jobs/{job_id}",
+}
+DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
 
 def operations():
@@ -130,6 +137,10 @@ class World:
     def token(self) -> dict:
         return bearer(KEY.token(uuid4()))
 
+    def dispatcher(self) -> dict:
+        """The job API's caller (#127)."""
+        return bearer(KEY.token(DISPATCHER))
+
     def without_runner(self) -> None:
         self.monkeypatch.setattr(app.state, "job_runner", None)
 
@@ -157,7 +168,8 @@ class World:
         } | changes
 
     def post_job(self, body: dict, key: str = "contract-key") -> object:
-        return self.client.post("/optimisation-jobs", json=body, headers={"Idempotency-Key": key})
+        headers = {"Idempotency-Key": key} | self.dispatcher()
+        return self.client.post("/optimisation-jobs", json=body, headers=headers)
 
 
 def _reused_key(w: World):
@@ -198,7 +210,20 @@ def _job_without_runner(method: str):
         w.without_runner()
         if method == "POST":
             return w.post_job(w.job_body())
-        return w.client.get(f"/optimisation-jobs/{uuid4()}")
+        return w.client.get(f"/optimisation-jobs/{uuid4()}", headers=w.dispatcher())
+
+    return run
+
+
+def _job_as(headers: Callable[[World], dict], method: str):
+    def run(w: World):
+        if method == "POST":
+            return w.client.post(
+                "/optimisation-jobs",
+                json=w.job_body(),
+                headers={"Idempotency-Key": "k"} | headers(w),
+            )
+        return w.client.get(f"/optimisation-jobs/{uuid4()}", headers=headers(w))
 
     return run
 
@@ -222,7 +247,9 @@ CASES = (
             "/optimisation-jobs",
             422,
             "validation_failed",
-            lambda w: w.client.post("/optimisation-jobs", json=w.job_body()),
+            lambda w: w.client.post(
+                "/optimisation-jobs", json=w.job_body(), headers=w.dispatcher()
+            ),
             False,
         ),
         ("POST", "/optimisation-jobs", 422, "idempotency_key_reused", _reused_key, False),
@@ -235,7 +262,7 @@ CASES = (
             "/optimisation-jobs/{job_id}",
             404,
             "not_found",
-            lambda w: w.client.get(f"/optimisation-jobs/{uuid4()}"),
+            lambda w: w.client.get(f"/optimisation-jobs/{uuid4()}", headers=w.dispatcher()),
             False,
         ),
         (
@@ -243,7 +270,7 @@ CASES = (
             "/optimisation-jobs/{job_id}",
             422,
             "validation_failed",
-            lambda w: w.client.get("/optimisation-jobs/not-a-uuid"),
+            lambda w: w.client.get("/optimisation-jobs/not-a-uuid", headers=w.dispatcher()),
             False,
         ),
         (
@@ -254,6 +281,21 @@ CASES = (
             _job_without_runner("GET"),
             False,
         ),
+    ]
+    + [
+        case
+        for method, path in [("POST", "/optimisation-jobs"), ("GET", "/optimisation-jobs/{job_id}")]
+        for case in [
+            (method, path, 401, "unauthorized", _job_as(lambda w: {}, method), False),
+            (
+                method,
+                path,
+                403,
+                "forbidden",
+                _job_as(lambda w: bearer(KEY.token(CREW_USER)), method),
+                False,
+            ),
+        ]
     ]
     + [
         case
@@ -294,7 +336,7 @@ def world(monkeypatch):
     monkeypatch.setattr(app.state, "jwt_keys", FakeJwks(KEY).source(), raising=False)
     monkeypatch.setattr(app.state, "jwt_issuer", ISSUER, raising=False)
     monkeypatch.setattr(app.state, "db", None, raising=False)
-    store = InMemoryJobStore()
+    store = InMemoryJobStore(roles={DISPATCHER: "dispatcher", CREW_USER: "crew"})
     for k in range(3):
         pickup = StoredPickup(
             uuid4(), Point(-1.27 - k / 100, 36.81), NOW + timedelta(hours=3), "pending"

@@ -851,6 +851,32 @@
             },
             "description": "Successful Response"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
           "409": {
             "content": {
               "application/json": {
@@ -896,6 +922,11 @@
             ]
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Create Job",
         "tags": [
           "optimisation jobs"
@@ -927,6 +958,32 @@
               }
             },
             "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
           },
           "404": {
             "content": {
@@ -968,6 +1025,11 @@
             ]
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get Job",
         "tags": [
           "optimisation jobs"

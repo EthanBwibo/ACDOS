@@ -18,6 +18,7 @@ from app.main import app
 from app.solver.problem import Point
 from tests.fake_job_store import InMemoryJobStore
 from tests.job_api import individual_from_result, wait_for_job
+from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
 from tests.solver_checks import assert_feasible
 
 EPOCH = datetime(2026, 11, 2, 0, 0, tzinfo=UTC)  # 03:00 in Nairobi
@@ -47,9 +48,15 @@ def pool():
     pool.shutdown(cancel_futures=True)
 
 
+# Only dispatchers may use the job API (#127): every request here carries a
+# dispatcher's token, signed by a key made for the test run.
+KEY = SigningKey("job-api-key")
+DISPATCHER = uuid4()
+
+
 @pytest.fixture
 def store():
-    store = InMemoryJobStore()
+    store = InMemoryJobStore(roles={DISPATCHER: "dispatcher"})
     for location, report_in in CREW:
         pickup = StoredPickup(uuid4(), location, EPOCH + report_in, "pending")
         store.stored_pickups[pickup.id] = pickup
@@ -60,7 +67,9 @@ def store():
 
 
 @pytest.fixture
-def client(store, pool):
+def client(store, pool, monkeypatch):
+    monkeypatch.setattr(app.state, "jwt_keys", FakeJwks(KEY).source(), raising=False)
+    monkeypatch.setattr(app.state, "jwt_issuer", ISSUER, raising=False)
     app.state.job_runner = JobRunner(
         store,
         pool,
@@ -70,7 +79,7 @@ def client(store, pool):
         travel_model="haversine",
         now=lambda: EPOCH,
     )
-    with TestClient(app) as client:
+    with TestClient(app, headers=bearer(KEY.token(DISPATCHER))) as client:
         yield client
     app.state.job_runner = None
 
@@ -211,5 +220,7 @@ def test_leaving_a_route_mate_behind_is_a_conflict(client, store):
 
 def test_without_a_database_the_job_endpoints_are_unavailable(monkeypatch):
     monkeypatch.setattr(settings, "database_url", None)
-    with TestClient(app) as client:
+    monkeypatch.setattr(app.state, "jwt_keys", FakeJwks(KEY).source(), raising=False)
+    monkeypatch.setattr(app.state, "jwt_issuer", ISSUER, raising=False)
+    with TestClient(app, headers=bearer(KEY.token(DISPATCHER))) as client:
         assert client.get(f"/optimisation-jobs/{uuid4()}").status_code == 503

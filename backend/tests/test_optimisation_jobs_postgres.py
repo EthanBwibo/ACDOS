@@ -1,7 +1,11 @@
 """Optimisation job API (#51) against a real Postgres with the migrations.
 
-Runs only with DATABASE_URL set: in CI, the PostGIS service the backend job
-starts; locally, Supabase. Every row it makes is tagged with this run's id
+Only dispatchers may use the job API (#127), so each test makes a
+dispatcher (an auth.users row and its profile) and calls the API with a token
+signed by a key made for the run. Because of those auth.users rows, these run
+only on a throwaway database: when DATABASE_URL is set in the environment
+(CI's PostGIS service sets it), never against a Supabase host; backend/.env
+alone does not run them. Every row they make is tagged with this run's id
 and deleted afterwards, whatever the outcome.
 
 Through the HTTP API, so what is tested is what the app does: the lifespan
@@ -11,6 +15,7 @@ connects, the runner solves in a solver process, the store writes.
 import asyncio
 import os
 from datetime import UTC, datetime, timedelta
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 import asyncpg
@@ -20,10 +25,17 @@ from fastapi.testclient import TestClient
 from app.config import settings
 from app.main import app
 from tests.job_api import wait_for_job
+from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
 
-DATABASE_URL = os.environ.get("DATABASE_URL") or settings.database_url
-
-pytestmark = pytest.mark.skipif(not DATABASE_URL, reason="needs DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+pytestmark = [
+    pytest.mark.skipif(not DATABASE_URL, reason="needs DATABASE_URL in the environment"),
+    pytest.mark.skipif(
+        bool(DATABASE_URL) and "supabase" in (urlsplit(DATABASE_URL).hostname or ""),
+        reason="inserts auth.users rows: never against Supabase",
+    ),
+]
+KEY = SigningKey("job-api-key")
 
 RUN = uuid4().hex[:8]
 SEATS = 3
@@ -136,8 +148,30 @@ def client(monkeypatch, seeded):
     monkeypatch.setattr(settings, "travel_model", "haversine")
     monkeypatch.setattr(settings, "solve_time_limit_sec", 1.0)
     monkeypatch.setattr(settings, "solver_pool_size", 1)
-    with TestClient(app) as client:
-        yield client
+    monkeypatch.setattr(app.state, "jwt_keys", FakeJwks(KEY).source(), raising=False)
+    monkeypatch.setattr(app.state, "jwt_issuer", ISSUER, raising=False)
+    dispatcher = uuid4()
+
+    async def make(conn):
+        async with conn.transaction():
+            await conn.execute("insert into auth.users (id) values ($1)", dispatcher)
+            await conn.execute(
+                "insert into public.profiles (id, role, full_name) values ($1, 'dispatcher', $2)",
+                dispatcher,
+                f"test-{RUN} dispatcher",
+            )
+
+    async def remove(conn):
+        async with conn.transaction():
+            await conn.execute("delete from public.profiles where id = $1", dispatcher)
+            await conn.execute("delete from auth.users where id = $1", dispatcher)
+
+    db(make)
+    try:
+        with TestClient(app, headers=bearer(KEY.token(dispatcher))) as client:
+            yield client
+    finally:
+        db(remove)
 
 
 def post(client, pickups, vehicles, key):
