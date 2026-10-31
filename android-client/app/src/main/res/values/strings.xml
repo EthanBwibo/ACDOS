@@ -28,6 +28,7 @@
     <string name="tab_sync">Sync</string>
     <string name="coming_soon">Coming soon</string>
     <string name="route_none">No route assigned</string>
+    <string name="route_load_failed">Couldn\'t load your route. Pull to retry</string>
     <string name="route_updated">Updated %1$s</string>
     <string name="route_pickup_at">Pickup %1$s</string>
     <string name="route_zone_unknown">Pickup point</string>

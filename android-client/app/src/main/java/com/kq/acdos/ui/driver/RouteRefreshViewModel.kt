@@ -21,8 +21,9 @@ import kotlinx.coroutines.launch
 /**
  * What the driver is told after a refresh, or null for nothing. Automatic
  * refreshes stay quiet when offline or failing: the "Updated" time already
- * shows how old the route is. A session or role problem is always shown,
- * since refreshing again can't fix it.
+ * shows how old the route is, and with nothing cached [emptyRouteMessage]
+ * says it instead. A session or role problem is always shown, since
+ * refreshing again can't fix it.
  */
 @StringRes
 fun refreshMessage(result: RefreshResult, manual: Boolean): Int? = when (result) {
@@ -31,6 +32,23 @@ fun refreshMessage(result: RefreshResult, manual: Boolean): Int? = when (result)
     RefreshResult.OFFLINE -> if (manual) R.string.route_refresh_offline else null
     RefreshResult.FAILED -> if (manual) R.string.route_refresh_failed else null
     RefreshResult.UPDATED, RefreshResult.NO_ROUTE, RefreshResult.THROTTLED -> null
+}
+
+/**
+ * The Route tab's text when no route is cached. "No route assigned" only
+ * once the server has said so: after a failed refresh the driver is told to
+ * retry instead, so a refresh that never arrived doesn't pass for a free day.
+ */
+@StringRes
+fun emptyRouteMessage(lastFailure: RefreshResult?): Int = when (lastFailure) {
+    RefreshResult.OFFLINE, RefreshResult.FAILED -> R.string.route_load_failed
+
+    RefreshResult.SIGN_IN_AGAIN -> R.string.route_refresh_sign_in_again
+
+    RefreshResult.NOT_ALLOWED -> R.string.route_refresh_not_allowed
+
+    null, RefreshResult.UPDATED, RefreshResult.NO_ROUTE, RefreshResult.THROTTLED ->
+        R.string.route_none
 }
 
 /**
@@ -43,6 +61,14 @@ class RouteRefreshViewModel(private val repository: DriverRouteRepository?) : Vi
 
     /** True while a pull to refresh is running, for the spinner. */
     val refreshing: StateFlow<Boolean> = refreshingState.asStateFlow()
+
+    private val failureState = MutableStateFlow<RefreshResult?>(null)
+
+    /**
+     * The last refresh's result if it failed, null once one succeeds; a
+     * throttled refresh changes nothing. For [emptyRouteMessage].
+     */
+    val lastFailure: StateFlow<RefreshResult?> = failureState.asStateFlow()
 
     private val messageChannel = Channel<Int>(Channel.BUFFERED)
 
@@ -72,6 +98,11 @@ class RouteRefreshViewModel(private val repository: DriverRouteRepository?) : Vi
     }
 
     private suspend fun report(result: RefreshResult, manual: Boolean) {
+        when (result) {
+            RefreshResult.UPDATED, RefreshResult.NO_ROUTE -> failureState.value = null
+            RefreshResult.THROTTLED -> Unit
+            else -> failureState.value = result
+        }
         refreshMessage(result, manual)?.let { messageChannel.send(it) }
     }
 
