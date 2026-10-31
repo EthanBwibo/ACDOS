@@ -27,7 +27,7 @@ Checks, in order:
 """
 
 from datetime import datetime, timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import asyncpg
 
@@ -158,13 +158,16 @@ async def _record_one(
                     event.route_node_id,
                 )
                 await reads.become(conn, driver_id)
-                event_id = await conn.fetchval(
+                # The id is made here, not returned: under RLS, RETURNING needs
+                # a SELECT policy, and drivers have none on pickup_events.
+                event_id = uuid4()
+                await conn.execute(
                     """
-                    insert into public.pickup_events (route_node_id, driver_id, event_type,
+                    insert into public.pickup_events (id, route_node_id, driver_id, event_type,
                         exception_type, confirmed_at, synced_at, idempotency_key)
-                    values ($1, $2, $3, $4, $5, $6, $7)
-                    returning id
+                    values ($1, $2, $3, $4, $5, $6, $7, $8)
                     """,
+                    event_id,
                     *_fields(event),
                     now,
                     event.idempotency_key,
