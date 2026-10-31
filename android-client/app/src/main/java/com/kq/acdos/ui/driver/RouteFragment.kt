@@ -86,6 +86,13 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
                 refresh.refreshing.collect { swipe.isRefreshing = it }
             }
         }
+        // Only seen when nothing is cached: with a route on screen, a failed
+        // refresh stays quiet and the "Updated" time shows its age.
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                refresh.lastFailure.collect { empty.setText(emptyRouteMessage(it)) }
+            }
+        }
     }
 
     /** Opens the stop in the phone's maps app, with a pin labelled by the crew name. */

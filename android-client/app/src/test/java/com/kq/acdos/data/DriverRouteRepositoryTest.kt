@@ -7,13 +7,10 @@ import com.kq.acdos.data.local.RouteEntity
 import com.kq.acdos.data.local.RouteStopEntity
 import com.kq.acdos.data.local.RouteWithStops
 import com.kq.acdos.data.local.inMemoryDatabase
-import com.kq.acdos.data.remote.CrewPickupResponseDto
 import com.kq.acdos.data.remote.DriverRouteDto
 import com.kq.acdos.data.remote.DriverRouteResponseDto
 import com.kq.acdos.data.remote.DriverStopDto
-import com.kq.acdos.data.remote.MeApi
 import com.kq.acdos.data.remote.RouteStatusDto
-import com.kq.acdos.data.remote.RouteSummaryPageDto
 import com.squareup.moshi.JsonDataException
 import java.io.IOException
 import java.time.Instant
@@ -33,24 +30,6 @@ import retrofit2.Response
 /** What a refresh does to the Room cache for each answer from GET /drivers/me/route. */
 @RunWith(RobolectricTestRunner::class)
 class DriverRouteRepositoryTest {
-    /** Answers driverRoute() with [next] and counts the calls. */
-    private class FakeMeApi : MeApi {
-        var calls = 0
-        var next: () -> Response<DriverRouteResponseDto> = { error("no answer set") }
-
-        override suspend fun driverRoute(): Response<DriverRouteResponseDto> {
-            calls++
-            return next()
-        }
-
-        override suspend fun driverRoutes(
-            cursor: String?,
-            limit: Int?
-        ): Response<RouteSummaryPageDto> = error("not used")
-
-        override suspend fun crewPickup(): Response<CrewPickupResponseDto> = error("not used")
-    }
-
     private val t0 = Instant.parse("2026-10-30T03:00:00Z")
     private var now = t0
     private val driverId = "driver-1"
