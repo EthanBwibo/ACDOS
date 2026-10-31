@@ -141,8 +141,9 @@ async def seed(conn, w: World) -> None:
         async def route(van, status: str, stops: list[tuple[str, str]]):
             rid = await conn.fetchval(
                 "insert into public.routes "
-                "(vehicle_id, optimization_job_id, total_distance_km, status) "
-                "values ($1, $2, 20, $3) returning id",
+                "(vehicle_id, optimization_job_id, total_distance_km, status, "
+                "planned_departure, planned_arrival) "
+                "values ($1, $2, 20, $3, now(), now() + interval '2 hours') returning id",
                 van,
                 job,
                 status,

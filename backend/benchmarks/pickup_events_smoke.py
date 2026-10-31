@@ -115,8 +115,10 @@ async def seed(driver_id: UUID, now: datetime) -> dict:
                 ids["routes"].append(
                     await conn.fetchval(
                         "insert into public.routes "
-                        "(vehicle_id, optimization_job_id, total_distance_km, status) "
-                        "values ($1, $2, 20, 'active') returning id",
+                        "(vehicle_id, optimization_job_id, total_distance_km, status, "
+                        "planned_departure, planned_arrival) "
+                        "values ($1, $2, 20, 'active', now(), now() + interval '2 hours') "
+                        "returning id",
                         vehicle,
                         ids["job"],
                     )

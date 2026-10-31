@@ -115,8 +115,9 @@ async def seed(accounts: dict, crew_row_id: UUID) -> dict:
             async def route(status, stops):
                 rid = await conn.fetchval(
                     "insert into public.routes "
-                    "(vehicle_id, optimization_job_id, total_distance_km, status) "
-                    "values ($1, $2, 27.3, $3) returning id",
+                    "(vehicle_id, optimization_job_id, total_distance_km, status, "
+                    "planned_departure, planned_arrival) "
+                    "values ($1, $2, 27.3, $3, now(), now() + interval '2 hours') returning id",
                     ids["vehicle"],
                     ids["job"],
                     status,
