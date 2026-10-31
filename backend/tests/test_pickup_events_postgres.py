@@ -314,13 +314,15 @@ def test_events_move_the_pickup_status_with_guards(client, world):
             world.event("n3"),  # assigned -> picked_up
             world.event("n3", **no_show),  # picked_up never goes back
             world.event("n5"),  # cancelled is never changed
+            world.event("n6", **no_show),  # assigned -> missed, and stays there
         ],
     )
-    assert [world.status(p) for p in ["p1", "p2", "p3", "p5"]] == [
+    assert [world.status(p) for p in ["p1", "p2", "p3", "p5", "p6"]] == [
         "picked_up",
         "assigned",
         "picked_up",
         "cancelled",
+        "missed",
     ]
 
 
