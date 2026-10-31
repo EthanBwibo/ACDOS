@@ -4,10 +4,11 @@ from fastapi import FastAPI
 
 from app import errors
 from app.auth import JwksKeys, fetch_jwks, issuer
+from app.body_limit import BodyLimit
 from app.config import settings
 from app.jobs import store
 from app.jobs.runner import JobRunner, solver_pool
-from app.routers import health, me, optimisation_jobs
+from app.routers import health, me, optimisation_jobs, pickup_events
 from app.solver.problem import Point
 
 
@@ -55,3 +56,5 @@ errors.install(app)
 app.include_router(health.router)
 app.include_router(optimisation_jobs.router)
 app.include_router(me.router)
+app.include_router(pickup_events.router)
+app.add_middleware(BodyLimit, limits={("POST", pickup_events.PATH): pickup_events.BODY_LIMIT})

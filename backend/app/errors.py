@@ -39,6 +39,11 @@ class ErrorCode(StrEnum):
     NOT_PLANNABLE = "not_plannable"
     DEPARTED_ROUTES = "departed_routes"
     LEFT_BEHIND_ON_ROUTE = "left_behind_on_route"
+    # Pickup-event upload (#33): the whole request, then one event.
+    PAYLOAD_TOO_LARGE = "payload_too_large"
+    DRIVER_MISMATCH = "driver_mismatch"
+    NOT_YOUR_STOP = "not_your_stop"
+    ALREADY_CONFIRMED = "already_confirmed"
 
 
 class ErrorBody(BaseModel):
@@ -74,7 +79,9 @@ class ApiError(Exception):
         self.headers = headers
 
 
-def _send(status: int, body: ErrorBody, headers: dict[str, str] | None = None) -> JSONResponse:
+def error_response(
+    status: int, body: ErrorBody, headers: dict[str, str] | None = None
+) -> JSONResponse:
     return JSONResponse(
         body.model_dump(mode="json", exclude_none=True), status_code=status, headers=headers
     )
@@ -87,6 +94,7 @@ _CODE_FOR_STATUS = {
     403: ErrorCode.FORBIDDEN,
     404: ErrorCode.NOT_FOUND,
     405: ErrorCode.METHOD_NOT_ALLOWED,
+    413: ErrorCode.PAYLOAD_TOO_LARGE,
     503: ErrorCode.UNAVAILABLE,
 }
 
@@ -94,7 +102,7 @@ _CODE_FOR_STATUS = {
 def install(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def api_error(request: Request, error: ApiError) -> JSONResponse:
-        return _send(error.status, error.body, error.headers)
+        return error_response(error.status, error.body, error.headers)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError) -> JSONResponse:
@@ -103,14 +111,14 @@ def install(app: FastAPI) -> None:
         detail = "; ".join(
             f"{'.'.join(str(part) for part in e['loc'])}: {e['msg']}" for e in error.errors()
         )
-        return _send(422, ErrorBody(code=ErrorCode.VALIDATION_FAILED, detail=detail))
+        return error_response(422, ErrorBody(code=ErrorCode.VALIDATION_FAILED, detail=detail))
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, error: StarletteHTTPException) -> JSONResponse:
         code = _CODE_FOR_STATUS.get(error.status_code)
         if code is None:
             raise RuntimeError(f"no ErrorCode for status {error.status_code}") from error
-        return _send(
+        return error_response(
             error.status_code, ErrorBody(code=code, detail=str(error.detail)), error.headers
         )
 
