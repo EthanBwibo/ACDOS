@@ -7,11 +7,15 @@ import com.kq.acdos.auth.SharedPreferencesProfileCache
 import com.kq.acdos.auth.SharedPreferencesSessionManager
 import com.kq.acdos.auth.SupabaseAuthRepository
 import com.kq.acdos.data.local.AcdosDatabase
+import com.kq.acdos.data.remote.ApiClient
+import com.kq.acdos.data.remote.MeApi
+import com.kq.acdos.data.remote.OptimisationJobsApi
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.ktor.client.engine.okhttp.OkHttp
 import kotlin.time.Duration.Companion.seconds
+import retrofit2.create
 
 /** Hand-wired dependencies, one per process (no DI framework). */
 class AppContainer(context: Context) {
@@ -41,6 +45,18 @@ class AppContainer(context: Context) {
         }
         SupabaseAuthRepository(client, sessionManager)
     }
+
+    /** False in builds without an API base URL, such as CI. */
+    val isApiConfigured: Boolean = BuildConfig.API_BASE_URL.isNotBlank()
+
+    // The FastAPI backend, authenticated with the Supabase access token.
+    private val retrofit by lazy {
+        ApiClient.retrofit(BuildConfig.API_BASE_URL, ApiClient.okHttp(authRepository))
+    }
+
+    val optimisationJobsApi: OptimisationJobsApi by lazy { retrofit.create() }
+
+    val meApi: MeApi by lazy { retrofit.create() }
 
     val database: AcdosDatabase by lazy { AcdosDatabase.build(appContext) }
 
