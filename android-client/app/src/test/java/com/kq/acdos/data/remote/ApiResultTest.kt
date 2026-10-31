@@ -39,10 +39,9 @@ class ApiResultTest {
     private fun retrofit() =
         ApiClient.retrofit(server.url("/").toString(), ApiClient.okHttp(tokens))
 
-    private fun reply(code: Int, body: String, type: String = "application/json") =
-        server.enqueue(
-            MockResponse.Builder().code(code).addHeader("Content-Type", type).body(body).build()
-        )
+    private fun reply(code: Int, body: String, type: String = "application/json") = server.enqueue(
+        MockResponse.Builder().code(code).addHeader("Content-Type", type).body(body).build()
+    )
 
     private fun crewPickup() = runBlocking { apiCall { retrofit().create<MeApi>().crewPickup() } }
 

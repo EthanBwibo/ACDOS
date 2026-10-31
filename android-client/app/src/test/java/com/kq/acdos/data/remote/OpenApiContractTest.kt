@@ -104,6 +104,7 @@ class OpenApiContractTest {
         for ((name, dto) in dtos) {
             val schema = schemas.obj(name)
             val required = (schema["required"] as List<*>?).orEmpty()
+
             @Suppress("UNCHECKED_CAST")
             val example = example(schema) as Map<String, Any?>
             for ((field, property) in schema.obj("properties")) {
@@ -172,14 +173,19 @@ class OpenApiContractTest {
         schema["enum"]?.let { return (it as List<*>).first() }
         return when (schema["type"]) {
             "object" -> schema.obj("properties").mapValues { example(it.value as Map<*, *>) }
+
             "array" -> listOf(example(schema.obj("items")))
+
             "integer" -> 3
+
             "number" -> 1.5
+
             "string" -> when (schema["format"]) {
                 "uuid" -> "6f1c2a9e-0d4b-4c57-9a3e-2b8f7d1e5a40"
                 "date-time" -> "2026-10-30T03:50:34.037197Z"
                 else -> "text"
             }
+
             else -> error("no example for schema $schema")
         }
     }
