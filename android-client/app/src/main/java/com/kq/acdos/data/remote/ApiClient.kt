@@ -4,6 +4,7 @@ import com.kq.acdos.auth.AccessTokenProvider
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
+import com.squareup.moshi.adapters.EnumJsonAdapter
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -30,7 +31,14 @@ object InstantAdapter {
 
 /** Builds the Retrofit client for the FastAPI backend. */
 object ApiClient {
-    val moshi: Moshi = Moshi.Builder().add(InstantAdapter).build()
+    val moshi: Moshi = Moshi.Builder()
+        .add(InstantAdapter)
+        // A code the backend adds later reads as UNKNOWN instead of failing the body.
+        .add(
+            ErrorCode::class.java,
+            EnumJsonAdapter.create(ErrorCode::class.java).withUnknownFallback(ErrorCode.UNKNOWN)
+        )
+        .build()
 
     fun okHttp(tokens: AccessTokenProvider): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(BearerTokenInterceptor(tokens))

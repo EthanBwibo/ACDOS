@@ -11,8 +11,10 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 /**
- * The dispatcher's optimisation runs (#51). Responses come back as
- * [Response] so callers can tell 409 and 422 apart from a network failure.
+ * The dispatcher's optimisation runs (#51). Only the dispatcher screens (#27)
+ * call this. The routes will require a dispatcher token: anyone else gets 403,
+ * which never triggers a token refresh and reaches the caller through
+ * [apiCall] as ErrorCode.FORBIDDEN ("not allowed").
  */
 interface OptimisationJobsApi {
     /**
@@ -25,11 +27,11 @@ interface OptimisationJobsApi {
         @Body body: OptimisationJobCreateDto
     ): Response<OptimisationJobAcceptedDto>
 
-    @GET("optimisation-jobs/{id}")
-    suspend fun getJob(@Path("id") jobId: String): Response<OptimisationJobResultDto>
+    @GET("optimisation-jobs/{job_id}")
+    suspend fun getJob(@Path("job_id") jobId: String): Response<OptimisationJobResultDto>
 }
 
-// DTOs mirror backend/app/models/schemas.py field for field. Ids stay strings.
+// DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
 
 enum class OptimizationTriggerTypeDto {
     @Json(name = "scheduled")

@@ -55,6 +55,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // OpenApiContractTest reads the backend's contract. Declared as an input so
+    // a changed spec reruns the tests instead of reusing an up-to-date result.
+    testOptions {
+        unitTests.all {
+            val spec = rootProject.file("../docs/openapi.json")
+            it.inputs.file(spec)
+                .withPropertyName("openapi")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+            it.systemProperty("acdos.openapi", spec.absolutePath)
+        }
+    }
 }
 
 // Room writes each schema version as JSON here; committed, so schema changes show in review.
@@ -83,6 +95,7 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     // Moshi adapters generated at compile time (KSP), so no kotlin-reflect in the APK
     implementation(libs.moshi)
+    implementation(libs.moshi.adapters)
     ksp(libs.moshi.kotlin.codegen)
     // ViewModel + lifecycleScope: coroutines tied to screen lifecycle
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

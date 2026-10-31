@@ -26,7 +26,7 @@ interface MeApi {
     suspend fun crewPickup(): Response<CrewPickupResponseDto>
 }
 
-// DTOs mirror backend/app/models/schemas.py field for field. Ids stay strings.
+// DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
 
 enum class RouteStatusDto {
     @Json(name = "active")
