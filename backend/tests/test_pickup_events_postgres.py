@@ -385,7 +385,9 @@ def test_a_concurrent_upload_of_the_same_key_is_a_duplicate_not_an_error(world):
     )
 
     async def run():
-        pool = await asyncpg.create_pool(DATABASE_URL, statement_cache_size=0, max_size=2)
+        pool = await asyncpg.create_pool(
+            DATABASE_URL, statement_cache_size=0, min_size=1, max_size=2
+        )
         other = await asyncpg.connect(DATABASE_URL, statement_cache_size=0)
         try:
             tx = other.transaction()
@@ -501,18 +503,26 @@ POLICY_011 = """
 """
 
 
-def test_022_refuses_an_event_after_its_stop_was_replanned(world):
+def test_022_accepts_an_event_from_before_its_stop_was_replanned(world):
+    # 011's policy reads route_nodes under the driver's own RLS, which since
+    # 021 hides superseded nodes: it refused every event on a replanned stop,
+    # even one that happened before the re-plan. 022 accepts that one, and
+    # still refuses one from after.
+    replanned_at = world.now - timedelta(minutes=30)
+
     async def supersede(conn):
         await conn.execute(
             "update public.route_nodes set superseded_at = $2 where id = $1",
             world.nodes["n6"],
-            world.now - timedelta(minutes=30),
+            replanned_at,
         )
 
     db(supersede)
-    late = world.now - timedelta(minutes=1)
+    early = replanned_at - timedelta(minutes=10)
+    late = replanned_at + timedelta(minutes=10)
+    assert as_driver_after("select 1", world, "n6", early)[0] is True
     assert as_driver_after("select 1", world, "n6", late)[0] is False
-    assert as_driver_after(POLICY_011, world, "n6", late)[0] is True
+    assert as_driver_after(POLICY_011, world, "n6", early)[0] is False
 
 
 def test_023_moves_the_status(world):
