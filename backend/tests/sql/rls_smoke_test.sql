@@ -1,7 +1,8 @@
 -- Checks the RLS policies (011, helpers moved to private by 012), the
 -- pickup_events confirmation index, one live route node per pickup (018),
 -- pickup zones (019), crew reading their own route and van (020) and drivers
--- reading only live stops (021), by impersonating each role.
+-- reading only live stops (021) and recording events by when they happened
+-- (022), by impersonating each role.
 -- Seed data is inserted as the superuser, which bypasses RLS.
 -- Any failed assert stops psql (ON_ERROR_STOP) and fails CI.
 
@@ -157,6 +158,23 @@ exception when insufficient_privilege then
     null; -- expected: blocked by RLS
 end $$;
 
+-- A stop judged as it was when the event happened (022): crew F's stop on
+-- vehicle A's old route was superseded at 2026-10-31T20:00Z. An event from
+-- before that is still driver A's to record (it synced late); one from
+-- after is not.
+insert into public.pickup_events (route_node_id, driver_id, event_type, exception_type, confirmed_at, idempotency_key)
+values ('60000000-0000-0000-0000-0000000000a0', '00000000-0000-0000-0000-00000000000a',
+        'exception', 'traffic_delay', '2026-10-31T19:30:00Z', 'device-a-6');
+do $$
+begin
+    insert into public.pickup_events (route_node_id, driver_id, event_type, exception_type, confirmed_at, idempotency_key)
+    values ('60000000-0000-0000-0000-0000000000a0', '00000000-0000-0000-0000-00000000000a',
+            'exception', 'traffic_delay', '2026-10-31T20:30:00Z', 'device-a-7');
+    raise exception 'driver A recorded an event on a stop after it was replanned';
+exception when insufficient_privilege then
+    null; -- expected: 022, the stop was no longer theirs
+end $$;
+
 -- Crew C ------------------------------------------------------------------
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
 
@@ -193,7 +211,7 @@ begin
         'dispatcher should see the job outcome';
     assert (select count(*) from public.pickup_requests) = 3, 'dispatcher should see 3 requests';
     assert (select count(*) from public.crew_members) = 3, 'dispatcher should see 3 crew members';
-    assert (select count(*) from public.pickup_events) = 2, 'dispatcher should see 2 events';
+    assert (select count(*) from public.pickup_events) = 3, 'dispatcher should see 3 events';
     assert (select count(*) from public.profiles) = 4, 'dispatcher should see 4 profiles';
 end $$;
 insert into public.vehicles (plate_number, capacity) values ('KDC 003C', 7);

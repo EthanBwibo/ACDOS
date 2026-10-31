@@ -49,6 +49,18 @@ enum class ErrorCode {
     @Json(name = "left_behind_on_route")
     LEFT_BEHIND_ON_ROUTE,
 
+    @Json(name = "payload_too_large")
+    PAYLOAD_TOO_LARGE,
+
+    @Json(name = "driver_mismatch")
+    DRIVER_MISMATCH,
+
+    @Json(name = "not_your_stop")
+    NOT_YOUR_STOP,
+
+    @Json(name = "already_confirmed")
+    ALREADY_CONFIRMED,
+
     /**
      * The generic error: a code newer than this app, or a body that isn't an
      * ErrorBody at all (a proxy's HTML 502, an empty body). Not in the contract.

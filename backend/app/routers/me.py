@@ -8,7 +8,6 @@ rows themselves are filtered by RLS (app/reads.py).
 from datetime import UTC, datetime
 from typing import Annotated
 
-import asyncpg
 from fastapi import APIRouter, Query, Request, status
 
 from app import reads
@@ -30,15 +29,6 @@ _CALLER_ERRORS = {
 }
 
 
-def _db(request: Request) -> asyncpg.Pool:
-    pool = getattr(request.app.state, "db", None)
-    if pool is None:
-        raise ApiError(
-            status.HTTP_503_SERVICE_UNAVAILABLE, ErrorCode.UNAVAILABLE, "DATABASE_URL is not set"
-        )
-    return pool
-
-
 def _require(profile: reads.Profile | None, role: str) -> None:
     if profile is None or profile.role != role:
         raise ApiError(
@@ -50,7 +40,7 @@ def _require(profile: reads.Profile | None, role: str) -> None:
     "/drivers/me/route", response_model=DriverRouteResponse, responses=errors(_CALLER_ERRORS)
 )
 async def my_route(request: Request, caller: CallerDep) -> DriverRouteResponse:
-    async with reads.as_caller(_db(request), caller.user_id) as (conn, profile):
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
         _require(profile, "driver")
         return DriverRouteResponse(route=await reads.current_route(conn, caller.user_id))
 
@@ -72,14 +62,14 @@ async def my_routes(
         raise ApiError(
             status.HTTP_422_UNPROCESSABLE_CONTENT, ErrorCode.VALIDATION_FAILED, "invalid cursor"
         ) from error
-    async with reads.as_caller(_db(request), caller.user_id) as (conn, profile):
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
         _require(profile, "driver")
         return await reads.route_page(conn, caller.user_id, after, limit)
 
 
 @router.get("/crew/me/pickup", response_model=CrewPickupResponse, responses=errors(_CALLER_ERRORS))
 async def my_pickup(request: Request, caller: CallerDep) -> CrewPickupResponse:
-    async with reads.as_caller(_db(request), caller.user_id) as (conn, profile):
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
         _require(profile, "crew")
         if profile.crew_member_id is None:
             # A crew account not yet linked to a crew_members row.

@@ -18,7 +18,7 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | pickup_requests | id UUID; crew_member_id UUID; pickup_location GEOGRAPHY(Point, 4326); report_time TIMESTAMPTZ; request_type TEXT; status TEXT; created_at TIMESTAMPTZ | PK id; FK crew_member_id; request_type in (rostered, standby); status in (pending, assigned, picked_up, missed, cancelled); spatial index on pickup_location |
 | routes | id UUID; vehicle_id UUID; optimization_job_id UUID; total_distance_km NUMERIC; status TEXT; created_at TIMESTAMPTZ | PK id; FK vehicle_id, optimization_job_id; status in (active, completed, superseded) |
 | route_nodes | id UUID; route_id UUID; pickup_request_id UUID; seq_order INT; estimated_arrival TIMESTAMPTZ; superseded_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK route_id, pickup_request_id; pickup_request_id unique among nodes with superseded_at null (partial unique index); route_id and seq_order unique together; superseded_at null until a later job re-plans the pickup |
-| pickup_events | id UUID; route_node_id UUID; driver_id UUID; event_type TEXT; exception_type TEXT; confirmed_at TIMESTAMPTZ; synced_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id, driver_id to profiles; event_type in (pickup_confirmed, exception); exception_type in (no_show, vehicle_issue, traffic_delay) or null; idempotency_key unique; at most one pickup_confirmed per route_node_id (partial unique index); synced_at null until synchronised |
+| pickup_events | id UUID; route_node_id UUID; driver_id UUID; event_type TEXT; exception_type TEXT; confirmed_at TIMESTAMPTZ; synced_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id, driver_id to profiles; event_type in (pickup_confirmed, exception); exception_type in (no_show, vehicle_issue, traffic_delay) or null; idempotency_key unique; at most one pickup_confirmed per route_node_id (partial unique index); synced_at null until synchronised; confirmed_at is when the event **occurred** on the device, for every event type, exceptions included; synced_at is when the server received it |
 | trip_records | id UUID; route_node_id UUID; vehicle_id UUID; crew_count INT; pickup_timestamp TIMESTAMPTZ; scheduled_report_time TIMESTAMPTZ; actual_arrival TIMESTAMPTZ; actual_duration_sec INT; day_of_week SMALLINT; route_corridor TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id (unique), vehicle_id; day_of_week 0 = Monday to 6 = Sunday (see Conventions) |
 
 ## Communication model (ERD Figure: communication)
@@ -75,7 +75,11 @@ for every client path, not only a backstop behind FastAPI.
 - **Dispatcher:** read and write on operational tables; read crew messages and notice status.
 - **Driver:** read the route of their assigned vehicle and its route nodes that are not
   superseded; read the `pickup_requests` and `crew_members` rows linked to route nodes on an
-  **active** route of that vehicle (who to pick up and where); insert pickup events.
+  **active** route of that vehicle (who to pick up and where); insert pickup events as
+  themselves on a node of a route of that vehicle, judged by when the event happened: a live
+  node on an active or completed route, or a superseded node whose `superseded_at` is after
+  the event's `confirmed_at` (an offline event synced after a re-plan). Device time is
+  evidence, not proof.
 - **Dispatcher, validation data:** read `travel_time_observations`. No client writes it: only
   the Edge Function, with the service role.
 - **Crew:** read their own pickup requests and notices; read the `route_nodes` for their own
@@ -92,6 +96,18 @@ subquery would recurse.
 The helpers live in the `private` schema, which the Supabase API does not expose, so clients
 cannot call them as `/rest/v1/rpc/...` endpoints. Only `authenticated` may execute them; `anon`
 and `PUBLIC` may not.
+
+## Triggers (logic outside the API)
+
+- `pickup_events_apply_to_pickup` (after insert on `pickup_events`, `private.apply_pickup_event`,
+  `SECURITY DEFINER`, #33) moves the event's pickup request in the same transaction, whatever
+  wrote the event:
+  - `pickup_confirmed` sets `picked_up` from `assigned` or `missed`;
+  - exception `no_show` sets `missed` from `assigned` only;
+  - `vehicle_issue` and `traffic_delay` change nothing.
+
+  It never changes a `cancelled` pickup and never moves `picked_up` back. Drivers have no
+  UPDATE policy on `pickup_requests`; this is the only way their events change it.
 
 ## Conventions
 
