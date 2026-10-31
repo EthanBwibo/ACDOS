@@ -104,6 +104,8 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     // The Route tab's stop list (only came in through Material before)
     implementation(libs.androidx.recyclerview)
+    // Pull to refresh on the Route tab (#123)
+    implementation(libs.androidx.swiperefreshlayout)
     testImplementation(libs.kotlinx.coroutines.test)
     kspTest(libs.moshi.kotlin.codegen)
     // Supabase Auth (sign-in, token refresh) and PostgREST (reading profiles.role).
