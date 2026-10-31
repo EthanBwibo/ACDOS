@@ -102,6 +102,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     // Fragments for the bottom-nav tabs (Driver: Route/Schedule/Sync, Crew: Pickup/Message)
     implementation(libs.androidx.fragment.ktx)
+    // The Route tab's stop list (only came in through Material before)
+    implementation(libs.androidx.recyclerview)
     testImplementation(libs.kotlinx.coroutines.test)
     kspTest(libs.moshi.kotlin.codegen)
     // Supabase Auth (sign-in, token refresh) and PostgREST (reading profiles.role).

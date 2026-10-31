@@ -36,10 +36,11 @@ class DriverRouteDaoTest {
         routeId = route,
         seqOrder = seq,
         crewName = "Crew $node",
+        zoneLabel = "Westlands, Nairobi",
+        scheduledPickup = t0.plusSeconds(600L * seq),
+        eta = null,
         pickupLat = -1.2675,
-        pickupLon = 36.812022,
-        estimatedArrival = t0.plusSeconds(600L * seq),
-        reportTime = Instant.parse("2026-11-01T04:10:00Z")
+        pickupLon = 36.81202
     )
 
     @Test

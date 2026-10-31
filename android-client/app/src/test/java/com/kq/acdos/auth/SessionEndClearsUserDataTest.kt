@@ -53,7 +53,7 @@ class SessionEndClearsUserDataTest {
     private suspend fun seed() {
         db.driverRouteDao().saveActiveRoute(
             RouteEntity("r1", "KDA 001A", t0),
-            listOf(RouteStopEntity("n1", "r1", 1, "Crew C", -1.2675, 36.812022, t0, t0))
+            listOf(RouteStopEntity("n1", "r1", 1, "Crew C", null, t0, null, -1.2675, 36.81202))
         )
         val crew = db.crewDao()
         crew.savePickup(CrewPickupEntity("p1", t0, t0, "KDA 001A", t0))

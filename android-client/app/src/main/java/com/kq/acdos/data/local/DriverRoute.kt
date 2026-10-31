@@ -2,12 +2,14 @@ package com.kq.acdos.data.local
 
 import androidx.room.ColumnInfo
 import androidx.room.Dao
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Relation
 import androidx.room.Transaction
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -24,9 +26,9 @@ data class RouteEntity(
 )
 
 /**
- * One pickup on the driver's route (a route_nodes row), with the crew member's
- * name, pickup point and report time copied in so the Route tab works offline.
- * Only what the screen shows: no crew id, phone or home address text.
+ * One pickup on the driver's route: a stop of GET /drivers/me/route (#52),
+ * kept so the Route tab works offline. Only what the screen shows: no crew id,
+ * phone or address text, and no per-crew deadline (drivers don't see them).
  */
 @Entity(
     tableName = "route_stop",
@@ -46,15 +48,34 @@ data class RouteStopEntity(
     @ColumnInfo(name = "route_id") val routeId: String,
     @ColumnInfo(name = "seq_order") val seqOrder: Int,
     @ColumnInfo(name = "crew_name") val crewName: String,
+    /** Nearest pickup zone, e.g. "Westlands, Nairobi"; null when the backend has none. */
+    @ColumnInfo(name = "zone_label") val zoneLabel: String?,
+    /** The live plan's time at this stop. */
+    @ColumnInfo(name = "scheduled_pickup") val scheduledPickup: Instant,
+    /** Null until live tracking can estimate it; shown instead of [scheduledPickup] when set. */
+    val eta: Instant?,
     @ColumnInfo(name = "pickup_lat") val pickupLat: Double,
-    @ColumnInfo(name = "pickup_lon") val pickupLon: Double,
-    @ColumnInfo(name = "estimated_arrival") val estimatedArrival: Instant,
-    /** pickup_requests.report_time: the crew member's deadline at JKIA. */
-    @ColumnInfo(name = "report_time") val reportTime: Instant
+    @ColumnInfo(name = "pickup_lon") val pickupLon: Double
+)
+
+/** The cached route with its stops, read together (see [DriverRouteDao.observeRouteWithStops]). */
+data class RouteWithStops(
+    @Embedded val route: RouteEntity,
+    @Relation(parentColumn = "id", entityColumn = "route_id")
+    val stops: List<RouteStopEntity>
 )
 
 @Dao
 interface DriverRouteDao {
+    /**
+     * The route and its stops in one read, so a replaced route shows up as one
+     * change: never the old route with its stops already deleted. Stops come
+     * unordered from @Relation; sort by seq_order.
+     */
+    @Transaction
+    @Query("SELECT * FROM driver_route LIMIT 1")
+    fun observeRouteWithStops(): Flow<RouteWithStops?>
+
     @Query("SELECT * FROM driver_route LIMIT 1")
     fun observeRoute(): Flow<RouteEntity?>
 

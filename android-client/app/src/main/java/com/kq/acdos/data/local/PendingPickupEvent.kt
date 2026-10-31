@@ -65,6 +65,13 @@ interface PendingPickupEventDao {
     )
     suspend fun pending(driverId: String): List<PendingPickupEventEntity>
 
+    /** How many of [driverId]'s events are still to upload, as in [pending]. Asked at sign-out. */
+    @Query(
+        "SELECT COUNT(*) FROM pickup_event_outbox WHERE driver_id = :driverId " +
+            "AND synced_at IS NULL AND conflict IS NULL"
+    )
+    suspend fun countPending(driverId: String): Int
+
     @Query("UPDATE pickup_event_outbox SET synced_at = :syncedAt WHERE idempotency_key = :key")
     suspend fun markSynced(key: String, syncedAt: Instant)
 

@@ -1,0 +1,322 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "8adac47f63c87e6eac1f67a923e63285",
+    "entities": [
+      {
+        "tableName": "driver_route",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `plate_number` TEXT NOT NULL, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plateNumber",
+            "columnName": "plate_number",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAt",
+            "columnName": "fetched_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "route_stop",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`route_node_id` TEXT NOT NULL, `route_id` TEXT NOT NULL, `seq_order` INTEGER NOT NULL, `crew_name` TEXT NOT NULL, `zone_label` TEXT, `scheduled_pickup` INTEGER NOT NULL, `eta` INTEGER, `pickup_lat` REAL NOT NULL, `pickup_lon` REAL NOT NULL, PRIMARY KEY(`route_node_id`), FOREIGN KEY(`route_id`) REFERENCES `driver_route`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "routeNodeId",
+            "columnName": "route_node_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "routeId",
+            "columnName": "route_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seqOrder",
+            "columnName": "seq_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "crewName",
+            "columnName": "crew_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zoneLabel",
+            "columnName": "zone_label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "scheduledPickup",
+            "columnName": "scheduled_pickup",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eta",
+            "columnName": "eta",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "pickupLat",
+            "columnName": "pickup_lat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pickupLon",
+            "columnName": "pickup_lon",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "route_node_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_route_stop_route_id",
+            "unique": false,
+            "columnNames": [
+              "route_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_route_stop_route_id` ON `${TABLE_NAME}` (`route_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "driver_route",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "route_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "crew_pickup",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`pickup_request_id` TEXT NOT NULL, `estimated_pickup` INTEGER, `report_time` INTEGER NOT NULL, `plate_number` TEXT, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`pickup_request_id`))",
+        "fields": [
+          {
+            "fieldPath": "pickupRequestId",
+            "columnName": "pickup_request_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estimatedPickup",
+            "columnName": "estimated_pickup",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "reportTime",
+            "columnName": "report_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plateNumber",
+            "columnName": "plate_number",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fetchedAt",
+            "columnName": "fetched_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "pickup_request_id"
+          ]
+        }
+      },
+      {
+        "tableName": "schedule_change_notice",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `pickup_request_id` TEXT NOT NULL, `reason` TEXT NOT NULL, `previous_pickup_time` INTEGER, `new_pickup_time` INTEGER, `issued_at` INTEGER NOT NULL, `acknowledged_at` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pickupRequestId",
+            "columnName": "pickup_request_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousPickupTime",
+            "columnName": "previous_pickup_time",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "newPickupTime",
+            "columnName": "new_pickup_time",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "issuedAt",
+            "columnName": "issued_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "acknowledgedAt",
+            "columnName": "acknowledged_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "preset_message",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `code` TEXT NOT NULL, `label` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "pickup_event_outbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idempotency_key` TEXT NOT NULL, `driver_id` TEXT NOT NULL, `route_node_id` TEXT NOT NULL, `event_type` TEXT NOT NULL, `exception_type` TEXT, `confirmed_at` INTEGER NOT NULL, `synced_at` INTEGER, `conflict` TEXT, PRIMARY KEY(`idempotency_key`))",
+        "fields": [
+          {
+            "fieldPath": "idempotencyKey",
+            "columnName": "idempotency_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driverId",
+            "columnName": "driver_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "routeNodeId",
+            "columnName": "route_node_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventType",
+            "columnName": "event_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exceptionType",
+            "columnName": "exception_type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "confirmedAt",
+            "columnName": "confirmed_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncedAt",
+            "columnName": "synced_at",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "conflict",
+            "columnName": "conflict",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idempotency_key"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pickup_event_outbox_driver_id_synced_at_conflict",
+            "unique": false,
+            "columnNames": [
+              "driver_id",
+              "synced_at",
+              "conflict"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pickup_event_outbox_driver_id_synced_at_conflict` ON `${TABLE_NAME}` (`driver_id`, `synced_at`, `conflict`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8adac47f63c87e6eac1f67a923e63285')"
+    ]
+  }
+}
