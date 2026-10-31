@@ -27,13 +27,9 @@ import kotlinx.coroutines.launch
 @StringRes
 fun refreshMessage(result: RefreshResult, manual: Boolean): Int? = when (result) {
     RefreshResult.SIGN_IN_AGAIN -> R.string.route_refresh_sign_in_again
-
     RefreshResult.NOT_ALLOWED -> R.string.route_refresh_not_allowed
-
     RefreshResult.OFFLINE -> if (manual) R.string.route_refresh_offline else null
-
     RefreshResult.FAILED -> if (manual) R.string.route_refresh_failed else null
-
     RefreshResult.UPDATED, RefreshResult.NO_ROUTE, RefreshResult.THROTTLED -> null
 }
 
