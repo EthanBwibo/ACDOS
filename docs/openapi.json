@@ -241,7 +241,11 @@
           "unknown_ids",
           "not_plannable",
           "departed_routes",
-          "left_behind_on_route"
+          "left_behind_on_route",
+          "payload_too_large",
+          "driver_mismatch",
+          "not_your_stop",
+          "already_confirmed"
         ],
         "title": "ErrorCode",
         "type": "string"
@@ -398,6 +402,154 @@
           "vehicle_breakdown"
         ],
         "title": "OptimizationTriggerType",
+        "type": "string"
+      },
+      "PickupEventBatch": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/PickupEventIn"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Events",
+            "type": "array"
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "title": "PickupEventBatch",
+        "type": "object"
+      },
+      "PickupEventIn": {
+        "properties": {
+          "driver_id": {
+            "format": "uuid",
+            "title": "Driver Id",
+            "type": "string"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/PickupEventType"
+          },
+          "exception_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PickupExceptionType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "idempotency_key": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "route_node_id": {
+            "format": "uuid",
+            "title": "Route Node Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "route_node_id",
+          "driver_id",
+          "event_type",
+          "occurred_at"
+        ],
+        "title": "PickupEventIn",
+        "type": "object"
+      },
+      "PickupEventOutcome": {
+        "enum": [
+          "accepted",
+          "duplicate",
+          "rejected"
+        ],
+        "title": "PickupEventOutcome",
+        "type": "string"
+      },
+      "PickupEventResult": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode",
+            "title": "Code",
+            "x-error-codes": [
+              "validation_failed",
+              "driver_mismatch",
+              "idempotency_key_reused",
+              "not_your_stop",
+              "already_confirmed"
+            ]
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PickupEventOutcome"
+          },
+          "stop_replanned": {
+            "title": "Stop Replanned",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "status"
+        ],
+        "title": "PickupEventResult",
+        "type": "object"
+      },
+      "PickupEventResults": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PickupEventResult"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "PickupEventResults",
+        "type": "object"
+      },
+      "PickupEventType": {
+        "enum": [
+          "pickup_confirmed",
+          "exception"
+        ],
+        "title": "PickupEventType",
+        "type": "string"
+      },
+      "PickupExceptionType": {
+        "enum": [
+          "no_show",
+          "vehicle_issue",
+          "traffic_delay"
+        ],
+        "title": "PickupExceptionType",
         "type": "string"
       },
       "PickupRequestStatus": {
@@ -615,6 +767,107 @@
           }
         ],
         "summary": "My Pickup",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/drivers/me/pickup-events": {
+      "post": {
+        "operationId": "upload_drivers_me_pickup_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupEventBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickupEventResults"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Content Too Large: payload_too_large",
+            "x-error-codes": [
+              "payload_too_large"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Upload",
         "tags": [
           "me"
         ]

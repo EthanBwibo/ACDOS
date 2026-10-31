@@ -14,7 +14,10 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
+from pydantic.json_schema import SkipJsonSchema
+
+from app.errors import ErrorCode
 
 
 class HealthResponse(BaseModel):
@@ -315,3 +318,61 @@ class CrewPickup(BaseModel):
 
 class CrewPickupResponse(BaseModel):
     pickup: CrewPickup | None  # null when nothing is coming up
+
+
+# Pickup-event upload (#33): a batch from the app's outbox, and what became
+# of each event.
+
+
+class PickupEventIn(BaseModel):
+    # Made on the device, so a resent event is recognised (pickup_events.
+    # idempotency_key).
+    idempotency_key: str = Field(min_length=1, max_length=100)
+    route_node_id: UUID
+    driver_id: UUID  # must be the caller
+    event_type: PickupEventType
+    # Exactly when event_type is exception; checked per event.
+    exception_type: PickupExceptionType | None = None
+    # When it happened on the device (stored as pickup_events.confirmed_at),
+    # with its UTC offset.
+    occurred_at: AwareDatetime
+
+
+class PickupEventBatch(BaseModel):
+    events: list[PickupEventIn] = Field(min_length=1, max_length=50)
+
+
+class PickupEventOutcome(StrEnum):
+    ACCEPTED = "accepted"
+    DUPLICATE = "duplicate"  # already stored: counts as success
+    REJECTED = "rejected"  # final: retrying will not help
+
+
+class PickupEventResult(BaseModel):
+    idempotency_key: str
+    status: PickupEventOutcome
+    # The stored pickup_events.id, when accepted or duplicate (for a
+    # duplicate, the event already stored), so the outbox can keep the
+    # server's id.
+    event_id: UUID | SkipJsonSchema[None] = None
+    # Only when rejected.
+    code: ErrorCode | SkipJsonSchema[None] = Field(
+        default=None,
+        json_schema_extra={
+            "x-error-codes": [
+                "validation_failed",
+                "driver_mismatch",
+                "idempotency_key_reused",
+                "not_your_stop",
+                "already_confirmed",
+            ]
+        },
+    )
+    detail: str | SkipJsonSchema[None] = None
+    # Only (true) when accepted on a stop a later plan replaced: the event
+    # happened before the re-plan. Tell the dispatcher (#113).
+    stop_replanned: bool | SkipJsonSchema[None] = None
+
+
+class PickupEventResults(BaseModel):
+    results: list[PickupEventResult]  # one per event, in request order

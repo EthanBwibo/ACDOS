@@ -45,6 +45,7 @@ TOKEN_ROUTES = {
     "/crew/me/pickup",
     "/optimisation-jobs",
     "/optimisation-jobs/{job_id}",
+    "/drivers/me/pickup-events",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
@@ -157,8 +158,12 @@ class World:
         async def as_caller(pool, user_id):
             yield None, reads.Profile(role, None)
 
+        async def profile_of(conn, user_id):
+            return reads.Profile(role, None)
+
         self.monkeypatch.setattr(app.state, "db", object(), raising=False)
         self.monkeypatch.setattr(reads, "as_caller", as_caller)
+        self.monkeypatch.setattr(reads, "profile_of", profile_of)
 
     def job_body(self, **changes) -> dict:
         return {
@@ -233,6 +238,38 @@ def _me(path: str, setup: Callable[[World], None] | None, token: bool, query: st
         if setup:
             setup(w)
         return w.client.get(path + query, headers=w.token() if token else {})
+
+    return run
+
+
+EVENTS = "/drivers/me/pickup-events"
+
+
+def _events(setup, token: bool = True, events: list | None = None, size: int | None = None):
+    """POST a pickup-event batch: one valid-looking event by default, an
+    explicit list, or a body padded to size bytes."""
+
+    def run(w: World):
+        if setup:
+            setup(w)
+        batch = {
+            "events": events
+            if events is not None
+            else [
+                {
+                    "idempotency_key": "contract-event",
+                    "route_node_id": str(uuid4()),
+                    "driver_id": str(uuid4()),
+                    "event_type": "pickup_confirmed",
+                    "occurred_at": "2026-11-02T03:41:00Z",
+                }
+            ]
+        }
+        content = json.dumps(batch)
+        if size is not None:
+            content = content[:-1] + ', "padding": "' + "x" * size + '"}'
+        headers = {"Content-Type": "application/json"} | (w.token() if token else {})
+        return w.client.post(EVENTS, content=content, headers=headers)
 
     return run
 
@@ -327,6 +364,13 @@ CASES = (
             False,
         ),
     ]
+    + [
+        ("POST", EVENTS, 401, "unauthorized", _events(None, token=False), False),
+        ("POST", EVENTS, 403, "forbidden", _events(lambda w: w.as_profile("crew")), False),
+        ("POST", EVENTS, 413, "payload_too_large", _events(None, size=40 * 1024), False),
+        ("POST", EVENTS, 422, "validation_failed", _events(None, events=[]), False),
+        ("POST", EVENTS, 503, "unavailable", _events(World.without_db), False),
+    ]
 )
 
 
@@ -382,10 +426,22 @@ def test_every_declared_error_has_a_case():
     assert declared_errors() == exercised
 
 
+def per_event_codes() -> set[str]:
+    """The codes a pickup event can be rejected with (#33), declared on the
+    result's code field."""
+    field = SPEC["components"]["schemas"]["PickupEventResult"]["properties"]["code"]
+    return set(field["x-error-codes"])
+
+
 def test_every_error_code_is_used_by_some_route_or_the_framework():
-    used = {code for *_, code in declared_errors()}
+    used = {code for *_, code in declared_errors()} | per_event_codes()
     framework_only = {ErrorCode.METHOD_NOT_ALLOWED}  # tested below; no route declares it
     assert used | framework_only == {c.value for c in ErrorCode}
+
+
+def test_per_event_codes_are_real_error_codes():
+    # Each is driven against Postgres in test_pickup_events_postgres.py.
+    assert per_event_codes() <= {c.value for c in ErrorCode}
 
 
 def test_unknown_paths_and_methods_use_the_envelope_too(world):

@@ -27,7 +27,9 @@ from datetime import datetime
 from uuid import UUID
 
 import asyncpg
+from fastapi import Request, status
 
+from app.errors import ApiError, ErrorCode
 from app.models.schemas import (
     CrewPickup,
     DriverRoute,
@@ -47,6 +49,30 @@ class Profile:
     crew_member_id: UUID | None  # set only for crew with a crew_members row
 
 
+def pool(request: Request) -> asyncpg.Pool:
+    """The app's database pool, or 503 without one."""
+    db = getattr(request.app.state, "db", None)
+    if db is None:
+        raise ApiError(
+            status.HTTP_503_SERVICE_UNAVAILABLE, ErrorCode.UNAVAILABLE, "DATABASE_URL is not set"
+        )
+    return db
+
+
+async def profile_of(conn: asyncpg.Connection | asyncpg.Pool, user_id: UUID) -> Profile | None:
+    """The caller's profile, read as postgres (None without a profiles row)."""
+    row = await conn.fetchrow(
+        """
+        select p.role, c.id as crew_member_id
+        from public.profiles p
+        left join public.crew_members c on c.profile_id = p.id
+        where p.id = $1
+        """,
+        user_id,
+    )
+    return Profile(row["role"], row["crew_member_id"]) if row else None
+
+
 @asynccontextmanager
 async def as_caller(
     pool: asyncpg.Pool, user_id: UUID
@@ -54,16 +80,7 @@ async def as_caller(
     """A transaction running as the caller, and their profile (None when
     they have no profiles row)."""
     async with pool.acquire() as conn, conn.transaction():
-        row = await conn.fetchrow(
-            """
-            select p.role, c.id as crew_member_id
-            from public.profiles p
-            left join public.crew_members c on c.profile_id = p.id
-            where p.id = $1
-            """,
-            user_id,
-        )
-        profile = Profile(row["role"], row["crew_member_id"]) if row else None
+        profile = await profile_of(conn, user_id)
         await become(conn, user_id)
         yield conn, profile
 
