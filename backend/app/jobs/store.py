@@ -87,6 +87,8 @@ class RouteConflictError(Exception):
 
 
 class JobStore(Protocol):
+    async def profile_role(self, user_id: UUID) -> str | None: ...
+
     async def job_for_key(self, idempotency_key: str) -> KeyedJob | None: ...
 
     async def pickups(self, ids: list[UUID]) -> dict[UUID, StoredPickup]: ...
@@ -177,6 +179,12 @@ class PostgresJobStore:
     def __init__(self, pool: asyncpg.Pool, depot: Point) -> None:
         self._pool = pool
         self._depot = depot
+
+    async def profile_role(self, user_id: UUID) -> str | None:
+        """profiles.role of a verified caller (#127), or None without a
+        profile. As postgres, like the rest of the job API: the dispatcher's
+        RLS policies would allow everything it reads anyway."""
+        return await self._pool.fetchval("select role from public.profiles where id = $1", user_id)
 
     async def job_for_key(self, idempotency_key: str) -> KeyedJob | None:
         row = await self._pool.fetchrow(

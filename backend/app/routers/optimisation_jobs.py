@@ -16,7 +16,9 @@ has several problems, the first in this order is reported:
    running.
 4. Create the job (queued) and hand it to the runner.
 
-Who may call this (dispatchers only) is #52.
+Only dispatchers may call these (#127): the caller's token is checked
+(app/auth.py, 401 without a valid one), and their profiles.role must be
+dispatcher (403 otherwise).
 """
 
 import hashlib
@@ -26,8 +28,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, Request, status
 
+from app.auth import Caller, CallerDep
 from app.errors import ApiError, ErrorCode, errors
 from app.jobs.runner import JobRunner
+from app.jobs.store import JobStore
 from app.jobs.worker import PickupInput, VehicleInput
 from app.models.schemas import (
     OptimisationJobAccepted,
@@ -50,6 +54,17 @@ def runner(request: Request) -> JobRunner:
             status.HTTP_503_SERVICE_UNAVAILABLE, ErrorCode.UNAVAILABLE, "DATABASE_URL is not set"
         )
     return job_runner
+
+
+async def _dispatcher_only(store: JobStore, caller: Caller) -> None:
+    if await store.profile_role(caller.user_id) != "dispatcher":
+        raise ApiError(
+            status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, "only a dispatcher may use the job API"
+        )
+
+
+# Every job route: no or bad token, not a dispatcher.
+_CALLER_ERRORS = {401: [ErrorCode.UNAUTHORIZED], 403: [ErrorCode.FORBIDDEN]}
 
 
 def request_hash(body: OptimisationJobCreate) -> str:
@@ -88,7 +103,8 @@ def _422(code: ErrorCode, detail: str, **ids: list[UUID]) -> ApiError:
     status_code=status.HTTP_202_ACCEPTED,
     response_model=OptimisationJobAccepted,
     responses=errors(
-        {
+        _CALLER_ERRORS
+        | {
             409: [ErrorCode.DEPARTED_ROUTES, ErrorCode.LEFT_BEHIND_ON_ROUTE],
             422: [
                 ErrorCode.VALIDATION_FAILED,
@@ -103,11 +119,13 @@ def _422(code: ErrorCode, detail: str, **ids: list[UUID]) -> ApiError:
 )
 async def create_job(
     request: Request,
+    caller: CallerDep,
     body: OptimisationJobCreate,
     idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
 ) -> OptimisationJobAccepted:
     job_runner = runner(request)
     store = job_runner.store
+    await _dispatcher_only(store, caller)
     body_hash = request_hash(body)
 
     existing = await store.job_for_key(idempotency_key)
@@ -178,15 +196,18 @@ async def create_job(
     "/{job_id}",
     response_model=OptimisationJobResult,
     responses=errors(
-        {
+        _CALLER_ERRORS
+        | {
             404: [ErrorCode.NOT_FOUND],
             422: [ErrorCode.VALIDATION_FAILED],
             503: [ErrorCode.UNAVAILABLE],
         }
     ),
 )
-async def get_job(request: Request, job_id: UUID) -> OptimisationJobResult:
-    result = await runner(request).store.result(job_id)
+async def get_job(request: Request, caller: CallerDep, job_id: UUID) -> OptimisationJobResult:
+    store = runner(request).store
+    await _dispatcher_only(store, caller)
+    result = await store.result(job_id)
     if result is None:
         raise ApiError(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "no such optimisation job")
     return result

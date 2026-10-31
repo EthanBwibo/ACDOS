@@ -39,6 +39,11 @@ class InMemoryJobStore:
     # Pickup -> the other pickups on its active route.
     route_mates: dict[UUID, set[UUID]] = field(default_factory=dict)
     jobs: dict[UUID, FakeJob] = field(default_factory=dict)
+    # profiles.role by user id (#127).
+    roles: dict[UUID, str] = field(default_factory=dict)
+
+    async def profile_role(self, user_id: UUID) -> str | None:
+        return self.roles.get(user_id)
 
     async def job_for_key(self, idempotency_key: str) -> KeyedJob | None:
         for job_id, job in self.jobs.items():
