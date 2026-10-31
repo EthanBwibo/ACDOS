@@ -32,6 +32,10 @@
     <string name="route_pickup_at">Pickup %1$s</string>
     <string name="route_zone_unknown">Pickup point</string>
     <string name="route_no_maps_app">No maps app on this phone.</string>
+    <string name="route_refresh_offline">Couldn\'t refresh the route. Check your connection.</string>
+    <string name="route_refresh_failed">Couldn\'t refresh the route. Try again shortly.</string>
+    <string name="route_refresh_sign_in_again">Sign in again to refresh the route.</string>
+    <string name="route_refresh_not_allowed">This account can\'t load a driver route.</string>
     <plurals name="sign_out_unsynced">
         <item quantity="one">%d pickup confirmation hasn\'t uploaded yet. It\'ll upload next time you sign in.</item>
         <item quantity="other">%d pickup confirmations haven\'t uploaded yet. They\'ll upload next time you sign in.</item>
