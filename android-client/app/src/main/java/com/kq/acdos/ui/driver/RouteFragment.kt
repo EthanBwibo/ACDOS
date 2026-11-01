@@ -28,6 +28,7 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.Times
 import java.util.Locale
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -83,14 +84,20 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                refresh.refreshing.collect { swipe.isRefreshing = it }
+                combine(
+                    refresh.refreshing,
+                    refresh.firstLoadPending,
+                    viewModel.state,
+                    ::routeSpinner
+                ).collect { swipe.isRefreshing = it }
             }
         }
         // Only seen when nothing is cached: with a route on screen, a failed
         // refresh stays quiet and the "Updated" time shows its age.
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                refresh.lastFailure.collect { empty.setText(emptyRouteMessage(it)) }
+                combine(refresh.firstLoadPending, refresh.lastFailure, ::emptyRouteMessage)
+                    .collect { empty.setText(it) }
             }
         }
     }

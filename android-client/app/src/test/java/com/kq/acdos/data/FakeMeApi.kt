@@ -9,7 +9,7 @@ import retrofit2.Response
 /** Answers driverRoute() with [next] and counts the calls. */
 class FakeMeApi : MeApi {
     var calls = 0
-    var next: () -> Response<DriverRouteResponseDto> = { error("no answer set") }
+    var next: suspend () -> Response<DriverRouteResponseDto> = { error("no answer set") }
 
     override suspend fun driverRoute(): Response<DriverRouteResponseDto> {
         calls++

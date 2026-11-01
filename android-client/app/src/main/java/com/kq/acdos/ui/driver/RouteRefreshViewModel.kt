@@ -36,11 +36,17 @@ fun refreshMessage(result: RefreshResult, manual: Boolean): Int? = when (result)
 
 /**
  * The Route tab's text when no route is cached. "No route assigned" only
- * once the server has said so: after a failed refresh the driver is told to
- * retry instead, so a refresh that never arrived doesn't pass for a free day.
+ * once the server has said so: while the first refresh is in flight (up to
+ * the 20 s timeout on 2G) it says loading, and after a failed refresh the
+ * driver is told to retry, so a refresh that never arrived doesn't pass for
+ * a free day.
  */
 @StringRes
-fun emptyRouteMessage(lastFailure: RefreshResult?): Int = when (lastFailure) {
+fun emptyRouteMessage(firstLoadPending: Boolean, lastFailure: RefreshResult?): Int =
+    if (firstLoadPending) R.string.route_loading else failureMessage(lastFailure)
+
+@StringRes
+private fun failureMessage(lastFailure: RefreshResult?): Int = when (lastFailure) {
     RefreshResult.OFFLINE, RefreshResult.FAILED -> R.string.route_load_failed
 
     RefreshResult.SIGN_IN_AGAIN -> R.string.route_refresh_sign_in_again
@@ -52,6 +58,14 @@ fun emptyRouteMessage(lastFailure: RefreshResult?): Int = when (lastFailure) {
 }
 
 /**
+ * The pull-to-refresh spinner: during a pull, and during the first refresh
+ * when there is nothing cached to look at. With a route on screen, the
+ * refresh on start stays invisible.
+ */
+fun routeSpinner(pulling: Boolean, firstLoadPending: Boolean, state: RouteUiState): Boolean =
+    pulling || (firstLoadPending && state == RouteUiState.NoRoute)
+
+/**
  * Shared by the driver home (refresh on start) and the Route tab (pull to
  * refresh), so it lives as long as the activity. [repository] is null in
  * builds without an API URL; then nothing refreshes.
@@ -61,6 +75,14 @@ class RouteRefreshViewModel(private val repository: DriverRouteRepository?) : Vi
 
     /** True while a pull to refresh is running, for the spinner. */
     val refreshing: StateFlow<Boolean> = refreshingState.asStateFlow()
+
+    private val firstLoadState = MutableStateFlow(repository != null)
+
+    /**
+     * True until the first refresh of this screen answers, whatever the
+     * answer. Never true without an API URL, since nothing will answer.
+     */
+    val firstLoadPending: StateFlow<Boolean> = firstLoadState.asStateFlow()
 
     private val failureState = MutableStateFlow<RefreshResult?>(null)
 
@@ -103,6 +125,7 @@ class RouteRefreshViewModel(private val repository: DriverRouteRepository?) : Vi
             RefreshResult.THROTTLED -> Unit
             else -> failureState.value = result
         }
+        firstLoadState.value = false
         refreshMessage(result, manual)?.let { messageChannel.send(it) }
     }
 

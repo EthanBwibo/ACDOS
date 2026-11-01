@@ -8,6 +8,7 @@ import com.kq.acdos.data.local.inMemoryDatabase
 import com.kq.acdos.data.remote.DriverRouteResponseDto
 import java.io.IOException
 import java.time.Instant
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -18,6 +19,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,7 +58,32 @@ class RouteRefreshViewModelTest {
         api.next = { Response.success(DriverRouteResponseDto(null)) }
     }
 
-    private fun emptyText() = emptyRouteMessage(viewModel.lastFailure.value)
+    private fun emptyText() =
+        emptyRouteMessage(viewModel.firstLoadPending.value, viewModel.lastFailure.value)
+
+    @Test
+    fun firstRefreshInFlight_saysLoadingThenNoRouteOnceTheServerSaysSo() = runTest {
+        val answer = CompletableDeferred<Response<DriverRouteResponseDto>>()
+        api.next = { answer.await() }
+        assertEquals(R.string.route_loading, emptyText())
+
+        viewModel.refreshOnStart(first = true)
+        assertEquals(R.string.route_loading, emptyText())
+
+        answer.complete(Response.success(DriverRouteResponseDto(null)))
+        // The purge runs on Room's executor, so wait for the result.
+        viewModel.firstLoadPending.first { !it }
+        assertEquals(R.string.route_none, emptyText())
+    }
+
+    @Test
+    fun noApiUrl_neverSaysLoading() {
+        val withoutApi = RouteRefreshViewModel(repository = null)
+
+        withoutApi.refreshOnStart(first = true)
+
+        assertFalse(withoutApi.firstLoadPending.value)
+    }
 
     @Test
     fun startOfflineWithNothingCached_saysCouldntLoadNotNoRoute() {
