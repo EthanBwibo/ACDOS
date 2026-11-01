@@ -22,8 +22,10 @@ has several problems, the first in this order is reported:
    vehicle_breakdown re-plan). A van on the road: 409
    vehicles_on_departed_routes.
 4. Add the other pickups on the routes the request replaces, so a re-plan
-   takes whole routes. Their new places (or unassigned) are in the job's
-   result like the requested ones.
+   takes whole routes: the routes of its pickups, and each requested van's
+   route that has not departed, so a van never has two active routes. Their
+   new places (or unassigned) are in the job's result like the requested
+   ones.
 5. Create the job (queued) and hand it to the runner.
 
 Only dispatchers may call these (#127): the caller's token is checked
@@ -195,8 +197,9 @@ async def create_job(
             "these vans are on a route that has departed and are not yet due back at JKIA",
             vehicle_ids=conflicts.on_the_road,
         )
-    # A re-plan takes whole routes: the other pickups on the routes it
-    # replaces are planned with it, never left on a superseded route.
+    # A re-plan takes whole routes, its pickups' and its vans' (store.py,
+    # _REPLACED_ROUTES): the other pickups on them are planned with it,
+    # never left on a superseded route.
     pickups |= await store.pickups(conflicts.left_behind)
     planned = body.pickup_request_ids + conflicts.left_behind
 

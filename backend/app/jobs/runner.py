@@ -109,6 +109,7 @@ class JobRunner:
                 await self.store.complete(
                     job_id,
                     outcome,
+                    [UUID(v.id) for v in vehicles],
                     self.now(),
                     breakdown=trigger_type == OptimizationTriggerType.VEHICLE_BREAKDOWN,
                 )

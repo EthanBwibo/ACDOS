@@ -9,11 +9,13 @@ trigger are driven directly.
 Each test seeds its own world (fresh ids, deleted afterwards by id): a
 dispatcher D, drivers A and B with vans VA and VB, a third van VC with no
 driver, and ten pickups across Nairobi reporting in three hours. Routes are
-seeded per test with route().
+seeded per test with route(). The acceptance test adds morning_wave_120's
+120 crew and 20 vans to its world (seed_wave).
 """
 
 import asyncio
 import os
+import random
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
@@ -30,7 +32,8 @@ from app.jobs.store import PostgresJobStore, RouteConflictError
 from app.jobs.worker import PlannedRoute, PlannedStop, SolveOutcome
 from app.main import app
 from app.models.schemas import OptimizationTriggerType
-from app.solver.instances import SPEED_KMH
+from app.solver.ga import solve
+from app.solver.instances import SPEED_KMH, morning_wave_120
 from app.solver.problem import Point, haversine_travel_time
 from tests.job_api import wait_for_job
 from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
@@ -649,7 +652,9 @@ def test_a_pickup_collected_while_the_job_ran_fails_the_commit(world):
             )
             await insert_event(conn, a_node, world.users["A"], world.now - timedelta(minutes=15))
             with pytest.raises(RouteConflictError) as failed:
-                await store.complete(job.id, outcome, world.now, breakdown=False)
+                await store.complete(
+                    job.id, outcome, [world.vans["VC"]], world.now, breakdown=False
+                )
             return failed.value.conflicts
         finally:
             await pool.close()
@@ -662,45 +667,70 @@ def test_a_pickup_collected_while_the_job_ran_fails_the_commit(world):
     assert world.live_node(p2)["optimization_job_id"] == world.job
 
 
-@pytest.mark.parametrize("disruption", ["left", "broke_down"])
-def test_a_van_that_left_or_broke_down_while_the_job_ran_fails_it(
-    client, world, monkeypatch, disruption
-):
-    """VA is free when the job over p2 is accepted, so the solver plans p2
-    onto it. While it solves, VA leaves on its other route (a pickup event
-    there) or breaks down. The commit must fail the job and write nothing."""
-    p1, p2 = world.pickups[:2]
-    # VA's other route, not part of this job, leaving in an hour.
-    other = world.route("VA", [p1], departs_in=timedelta(hours=1))
-
-    def disrupt():
-        if disruption == "left":
-            world.confirm(p1, "A", datetime.now(UTC))
-        else:
-            world.sql(
-                "update public.vehicles set status = 'broken_down' where id = $1",
-                world.vans["VA"],
-            )
-
+def solve_then(monkeypatch, disruption):
+    """Run the job's solve in a thread rather than the solver process, then
+    disruption(), so the disruption lands between the solve and the commit.
+    Haversine needs no worker.init. Returns the executor to put in place."""
     solve = worker.run
 
     def solve_then_disrupt(job):
         outcome = solve(job)
-        disrupt()
+        disruption()
         return outcome
 
-    # In a thread rather than the solver process, so the disruption lands
-    # between the solve and the commit. Haversine needs no worker.init.
     monkeypatch.setattr(worker, "run", solve_then_disrupt)
-    with ThreadPoolExecutor(1) as threads:
-        monkeypatch.setattr(app.state.job_runner, "_pool", threads)
+    threads = ThreadPoolExecutor(1)
+    monkeypatch.setattr(app.state.job_runner, "_pool", threads)
+    return threads
+
+
+def active_routes(world: World, van: str) -> list[UUID]:
+    return [
+        r["id"]
+        for r in db(
+            lambda conn: conn.fetch(
+                "select id from public.routes where vehicle_id = $1 and status = 'active'",
+                world.vans[van],
+            )
+        )
+    ]
+
+
+@pytest.mark.parametrize("disruption", ["left", "broke_down", "given_a_route"])
+def test_a_van_whose_plan_changed_while_the_job_ran_fails_it(
+    client, world, monkeypatch, disruption
+):
+    """VA is free when the job over p2 is accepted, so the solver plans p2
+    onto it. While it solves, another job gives VA a route over p3 and VA
+    leaves on it (p3 collected), or VA breaks down, or another job gives VA
+    a route that has not left. Each is the only conflict at commit, which
+    must fail the job and write nothing."""
+    p2, p3 = world.pickups[1:3]
+    other: list[UUID] = []
+
+    def disrupt():
+        if disruption == "broke_down":
+            world.sql(
+                "update public.vehicles set status = 'broken_down' where id = $1",
+                world.vans["VA"],
+            )
+            return
+        other.append(world.route("VA", [p3], departs_in=timedelta(hours=1)))
+        if disruption == "left":
+            world.confirm(p3, "A", datetime.now(UTC))
+
+    with solve_then(monkeypatch, disrupt):
         accepted = post(client, world, [p2], ["VA"])
         assert accepted.status_code == 202, accepted.text
         result = wait_for_job(client, accepted.json()["id"])
 
     assert result["status"] == "failed"
-    key = {"left": "vehicle_ids_on_departed_routes", "broke_down": "vehicle_ids_broken_down"}
-    assert f"'{key[disruption]}': ['{world.vans['VA']}']" in result["error"]
+    expected = {
+        "left": f"{{'vehicle_ids_on_departed_routes': ['{world.vans['VA']}']}}",
+        "broke_down": f"{{'vehicle_ids_broken_down': ['{world.vans['VA']}']}}",
+        "given_a_route": f"{{'pickup_request_ids_left_behind': ['{p3}']}}",
+    }
+    assert result["error"].endswith(expected[disruption]), result["error"]
     written = db(
         lambda conn: conn.fetchval(
             "select count(*) from public.routes where optimization_job_id = $1",
@@ -710,6 +740,261 @@ def test_a_van_that_left_or_broke_down_while_the_job_ran_fails_it(
     assert written == 0
     assert world.live_node(p2) is None
     assert world.status(p2) == "pending"
-    # VA's other route is as it was.
-    assert world.live_node(p1)["id"] == world.nodes[p1]
-    assert world.route_status(other) == "active"
+    # The route VA was given meanwhile is as the other job left it.
+    assert active_routes(world, "VA") == other
+    if other:
+        assert world.live_node(p3)["id"] == world.nodes[p3]
+
+
+@pytest.mark.parametrize("mate", ["assigned", "cancelled"])
+def test_a_van_with_a_live_route_ends_with_exactly_one_active_route(client, world, mate):
+    """VA's route over p1 has not left. A job over p2 with VA replaces that
+    route too: p1 comes with it (unless cancelled, when it just loses its
+    node), and VA ends with one active route, the job's."""
+    p1, p2 = world.pickups[:2]
+    old = world.route("VA", [p1], departs_in=timedelta(hours=1))
+    if mate == "cancelled":
+        world.sql("update public.pickup_requests set status = 'cancelled' where id = $1", p1)
+
+    result = replan(client, world, [p2], ["VA"])
+
+    assert planned(result) == ({str(p1), str(p2)} if mate == "assigned" else {str(p2)})
+    assert world.route_status(old) == "superseded"
+    [route] = active_routes(world, "VA")
+    assert world.live_node(p2)["route_id"] == route
+    if mate == "assigned":
+        assert world.live_node(p1)["route_id"] == route
+    else:
+        assert world.live_node(p1) is None
+        assert world.status(p1) == "cancelled"
+
+
+# The acceptance test of #113, on morning_wave_120: plan, a flight delay
+# moves one report time +60 min partway through, re-plan. The solver runs in
+# a thread with a fixed seed and stops at a generation cap, not the clock,
+# so the plans are the same on every run and the test stays short.
+WAVE_SEED = 113
+WAVE_GENERATIONS = 2
+
+
+def seed_wave(world: World) -> tuple[list[UUID], list[str]]:
+    """morning_wave_120's crew (report times from world.now) and its 20
+    vans of 14 seats, added to the world so they are cleaned up with it."""
+    problem = morning_wave_120()
+
+    async def run(conn):
+        pickups, vans = [], []
+        async with conn.transaction():
+            for v in problem.vehicles:
+                name = f"W{v.id}"
+                world.vans[name] = await conn.fetchval(
+                    "insert into public.vehicles (plate_number, capacity) "
+                    "values ($1, $2) returning id",
+                    f"T{RUN}{v.id}",
+                    v.capacity,
+                )
+                vans.append(name)
+            for p in problem.pickups:
+                point = f"SRID=4326;POINT({p.location.lon} {p.location.lat})"
+                crew = await conn.fetchval(
+                    "insert into public.crew_members (name, role, home_location) "
+                    "values ($1, 'cabin_crew', $2) returning id",
+                    f"test-{RUN} {p.id}",
+                    point,
+                )
+                world.crew.append(crew)
+                pickup = await conn.fetchval(
+                    "insert into public.pickup_requests "
+                    "(crew_member_id, pickup_location, report_time, request_type) "
+                    "values ($1, $2, $3, 'rostered') returning id",
+                    crew,
+                    point,
+                    world.now + timedelta(seconds=p.deadline),
+                )
+                world.pickups.append(pickup)
+                pickups.append(pickup)
+        return pickups, vans
+
+    return db(run)
+
+
+def capped_solve(job):
+    problem = worker.build_problem(job)
+    result = solve(
+        problem, random.Random(WAVE_SEED), max_generations=WAVE_GENERATIONS, time_limit_sec=600
+    )
+    return worker.outcome(problem, result.best, job.epoch)
+
+
+def job_routes(job_id: str) -> list[dict]:
+    """The job's routes as stored, each with its nodes in order."""
+    rows = db(
+        lambda conn: conn.fetch(
+            """
+            select r.id, r.vehicle_id, r.status, r.total_distance_km,
+                r.planned_departure, r.planned_arrival,
+                n.id as node, n.pickup_request_id, n.seq_order, n.estimated_arrival,
+                n.superseded_at
+            from public.routes r join public.route_nodes n on n.route_id = r.id
+            where r.optimization_job_id = $1
+            order by r.id, n.seq_order
+            """,
+            UUID(job_id),
+        )
+    )
+    route_keys = ["id", "vehicle_id", "status", "total_distance_km"]
+    route_keys += ["planned_departure", "planned_arrival"]
+    node_keys = ["node", "pickup_request_id", "seq_order", "estimated_arrival", "superseded_at"]
+    routes: dict[UUID, dict] = {}
+    for r in rows:
+        route = routes.setdefault(r["id"], {k: r[k] for k in route_keys} | {"nodes": []})
+        route["nodes"].append({k: r[k] for k in node_keys})
+    return list(routes.values())
+
+
+def live_nodes(pickup: UUID) -> list:
+    return db(
+        lambda conn: conn.fetch(
+            "select n.route_id, r.optimization_job_id, r.planned_arrival "
+            "from public.route_nodes n join public.routes r on r.id = n.route_id "
+            "where n.pickup_request_id = $1 and n.superseded_at is null",
+            pickup,
+        )
+    )
+
+
+def assert_result_matches_database(result: dict) -> None:
+    """GET's result is what the database holds for the job."""
+    stored = sorted(
+        (
+            str(r["vehicle_id"]),
+            r["planned_departure"],
+            r["planned_arrival"],
+            [
+                (str(n["pickup_request_id"]), n["seq_order"], n["estimated_arrival"])
+                for n in r["nodes"]
+            ],
+        )
+        for r in job_routes(result["id"])
+    )
+    returned = sorted(
+        (
+            r["vehicle_id"],
+            datetime.fromisoformat(r["planned_departure"]),
+            datetime.fromisoformat(r["planned_arrival"]),
+            [
+                (
+                    n["pickup_request_id"],
+                    n["seq_order"],
+                    datetime.fromisoformat(n["estimated_arrival"]),
+                )
+                for n in sorted(r["nodes"], key=lambda n: n["seq_order"])
+            ],
+        )
+        for r in result["routes"]
+    )
+    assert stored == returned
+    outcomes = db(
+        lambda conn: conn.fetch(
+            "select pickup_request_id, outcome, late_sec from public.optimization_job_pickups "
+            "where optimization_job_id = $1",
+            UUID(result["id"]),
+        )
+    )
+    late = {str(o["pickup_request_id"]): o["late_sec"] for o in outcomes if o["outcome"] == "late"}
+    assert late == {x["pickup_request_id"]: x["late_sec"] for x in result["late"]}
+    unassigned = {str(o["pickup_request_id"]) for o in outcomes if o["outcome"] == "unassigned"}
+    assert unassigned == set(result["unassigned"])
+    # Every pickup the job planned has an outcome row, and only those.
+    assert {str(o["pickup_request_id"]) for o in outcomes} == planned(result)
+
+
+def test_morning_wave_120_flight_delay_replan_keeps_departed_routes(client, world, monkeypatch):
+    wave, vans = seed_wave(world)
+    monkeypatch.setattr(worker, "run", capped_solve)
+    with ThreadPoolExecutor(1) as threads:
+        monkeypatch.setattr(app.state.job_runner, "_pool", threads)
+
+        first = replan(client, world, wave, vans, trigger="scheduled", at=world.now)
+        assert_result_matches_database(first)
+        routes = job_routes(first["id"])
+        assert len(routes) > 1
+
+        # Partway through: half the routes have left the depot.
+        departures = sorted(r["planned_departure"] for r in routes)
+        at = departures[len(departures) // 2]
+        departed = [r for r in routes if r["planned_departure"] <= at]
+        live = sorted(
+            (r for r in routes if r["planned_departure"] > at),
+            key=lambda r: r["planned_departure"],
+        )
+        assert departed and live
+
+        # The flight delay. No endpoint sets report_time yet (#53).
+        delayed = live[0]["nodes"][0]["pickup_request_id"]
+        delayed_from = db(
+            lambda conn: conn.fetchval(
+                "select report_time from public.pickup_requests where id = $1", delayed
+            )
+        )
+        world.sql(
+            "update public.pickup_requests set report_time = report_time + interval '1 hour' "
+            "where id = $1",
+            delayed,
+        )
+        # Vans that have left are on the road and stay out of the re-plan.
+        on_the_road = {r["vehicle_id"] for r in departed}
+        free = [v for v in vans if world.vans[v] not in on_the_road]
+        moved = [n["pickup_request_id"] for r in live for n in r["nodes"]]
+        moved += [UUID(i) for i in first["unassigned"]]
+
+        second = replan(client, world, moved, free, trigger="flight_delay", at=at)
+
+    # Departed routes and their nodes are exactly as they were.
+    after = {r["id"]: r for r in job_routes(first["id"])}
+    for route in departed:
+        assert after[route["id"]] == route
+    # The routes that had not left are replaced whole.
+    for route in live:
+        assert after[route["id"]]["status"] == "superseded"
+    assert planned(second) == {str(p) for p in moved}
+    assert_result_matches_database(second)
+
+    # Every pickup that moved has exactly one live node, in the new job,
+    # unless it is unassigned. Not late means at JKIA by its report time
+    # (late_sec is rounded up), the delayed one's new report time included.
+    late = {x["pickup_request_id"] for x in second["late"]}
+    report = {
+        r["id"]: r["report_time"]
+        for r in db(
+            lambda conn: conn.fetch(
+                "select id, report_time from public.pickup_requests where id = any($1::uuid[])",
+                moved,
+            )
+        )
+    }
+    for pickup in moved:
+        nodes = live_nodes(pickup)
+        if str(pickup) in second["unassigned"]:
+            assert nodes == []
+            continue
+        [node] = nodes
+        assert str(node["optimization_job_id"]) == second["id"]
+        if str(pickup) not in late:
+            assert node["planned_arrival"] <= report[pickup], pickup
+    # The delayed crew member: planned against the report time an hour on,
+    # at JKIA by it or listed late.
+    assert report[delayed] == delayed_from + timedelta(hours=1)
+    assert str(delayed) not in second["unassigned"]
+    [node] = live_nodes(delayed)
+    assert node["planned_arrival"] <= report[delayed] or str(delayed) in late
+
+    # No van has two active routes.
+    counts = db(
+        lambda conn: conn.fetch(
+            "select vehicle_id, count(*) as n from public.routes "
+            "where vehicle_id = any($1::uuid[]) and status = 'active' group by vehicle_id",
+            [world.vans[v] for v in vans],
+        )
+    )
+    assert counts and all(c["n"] == 1 for c in counts)

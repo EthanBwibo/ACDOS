@@ -88,7 +88,12 @@ class InMemoryJobStore:
         self.jobs[job_id].status = OptimizationJobStatus.RUNNING
 
     async def complete(
-        self, job_id: UUID, outcome: SolveOutcome, now: datetime, breakdown: bool
+        self,
+        job_id: UUID,
+        outcome: SolveOutcome,
+        vehicle_ids: list[UUID],
+        now: datetime,
+        breakdown: bool,
     ) -> None:
         self.jobs[job_id].outcome = outcome
         self.jobs[job_id].breakdown = breakdown

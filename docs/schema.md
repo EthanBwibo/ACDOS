@@ -123,8 +123,10 @@ and `PUBLIC` may not.
 - A van is **on the road**, and left out of new plans, while it has an `active` route that has
   departed and `planned_arrival` plus a grace period (backend setting, 30 minutes) has not
   passed.
-- A re-plan replaces whole routes: the other plannable pickups on a route it touches are planned
-  with it. Pickups past `assigned` lose their node and get no new one.
+- A re-plan replaces whole routes: the routes of its pickups, and each requested van's `active`
+  route that has not departed, so a van never has two active routes. The other plannable
+  pickups on those routes are planned with it. Pickups past `assigned` lose their node and get
+  no new one. At commit the job fails if a requested van was given a route meanwhile.
 
 ## Conventions
 

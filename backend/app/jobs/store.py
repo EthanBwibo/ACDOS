@@ -9,9 +9,10 @@ checks requests itself. Every name is schema-qualified, PostGIS included
 (extensions, migration 000), so nothing depends on the connection's
 search_path.
 
-Re-planning (#113): a job replaces whole routes that have not departed. A
-departed route stays as it is, and its van stays out of new plans until it
-is due back at JKIA. The one exception is a van that broke down: in a
+Re-planning (#113): a job replaces whole routes that have not departed:
+the routes of its pickups, and the routes of its vans, so a van never has
+two active routes. A departed route stays as it is, and its van stays out
+of new plans until it is due back at JKIA. The one exception is a van that broke down: in a
 vehicle_breakdown re-plan, its route's pickups not yet collected may go to
 other vans.
 """
@@ -71,9 +72,11 @@ class RouteConflicts:
     # never touches; except, in a vehicle_breakdown re-plan, the route of a
     # broken-down van (_FIXED_ROUTE).
     departed: list[UUID]
-    # Plannable pickups NOT in the set that share a route the set replaces.
-    # The API adds them to the job, so a re-plan takes whole routes; at
-    # commit, one here means a pickup joined such a route meanwhile.
+    # Plannable pickups NOT in the set on a route the job replaces
+    # (_REPLACED_ROUTES): a route of one of its pickups, or a requested van's
+    # route that has not departed. The API adds them to the job, so a re-plan
+    # takes whole routes; at commit, one here means a pickup joined such a
+    # route meanwhile, or a requested van was given a route meanwhile.
     left_behind: list[UUID] = ()
     # Pickups in the set past assigned (picked up, missed, cancelled). The
     # API refuses these itself; at commit, one here was collected while the
@@ -128,7 +131,12 @@ class JobStore(Protocol):
     async def mark_running(self, job_id: UUID) -> None: ...
 
     async def complete(
-        self, job_id: UUID, outcome: SolveOutcome, now: datetime, breakdown: bool
+        self,
+        job_id: UUID,
+        outcome: SolveOutcome,
+        vehicle_ids: list[UUID],
+        now: datetime,
+        breakdown: bool,
     ) -> None: ...
 
     async def fail(self, job_id: UUID, error: str) -> None: ...
@@ -171,15 +179,24 @@ _LIVE_NODES = """
       and r.status in ('active', 'completed')
 """
 
-# Active routes holding a live node of a pickup in $1: the routes a job over
-# $1 replaces.
-_REPLACED_ROUTES = """
+# The routes a job over pickups $1 and vans $3 replaces, at $2: every active
+# route holding a live node of a pickup in $1, and every active route of a
+# van in $3 that has not departed. Taking the vans' routes too means a van
+# never has two active routes: its route that has not left is re-planned
+# with the job (a departed one keeps the van out of the job, _ON_THE_ROAD).
+_REPLACED_ROUTES = f"""
     select n.route_id
     from public.route_nodes n
     join public.routes r on r.id = n.route_id
     where n.pickup_request_id = any($1::uuid[])
       and n.superseded_at is null
       and r.status = 'active'
+    union
+    select r.id
+    from public.routes r
+    where r.vehicle_id = any($3::uuid[])
+      and r.status = 'active'
+      and not ({_DEPARTED_ROUTE})
 """
 
 # Vans ($1) on the road at $2: an active route of theirs has departed and
@@ -305,13 +322,19 @@ class PostgresJobStore:
         )
 
     async def complete(
-        self, job_id: UUID, outcome: SolveOutcome, now: datetime, breakdown: bool
+        self,
+        job_id: UUID,
+        outcome: SolveOutcome,
+        vehicle_ids: list[UUID],
+        now: datetime,
+        breakdown: bool,
     ) -> None:
         """Write the plan and complete the job in one transaction, so a job is
-        never completed without its routes, and a failure leaves nothing."""
+        never completed without its routes, and a failure leaves nothing.
+        vehicle_ids are the job's vans, used or not, as the API checked them."""
         routed = [UUID(s.pickup_id) for route in outcome.routes for s in route.stops]
         requested = routed + [UUID(i) for i in outcome.unassigned]
-        vans = [UUID(route.vehicle_id) for route in outcome.routes]
+        vans = vehicle_ids
         async with self._pool.acquire() as conn, conn.transaction():
             # Lock the job's pickups before checking them. A pickup event's
             # status change (023) then either waits for this transaction,
@@ -325,18 +348,20 @@ class PostgresJobStore:
                 """,
                 requested,
             )
-            # The API checked this when the job was accepted. While the job
-            # queued or ran, a route may have left, a van may have left or
-            # broken down, a pickup may have been collected (and 025 taken it
-            # off its route), or another job may have changed the plan.
+            # The API checked this when the job was accepted, with the same
+            # pickups and vans. While the job queued or ran, a route may have
+            # left, a van may have left, broken down or been given a route, a
+            # pickup may have been collected (and 025 taken it off its route),
+            # or another job may have changed the plan.
             conflicts = await _route_conflicts(conn, requested, vans, now, breakdown, self._grace)
             if conflicts:
                 raise RouteConflictError(conflicts)
 
             # Supersede the job's pickups' live nodes, and every other live
-            # node of the routes they are on, so those routes are replaced
-            # whole. The pickups left on such a route are past assigned (the
-            # check above found no plannable ones): they get no new node.
+            # node of the routes it replaces (its pickups' and its vans'), so
+            # those routes are replaced whole. The pickups left on such a
+            # route are past assigned (the check above found no plannable
+            # ones): they get no new node.
             # Except a node with an event of its own, which only a broken-down
             # van's route can have here: what that van collected (or found
             # missing) keeps its node, as the record of what happened.
@@ -355,6 +380,7 @@ class PostgresJobStore:
                 """,
                 requested,
                 now,
+                vans,
             )
             # A replaced route with no live node left is superseded; a
             # broken-down van's route that keeps a collected pickup stays.
@@ -552,6 +578,8 @@ async def _route_conflicts(
         order by other.pickup_request_id
         """,
         pickup_ids,
+        now,
+        vehicle_ids,
     )
     not_plannable = await conn.fetch(
         """
