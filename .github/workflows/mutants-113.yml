@@ -1,0 +1,60 @@
+name: mutants-113
+
+# DO NOT MERGE. Mutation check for #113's tests (backend/mutants/run_113.py),
+# on a throwaway PostGIS set up as in ci.yml's backend job.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  mutants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGDATABASE: acdos_ci
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Install psql if the runner lacks it
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+
+      - name: Database with the migrations
+        run: |
+          createdb --maintenance-db=postgres -T template0 acdos_ci
+          psql -v ON_ERROR_STOP=1 -q -f tests/sql/supabase_stubs.sql
+          for f in migrations/*.sql; do
+            if grep -q '^-- supabase-only' "$f"; then continue; fi
+            psql -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: Mutants
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/acdos_ci
+        run: python mutants/run_113.py
