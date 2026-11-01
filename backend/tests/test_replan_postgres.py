@@ -667,11 +667,12 @@ def test_a_pickup_collected_while_the_job_ran_fails_the_commit(world):
     assert world.live_node(p2)["optimization_job_id"] == world.job
 
 
-def solve_then(monkeypatch, disruption):
-    """Run the job's solve in a thread rather than the solver process, then
-    disruption(), so the disruption lands between the solve and the commit.
-    Haversine needs no worker.init. Returns the executor to put in place."""
-    solve = worker.run
+def solve_then(monkeypatch, disruption, plan=None):
+    """Run the job's solve (or plan(job), when given) in a thread rather
+    than the solver process, then disruption(), so the disruption lands
+    between the solve and the commit. Haversine needs no worker.init.
+    Returns the executor to put in place."""
+    solve = plan or worker.run
 
     def solve_then_disrupt(job):
         outcome = solve(job)
@@ -696,17 +697,34 @@ def active_routes(world: World, van: str) -> list[UUID]:
     ]
 
 
-@pytest.mark.parametrize("disruption", ["left", "broke_down", "given_a_route"])
+@pytest.mark.parametrize(
+    "disruption", ["left", "broke_down", "given_a_route", "unused_van_given_a_route"]
+)
 def test_a_van_whose_plan_changed_while_the_job_ran_fails_it(
     client, world, monkeypatch, disruption
 ):
     """VA is free when the job over p2 is accepted, so the solver plans p2
     onto it. While it solves, another job gives VA a route over p3 and VA
     leaves on it (p3 collected), or VA breaks down, or another job gives VA
-    a route that has not left. Each is the only conflict at commit, which
-    must fail the job and write nothing."""
+    a route that has not left. Or the job also has VB, which the plan does
+    not use, and VB is given a route. Each is the only conflict at commit,
+    which must fail the job and write nothing."""
     p2, p3 = world.pickups[1:3]
     other: list[UUID] = []
+    unused = disruption == "unused_van_given_a_route"
+    given = "VB" if unused else "VA"
+
+    def on_va_only(job):
+        """The plan the solver might make, fixed so it leaves VB unused."""
+        soon = world.now + timedelta(hours=2)
+        stop = PlannedStop(str(p2), soon)
+        route = PlannedRoute(
+            str(world.vans["VA"]),
+            (stop,),
+            departure=soon - timedelta(minutes=20),
+            arrival=soon + timedelta(minutes=40),
+        )
+        return SolveOutcome((route,), {str(p2): 0}, ())
 
     def disrupt():
         if disruption == "broke_down":
@@ -715,12 +733,12 @@ def test_a_van_whose_plan_changed_while_the_job_ran_fails_it(
                 world.vans["VA"],
             )
             return
-        other.append(world.route("VA", [p3], departs_in=timedelta(hours=1)))
+        other.append(world.route(given, [p3], departs_in=timedelta(hours=1)))
         if disruption == "left":
             world.confirm(p3, "A", datetime.now(UTC))
 
-    with solve_then(monkeypatch, disrupt):
-        accepted = post(client, world, [p2], ["VA"])
+    with solve_then(monkeypatch, disrupt, plan=on_va_only if unused else None):
+        accepted = post(client, world, [p2], ["VA", "VB"] if unused else ["VA"])
         assert accepted.status_code == 202, accepted.text
         result = wait_for_job(client, accepted.json()["id"])
 
@@ -729,6 +747,7 @@ def test_a_van_whose_plan_changed_while_the_job_ran_fails_it(
         "left": f"{{'vehicle_ids_on_departed_routes': ['{world.vans['VA']}']}}",
         "broke_down": f"{{'vehicle_ids_broken_down': ['{world.vans['VA']}']}}",
         "given_a_route": f"{{'pickup_request_ids_left_behind': ['{p3}']}}",
+        "unused_van_given_a_route": f"{{'pickup_request_ids_left_behind': ['{p3}']}}",
     }
     assert result["error"].endswith(expected[disruption]), result["error"]
     written = db(
@@ -740,8 +759,8 @@ def test_a_van_whose_plan_changed_while_the_job_ran_fails_it(
     assert written == 0
     assert world.live_node(p2) is None
     assert world.status(p2) == "pending"
-    # The route VA was given meanwhile is as the other job left it.
-    assert active_routes(world, "VA") == other
+    # The route the van was given meanwhile is as the other job left it.
+    assert active_routes(world, given) == other
     if other:
         assert world.live_node(p3)["id"] == world.nodes[p3]
 
