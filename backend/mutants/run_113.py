@@ -98,7 +98,7 @@ MUTANTS = [
         "a broken-down van's departed route stays fixed",
         STORE,
         "    and not ($3::boolean and exists (",
-        "    and not (false and exists (",
+        "    and not ($3::boolean and false and exists (",
         [
             T + "test_a_breakdown_replan_moves_what_the_broken_van_had_not_collected",
             T + "test_the_breakdown_route_is_superseded_once_nothing_is_left_on_it",
@@ -108,7 +108,7 @@ MUTANTS = [
         "a broken-down van's route is freed whatever the trigger",
         STORE,
         "    and not ($3::boolean and exists (",
-        "    and not (true and exists (",
+        "    and not (($3::boolean or true) and exists (",
         [T + "test_a_breakdown_replan_moves_what_the_broken_van_had_not_collected"],
     ),
     (
