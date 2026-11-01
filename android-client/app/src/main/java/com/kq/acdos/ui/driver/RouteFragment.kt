@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -22,13 +23,18 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.Times
 import java.util.Locale
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-/** The driver's stops in order, from the Room cache, so it works with no signal. */
+/**
+ * The driver's stops in order, from the Room cache, so it works with no signal.
+ * Pull to refresh asks the server; the list updates when Room does.
+ */
 class RouteFragment : Fragment(R.layout.fragment_route) {
     private val viewModel: RouteViewModel by viewModels {
         viewModelFactory {
@@ -39,16 +45,27 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         }
     }
 
+    private val refresh: RouteRefreshViewModel by activityViewModels {
+        RouteRefreshViewModel.Factory
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val header = view.findViewById<View>(R.id.route_header)
         val plate = view.findViewById<TextView>(R.id.plate)
         val updated = view.findViewById<TextView>(R.id.updated)
         val empty = view.findViewById<TextView>(R.id.empty)
         val adapter = StopAdapter(::navigateTo)
-        view.findViewById<RecyclerView>(R.id.stops).also {
+        val stops = view.findViewById<RecyclerView>(R.id.stops).also {
             it.layoutManager = LinearLayoutManager(requireContext())
             it.adapter = adapter
         }
+        val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipe.setOnRefreshListener {
+            if (!refresh.refreshByPull()) swipe.isRefreshing = false
+        }
+        // The swipe's child is the whole column, so ask the list: a pull only
+        // refreshes when the list is already scrolled to the top.
+        swipe.setOnChildScrollUpCallback { _, _ -> stops.canScrollVertically(-1) }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -63,6 +80,24 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
                     }
                     adapter.submitList(route?.stops.orEmpty())
                 }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(
+                    refresh.refreshing,
+                    refresh.firstLoadPending,
+                    viewModel.state,
+                    ::routeSpinner
+                ).collect { swipe.isRefreshing = it }
+            }
+        }
+        // Only seen when nothing is cached: with a route on screen, a failed
+        // refresh stays quiet and the "Updated" time shows its age.
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(refresh.firstLoadPending, refresh.lastFailure, ::emptyRouteMessage)
+                    .collect { empty.setText(it) }
             }
         }
     }
