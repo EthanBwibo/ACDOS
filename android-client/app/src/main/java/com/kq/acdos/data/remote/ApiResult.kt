@@ -46,8 +46,8 @@ enum class ErrorCode {
     @Json(name = "departed_routes")
     DEPARTED_ROUTES,
 
-    @Json(name = "left_behind_on_route")
-    LEFT_BEHIND_ON_ROUTE,
+    @Json(name = "vehicles_on_departed_routes")
+    VEHICLES_ON_DEPARTED_ROUTES,
 
     @Json(name = "payload_too_large")
     PAYLOAD_TOO_LARGE,

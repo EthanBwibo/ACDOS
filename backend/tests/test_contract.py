@@ -195,10 +195,9 @@ def _departed(w: World):
     return w.post_job(w.job_body())
 
 
-def _left_behind(w: World):
-    first, second = list(w.store.stored_pickups)[:2]
-    w.store.route_mates = {first: {second}, second: {first}}
-    return w.post_job(w.job_body(pickup_request_ids=[str(first)]))
+def _on_the_road(w: World):
+    w.store.on_the_road.add(next(iter(w.store.stored_vehicles)))
+    return w.post_job(w.job_body())
 
 
 def _duplicates(w: World):
@@ -278,7 +277,7 @@ def _events(setup, token: bool = True, events: list | None = None, size: int | N
 CASES = (
     [
         ("POST", "/optimisation-jobs", 409, "departed_routes", _departed, True),
-        ("POST", "/optimisation-jobs", 409, "left_behind_on_route", _left_behind, True),
+        ("POST", "/optimisation-jobs", 409, "vehicles_on_departed_routes", _on_the_road, True),
         (
             "POST",
             "/optimisation-jobs",

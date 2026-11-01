@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import timedelta
 
 from fastapi import FastAPI
 
@@ -29,7 +30,9 @@ async def lifespan(app: FastAPI):
     try:
         app.state.db = db  # also read by the #52 endpoints (app/reads.py)
         depot = Point(settings.depot_lat, settings.depot_lon)
-        job_store = store.PostgresJobStore(db, depot)
+        job_store = store.PostgresJobStore(
+            db, depot, timedelta(minutes=settings.van_return_grace_min)
+        )
         # Safe only with one uvicorn process (README: --workers 1).
         await job_store.fail_unfinished()
         app.state.job_runner = JobRunner(

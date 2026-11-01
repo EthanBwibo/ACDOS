@@ -82,6 +82,8 @@ data class PlannedNodeDto(
 data class PlannedRouteDto(
     @Json(name = "vehicle_id") val vehicleId: String,
     @Json(name = "total_distance_km") val totalDistanceKm: Double,
+    @Json(name = "planned_departure") val plannedDeparture: Instant,
+    @Json(name = "planned_arrival") val plannedArrival: Instant,
     val nodes: List<PlannedNodeDto>
 )
 

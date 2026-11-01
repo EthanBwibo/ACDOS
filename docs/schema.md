@@ -16,7 +16,7 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | optimization_jobs | id UUID; triggered_at TIMESTAMPTZ; trigger_type TEXT; status TEXT; idempotency_key TEXT; request_hash TEXT; error TEXT; finished_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; trigger_type in (scheduled, flight_delay, standby_activation, vehicle_breakdown); status in (queued, running, completed, failed), default queued; idempotency_key unique, null for jobs not made through the API; error and finished_at null until the job fails or completes |
 | optimization_job_pickups | id UUID; optimization_job_id UUID; pickup_request_id UUID; outcome TEXT; late_sec INT; created_at TIMESTAMPTZ | PK id; FK optimization_job_id, pickup_request_id; optimization_job_id and pickup_request_id unique together; outcome in (on_time, late, unassigned); late_sec at least 0, null exactly when unassigned |
 | pickup_requests | id UUID; crew_member_id UUID; pickup_location GEOGRAPHY(Point, 4326); report_time TIMESTAMPTZ; request_type TEXT; status TEXT; created_at TIMESTAMPTZ | PK id; FK crew_member_id; request_type in (rostered, standby); status in (pending, assigned, picked_up, missed, cancelled); spatial index on pickup_location |
-| routes | id UUID; vehicle_id UUID; optimization_job_id UUID; total_distance_km NUMERIC; status TEXT; created_at TIMESTAMPTZ | PK id; FK vehicle_id, optimization_job_id; status in (active, completed, superseded) |
+| routes | id UUID; vehicle_id UUID; optimization_job_id UUID; total_distance_km NUMERIC; status TEXT; planned_departure TIMESTAMPTZ; planned_arrival TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK vehicle_id, optimization_job_id; status in (active, completed, superseded); planned_departure (the van leaves the depot) and planned_arrival (it reaches JKIA) not null, from the solver's schedule, planned_departure <= planned_arrival |
 | route_nodes | id UUID; route_id UUID; pickup_request_id UUID; seq_order INT; estimated_arrival TIMESTAMPTZ; superseded_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK route_id, pickup_request_id; pickup_request_id unique among nodes with superseded_at null (partial unique index); route_id and seq_order unique together; superseded_at null until a later job re-plans the pickup |
 | pickup_events | id UUID; route_node_id UUID; driver_id UUID; event_type TEXT; exception_type TEXT; confirmed_at TIMESTAMPTZ; synced_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id, driver_id to profiles; event_type in (pickup_confirmed, exception); exception_type in (no_show, vehicle_issue, traffic_delay) or null; idempotency_key unique; at most one pickup_confirmed per route_node_id (partial unique index); synced_at null until synchronised; confirmed_at is when the event **occurred** on the device, for every event type, exceptions included; synced_at is when the server received it |
 | trip_records | id UUID; route_node_id UUID; vehicle_id UUID; crew_count INT; pickup_timestamp TIMESTAMPTZ; scheduled_report_time TIMESTAMPTZ; actual_arrival TIMESTAMPTZ; actual_duration_sec INT; day_of_week SMALLINT; route_corridor TEXT; created_at TIMESTAMPTZ | PK id; FK route_node_id (unique), vehicle_id; day_of_week 0 = Monday to 6 = Sunday (see Conventions) |
@@ -108,6 +108,25 @@ and `PUBLIC` may not.
 
   It never changes a `cancelled` pickup and never moves `picked_up` back. Drivers have no
   UPDATE policy on `pickup_requests`; this is the only way their events change it.
+- `pickup_events_drop_stop_collected_elsewhere` (after insert on `pickup_events`,
+  `private.drop_stop_collected_elsewhere`, `SECURITY DEFINER`, #113): a `pickup_confirmed` on a
+  superseded node (a van collected a pickup it had been re-planned away from) supersedes the
+  pickup's live node on another route, unless that node has an event of its own. A route left
+  with no live node is marked `superseded`.
+
+## Re-planning (#113)
+
+- A route has **departed** once `planned_departure` has passed, once any of its nodes has a
+  pickup event, or once it is `completed`. A re-plan never changes a departed route, except in a
+  `vehicle_breakdown` re-plan when its van is `broken_down`: then its pickups not yet past
+  `assigned` may move to other vans, and the nodes with events stay.
+- A van is **on the road**, and left out of new plans, while it has an `active` route that has
+  departed and `planned_arrival` plus a grace period (backend setting, 30 minutes) has not
+  passed.
+- A re-plan replaces whole routes: the routes of its pickups, and each requested van's `active`
+  route that has not departed, so a van never has two active routes. The other plannable
+  pickups on those routes are planned with it. Pickups past `assigned` lose their node and get
+  no new one. At commit the job fails if a requested van was given a route meanwhile.
 
 ## Conventions
 
