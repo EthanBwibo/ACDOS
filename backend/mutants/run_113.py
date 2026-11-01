@@ -102,7 +102,9 @@ MUTANTS = [
         "a route has not departed at its planned departure",
         STORE,
         "    or r.planned_departure <= $2\n    or exists",
-        "    or exists",
+        # $2 stays in the text, so the queries that use it only here still
+        # know its type.
+        "    or (r.planned_departure <= $2 and false)\n    or exists",
         [T + "test_a_route_has_departed_once_its_van_was_due_to_leave"],
     ),
     (
