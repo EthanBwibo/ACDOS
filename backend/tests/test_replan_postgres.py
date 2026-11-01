@@ -14,6 +14,7 @@ seeded per test with route().
 
 import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
 from uuid import UUID, uuid4
@@ -24,6 +25,7 @@ from fastapi.testclient import TestClient
 
 from app import reads
 from app.config import settings
+from app.jobs import worker
 from app.jobs.store import PostgresJobStore, RouteConflictError
 from app.jobs.worker import PlannedRoute, PlannedStop, SolveOutcome
 from app.main import app
@@ -658,3 +660,56 @@ def test_a_pickup_collected_while_the_job_ran_fails_the_commit(world):
     assert world.status(p1) == "picked_up"
     # Nothing of the job was written: p2 is still on VB's route.
     assert world.live_node(p2)["optimization_job_id"] == world.job
+
+
+@pytest.mark.parametrize("disruption", ["left", "broke_down"])
+def test_a_van_that_left_or_broke_down_while_the_job_ran_fails_it(
+    client, world, monkeypatch, disruption
+):
+    """VA is free when the job over p2 is accepted, so the solver plans p2
+    onto it. While it solves, VA leaves on its other route (a pickup event
+    there) or breaks down. The commit must fail the job and write nothing."""
+    p1, p2 = world.pickups[:2]
+    # VA's other route, not part of this job, leaving in an hour.
+    other = world.route("VA", [p1], departs_in=timedelta(hours=1))
+
+    def disrupt():
+        if disruption == "left":
+            world.confirm(p1, "A", datetime.now(UTC))
+        else:
+            world.sql(
+                "update public.vehicles set status = 'broken_down' where id = $1",
+                world.vans["VA"],
+            )
+
+    solve = worker.run
+
+    def solve_then_disrupt(job):
+        outcome = solve(job)
+        disrupt()
+        return outcome
+
+    # In a thread rather than the solver process, so the disruption lands
+    # between the solve and the commit. Haversine needs no worker.init.
+    monkeypatch.setattr(worker, "run", solve_then_disrupt)
+    with ThreadPoolExecutor(1) as threads:
+        monkeypatch.setattr(app.state.job_runner, "_pool", threads)
+        accepted = post(client, world, [p2], ["VA"])
+        assert accepted.status_code == 202, accepted.text
+        result = wait_for_job(client, accepted.json()["id"])
+
+    assert result["status"] == "failed"
+    key = {"left": "vehicle_ids_on_departed_routes", "broke_down": "vehicle_ids_broken_down"}
+    assert f"'{key[disruption]}': ['{world.vans['VA']}']" in result["error"]
+    written = db(
+        lambda conn: conn.fetchval(
+            "select count(*) from public.routes where optimization_job_id = $1",
+            UUID(result["id"]),
+        )
+    )
+    assert written == 0
+    assert world.live_node(p2) is None
+    assert world.status(p2) == "pending"
+    # VA's other route is as it was.
+    assert world.live_node(p1)["id"] == world.nodes[p1]
+    assert world.route_status(other) == "active"
