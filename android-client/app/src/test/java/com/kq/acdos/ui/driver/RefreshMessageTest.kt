@@ -2,7 +2,10 @@ package com.kq.acdos.ui.driver
 
 import com.kq.acdos.R
 import com.kq.acdos.data.RefreshResult
+import java.time.Instant
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -50,17 +53,31 @@ class RefreshMessageTest {
     @Test
     fun emptyRoute_saysNoRouteAssignedOnlyWhenTheServerSaidSo() {
         for (result in listOf(null, RefreshResult.UPDATED, RefreshResult.NO_ROUTE)) {
-            assertEquals("$result", R.string.route_none, emptyRouteMessage(result))
+            assertEquals("$result", R.string.route_none, emptyRouteMessage(false, result))
         }
-        assertEquals(R.string.route_load_failed, emptyRouteMessage(RefreshResult.OFFLINE))
-        assertEquals(R.string.route_load_failed, emptyRouteMessage(RefreshResult.FAILED))
+        assertEquals(R.string.route_load_failed, emptyRouteMessage(false, RefreshResult.OFFLINE))
+        assertEquals(R.string.route_load_failed, emptyRouteMessage(false, RefreshResult.FAILED))
         assertEquals(
             R.string.route_refresh_sign_in_again,
-            emptyRouteMessage(RefreshResult.SIGN_IN_AGAIN)
+            emptyRouteMessage(false, RefreshResult.SIGN_IN_AGAIN)
         )
         assertEquals(
             R.string.route_refresh_not_allowed,
-            emptyRouteMessage(RefreshResult.NOT_ALLOWED)
+            emptyRouteMessage(false, RefreshResult.NOT_ALLOWED)
         )
+    }
+
+    @Test
+    fun emptyRoute_saysLoadingUntilTheFirstRefreshAnswers() {
+        assertEquals(R.string.route_loading, emptyRouteMessage(true, null))
+    }
+
+    @Test
+    fun spinner_showsForAPullAndForTheFirstLoadOnlyWhenNothingIsCached() {
+        val cached = RouteUiState.Route("KDA 001T", Instant.EPOCH, emptyList())
+        assertTrue(routeSpinner(pulling = true, firstLoadPending = false, cached))
+        assertTrue(routeSpinner(pulling = false, firstLoadPending = true, RouteUiState.NoRoute))
+        assertFalse(routeSpinner(pulling = false, firstLoadPending = true, cached))
+        assertFalse(routeSpinner(pulling = false, firstLoadPending = false, RouteUiState.NoRoute))
     }
 }
