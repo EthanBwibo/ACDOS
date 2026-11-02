@@ -267,13 +267,22 @@ def as_role(world: World, name: str, steps):
 
 
 def insert_as(world: World, name: str, crew: str, read: bool = False):
+    """Insert a message as name for crew's crew member. The preset id is read
+    as postgres and given as a value, so the insert policy itself decides
+    (a select under RLS could just match no presets and insert nothing)."""
+    preset = db(
+        lambda conn: conn.fetchval(
+            "select id from public.preset_messages where code = 'running_late'"
+        )
+    )
+
     async def steps(conn):
-        await conn.execute(
+        return await conn.execute(
             "insert into public.crew_messages "
             "(crew_member_id, preset_message_id, idempotency_key, read_at) "
-            "select $1, id, $2, case when $3 then now() end from public.preset_messages "
-            "where code = 'running_late'",
+            "values ($1, $2, $3, case when $4 then now() end)",
             world.crew[crew],
+            preset,
             f"test-{RUN}-{uuid4().hex}",
             read,
         )
@@ -288,7 +297,7 @@ def test_crew_cannot_send_as_someone_else_or_already_read(world):
         insert_as(world, "C", "C", read=True)
     with pytest.raises(asyncpg.InsufficientPrivilegeError):
         insert_as(world, "A", "C")
-    insert_as(world, "C", "C")  # their own, unread: allowed
+    assert insert_as(world, "C", "C") == "INSERT 0 1"  # their own, unread: allowed
 
 
 def test_drivers_see_nothing_and_crew_only_their_own(client, world):
