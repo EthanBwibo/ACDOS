@@ -35,7 +35,7 @@
             android:name=".ui.CrewHomeActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.DispatcherHomeActivity"
+            android:name=".ui.dispatcher.DispatcherHomeActivity"
             android:exported="false" />
     </application>
 

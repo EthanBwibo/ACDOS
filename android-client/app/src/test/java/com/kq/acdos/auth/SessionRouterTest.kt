@@ -1,7 +1,7 @@
 package com.kq.acdos.auth
 
 import com.kq.acdos.ui.CrewHomeActivity
-import com.kq.acdos.ui.DispatcherHomeActivity
+import com.kq.acdos.ui.dispatcher.DispatcherHomeActivity
 import com.kq.acdos.ui.driver.DriverHomeActivity
 import com.kq.acdos.ui.homeActivityFor
 import java.io.IOException
