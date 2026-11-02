@@ -1,27 +1,34 @@
 """
-ACDOS — a real solver-planned route for the test driver, for phone checks (#123).
+ACDOS — test routes for phone checks (#123) and the end-to-end demo (#29, #27).
 
-Run seed_test_accounts.py first. Then, with the backend running locally:
+Run seed_test_accounts.py first. Every mode below first seeds the same test day:
 
-1. Gives driver@acdos.test a test vehicle (KDA 001T, capacity 4).
-2. Makes sure there are four test crew: crew@acdos.test (Westlands) and three
-   crew without accounts in Kilimani, Lavington and Upper Hill.
-3. Completes the test vehicle's active route, if any, so the new plan
-   doesn't sit next to an old one.
-4. Creates one fresh pending pickup request per test crew member, reporting
-   at JKIA at the next 08:30 EAT that is at least three hours away.
-5. Runs POST /optimisation-jobs as dispatcher@acdos.test and waits for the
-   plan, then prints it. The routes come from the solver, never from this
-   script.
+1. Two test vans, capacity 4 each:
+   KDA 001T for driver@acdos.test, available;
+   KDA 002T for driver2@acdos.test, broken_down: the spare. The demo brings it
+   in (Mark available) when KDA 001T breaks down, so the first plan always
+   lands on KDA 001T.
+2. Completes the vans' active routes and cancels earlier test pickups still
+   pending or assigned, so re-runs start clean.
+3. Four test crew: crew@acdos.test (Westlands) and three crew without
+   accounts in Kilimani, Lavington and Upper Hill.
+4. One fresh pending pickup request per test crew member, reporting at JKIA
+   at the next 08:30 EAT that is at least three hours away.
 
-    --complete   only marks the test vehicle's active route completed, so the
-                 next refresh on the phone shows "No route assigned"
+Then:
+    (default)    runs POST /optimisation-jobs as dispatcher@acdos.test with
+                 KDA 001T and prints the plan. The routes come from the
+                 solver, never from this script.
+    --seed-only  stops there: the dispatcher runs the optimisation in the app.
+    --complete   only marks the vans' active routes completed (no seeding),
+                 so the next refresh on the phone shows "No route assigned".
 
 Environment: as seed_test_accounts.py (SUPABASE_SERVICE_ROLE_KEY,
 SEED_PASSWORD, optionally SUPABASE_URL).
 
 Usage (from the repo root):
     python scripts/plan_test_route.py [--api http://127.0.0.1:8000]
+    python scripts/plan_test_route.py --seed-only
     python scripts/plan_test_route.py --complete
 """
 
@@ -43,8 +50,13 @@ from seed_test_accounts import (
 )
 
 EAT = timezone(timedelta(hours=3))
-PLATE = "KDA 001T"
 CAPACITY = 4
+
+# (plate, driver, status after seeding). The first van is the one planned.
+VANS = [
+    ("KDA 001T", "driver@acdos.test", "available"),
+    ("KDA 002T", "driver2@acdos.test", "broken_down"),
+]
 
 # Crew without accounts, fixed ids so re-runs reuse them. EWKT, longitude
 # first; coordinates from data/pickup_zones.csv.
@@ -61,12 +73,26 @@ def select(client: httpx.Client, table: str, **filters: str) -> list[dict]:
     return r.json()
 
 
-def complete_active_routes(client: httpx.Client, vehicle_id: str) -> int:
+def complete_active_routes(client: httpx.Client, vehicle_ids: list[str]) -> int:
     r = client.patch(
         "/rest/v1/routes",
-        params={"vehicle_id": f"eq.{vehicle_id}", "status": "eq.active"},
+        params={"vehicle_id": f"in.({','.join(vehicle_ids)})", "status": "eq.active"},
         headers={"Prefer": "return=representation"},
         json={"status": "completed"},
+    )
+    r.raise_for_status()
+    return len(r.json())
+
+
+def cancel_open_pickups(client: httpx.Client, crew_ids: list[str]) -> int:
+    r = client.patch(
+        "/rest/v1/pickup_requests",
+        params={
+            "crew_member_id": f"in.({','.join(crew_ids)})",
+            "status": "in.(pending,assigned)",
+        },
+        headers={"Prefer": "return=representation"},
+        json={"status": "cancelled"},
     )
     r.raise_for_status()
     return len(r.json())
@@ -80,10 +106,29 @@ def next_report_time(now: datetime) -> datetime:
     return report
 
 
-def plan(client: httpx.Client, api: str, password: str, vehicle_id: str) -> None:
-    driver_id = find_user_id(client, "driver@acdos.test")
-    crew_id = find_user_id(client, "crew@acdos.test")
+def seed_vans(client: httpx.Client) -> list[str]:
+    """The test vans' ids, in VANS order, with their drivers and statuses reset."""
+    ids = []
+    for plate, email, status in VANS:
+        upsert(
+            client,
+            "vehicles",
+            "plate_number",
+            {
+                "plate_number": plate,
+                "assigned_driver_id": find_user_id(client, email),
+                "capacity": CAPACITY,
+                "status": status,
+            },
+        )
+        ids.append(select(client, "vehicles", plate_number=f"eq.{plate}")[0]["id"])
+        print(f"{plate}  {email:<20} {status}")
+    return ids
 
+
+def seed_day(client: httpx.Client, vehicle_ids: list[str]) -> tuple[list[str], datetime]:
+    """Fresh pending pickups for the four test crew; returns their ids and report time."""
+    crew_id = find_user_id(client, "crew@acdos.test")
     crew = select(client, "crew_members", profile_id=f"eq.{crew_id}")
     if not crew:
         sys.exit("crew@acdos.test has no crew_members row: run seed_test_accounts.py first.")
@@ -102,9 +147,9 @@ def plan(client: httpx.Client, api: str, password: str, vehicle_id: str) -> None
     members = [(crew[0]["id"], CREW_HOME)]
     members += [(member_id, f"SRID=4326;{point}") for member_id, _, point in EXTRA_CREW]
 
-    completed = complete_active_routes(client, vehicle_id)
-    if completed:
-        print(f"completed {completed} earlier active route(s) of {PLATE}")
+    completed = complete_active_routes(client, vehicle_ids)
+    cancelled = cancel_open_pickups(client, [member_id for member_id, _ in members])
+    print(f"completed {completed} earlier route(s), cancelled {cancelled} earlier pickup(s)")
 
     report = next_report_time(datetime.now(UTC))
     r = client.post(
@@ -122,10 +167,11 @@ def plan(client: httpx.Client, api: str, password: str, vehicle_id: str) -> None
     )
     if r.is_error:
         sys.exit(f"pickup_requests: insert failed ({r.status_code}): {r.text}")
-    pickup_ids = [row["id"] for row in r.json()]
-    print(f"{len(pickup_ids)} pickup requests, report at JKIA {report:%Y-%m-%d %H:%M} EAT")
+    print(f"{len(members)} pending pickups, report at JKIA {report:%a %d %b %H:%M} EAT")
+    return [row["id"] for row in r.json()], report
 
-    token = access_token(client, "dispatcher@acdos.test", password)
+
+def plan(api: str, token: str, pickup_ids: list[str], vehicle_id: str) -> None:
     with httpx.Client(
         base_url=api, headers={"Authorization": f"Bearer {token}"}, timeout=30
     ) as backend:
@@ -155,7 +201,7 @@ def plan(client: httpx.Client, api: str, password: str, vehicle_id: str) -> None
     if job["status"] == "failed":
         sys.exit(f"job {job_id} failed: {job.get('error')}")
     for route in job["routes"]:
-        print(f"route for {PLATE}: {route['total_distance_km']:.1f} km")
+        print(f"route for {VANS[0][0]}: {route['total_distance_km']:.1f} km")
         for node in route["nodes"]:
             at = datetime.fromisoformat(node["estimated_arrival"]).astimezone(EAT)
             print(f"  {node['seq_order']}. pickup {node['pickup_request_id']} at {at:%H:%M} EAT")
@@ -163,7 +209,7 @@ def plan(client: httpx.Client, api: str, password: str, vehicle_id: str) -> None
         print(f"late: {job['late']}")
     if job["unassigned"]:
         print(f"unassigned: {job['unassigned']}")
-    print(f"driver {driver_id}: pull to refresh on the Route tab")
+    print("pull to refresh on the driver's Route tab")
 
 
 def main() -> None:
@@ -171,9 +217,9 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--api", default="http://127.0.0.1:8000", help="the local backend")
-    parser.add_argument(
-        "--complete", action="store_true", help="only complete the active test route"
-    )
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--seed-only", action="store_true", help="seed, but don't plan")
+    mode.add_argument("--complete", action="store_true", help="only complete the vans' routes")
     args = parser.parse_args()
 
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -183,25 +229,21 @@ def main() -> None:
         sys.exit("Set SUPABASE_SERVICE_ROLE_KEY and SEED_PASSWORD (see the docstring).")
 
     with httpx.Client(base_url=url, headers=headers(key), timeout=30) as client:
-        driver_id = find_user_id(client, "driver@acdos.test")
-        upsert(
-            client,
-            "vehicles",
-            "plate_number",
-            {
-                "plate_number": PLATE,
-                "assigned_driver_id": driver_id,
-                "capacity": CAPACITY,
-                "status": "available",
-            },
-        )
-        vehicle_id = select(client, "vehicles", plate_number=f"eq.{PLATE}")[0]["id"]
-
         if args.complete:
-            count = complete_active_routes(client, vehicle_id)
-            print(f"completed {count} active route(s) of {PLATE}")
-        else:
-            plan(client, args.api.rstrip("/"), password, vehicle_id)
+            plates = [plate for plate, _, _ in VANS]
+            quoted = ",".join(f'"{plate}"' for plate in plates)
+            vans = select(client, "vehicles", plate_number=f"in.({quoted})")
+            count = complete_active_routes(client, [van["id"] for van in vans])
+            print(f"completed {count} active route(s) of {', '.join(plates)}")
+            return
+
+        vehicle_ids = seed_vans(client)
+        pickup_ids, report = seed_day(client, vehicle_ids)
+        if args.seed_only:
+            print(f"dispatcher: open {report:%a %d %b} and tap Run optimisation")
+            return
+        token = access_token(client, "dispatcher@acdos.test", password)
+        plan(args.api.rstrip("/"), token, pickup_ids, vehicle_ids[0])
 
 
 if __name__ == "__main__":
