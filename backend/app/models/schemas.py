@@ -166,6 +166,8 @@ class Route(BaseModel):
     optimization_job_id: UUID
     total_distance_km: float
     status: RouteStatus
+    planned_departure: datetime
+    planned_arrival: datetime
     created_at: datetime
 
 
@@ -243,6 +245,9 @@ class PlannedNode(BaseModel):
 class PlannedRoute(BaseModel):
     vehicle_id: UUID
     total_distance_km: float
+    # When the van is due to leave the depot and reach JKIA (#113).
+    planned_departure: datetime
+    planned_arrival: datetime
     nodes: list[PlannedNode]
 
 

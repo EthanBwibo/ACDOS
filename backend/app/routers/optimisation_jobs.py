@@ -3,18 +3,30 @@
 POST accepts a job and answers 202 straight away; the solve runs in a
 solver process (app/jobs/runner.py) and the client polls GET.
 
+The same POST makes the first plan (trigger_type scheduled) and re-plans
+after a disruption (flight_delay, standby_activation, vehicle_breakdown):
+pickups already assigned are re-planned by replacing their routes (#113).
+Only a dispatcher starts one; nothing else does (messages never trigger
+re-optimisation, #54).
+
 Order of checks on POST, so a rejected request never creates a job row.
 Each error is one ErrorBody (app/errors.py) with one code; when a request
 has several problems, the first in this order is reported:
 1. Idempotency-Key already used: same body, the job it started; a different
    body, 422 idempotency_key_reused.
 2. An id listed twice: 422 duplicate_ids. An id that doesn't exist: 422
-   unknown_ids. A pickup past assigned: 422 not_plannable.
-3. A pickup on a route that has departed: 409 departed_routes. An active
-   route the request replaces carrying a pickup the request leaves out: 409
-   left_behind_on_route. #113 handles both, and re-plans that keep a route
-   running.
-4. Create the job (queued) and hand it to the runner.
+   unknown_ids. A pickup past assigned, or a van broken down: 422
+   not_plannable.
+3. A pickup on a route that has departed: 409 departed_routes (a departed
+   route is never re-planned, except a broken-down van's in a
+   vehicle_breakdown re-plan). A van on the road: 409
+   vehicles_on_departed_routes.
+4. Add the other pickups on the routes the request replaces, so a re-plan
+   takes whole routes: the routes of its pickups, and each requested van's
+   route that has not departed, so a van never has two active routes. Their
+   new places (or unassigned) are in the job's result like the requested
+   ones.
+5. Create the job (queued) and hand it to the runner.
 
 Only dispatchers may call these (#127): the caller's token is checked
 (app/auth.py, 401 without a valid one), and their profiles.role must be
@@ -37,7 +49,9 @@ from app.models.schemas import (
     OptimisationJobAccepted,
     OptimisationJobCreate,
     OptimisationJobResult,
+    OptimizationTriggerType,
     PickupRequestStatus,
+    VehicleStatus,
 )
 
 router = APIRouter(prefix="/optimisation-jobs", tags=["optimisation jobs"])
@@ -105,7 +119,7 @@ def _422(code: ErrorCode, detail: str, **ids: list[UUID]) -> ApiError:
     responses=errors(
         _CALLER_ERRORS
         | {
-            409: [ErrorCode.DEPARTED_ROUTES, ErrorCode.LEFT_BEHIND_ON_ROUTE],
+            409: [ErrorCode.DEPARTED_ROUTES, ErrorCode.VEHICLES_ON_DEPARTED_ROUTES],
             422: [
                 ErrorCode.VALIDATION_FAILED,
                 ErrorCode.IDEMPOTENCY_KEY_REUSED,
@@ -153,29 +167,41 @@ async def create_job(
             vehicle_ids=unknown_vehicles,
         )
     done = [p.id for p in pickups.values() if p.status not in PLANNABLE]
-    if done:
+    broken = [v.id for v in vehicles.values() if v.status == VehicleStatus.BROKEN_DOWN]
+    if done or broken:
         raise _422(
             ErrorCode.NOT_PLANNABLE,
-            "these pickups are past assigned (picked up, missed or cancelled)",
+            "these pickups are past assigned (picked up, missed or cancelled), "
+            "or these vans are broken down",
             pickup_request_ids=done,
+            vehicle_ids=broken,
         )
 
-    conflicts = await store.route_conflicts(body.pickup_request_ids, job_runner.now())
+    conflicts = await store.route_conflicts(
+        body.pickup_request_ids,
+        body.vehicle_ids,
+        job_runner.now(),
+        breakdown=body.trigger_type == OptimizationTriggerType.VEHICLE_BREAKDOWN,
+    )
     if conflicts.departed:
         raise ApiError(
             status.HTTP_409_CONFLICT,
             ErrorCode.DEPARTED_ROUTES,
-            "these pickups are on a route that has departed; re-planning them is #113",
+            "these pickups are on a route that has departed, which a re-plan leaves as it is",
             pickup_request_ids=conflicts.departed,
         )
-    if conflicts.left_behind:
+    if conflicts.on_the_road:
         raise ApiError(
             status.HTTP_409_CONFLICT,
-            ErrorCode.LEFT_BEHIND_ON_ROUTE,
-            "these pickups share an active route with requested ones: include them, "
-            "or leave the route alone",
-            pickup_request_ids=conflicts.left_behind,
+            ErrorCode.VEHICLES_ON_DEPARTED_ROUTES,
+            "these vans are on a route that has departed and are not yet due back at JKIA",
+            vehicle_ids=conflicts.on_the_road,
         )
+    # A re-plan takes whole routes, its pickups' and its vans' (store.py,
+    # _REPLACED_ROUTES): the other pickups on them are planned with it,
+    # never left on a superseded route.
+    pickups |= await store.pickups(conflicts.left_behind)
+    planned = body.pickup_request_ids + conflicts.left_behind
 
     job = await store.create_job(idempotency_key, body_hash, body.trigger_type)
     if not job.created:
@@ -184,10 +210,10 @@ async def create_job(
     job_runner.submit(
         job.id,
         tuple(
-            PickupInput(str(p.id), p.location, p.report_time)
-            for p in (pickups[i] for i in body.pickup_request_ids)
+            PickupInput(str(p.id), p.location, p.report_time) for p in (pickups[i] for i in planned)
         ),
         tuple(VehicleInput(str(v.id), v.capacity) for v in (vehicles[i] for i in body.vehicle_ids)),
+        body.trigger_type,
     )
     return OptimisationJobAccepted(id=job.id)
 

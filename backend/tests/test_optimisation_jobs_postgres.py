@@ -292,22 +292,15 @@ def job_count(key) -> int:
     return db(count)
 
 
-def test_partial_replan_of_a_route_is_a_conflict_and_a_full_one_succeeds(client, seeded):
+def test_replanning_one_pickup_of_a_route_replans_the_whole_route(client, seeded):
     pickups, vehicles = seeded
     p1, p2 = pickups[:2]
     # One van with room for both: P1 and P2 share its route.
     first = run_job(client, [p1, p2], vehicles[:1], "pair")
     assert len(first["routes"]) == 1 and len(first["routes"][0]["nodes"]) == 2
 
-    # P1 alone would leave P2 on a superseded route.
-    partial = post(client, [p1], vehicles[:1], "p1-only")
-    assert partial.status_code == 409
-    assert partial.json()["code"] == "left_behind_on_route"
-    assert partial.json()["pickup_request_ids"] == [str(p2)]
-    assert job_count("p1-only") == 0
-
-    # Both together replace the route: one live node each, on the new job's.
-    second = run_job(client, [p1, p2], vehicles[:1], "pair-again")
+    # P1 alone takes P2 with it (#113): never left on a superseded route.
+    second = run_job(client, [p1], vehicles[:1], "p1-only")
     live = live_nodes([p1, p2])
     assert sorted(n["pickup_request_id"] for n in live) == sorted([p1, p2])
     assert all(str(n["optimization_job_id"]) == second["id"] for n in live)
@@ -319,7 +312,7 @@ def test_pickup_on_a_departed_route_is_a_conflict_and_creates_no_job(client, see
     first = run_job(client, pickups, vehicles, "before")
     routed = {n["pickup_request_id"] for r in first["routes"] for n in r["nodes"]}
 
-    # Later than every first stop: every route of the first job has left.
+    # Later than every van's departure: every route of the first job has left.
     runner = app.state.job_runner
     runner.now = lambda: datetime.now(UTC) + timedelta(hours=4)
     response = post(client, pickups, vehicles, "after")

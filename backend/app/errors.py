@@ -38,7 +38,7 @@ class ErrorCode(StrEnum):
     UNKNOWN_IDS = "unknown_ids"
     NOT_PLANNABLE = "not_plannable"
     DEPARTED_ROUTES = "departed_routes"
-    LEFT_BEHIND_ON_ROUTE = "left_behind_on_route"
+    VEHICLES_ON_DEPARTED_ROUTES = "vehicles_on_departed_routes"
     # Pickup-event upload (#33): the whole request, then one event.
     PAYLOAD_TOO_LARGE = "payload_too_large"
     DRIVER_MISMATCH = "driver_mismatch"

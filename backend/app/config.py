@@ -30,11 +30,16 @@ class Settings(BaseSettings):
     # lines at 30 km/h, for tests.
     travel_model: str = "rf"
     # Where every vehicle starts. vehicles has no location column
-    # (docs/schema.md), so one base for all until re-planning (#113) starts
-    # vans from where they are. JKIA by default: the vans are based there, so
+    # (docs/schema.md), so one base for all; a van on the road is left out
+    # of a re-plan instead (#113). JKIA by default: the vans are based there, so
     # routes run JKIA -> pickups -> JKIA. Override with a base coordinate.
     depot_lat: float = Field(default=JKIA.lat, ge=-90, le=90)
     depot_lon: float = Field(default=JKIA.lon, ge=-180, le=180)
+    # A van is on the road from its route's planned departure until its
+    # planned arrival at JKIA plus this, unless the route is completed first
+    # (#113). The margin covers a van running late; nothing reports its real
+    # arrival yet.
+    van_return_grace_min: float = Field(default=30.0, ge=0)
 
 
 settings = Settings()

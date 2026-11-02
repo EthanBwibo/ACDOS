@@ -46,13 +46,15 @@ insert into public.pickup_requests (id, crew_member_id, pickup_location, report_
 
 -- Active routes: vehicle A picks up crew C, vehicle B picks up crew E.
 -- Vehicle A also has an older, superseded route that held crew F.
-insert into public.routes (id, vehicle_id, optimization_job_id, total_distance_km, status) values
+insert into public.routes
+    (id, vehicle_id, optimization_job_id, total_distance_km, status,
+     planned_departure, planned_arrival) values
     ('50000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-00000000000a',
-     '30000000-0000-0000-0000-000000000001', 14.1, 'active'),
+     '30000000-0000-0000-0000-000000000001', 14.1, 'active', now(), now() + interval '2 hours'),
     ('50000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-00000000000b',
-     '30000000-0000-0000-0000-000000000001', 17.3, 'active'),
+     '30000000-0000-0000-0000-000000000001', 17.3, 'active', now(), now() + interval '2 hours'),
     ('50000000-0000-0000-0000-0000000000a0', '20000000-0000-0000-0000-00000000000a',
-     '30000000-0000-0000-0000-000000000000', 9.8, 'superseded');
+     '30000000-0000-0000-0000-000000000000', 9.8, 'superseded', now(), now() + interval '2 hours');
 
 insert into public.route_nodes (id, route_id, pickup_request_id, seq_order, estimated_arrival) values
     ('60000000-0000-0000-0000-00000000000a', '50000000-0000-0000-0000-00000000000a',

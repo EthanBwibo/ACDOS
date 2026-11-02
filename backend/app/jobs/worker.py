@@ -63,7 +63,7 @@ class SolveInput:
     pickups: tuple[PickupInput, ...]
     vehicles: tuple[VehicleInput, ...]
     # Every vehicle starts here, free to leave at the epoch (docs/schema.md:
-    # vehicles have no location; a config constant until #113).
+    # vehicles have no location). Vans on the road are not in a job (#113).
     depot: Point
     epoch: datetime  # timezone-aware
     time_limit_sec: float
@@ -81,6 +81,9 @@ class PlannedStop:
 class PlannedRoute:
     vehicle_id: str
     stops: tuple[PlannedStop, ...]
+    # When the van leaves the depot and reaches JKIA (#113).
+    departure: datetime
+    arrival: datetime
 
 
 @dataclass(frozen=True)
@@ -182,6 +185,13 @@ def outcome(problem: Problem, best: Individual, epoch: datetime) -> SolveOutcome
             # Rounded up, so a crew member late by a fraction of a second is
             # still reported late.
             late_sec[pickup_id] = math.ceil(stop.lateness)
-        routes.append(PlannedRoute(problem.vehicles[route.vehicle_index].id, tuple(stops)))
+        routes.append(
+            PlannedRoute(
+                problem.vehicles[route.vehicle_index].id,
+                tuple(stops),
+                departure=epoch + timedelta(seconds=route.start),
+                arrival=epoch + timedelta(seconds=route.destination_arrival),
+            )
+        )
     unassigned = tuple(problem.pickups[i].id for i in best.unassigned)
     return SolveOutcome(tuple(routes), late_sec, unassigned)

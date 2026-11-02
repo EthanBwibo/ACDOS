@@ -241,7 +241,7 @@
           "unknown_ids",
           "not_plannable",
           "departed_routes",
-          "left_behind_on_route",
+          "vehicles_on_departed_routes",
           "payload_too_large",
           "driver_mismatch",
           "not_your_stop",
@@ -597,6 +597,16 @@
             "title": "Nodes",
             "type": "array"
           },
+          "planned_arrival": {
+            "format": "date-time",
+            "title": "Planned Arrival",
+            "type": "string"
+          },
+          "planned_departure": {
+            "format": "date-time",
+            "title": "Planned Departure",
+            "type": "string"
+          },
           "total_distance_km": {
             "title": "Total Distance Km",
             "type": "number"
@@ -610,6 +620,8 @@
         "required": [
           "vehicle_id",
           "total_distance_km",
+          "planned_departure",
+          "planned_arrival",
           "nodes"
         ],
         "title": "PlannedRoute",
@@ -1138,10 +1150,10 @@
                 }
               }
             },
-            "description": "Conflict: departed_routes, left_behind_on_route",
+            "description": "Conflict: departed_routes, vehicles_on_departed_routes",
             "x-error-codes": [
               "departed_routes",
-              "left_behind_on_route"
+              "vehicles_on_departed_routes"
             ]
           },
           "422": {

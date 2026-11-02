@@ -150,6 +150,8 @@ class ApiModelsTest {
         reply(
             """{"id":"job-1","status":"completed","error":null,
             "routes":[{"vehicle_id":"v1","total_distance_km":41.5,
+            "planned_departure":"2026-10-30T03:05:00Z",
+            "planned_arrival":"2026-10-30T04:20:00Z",
             "nodes":[{"pickup_request_id":"p1","seq_order":1,
             "estimated_arrival":"2026-10-30T03:40:00.123456Z"}]}],
             "late":[{"pickup_request_id":"p2","late_sec":420}],"unassigned":["p3"]}"""
@@ -160,6 +162,7 @@ class ApiModelsTest {
         assertEquals("/optimisation-jobs/job-1", server.takeRequest().url.encodedPath)
         assertEquals(OptimizationJobStatusDto.COMPLETED, job.status)
         assertEquals("p1", job.routes.single().nodes.single().pickupRequestId)
+        assertEquals(Instant.parse("2026-10-30T03:05:00Z"), job.routes.single().plannedDeparture)
         assertEquals(420, job.late.single().lateSec)
         assertEquals(listOf("p3"), job.unassigned)
     }
