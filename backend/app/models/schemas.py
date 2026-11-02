@@ -381,3 +381,60 @@ class PickupEventResult(BaseModel):
 
 class PickupEventResults(BaseModel):
     results: list[PickupEventResult]  # one per event, in request order
+
+
+# The dispatcher's dashboard (#136, for Android #27). Lists are keyset
+# paginated like /drivers/me/routes: pass next_cursor back as ?cursor=.
+
+
+class DispatcherPickup(BaseModel):
+    id: UUID
+    crew_name: str
+    zone_label: str | None  # nearest pickup zone; null only without zones
+    report_time: datetime  # the deadline at JKIA
+    status: PickupRequestStatus
+
+
+class DispatcherPickupPage(BaseModel):
+    items: list[DispatcherPickup]
+    next_cursor: str | None
+
+
+class DispatcherVehicle(BaseModel):
+    id: UUID
+    plate_number: str
+    capacity: int
+    status: VehicleStatus
+    # Away on a route that has departed, not yet due back at JKIA (#113):
+    # a job that includes this van gets 409 vehicles_on_departed_routes.
+    on_the_road: bool
+
+
+class DispatcherVehiclePage(BaseModel):
+    items: list[DispatcherVehicle]
+    next_cursor: str | None
+
+
+class DispatcherRoute(PlannedRoute):
+    """#51's route shape, with the route's id and its van's plate. Live
+    stops only."""
+
+    route_id: UUID
+    vehicle_plate: str
+
+
+class DispatcherRoutePage(BaseModel):
+    items: list[DispatcherRoute]
+    next_cursor: str | None
+
+
+class PickupReportTimeUpdate(BaseModel):
+    """A flight delay (or any roster change) recorded for one pickup. It
+    never starts a re-plan: the dispatcher does that with POST
+    /optimisation-jobs."""
+
+    report_time: AwareDatetime
+
+
+class VehicleStatusUpdate(BaseModel):
+    status: VehicleStatus

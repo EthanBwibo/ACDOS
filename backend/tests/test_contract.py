@@ -25,7 +25,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app import contract, reads
+from app import contract, dispatch, reads
 from app.config import settings
 from app.errors import ErrorBody, ErrorCode
 from app.jobs.runner import JobRunner
@@ -46,6 +46,11 @@ TOKEN_ROUTES = {
     "/optimisation-jobs",
     "/optimisation-jobs/{job_id}",
     "/drivers/me/pickup-events",
+    "/pickup-requests",
+    "/pickup-requests/{pickup_id}",
+    "/vehicles",
+    "/vehicles/{vehicle_id}",
+    "/routes",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
@@ -273,6 +278,43 @@ def _events(setup, token: bool = True, events: list | None = None, size: int | N
     return run
 
 
+PICKUP, VEHICLE = f"/pickup-requests/{uuid4()}", f"/vehicles/{uuid4()}"
+REPORT_TIME = {"report_time": "2026-11-02T08:00:00Z"}
+
+
+def _dispatch(
+    method: str,
+    path: str,
+    setup: Callable[[World], None] | None = None,
+    token: bool = True,
+    body: dict | None = None,
+    returns: dict | None = None,
+):
+    """A dispatcher endpoint (#136). returns stubs app.dispatch functions,
+    by name, so a PATCH can find no row or a pickup past assigned without a
+    database."""
+
+    def run(w: World):
+        if setup:
+            setup(w)
+        for name, value in (returns or {}).items():
+
+            async def stub(*args, value=value):
+                return value
+
+            w.monkeypatch.setattr(dispatch, name, stub)
+        headers = w.token() if token else {}
+        if method == "GET":
+            return w.client.get(path, headers=headers)
+        return w.client.patch(path, json=body, headers=headers)
+
+    return run
+
+
+def _as_dispatcher(w: World) -> None:
+    w.as_profile("dispatcher")
+
+
 # (method, path, status, code, how to make the route send it, ids expected)
 CASES = (
     [
@@ -369,6 +411,126 @@ CASES = (
         ("POST", EVENTS, 413, "payload_too_large", _events(None, size=40 * 1024), False),
         ("POST", EVENTS, 422, "validation_failed", _events(None, events=[]), False),
         ("POST", EVENTS, 503, "unavailable", _events(World.without_db), False),
+    ]
+    + [
+        case
+        for method, spec_path, path, body in [
+            ("GET", "/pickup-requests", "/pickup-requests", None),
+            ("PATCH", "/pickup-requests/{pickup_id}", PICKUP, REPORT_TIME),
+            ("GET", "/vehicles", "/vehicles", None),
+            ("PATCH", "/vehicles/{vehicle_id}", VEHICLE, {"status": "broken_down"}),
+            ("GET", "/routes", "/routes", None),
+        ]
+        for case in [
+            (
+                method,
+                spec_path,
+                401,
+                "unauthorized",
+                _dispatch(method, path, token=False, body=body),
+                False,
+            ),
+            (
+                method,
+                spec_path,
+                403,
+                "forbidden",
+                _dispatch(method, path, lambda w: w.as_profile("driver"), body=body),
+                False,
+            ),
+            (
+                method,
+                spec_path,
+                503,
+                "unavailable",
+                _dispatch(method, path, World.without_db, body=body),
+                False,
+            ),
+        ]
+    ]
+    + [
+        (
+            "GET",
+            "/pickup-requests",
+            422,
+            "validation_failed",
+            _dispatch("GET", "/pickup-requests?date=tomorrow", _as_dispatcher),
+            False,
+        ),
+        (
+            "GET",
+            "/vehicles",
+            422,
+            "validation_failed",
+            _dispatch("GET", "/vehicles?cursor=not-a-cursor", _as_dispatcher),
+            False,
+        ),
+        (
+            "GET",
+            "/routes",
+            422,
+            "validation_failed",
+            _dispatch("GET", "/routes?limit=0", _as_dispatcher),
+            False,
+        ),
+        (
+            "PATCH",
+            "/pickup-requests/{pickup_id}",
+            404,
+            "not_found",
+            _dispatch(
+                "PATCH",
+                PICKUP,
+                _as_dispatcher,
+                body=REPORT_TIME,
+                returns={"update_report_time": None},
+            ),
+            False,
+        ),
+        (
+            "PATCH",
+            "/pickup-requests/{pickup_id}",
+            422,
+            "not_plannable",
+            _dispatch(
+                "PATCH",
+                PICKUP,
+                _as_dispatcher,
+                body=REPORT_TIME,
+                returns={"update_report_time": "picked_up"},
+            ),
+            True,
+        ),
+        (
+            "PATCH",
+            "/pickup-requests/{pickup_id}",
+            422,
+            "validation_failed",
+            _dispatch("PATCH", PICKUP, _as_dispatcher, body={"report_time": "2026-11-02T08:00:00"}),
+            False,
+        ),
+        (
+            "PATCH",
+            "/vehicles/{vehicle_id}",
+            404,
+            "not_found",
+            _dispatch(
+                "PATCH",
+                VEHICLE,
+                _as_dispatcher,
+                body={"status": "broken_down"},
+                returns={"update_vehicle_status": None},
+            ),
+            False,
+        ),
+        (
+            "PATCH",
+            "/vehicles/{vehicle_id}",
+            422,
+            "validation_failed",
+            _dispatch("PATCH", VEHICLE, _as_dispatcher, body={"status": "on_fire"}),
+            False,
+        ),
     ]
 )
 
