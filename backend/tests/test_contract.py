@@ -43,6 +43,7 @@ TOKEN_ROUTES = {
     "/drivers/me/route",
     "/drivers/me/routes",
     "/crew/me/pickup",
+    "/crew/me/notices/{notice_id}/acknowledge",
     "/optimisation-jobs",
     "/optimisation-jobs/{job_id}",
     "/drivers/me/pickup-events",
@@ -315,6 +316,22 @@ def _as_dispatcher(w: World) -> None:
     w.as_profile("dispatcher")
 
 
+ACK = "/crew/me/notices/{notice_id}/acknowledge"
+
+
+def _ack(setup: Callable[[World], None] | None, token: bool = True, notice: str | None = None):
+    """POST an acknowledgement (#53). A crew profile without a crew_members
+    row has no notices, so any id is 404 without a database."""
+
+    def run(w: World):
+        if setup:
+            setup(w)
+        path = ACK.format(notice_id=notice or uuid4())
+        return w.client.post(path, headers=w.token() if token else {})
+
+    return run
+
+
 # (method, path, status, code, how to make the route send it, ids expected)
 CASES = (
     [
@@ -404,6 +421,20 @@ CASES = (
             _me("/drivers/me/routes", None, token=True, query="?cursor=not-a-cursor"),
             False,
         ),
+    ]
+    + [
+        ("POST", ACK, 401, "unauthorized", _ack(None, token=False), False),
+        ("POST", ACK, 403, "forbidden", _ack(lambda w: w.as_profile("driver")), False),
+        ("POST", ACK, 404, "not_found", _ack(lambda w: w.as_profile("crew")), False),
+        (
+            "POST",
+            ACK,
+            422,
+            "validation_failed",
+            _ack(lambda w: w.as_profile("crew"), notice="not-a-uuid"),
+            False,
+        ),
+        ("POST", ACK, 503, "unavailable", _ack(World.without_db), False),
     ]
     + [
         ("POST", EVENTS, 401, "unauthorized", _events(None, token=False), False),

@@ -133,6 +133,11 @@ def seeded():
                 "delete from public.routes where optimization_job_id = any($1)", job_ids
             )
             await conn.execute("delete from public.optimization_jobs where id = any($1)", job_ids)
+            # The notices a re-plan wrote for them (#53).
+            await conn.execute(
+                "delete from public.schedule_change_notices where pickup_request_id = any($1)",
+                pickups,
+            )
             await conn.execute("delete from public.pickup_requests where id = any($1)", pickups)
             await conn.execute("delete from public.crew_members where id = any($1)", crew)
             await conn.execute("delete from public.vehicles where id = any($1)", vehicles)

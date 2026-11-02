@@ -36,6 +36,7 @@ from app.models.schemas import (
     DriverStop,
     RouteSummary,
     RouteSummaryPage,
+    ScheduleChangeNotice,
 )
 
 # Stop coordinates for the driver's navigation: 5 decimal places is about
@@ -218,16 +219,26 @@ async def next_pickup(
 ) -> CrewPickup | None:
     """The crew member's next pickup still to happen: pending or assigned,
     reporting from now on, earliest first; with the time and van of its live
-    route node when it has one. crew_member_id is the explicit second check."""
+    route node when it has one, and its latest notice not yet acknowledged
+    (#53). crew_member_id is the explicit second check."""
     row = await conn.fetchrow(
         """
         select p.id, p.status, p.report_time,
-            n.estimated_arrival, v.plate_number
+            n.estimated_arrival, v.plate_number,
+            s.id as notice_id, s.reason, s.previous_pickup_time, s.new_pickup_time,
+            s.issued_at
         from public.pickup_requests p
         left join public.route_nodes n
             on n.pickup_request_id = p.id and n.superseded_at is null
         left join public.routes r on r.id = n.route_id
         left join public.vehicles v on v.id = r.vehicle_id
+        left join lateral (
+            select id, reason, previous_pickup_time, new_pickup_time, issued_at
+            from public.schedule_change_notices
+            where pickup_request_id = p.id and acknowledged_at is null
+            order by issued_at desc, id desc
+            limit 1
+        ) s on true
         where p.crew_member_id = $1
           and p.status in ('pending', 'assigned')
           and p.report_time >= $2
@@ -245,4 +256,50 @@ async def next_pickup(
         report_time=row["report_time"],
         scheduled_pickup=row["estimated_arrival"],
         vehicle_plate=row["plate_number"],
+        needs_ack=row["notice_id"] is not None,
+        notice=(
+            ScheduleChangeNotice(
+                id=row["notice_id"],
+                reason=row["reason"],
+                previous_pickup_time=row["previous_pickup_time"],
+                new_pickup_time=row["new_pickup_time"],
+                issued_at=row["issued_at"],
+            )
+            if row["notice_id"] is not None
+            else None
+        ),
     )
+
+
+async def acknowledge_notice(
+    conn: asyncpg.Connection, crew_member_id: UUID, notice_id: UUID, now: datetime
+) -> datetime | None:
+    """Acknowledge a notice of the crew member's, and any earlier one still
+    pending for the same pickup: they have seen where it stands now. Returns
+    when the notice was acknowledged (the first time, on a retry too), or
+    None if it is not theirs. crew_member_id is the explicit second check."""
+    notice = await conn.fetchrow(
+        """
+        select s.pickup_request_id, s.issued_at, s.acknowledged_at
+        from public.schedule_change_notices s
+        join public.pickup_requests p on p.id = s.pickup_request_id
+        where s.id = $1 and p.crew_member_id = $2
+        """,
+        notice_id,
+        crew_member_id,
+    )
+    if notice is None:
+        return None
+    if notice["acknowledged_at"] is not None:
+        return notice["acknowledged_at"]
+    await conn.execute(
+        """
+        update public.schedule_change_notices
+        set acknowledged_at = $3
+        where pickup_request_id = $1 and issued_at <= $2 and acknowledged_at is null
+        """,
+        notice["pickup_request_id"],
+        notice["issued_at"],
+        now,
+    )
+    return now

@@ -357,6 +357,23 @@ class PostgresJobStore:
             if conflicts:
                 raise RouteConflictError(conflicts)
 
+            # What crew had been told, before it is replaced: each of the
+            # job's pickups' live node on an active route (#53).
+            before = {
+                r["pickup_request_id"]: (r["estimated_arrival"], r["vehicle_id"])
+                for r in await conn.fetch(
+                    """
+                    select n.pickup_request_id, n.estimated_arrival, r.vehicle_id
+                    from public.route_nodes n
+                    join public.routes r on r.id = n.route_id
+                    where n.pickup_request_id = any($1::uuid[])
+                      and n.superseded_at is null
+                      and r.status = 'active'
+                    """,
+                    requested,
+                )
+            }
+
             # Supersede the job's pickups' live nodes, and every other live
             # node of the routes it replaces (its pickups' and its vans'), so
             # those routes are replaced whole. The pickups left on such a
@@ -452,6 +469,7 @@ class PostgresJobStore:
                 ]
                 + [(job_id, UUID(i), "unassigned", None) for i in outcome.unassigned],
             )
+            await _write_notices(conn, job_id, outcome, before, now)
             await conn.execute(
                 """
                 update public.optimization_jobs
@@ -549,6 +567,53 @@ class PostgresJobStore:
             o["pickup_request_id"] for o in outcomes if o["outcome"] == "unassigned"
         ]
         return result
+
+
+# A pickup time that moves by less than this is not a change crew are told
+# about (#53): the crew app shows minutes.
+NOTICE_THRESHOLD = timedelta(minutes=1)
+# The triggers a notice can give as its reason (schedule_change_notices):
+# every re-plan. A scheduled job is the first plan, with nothing to change.
+_NOTICE_REASONS = {"flight_delay", "standby_activation", "vehicle_breakdown"}
+
+
+async def _write_notices(
+    conn: asyncpg.Connection,
+    job_id: UUID,
+    outcome: SolveOutcome,
+    before: dict[UUID, tuple[datetime, UUID]],
+    now: datetime,
+) -> None:
+    """One schedule_change_notice per pickup whose scheduled pickup the job
+    changed: a time at least NOTICE_THRESHOLD away, another van, or none (it
+    is unassigned now). Only for a pickup that had one before, and only in a
+    re-plan."""
+    reason = await conn.fetchval(
+        "select trigger_type from public.optimization_jobs where id = $1", job_id
+    )
+    if reason not in _NOTICE_REASONS:
+        return
+    after: dict[UUID, tuple[datetime, UUID] | None] = {
+        UUID(s.pickup_id): (s.arrival, UUID(route.vehicle_id))
+        for route in outcome.routes
+        for s in route.stops
+    } | {UUID(i): None for i in outcome.unassigned}
+    notices = []
+    for pickup, (old_time, old_van) in before.items():
+        new = after.get(pickup)
+        if new is not None:
+            new_time, new_van = new
+            if new_van == old_van and abs(new_time - old_time) < NOTICE_THRESHOLD:
+                continue
+        notices.append((pickup, reason, old_time, new[0] if new else None, now))
+    await conn.executemany(
+        """
+        insert into public.schedule_change_notices
+            (pickup_request_id, reason, previous_pickup_time, new_pickup_time, issued_at)
+        values ($1, $2, $3, $4, $5)
+        """,
+        notices,
+    )
 
 
 async def _route_conflicts(
