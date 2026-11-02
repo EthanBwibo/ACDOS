@@ -197,7 +197,8 @@ def client(monkeypatch, world):
     monkeypatch.setattr(settings, "solver_pool_size", 1)
     monkeypatch.setattr(app.state, "jwt_keys", FakeJwks(KEY).source(), raising=False)
     monkeypatch.setattr(app.state, "jwt_issuer", ISSUER, raising=False)
-    with TestClient(app) as client:
+    # The dispatcher by default (job API polls); crew and driver calls pass their own.
+    with TestClient(app, headers=as_user(world, "D")) as client:
         yield client
 
 
@@ -210,7 +211,9 @@ def commit(world: World, trigger: OptimizationTriggerType, van: str | None, move
     pC on van at its old pickup time plus moved, or unassigned (van None)."""
 
     async def run(conn):
-        pool = await asyncpg.create_pool(DATABASE_URL, statement_cache_size=0, max_size=2)
+        pool = await asyncpg.create_pool(
+            DATABASE_URL, statement_cache_size=0, min_size=1, max_size=2
+        )
         try:
             store = PostgresJobStore(pool, Point(-1.3192, 36.9278), GRACE)
             job = await store.create_job(f"test-{RUN}-{uuid4().hex}", "hash", trigger)
@@ -274,7 +277,9 @@ def test_a_pickup_planned_for_the_first_time_gets_no_notice(world):
     """pE had no route: a re-plan that gives it one has nothing to change."""
 
     async def run(conn):
-        pool = await asyncpg.create_pool(DATABASE_URL, statement_cache_size=0, max_size=2)
+        pool = await asyncpg.create_pool(
+            DATABASE_URL, statement_cache_size=0, min_size=1, max_size=2
+        )
         try:
             store = PostgresJobStore(pool, Point(-1.3192, 36.9278), GRACE)
             job = await store.create_job(f"test-{RUN}-{uuid4().hex}", "hash", FLIGHT_DELAY)
