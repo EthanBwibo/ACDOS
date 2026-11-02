@@ -87,4 +87,8 @@ interface PendingPickupEventDao {
             "AND conflict IS NOT NULL ORDER BY confirmed_at"
     )
     fun observeConflicts(driverId: String): Flow<List<PendingPickupEventEntity>>
+
+    /** All of [driverId]'s events, for the Route tab's status line on each stop. */
+    @Query("SELECT * FROM pickup_event_outbox WHERE driver_id = :driverId ORDER BY confirmed_at")
+    fun observeAll(driverId: String): Flow<List<PendingPickupEventEntity>>
 }
