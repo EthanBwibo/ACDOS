@@ -12,6 +12,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Test
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 /**
@@ -50,7 +51,15 @@ class OpenApiContractTest {
         "OptimisationJobResult" to OptimisationJobResultDto::class.java,
         "PlannedRoute" to PlannedRouteDto::class.java,
         "PlannedNode" to PlannedNodeDto::class.java,
-        "LatePickup" to LatePickupDto::class.java
+        "LatePickup" to LatePickupDto::class.java,
+        "DispatcherPickup" to DispatcherPickupDto::class.java,
+        "DispatcherPickupPage" to DispatcherPickupPageDto::class.java,
+        "DispatcherVehicle" to DispatcherVehicleDto::class.java,
+        "DispatcherVehiclePage" to DispatcherVehiclePageDto::class.java,
+        "DispatcherRoute" to DispatcherRouteDto::class.java,
+        "DispatcherRoutePage" to DispatcherRoutePageDto::class.java,
+        "PickupReportTimeUpdate" to PickupReportTimeUpdateDto::class.java,
+        "VehicleStatusUpdate" to VehicleStatusUpdateDto::class.java
     )
 
     private val enums: Map<String, Class<out Enum<*>>> = mapOf(
@@ -58,13 +67,15 @@ class OpenApiContractTest {
         "PickupRequestStatus" to PickupRequestStatusDto::class.java,
         "OptimizationJobStatus" to OptimizationJobStatusDto::class.java,
         "OptimizationTriggerType" to OptimizationTriggerTypeDto::class.java,
-        "ErrorCode" to ErrorCode::class.java
+        "ErrorCode" to ErrorCode::class.java,
+        "VehicleStatus" to VehicleStatusDto::class.java
     )
 
     @Test
     fun everyEndpointTheAppCalls_isInTheContractWithTheSameBodies() {
         // Static methods are Kotlin's $default helpers for parameters with defaults.
-        val services = listOf(MeApi::class.java, OptimisationJobsApi::class.java)
+        val services =
+            listOf(MeApi::class.java, OptimisationJobsApi::class.java, DispatcherApi::class.java)
         val methods = services.flatMap { it.declaredMethods.toList() }
             .filterNot { Modifier.isStatic(it.modifiers) }
         for (method in methods) {
@@ -141,6 +152,7 @@ class OpenApiContractTest {
     private fun Method.httpRoute(): Pair<String, String> {
         getAnnotation(GET::class.java)?.let { return "get" to "/" + it.value }
         getAnnotation(POST::class.java)?.let { return "post" to "/" + it.value }
+        getAnnotation(PATCH::class.java)?.let { return "patch" to "/" + it.value }
         error("$name has no HTTP annotation this test knows")
     }
 
@@ -179,6 +191,9 @@ class OpenApiContractTest {
             "integer" -> 3
 
             "number" -> 1.5
+
+            // true, so a DTO default of false can't pass for reading the field.
+            "boolean" -> true
 
             "string" -> when (schema["format"]) {
                 "uuid" -> "6f1c2a9e-0d4b-4c57-9a3e-2b8f7d1e5a40"

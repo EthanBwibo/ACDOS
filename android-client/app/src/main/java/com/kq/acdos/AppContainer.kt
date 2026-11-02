@@ -6,9 +6,11 @@ import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
 import com.kq.acdos.auth.SharedPreferencesSessionManager
 import com.kq.acdos.auth.SupabaseAuthRepository
+import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.remote.ApiClient
+import com.kq.acdos.data.remote.DispatcherApi
 import com.kq.acdos.data.remote.MeApi
 import com.kq.acdos.data.remote.OptimisationJobsApi
 import io.github.jan.supabase.auth.Auth
@@ -58,6 +60,13 @@ class AppContainer(context: Context) {
     val optimisationJobsApi: OptimisationJobsApi by lazy { retrofit.create() }
 
     val meApi: MeApi by lazy { retrofit.create() }
+
+    val dispatcherApi: DispatcherApi by lazy { retrofit.create() }
+
+    /** Null without an API URL; the dispatcher screen then shows nothing. */
+    val dispatchRepository: DispatchRepository? by lazy {
+        if (isApiConfigured) DispatchRepository(dispatcherApi, optimisationJobsApi) else null
+    }
 
     val database: AcdosDatabase by lazy { AcdosDatabase.build(appContext) }
 

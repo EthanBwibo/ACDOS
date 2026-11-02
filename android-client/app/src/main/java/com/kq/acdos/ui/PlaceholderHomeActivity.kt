@@ -12,8 +12,8 @@ import com.kq.acdos.R
 import kotlinx.coroutines.launch
 
 /**
- * Stand-in home screen until the real role screens land (#27 dispatcher,
- * #56 crew). Shows who is signed in and offers sign-out.
+ * Stand-in home screen until the Crew screens land (#56). Shows who is
+ * signed in and offers sign-out.
  */
 abstract class PlaceholderHomeActivity(@StringRes private val roleLabel: Int) :
     AppCompatActivity() {
@@ -41,5 +41,3 @@ abstract class PlaceholderHomeActivity(@StringRes private val roleLabel: Int) :
 }
 
 class CrewHomeActivity : PlaceholderHomeActivity(R.string.role_crew)
-
-class DispatcherHomeActivity : PlaceholderHomeActivity(R.string.role_dispatcher)

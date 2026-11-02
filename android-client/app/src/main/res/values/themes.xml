@@ -6,4 +6,12 @@
     </style>
 
     <style name="Theme.ACDOS" parent="Base.Theme.ACDOS" />
+
+    <!-- A section heading on the dispatcher's day board. -->
+    <style name="DispatchSection">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:textAppearance">?attr/textAppearanceTitleMedium</item>
+    </style>
 </resources>
