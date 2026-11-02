@@ -26,7 +26,7 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | Table | Columns | Keys and constraints |
 |---|---|---|
 | preset_messages | id UUID; code TEXT; label TEXT; created_at TIMESTAMPTZ | PK id; code unique |
-| crew_messages | id UUID; crew_member_id UUID; preset_message_id UUID; sent_at TIMESTAMPTZ; read_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK crew_member_id, preset_message_id; read_at null until reviewed by the dispatcher |
+| crew_messages | id UUID; crew_member_id UUID; preset_message_id UUID; sent_at TIMESTAMPTZ; read_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK crew_member_id, preset_message_id; read_at null until reviewed by the dispatcher; idempotency_key unique (the crew app's retry key, #54) |
 | schedule_change_notices | id UUID; pickup_request_id UUID; reason TEXT; previous_pickup_time TIMESTAMPTZ; new_pickup_time TIMESTAMPTZ; issued_at TIMESTAMPTZ; delivered_at TIMESTAMPTZ; acknowledged_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK pickup_request_id; reason in (flight_delay, standby_activation, vehicle_breakdown); pending while acknowledged_at is null |
 | device_tokens | id UUID; crew_member_id UUID; fcm_token TEXT; updated_at TIMESTAMPTZ | PK id; FK crew_member_id; fcm_token unique |
 
@@ -84,8 +84,9 @@ for every client path, not only a backstop behind FastAPI.
   the Edge Function, with the service role.
 - **Crew:** read their own pickup requests and notices; read the `route_nodes` for their own
   pickup requests that are not superseded (their current ETA), and the `routes` and `vehicles`
-  rows of those nodes (which van is coming); set `acknowledged_at` on their own notices; insert
-  their own crew messages; register their own device tokens.
+  rows of those nodes (which van is coming); read their own `crew_members` row; set
+  `acknowledged_at` on their own notices; insert their own crew messages, unread, and read them
+  back; read the preset messages; register their own device tokens.
 - **Every signed-in user:** read `pickup_zones`. No client writes it.
 
 Policies get the caller's role and any cross-table lookup through `SECURITY DEFINER` functions
@@ -138,6 +139,16 @@ and `PUBLIC` may not.
 - Crew read their own notices and may set only `acknowledged_at`, never to null (027). No
   client inserts or deletes one. Acknowledging a notice also acknowledges the earlier pending
   ones for the same pickup. `delivered_at` stays null until push delivery (#55).
+
+## Preset messages (#54)
+
+- Crew send one of the fixed `preset_messages` (seeded by 028) to the dispatcher; there is no
+  free text and no other recipient. The dispatcher reads every crew message and sets `read_at`,
+  the only column a client may change on one. No client writes `preset_messages`, edits or
+  deletes a crew message, or sends one as someone else. Drivers see neither table.
+- A send carries the crew app's `Idempotency-Key`, stored as `idempotency_key`: a retry with
+  the same key and preset returns the message already sent.
+- Messages never trigger re-optimisation: nothing reads them but the dispatcher's screen.
 
 ## Conventions
 
