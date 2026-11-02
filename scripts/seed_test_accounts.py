@@ -7,6 +7,7 @@ its profiles row, and links the crew account to a crew_members row so crew RLS
 
     dispatcher@acdos.test   profiles.role = dispatcher
     driver@acdos.test       profiles.role = driver
+    driver2@acdos.test      profiles.role = driver (the spare van's, for the demo)
     crew@acdos.test         profiles.role = crew, crew_members row in Westlands
 
 The app never sets a role: profiles has only SELECT policies, so roles are
@@ -15,7 +16,7 @@ existing account keeps its id and gets the password reset to SEED_PASSWORD.
 
 Environment:
     SUPABASE_SERVICE_ROLE_KEY   service role (or sb_secret_...) key. Never commit it.
-    SEED_PASSWORD               password for all three accounts (at least 8 characters)
+    SEED_PASSWORD               password for all the accounts (at least 8 characters)
     SUPABASE_URL                defaults to the ACDOS project
 
 Usage (from the repo root):
@@ -36,6 +37,8 @@ DEFAULT_URL = "https://yqqczlvhwlznvaezfpcl.supabase.co"
 ACCOUNTS = [
     {"email": "dispatcher@acdos.test", "role": "dispatcher", "full_name": "Test Dispatcher"},
     {"email": "driver@acdos.test", "role": "driver", "full_name": "Test Driver"},
+    # KDA 002T's driver, for the breakdown in the end-to-end demo (plan_test_route.py).
+    {"email": "driver2@acdos.test", "role": "driver", "full_name": "Test Driver 2"},
     {"email": "crew@acdos.test", "role": "crew", "full_name": "Test Crew"},
 ]
 
