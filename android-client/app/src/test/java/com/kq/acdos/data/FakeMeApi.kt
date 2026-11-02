@@ -16,10 +16,8 @@ class FakeMeApi : MeApi {
         return next()
     }
 
-    override suspend fun driverRoutes(
-        cursor: String?,
-        limit: Int?
-    ): Response<RouteSummaryPageDto> = error("not used")
+    override suspend fun driverRoutes(cursor: String?, limit: Int?): Response<RouteSummaryPageDto> =
+        error("not used")
 
     override suspend fun crewPickup(): Response<CrewPickupResponseDto> = error("not used")
 }
