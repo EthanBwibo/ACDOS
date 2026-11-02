@@ -6,6 +6,7 @@ import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
 import com.kq.acdos.auth.SharedPreferencesSessionManager
 import com.kq.acdos.auth.SupabaseAuthRepository
+import com.kq.acdos.data.CrewPickupRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.local.AcdosDatabase
@@ -103,6 +104,11 @@ class AppContainer(context: Context) {
     /** Starts uploading the signed-in driver's pending pickup events; returns at once. */
     fun uploadPickupEvents() {
         appScope.launch { pickupEventOutbox.uploadPending() }
+    }
+
+    /** Null without an API URL; the Pickup tab then shows only the cache. */
+    val crewPickupRepository: CrewPickupRepository? by lazy {
+        if (isApiConfigured) CrewPickupRepository(meApi, database.crewDao()) else null
     }
 
     val sessionRouter: SessionRouter by lazy {

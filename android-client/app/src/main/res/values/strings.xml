@@ -18,14 +18,24 @@
     <string name="login_error_not_set_up">This account is not set up yet. Contact the dispatcher.</string>
 
     <string name="role_driver">Driver</string>
-    <string name="role_crew">Crew</string>
-    <string name="role_dispatcher">Dispatcher</string>
 
     <string name="action_cancel">Cancel</string>
     <string name="action_navigate">Navigate</string>
     <string name="tab_route">Route</string>
     <string name="tab_schedule">Schedule</string>
     <string name="tab_sync">Sync</string>
+    <string name="tab_pickup">Pickup</string>
+    <string name="tab_message">Message</string>
+    <string name="crew_pickup_label">Your pickup</string>
+    <string name="crew_pickup_time_unknown">Time not set yet</string>
+    <string name="crew_report_time">Report at JKIA %1$s</string>
+    <string name="crew_vehicle">Vehicle %1$s</string>
+    <string name="crew_no_vehicle">Not on a vehicle yet</string>
+    <string name="crew_no_pickup">No pickup coming up</string>
+    <string name="crew_refresh_offline">Couldn\'t refresh your pickup. Check your connection.</string>
+    <string name="crew_refresh_failed">Couldn\'t refresh your pickup. Try again shortly.</string>
+    <string name="crew_refresh_sign_in_again">Sign in again to refresh your pickup.</string>
+    <string name="crew_refresh_not_allowed">This account can\'t load a crew pickup.</string>
     <string name="coming_soon">Coming soon</string>
     <string name="route_none">No route assigned</string>
     <string name="route_loading">Loading your route…</string>

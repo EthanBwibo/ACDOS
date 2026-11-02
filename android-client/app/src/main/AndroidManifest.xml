@@ -32,7 +32,7 @@
             android:name=".ui.driver.DriverHomeActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.CrewHomeActivity"
+            android:name=".ui.crew.CrewHomeActivity"
             android:exported="false" />
         <activity
             android:name=".ui.dispatcher.DispatcherHomeActivity"

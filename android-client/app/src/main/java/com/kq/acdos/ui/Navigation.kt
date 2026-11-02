@@ -12,6 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.kq.acdos.AppContainer
 import com.kq.acdos.auth.AppRole
 import com.kq.acdos.auth.Profile
+import com.kq.acdos.ui.crew.CrewHomeActivity
 import com.kq.acdos.ui.dispatcher.DispatcherHomeActivity
 import com.kq.acdos.ui.driver.DriverHomeActivity
 import kotlinx.coroutines.flow.first
@@ -23,7 +24,7 @@ const val NEW_CLEAR_TASK = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY
 /** The signed-in user's name, passed to the home screen so it shows without a lookup. */
 const val EXTRA_FULL_NAME = "full_name"
 
-/** The home screen for each role. Crew is still a placeholder (#56). */
+/** The home screen for each role. */
 fun homeActivityFor(role: AppRole): Class<out Activity> = when (role) {
     AppRole.DRIVER -> DriverHomeActivity::class.java
     AppRole.CREW -> CrewHomeActivity::class.java

@@ -39,6 +39,16 @@ enum class RefreshResult {
 }
 
 /**
+ * A failed refresh, by ErrorCode, never by the raw status. Shared with
+ * [CrewPickupRepository].
+ */
+internal fun ApiResult.Error.asRefreshResult(): RefreshResult = when (code) {
+    ErrorCode.UNAUTHORIZED -> RefreshResult.SIGN_IN_AGAIN
+    ErrorCode.FORBIDDEN -> RefreshResult.NOT_ALLOWED
+    else -> RefreshResult.FAILED
+}
+
+/**
  * Keeps the Room copy of the driver's route (#28) in step with
  * GET /drivers/me/route (#52). Whatever goes wrong, the cached route stays
  * as it was, so the Route tab still works with no signal.
@@ -73,14 +83,8 @@ class DriverRouteRepository(
 
         when (val result = apiCall { api.driverRoute() }) {
             is ApiResult.Success -> save(result.body.route, now)
-
             is ApiResult.NetworkError -> RefreshResult.OFFLINE
-
-            is ApiResult.Error -> when (result.code) {
-                ErrorCode.UNAUTHORIZED -> RefreshResult.SIGN_IN_AGAIN
-                ErrorCode.FORBIDDEN -> RefreshResult.NOT_ALLOWED
-                else -> RefreshResult.FAILED
-            }
+            is ApiResult.Error -> result.asRefreshResult()
         }
     }
 

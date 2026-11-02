@@ -8,7 +8,7 @@ import com.kq.acdos.data.remote.PickupEventResultsDto
 import com.kq.acdos.data.remote.RouteSummaryPageDto
 import retrofit2.Response
 
-/** Answers driverRoute() with [next] and counts the calls. */
+/** Answers driverRoute() with [next] and crewPickup() with [nextCrew]; counts the calls. */
 class FakeMeApi : MeApi {
     var calls = 0
     var next: suspend () -> Response<DriverRouteResponseDto> = { error("no answer set") }
@@ -21,7 +21,12 @@ class FakeMeApi : MeApi {
     override suspend fun driverRoutes(cursor: String?, limit: Int?): Response<RouteSummaryPageDto> =
         error("not used")
 
-    override suspend fun crewPickup(): Response<CrewPickupResponseDto> = error("not used")
+    var nextCrew: suspend () -> Response<CrewPickupResponseDto> = { error("no answer set") }
+
+    override suspend fun crewPickup(): Response<CrewPickupResponseDto> {
+        calls++
+        return nextCrew()
+    }
 
     override suspend fun uploadPickupEvents(
         batch: PickupEventBatchDto
