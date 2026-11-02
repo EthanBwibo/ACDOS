@@ -82,7 +82,7 @@ class RouteConflicts:
     # API refuses these itself; at commit, one here was collected while the
     # job ran, e.g. by the van it was re-planned away from (migration 025).
     not_plannable: list[UUID] = ()
-    # Vans on the road (_ON_THE_ROAD): away from the depot, crew on board.
+    # Vans on the road (ON_THE_ROAD): away from the depot, crew on board.
     on_the_road: list[UUID] = ()
     # Vans broken down.
     broken_down: list[UUID] = ()
@@ -183,7 +183,7 @@ _LIVE_NODES = """
 # route holding a live node of a pickup in $1, and every active route of a
 # van in $3 that has not departed. Taking the vans' routes too means a van
 # never has two active routes: its route that has not left is re-planned
-# with the job (a departed one keeps the van out of the job, _ON_THE_ROAD).
+# with the job (a departed one keeps the van out of the job, ON_THE_ROAD).
 _REPLACED_ROUTES = f"""
     select n.route_id
     from public.route_nodes n
@@ -202,7 +202,7 @@ _REPLACED_ROUTES = f"""
 # Vans ($1) on the road at $2: an active route of theirs has departed and
 # is not yet due back at JKIA plus the grace period ($3). A completed route
 # is not active, so its van is free again.
-_ON_THE_ROAD = """
+ON_THE_ROAD = """
     select distinct r.vehicle_id
     from public.routes r
     where r.vehicle_id = any($1::uuid[])
@@ -589,7 +589,7 @@ async def _route_conflicts(
         """,
         pickup_ids,
     )
-    on_the_road = await conn.fetch(_ON_THE_ROAD, vehicle_ids, now, grace)
+    on_the_road = await conn.fetch(ON_THE_ROAD, vehicle_ids, now, grace)
     broken_down = await conn.fetch(
         """
         select id from public.vehicles

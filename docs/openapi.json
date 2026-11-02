@@ -81,6 +81,215 @@
         "title": "CrewPickupResponse",
         "type": "object"
       },
+      "DispatcherPickup": {
+        "properties": {
+          "crew_name": {
+            "title": "Crew Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "report_time": {
+            "format": "date-time",
+            "title": "Report Time",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PickupRequestStatus"
+          },
+          "zone_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Label"
+          }
+        },
+        "required": [
+          "id",
+          "crew_name",
+          "zone_label",
+          "report_time",
+          "status"
+        ],
+        "title": "DispatcherPickup",
+        "type": "object"
+      },
+      "DispatcherPickupPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DispatcherPickup"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "DispatcherPickupPage",
+        "type": "object"
+      },
+      "DispatcherRoute": {
+        "description": "#51's route shape, with the route's id and its van's plate. Live\nstops only.",
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "planned_arrival": {
+            "format": "date-time",
+            "title": "Planned Arrival",
+            "type": "string"
+          },
+          "planned_departure": {
+            "format": "date-time",
+            "title": "Planned Departure",
+            "type": "string"
+          },
+          "route_id": {
+            "format": "uuid",
+            "title": "Route Id",
+            "type": "string"
+          },
+          "total_distance_km": {
+            "title": "Total Distance Km",
+            "type": "number"
+          },
+          "vehicle_id": {
+            "format": "uuid",
+            "title": "Vehicle Id",
+            "type": "string"
+          },
+          "vehicle_plate": {
+            "title": "Vehicle Plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "total_distance_km",
+          "planned_departure",
+          "planned_arrival",
+          "nodes",
+          "route_id",
+          "vehicle_plate"
+        ],
+        "title": "DispatcherRoute",
+        "type": "object"
+      },
+      "DispatcherRoutePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DispatcherRoute"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "DispatcherRoutePage",
+        "type": "object"
+      },
+      "DispatcherVehicle": {
+        "properties": {
+          "capacity": {
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "on_the_road": {
+            "title": "On The Road",
+            "type": "boolean"
+          },
+          "plate_number": {
+            "title": "Plate Number",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VehicleStatus"
+          }
+        },
+        "required": [
+          "id",
+          "plate_number",
+          "capacity",
+          "status",
+          "on_the_road"
+        ],
+        "title": "DispatcherVehicle",
+        "type": "object"
+      },
+      "DispatcherVehiclePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DispatcherVehicle"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "DispatcherVehiclePage",
+        "type": "object"
+      },
       "DriverRoute": {
         "properties": {
           "route_id": {
@@ -552,6 +761,21 @@
         "title": "PickupExceptionType",
         "type": "string"
       },
+      "PickupReportTimeUpdate": {
+        "description": "A flight delay (or any roster change) recorded for one pickup. It\nnever starts a re-plan: the dispatcher does that with POST\n/optimisation-jobs.",
+        "properties": {
+          "report_time": {
+            "format": "date-time",
+            "title": "Report Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_time"
+        ],
+        "title": "PickupReportTimeUpdate",
+        "type": "object"
+      },
       "PickupRequestStatus": {
         "enum": [
           "pending",
@@ -701,6 +925,27 @@
           "next_cursor"
         ],
         "title": "RouteSummaryPage",
+        "type": "object"
+      },
+      "VehicleStatus": {
+        "enum": [
+          "available",
+          "in_service",
+          "broken_down"
+        ],
+        "title": "VehicleStatus",
+        "type": "string"
+      },
+      "VehicleStatusUpdate": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/VehicleStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "VehicleStatusUpdate",
         "type": "object"
       }
     },
@@ -1298,6 +1543,600 @@
         "summary": "Get Job",
         "tags": [
           "optimisation jobs"
+        ]
+      }
+    },
+    "/pickup-requests": {
+      "get": {
+        "description": "The pickups reporting on a day, in report-time order.",
+        "operationId": "list_pickups_pickup_requests_get",
+        "parameters": [
+          {
+            "description": "YYYY-MM-DD, Nairobi time; default today",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD, Nairobi time; default today",
+              "title": "Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatcherPickupPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List Pickups",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
+    "/pickup-requests/{pickup_id}": {
+      "patch": {
+        "description": "Record a new report time (a flight delay). Starts no re-plan.",
+        "operationId": "set_report_time_pickup_requests__pickup_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pickup_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Pickup Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupReportTimeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatcherPickup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, not_plannable",
+            "x-error-codes": [
+              "validation_failed",
+              "not_plannable"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set Report Time",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
+    "/routes": {
+      "get": {
+        "description": "The active routes leaving the depot on a day, with their live stops.",
+        "operationId": "list_routes_routes_get",
+        "parameters": [
+          {
+            "description": "YYYY-MM-DD, Nairobi time; default today",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "YYYY-MM-DD, Nairobi time; default today",
+              "title": "Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatcherRoutePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List Routes",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "description": "Every vehicle, in plate order, with whether it is on the road.",
+        "operationId": "list_vehicles_vehicles_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatcherVehiclePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List Vehicles",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
+    "/vehicles/{vehicle_id}": {
+      "patch": {
+        "description": "Set a vehicle's status, e.g. broken_down. Starts no re-plan.",
+        "operationId": "set_vehicle_status_vehicles__vehicle_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vehicle_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vehicle Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleStatusUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatcherVehicle"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set Vehicle Status",
+        "tags": [
+          "dispatcher"
         ]
       }
     }
