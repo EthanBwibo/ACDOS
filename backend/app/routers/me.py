@@ -7,13 +7,19 @@ rows themselves are filtered by RLS (app/reads.py).
 
 from datetime import UTC, datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, status
 
 from app import reads
 from app.auth import CallerDep
 from app.errors import ApiError, ErrorCode, errors
-from app.models.schemas import CrewPickupResponse, DriverRouteResponse, RouteSummaryPage
+from app.models.schemas import (
+    CrewPickupResponse,
+    DriverRouteResponse,
+    NoticeAcknowledged,
+    RouteSummaryPage,
+)
 
 router = APIRouter(tags=["me"])
 
@@ -76,3 +82,27 @@ async def my_pickup(request: Request, caller: CallerDep) -> CrewPickupResponse:
             return CrewPickupResponse(pickup=None)
         pickup = await reads.next_pickup(conn, profile.crew_member_id, datetime.now(UTC))
         return CrewPickupResponse(pickup=pickup)
+
+
+@router.post(
+    "/crew/me/notices/{notice_id}/acknowledge",
+    response_model=NoticeAcknowledged,
+    responses=errors(
+        _CALLER_ERRORS | {404: [ErrorCode.NOT_FOUND], 422: [ErrorCode.VALIDATION_FAILED]}
+    ),
+)
+async def acknowledge_notice(
+    request: Request, caller: CallerDep, notice_id: UUID
+) -> NoticeAcknowledged:
+    """The crew member has seen a change to their pickup (#53). Safe to
+    retry: a notice already acknowledged keeps its first time."""
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
+        _require(profile, "crew")
+        acknowledged = None
+        if profile.crew_member_id is not None:
+            acknowledged = await reads.acknowledge_notice(
+                conn, profile.crew_member_id, notice_id, datetime.now(UTC)
+            )
+    if acknowledged is None:
+        raise ApiError(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "no such notice of yours")
+    return NoticeAcknowledged(id=notice_id, acknowledged_at=acknowledged)

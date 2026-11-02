@@ -312,6 +312,19 @@ class RouteSummaryPage(BaseModel):
     next_cursor: str | None  # pass as ?cursor= for the next page; null on the last
 
 
+class ScheduleChangeNotice(BaseModel):
+    """A re-plan changed this pickup (#53): what crew had been told, and
+    what now holds. Acknowledged with POST
+    /crew/me/notices/{id}/acknowledge."""
+
+    id: UUID
+    # Never scheduled: only a re-plan writes a notice.
+    reason: OptimizationTriggerType
+    previous_pickup_time: datetime
+    new_pickup_time: datetime | None  # null when the re-plan left it unassigned
+    issued_at: datetime
+
+
 class CrewPickup(BaseModel):
     pickup_request_id: UUID
     status: PickupRequestStatus
@@ -319,6 +332,16 @@ class CrewPickup(BaseModel):
     scheduled_pickup: datetime | None  # null until a route plans the pickup
     eta: datetime | None = None
     vehicle_plate: str | None  # null until a route plans the pickup
+    # True while a notice for this pickup is not acknowledged; notice is the
+    # latest such one, null when there is none.
+    needs_ack: bool
+    notice: ScheduleChangeNotice | None
+
+
+class NoticeAcknowledged(BaseModel):
+    id: UUID
+    # When the crew member acknowledged it: the first time, on a retry too.
+    acknowledged_at: datetime
 
 
 class CrewPickupResponse(BaseModel):

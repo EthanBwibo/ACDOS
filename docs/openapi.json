@@ -15,6 +15,20 @@
             ],
             "title": "Eta"
           },
+          "needs_ack": {
+            "title": "Needs Ack",
+            "type": "boolean"
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleChangeNotice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "pickup_request_id": {
             "format": "uuid",
             "title": "Pickup Request Id",
@@ -57,7 +71,9 @@
           "status",
           "report_time",
           "scheduled_pickup",
-          "vehicle_plate"
+          "vehicle_plate",
+          "needs_ack",
+          "notice"
         ],
         "title": "CrewPickup",
         "type": "object"
@@ -489,6 +505,26 @@
           "late_sec"
         ],
         "title": "LatePickup",
+        "type": "object"
+      },
+      "NoticeAcknowledged": {
+        "properties": {
+          "acknowledged_at": {
+            "format": "date-time",
+            "title": "Acknowledged At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "acknowledged_at"
+        ],
+        "title": "NoticeAcknowledged",
         "type": "object"
       },
       "OptimisationJobAccepted": {
@@ -927,6 +963,50 @@
         "title": "RouteSummaryPage",
         "type": "object"
       },
+      "ScheduleChangeNotice": {
+        "description": "A re-plan changed this pickup (#53): what crew had been told, and\nwhat now holds. Acknowledged with POST\n/crew/me/notices/{id}/acknowledge.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          },
+          "new_pickup_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Pickup Time"
+          },
+          "previous_pickup_time": {
+            "format": "date-time",
+            "title": "Previous Pickup Time",
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/OptimizationTriggerType"
+          }
+        },
+        "required": [
+          "id",
+          "reason",
+          "previous_pickup_time",
+          "new_pickup_time",
+          "issued_at"
+        ],
+        "title": "ScheduleChangeNotice",
+        "type": "object"
+      },
       "VehicleStatus": {
         "enum": [
           "available",
@@ -964,6 +1044,110 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/crew/me/notices/{notice_id}/acknowledge": {
+      "post": {
+        "description": "The crew member has seen a change to their pickup (#53). Safe to\nretry: a notice already acknowledged keeps its first time.",
+        "operationId": "acknowledge_notice_crew_me_notices__notice_id__acknowledge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Notice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeAcknowledged"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Acknowledge Notice",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/crew/me/pickup": {
       "get": {
         "operationId": "my_pickup_crew_me_pickup_get",

@@ -103,7 +103,7 @@ class ApiModelsTest {
         reply(
             """{"pickup":{"pickup_request_id":"p1","status":"pending",
             "report_time":"2026-10-30T09:00:00+03:00","scheduled_pickup":null,"eta":null,
-            "vehicle_plate":null}}"""
+            "vehicle_plate":null,"needs_ack":false,"notice":null}}"""
         )
 
         val pickup = retrofit.create<MeApi>().crewPickup().body()!!.pickup!!
@@ -114,6 +114,27 @@ class ApiModelsTest {
         assertEquals(Instant.parse("2026-10-30T06:00:00Z"), pickup.reportTime)
         assertNull(pickup.scheduledPickup)
         assertNull(pickup.vehiclePlate)
+        assertEquals(false, pickup.needsAck)
+        assertNull(pickup.notice)
+    }
+
+    @Test
+    fun crewPickup_carriesItsPendingChange() = runBlocking {
+        reply(
+            """{"pickup":{"pickup_request_id":"p1","status":"pending",
+            "report_time":"2026-10-30T09:00:00Z","scheduled_pickup":null,"eta":null,
+            "vehicle_plate":null,"needs_ack":true,"notice":{"id":"n1","reason":"flight_delay",
+            "previous_pickup_time":"2026-10-30T05:10:00Z","new_pickup_time":null,
+            "issued_at":"2026-10-30T04:00:00Z"}}}"""
+        )
+
+        val pickup = retrofit.create<MeApi>().crewPickup().body()!!.pickup!!
+
+        assertEquals(true, pickup.needsAck)
+        val notice = pickup.notice!!
+        assertEquals(OptimizationTriggerTypeDto.FLIGHT_DELAY, notice.reason)
+        assertEquals(Instant.parse("2026-10-30T05:10:00Z"), notice.previousPickupTime)
+        assertNull(notice.newPickupTime)
     }
 
     @Test

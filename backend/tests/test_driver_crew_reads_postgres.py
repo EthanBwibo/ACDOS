@@ -334,7 +334,10 @@ def test_crew_get_their_next_pickup_without_coordinates(client, world):
     assert body["scheduled_pickup"] is not None
     assert set(body) == {
         "pickup_request_id", "status", "report_time", "scheduled_pickup", "eta", "vehicle_plate",
+        "needs_ack", "notice",
     }  # fmt: skip
+    # No re-plan has changed it (#53).
+    assert (body["needs_ack"], body["notice"]) == (False, None)
     assert not keys_anywhere(body) & {"lat", "lon", "location", "pickup_location"}
 
 

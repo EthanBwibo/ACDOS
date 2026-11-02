@@ -117,10 +117,24 @@ data class CrewPickupDto(
     /** Null until a route plans the pickup, like [vehiclePlate]. */
     @Json(name = "scheduled_pickup") val scheduledPickup: Instant?,
     val eta: Instant? = null,
-    @Json(name = "vehicle_plate") val vehiclePlate: String?
+    @Json(name = "vehicle_plate") val vehiclePlate: String?,
+    /** True while a re-plan's change to this pickup is not acknowledged (#53). */
+    @Json(name = "needs_ack") val needsAck: Boolean,
+    /** The latest unacknowledged change; null when there is none. */
+    val notice: ScheduleChangeNoticeDto?
 )
 
-/** [pickup] is null when nothing is coming up. needs_ack arrives with #53. */
+/** A re-plan changed the pickup (#53). [newPickupTime] is null when it was left unassigned. */
+@JsonClass(generateAdapter = true)
+data class ScheduleChangeNoticeDto(
+    val id: String,
+    val reason: OptimizationTriggerTypeDto,
+    @Json(name = "previous_pickup_time") val previousPickupTime: Instant,
+    @Json(name = "new_pickup_time") val newPickupTime: Instant?,
+    @Json(name = "issued_at") val issuedAt: Instant
+)
+
+/** [pickup] is null when nothing is coming up. */
 @JsonClass(generateAdapter = true)
 data class CrewPickupResponseDto(val pickup: CrewPickupDto?)
 

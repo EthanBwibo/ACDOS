@@ -128,6 +128,17 @@ and `PUBLIC` may not.
   pickups on those routes are planned with it. Pickups past `assigned` lose their node and get
   no new one. At commit the job fails if a requested van was given a route meanwhile.
 
+## Schedule-change notices (#53)
+
+- The job API writes a `schedule_change_notices` row, in the transaction that commits a re-plan
+  (`flight_delay`, `standby_activation`, `vehicle_breakdown`), for each of the job's pickups whose
+  scheduled pickup changed: a time at least 1 minute away, another van, or no pickup any more
+  (`new_pickup_time` null). Only a pickup that had a live node before gets one; a `scheduled` job
+  writes none. `previous_pickup_time` is the replaced node's ETA.
+- Crew read their own notices and may set only `acknowledged_at`, never to null (026). No
+  client inserts or deletes one. Acknowledging a notice also acknowledges the earlier pending
+  ones for the same pickup. `delivered_at` stays null until push delivery (#55).
+
 ## Conventions
 
 - `day_of_week` (on `trip_records`) is 0 = Monday to 6 = Sunday, the same as Python's
