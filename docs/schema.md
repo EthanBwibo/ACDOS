@@ -135,7 +135,7 @@ and `PUBLIC` may not.
   scheduled pickup changed: a time at least 1 minute away, another van, or no pickup any more
   (`new_pickup_time` null). Only a pickup that had a live node before gets one; a `scheduled` job
   writes none. `previous_pickup_time` is the replaced node's ETA.
-- Crew read their own notices and may set only `acknowledged_at`, never to null (026). No
+- Crew read their own notices and may set only `acknowledged_at`, never to null (027). No
   client inserts or deletes one. Acknowledging a notice also acknowledges the earlier pending
   ones for the same pickup. `delivered_at` stays null until push delivery (#55).
 
