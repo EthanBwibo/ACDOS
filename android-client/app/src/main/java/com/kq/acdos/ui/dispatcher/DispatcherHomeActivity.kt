@@ -113,8 +113,11 @@ class DispatcherHomeActivity : AppCompatActivity() {
 
     private fun jobText(job: JobUi): String = when (job) {
         JobUi.None -> ""
+
         JobUi.Running -> getString(R.string.dispatch_job_running)
+
         is JobUi.Done -> getString(R.string.dispatch_job_done, job.routes, job.late, job.unassigned)
+
         is JobUi.Failed -> job.error?.let { getString(R.string.dispatch_job_failed, it) }
             ?: getString(R.string.dispatch_job_failed_unknown)
     }
