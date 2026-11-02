@@ -251,6 +251,11 @@ async def clean(conn, w: World) -> None:
             jobs,
         )
         await conn.execute("delete from public.optimization_jobs where id = any($1)", jobs)
+        # The notices a re-plan wrote for them (#53).
+        await conn.execute(
+            "delete from public.schedule_change_notices where pickup_request_id = any($1)",
+            w.pickups,
+        )
         await conn.execute("delete from public.pickup_requests where id = any($1)", w.pickups)
         await conn.execute("delete from public.crew_members where id = any($1)", w.crew)
         await conn.execute("delete from public.vehicles where id = any($1)", list(w.vans.values()))

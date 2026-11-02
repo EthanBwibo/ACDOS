@@ -213,6 +213,11 @@ async def clean(ids: dict) -> None:
                 jobs,
             )
             await conn.execute("delete from public.optimization_jobs where id = any($1)", jobs)
+            # The notices its re-plans wrote (#53).
+            await conn.execute(
+                "delete from public.schedule_change_notices where pickup_request_id = any($1)",
+                list(ids.get("pickups", {}).values()),
+            )
             await conn.execute(
                 "delete from public.pickup_requests where id = any($1)",
                 list(ids.get("pickups", {}).values()),
