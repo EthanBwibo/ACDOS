@@ -2,13 +2,17 @@ package com.kq.acdos.ui.driver
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.EXTRA_FULL_NAME
@@ -18,10 +22,15 @@ import kotlinx.coroutines.launch
 
 /**
  * The Driver role's home: Route, Schedule and Sync tabs, and Sign out in the
- * overflow menu. Reached only through the role in profiles (#30).
+ * overflow menu. Reached only through the role in profiles (#30). Refreshes
+ * the route each time it comes to the front (#123).
  */
 class DriverHomeActivity : AppCompatActivity() {
     private val container by lazy { (application as AcdosApplication).container }
+    private val refresh: RouteRefreshViewModel by viewModels { RouteRefreshViewModel.Factory }
+
+    /** The first start of this screen refreshes past the throttle. */
+    private var firstStart = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +59,23 @@ class DriverHomeActivity : AppCompatActivity() {
         // After a rotation the FragmentManager restores the open tab by itself.
         if (savedInstanceState == null) show(RouteFragment())
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                refresh.messages.collect { message ->
+                    Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG)
+                        .setAnchorView(tabs)
+                        .show()
+                }
+            }
+        }
+
         openLoginWhenSessionEnds(container)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        refresh.refreshOnStart(first = firstStart)
+        firstStart = false
     }
 
     private fun show(tab: Fragment) {

@@ -6,6 +6,7 @@ import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
 import com.kq.acdos.auth.SharedPreferencesSessionManager
 import com.kq.acdos.auth.SupabaseAuthRepository
+import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.remote.ApiClient
 import com.kq.acdos.data.remote.MeApi
@@ -59,6 +60,11 @@ class AppContainer(context: Context) {
     val meApi: MeApi by lazy { retrofit.create() }
 
     val database: AcdosDatabase by lazy { AcdosDatabase.build(appContext) }
+
+    /** One per process, so its 60 s throttle holds across screens. Null without an API URL. */
+    val driverRouteRepository: DriverRouteRepository? by lazy {
+        if (isApiConfigured) DriverRouteRepository(meApi, database.driverRouteDao()) else null
+    }
 
     val sessionRouter: SessionRouter by lazy {
         SessionRouter(
