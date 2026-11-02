@@ -76,6 +76,8 @@ class DriverHomeActivity : AppCompatActivity() {
         super.onStart()
         refresh.refreshOnStart(first = firstStart)
         firstStart = false
+        // Pickups recorded with no signal go up as soon as the driver is back.
+        container.uploadPickupEvents()
     }
 
     private fun show(tab: Fragment) {

@@ -1,6 +1,7 @@
 package com.kq.acdos.ui.driver
 
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -24,8 +25,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
+import com.kq.acdos.data.local.PickupExceptionType
 import com.kq.acdos.ui.Times
 import java.util.Locale
 import kotlinx.coroutines.flow.combine
@@ -39,8 +42,13 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
     private val viewModel: RouteViewModel by viewModels {
         viewModelFactory {
             initializer {
-                val container = (requireActivity().application as AcdosApplication).container
-                RouteViewModel(container.database.driverRouteDao())
+                RouteViewModel(
+                    container.database.driverRouteDao(),
+                    container.database.pendingPickupEventDao(),
+                    driverId = { container.authRepository.storedSessionUserId() },
+                    outbox = container.pickupEventOutbox,
+                    upload = container::uploadPickupEvents
+                )
             }
         }
     }
@@ -54,13 +62,14 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         val plate = view.findViewById<TextView>(R.id.plate)
         val updated = view.findViewById<TextView>(R.id.updated)
         val empty = view.findViewById<TextView>(R.id.empty)
-        val adapter = StopAdapter(::navigateTo)
+        val adapter = StopAdapter(::navigateTo, viewModel::confirmPickup, ::askWhatWentWrong)
         val stops = view.findViewById<RecyclerView>(R.id.stops).also {
             it.layoutManager = LinearLayoutManager(requireContext())
             it.adapter = adapter
         }
         val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
         swipe.setOnRefreshListener {
+            container.uploadPickupEvents()
             if (!refresh.refreshByPull()) swipe.isRefreshing = false
         }
         // The swipe's child is the whole column, so ask the list: a pull only
@@ -102,6 +111,24 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         }
     }
 
+    private val container get() = (requireActivity().application as AcdosApplication).container
+
+    /** The three exception types the server takes; the choice is recorded at once. */
+    private fun askWhatWentWrong(stop: StopRow) {
+        val problems = listOf(
+            PickupExceptionType.NO_SHOW to R.string.route_problem_no_show,
+            PickupExceptionType.VEHICLE_ISSUE to R.string.route_problem_vehicle_issue,
+            PickupExceptionType.TRAFFIC_DELAY to R.string.route_problem_traffic_delay
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.route_problem_title, stop.crewName))
+            .setItems(problems.map { getString(it.second) }.toTypedArray()) { _, which ->
+                viewModel.reportProblem(stop, problems[which].first)
+            }
+            .setNegativeButton(R.string.action_cancel, null)
+            .show()
+    }
+
     /** Opens the stop in the phone's maps app, with a pin labelled by the crew name. */
     private fun navigateTo(stop: StopRow) {
         // Locale.ROOT: a decimal point whatever the phone's language.
@@ -115,8 +142,11 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
     }
 }
 
-private class StopAdapter(private val onNavigate: (StopRow) -> Unit) :
-    ListAdapter<StopRow, StopAdapter.Holder>(Diff) {
+private class StopAdapter(
+    private val onNavigate: (StopRow) -> Unit,
+    private val onPickedUp: (StopRow) -> Unit,
+    private val onProblem: (StopRow) -> Unit
+) : ListAdapter<StopRow, StopAdapter.Holder>(Diff) {
 
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
         val number: TextView = view.findViewById(R.id.number)
@@ -124,6 +154,10 @@ private class StopAdapter(private val onNavigate: (StopRow) -> Unit) :
         val zone: TextView = view.findViewById(R.id.zone)
         val pickupTime: TextView = view.findViewById(R.id.pickup_time)
         val navigate: Button = view.findViewById(R.id.navigate)
+        val status: TextView = view.findViewById(R.id.status)
+        val actions: View = view.findViewById(R.id.actions)
+        val pickedUp: Button = view.findViewById(R.id.picked_up)
+        val problem: Button = view.findViewById(R.id.problem)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = Holder(
@@ -139,6 +173,20 @@ private class StopAdapter(private val onNavigate: (StopRow) -> Unit) :
         holder.pickupTime.text =
             context.getString(R.string.route_pickup_at, Times.clock(stop.pickupTime))
         holder.navigate.setOnClickListener { onNavigate(stop) }
+        holder.pickedUp.setOnClickListener { onPickedUp(stop) }
+        holder.problem.setOnClickListener { onProblem(stop) }
+
+        val progress = stop.progress
+        holder.status.isVisible = progress != null
+        holder.status.text = progress?.let { statusText(context, it) }
+        holder.actions.isVisible = progress?.done != true
+    }
+
+    private fun statusText(context: Context, progress: StopProgress): String {
+        progress.conflict?.let { return context.getString(R.string.route_status_rejected, it) }
+        val label = context.getString(progressLabel(progress))
+        if (progress.sent) return label
+        return context.getString(R.string.route_status_not_sent, label)
     }
 
     private object Diff : DiffUtil.ItemCallback<StopRow>() {

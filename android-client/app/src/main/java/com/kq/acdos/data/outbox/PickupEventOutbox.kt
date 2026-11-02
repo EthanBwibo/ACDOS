@@ -6,33 +6,36 @@ import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
 import java.time.Clock
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-/** How the server answered one upload. Mapping HTTP responses to these is the uploader's job. */
+/** How the server answered one event of a batch. */
 sealed interface UploadResult {
-    data object Accepted : UploadResult
+    /** accepted, or duplicate: an earlier upload already got through. */
+    data object Synced : UploadResult
 
-    /** The idempotency_key already exists: an earlier attempt got through. */
-    data object DuplicateKey : UploadResult
+    /** Refused for good, e.g. already_confirmed. [code] is stored as the conflict. */
+    data class Rejected(val code: String) : UploadResult
+}
 
-    /** pickup_events_one_confirmation_per_node: the stop was already confirmed. */
-    data object AlreadyConfirmed : UploadResult
+/** How the server answered a whole batch. */
+sealed interface BatchResult {
+    /** Per event, by idempotency key. An event missing from the map stays pending. */
+    data class Answered(val byKey: Map<String, UploadResult>) : BatchResult
 
     /**
-     * Any other refusal that retrying cannot fix, e.g. RLS 403 or a route node
-     * gone after a re-plan. [reason] is stored as the conflict.
+     * No answer, a 5xx, or a 401 the token refresh couldn't fix: send the whole
+     * batch again later. The keys make a resend come back as duplicate.
      */
-    data class Rejected(val reason: String) : UploadResult
-
-    /** Network or server trouble; try again later. */
-    data object Retry : UploadResult
+    data object Retry : BatchResult
 }
 
 /**
- * Sends one event to the API. Implemented with Retrofit in #26, which sends
+ * Sends a batch of events to the API (#33), each with its
  * [PendingPickupEventEntity.driverId] as stored, not the current session's user.
  */
 fun interface PickupEventUploader {
-    suspend fun upload(event: PendingPickupEventEntity): UploadResult
+    suspend fun upload(events: List<PendingPickupEventEntity>): BatchResult
 }
 
 /**
@@ -72,34 +75,44 @@ class PickupEventOutbox(
         return key
     }
 
+    private val lock = Mutex()
+
     /**
-     * Uploads the signed-in user's pending events, oldest first. Another user's
-     * events wait until that user signs in again. Stops at the first
-     * [UploadResult.Retry], since the next one would most likely fail the same
-     * way. Returns how many of this user's events are still pending.
+     * Uploads the signed-in user's pending events, oldest first, in batches of
+     * [MAX_BATCH]. Another user's events wait until that user signs in again.
+     * Stops at the first [BatchResult.Retry], since the next batch would most
+     * likely fail the same way. Runs one at a time, so a tap and a pull don't
+     * send the same event twice. Returns how many of this user's events are
+     * still pending.
      */
-    suspend fun uploadPending(): Int {
+    suspend fun uploadPending(): Int = lock.withLock {
         val driverId = currentUserId() ?: return 0
-        val pending = dao.pending(driverId)
-        for ((index, event) in pending.withIndex()) {
-            when (val result = uploader.upload(event)) {
-                UploadResult.Accepted, UploadResult.DuplicateKey ->
-                    dao.markSynced(event.idempotencyKey, clock.instant())
+        for (batch in dao.pending(driverId).chunked(MAX_BATCH)) {
+            when (val result = uploader.upload(batch)) {
+                BatchResult.Retry -> break
 
-                // Terminal: retrying can never succeed, so it is shown to the driver
-                // instead, and the events behind it still go.
-                UploadResult.AlreadyConfirmed ->
-                    dao.markConflict(event.idempotencyKey, CONFLICT_ALREADY_CONFIRMED)
+                is BatchResult.Answered -> for (event in batch) {
+                    val key = event.idempotencyKey
+                    when (val outcome = result.byKey[key]) {
+                        UploadResult.Synced -> dao.markSynced(key, clock.instant())
 
-                is UploadResult.Rejected -> dao.markConflict(event.idempotencyKey, result.reason)
+                        // Terminal: retrying can never succeed, so it is shown to
+                        // the driver instead, and the events behind it still go.
+                        is UploadResult.Rejected -> dao.markConflict(key, outcome.code)
 
-                UploadResult.Retry -> return pending.size - index
+                        null -> Unit
+                    }
+                }
             }
         }
-        return 0
+        dao.countPending(driverId)
     }
 
     companion object {
-        const val CONFLICT_ALREADY_CONFIRMED = "stop_already_confirmed"
+        /**
+         * The server's limit per request. 50 events are about 13 KB, well
+         * under its 32 KB limit, so a 413 can't happen.
+         */
+        const val MAX_BATCH = 50
     }
 }

@@ -2,6 +2,9 @@ package com.kq.acdos.ui.driver
 
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.local.DriverRouteDao
+import com.kq.acdos.data.local.PendingPickupEventEntity
+import com.kq.acdos.data.local.PickupEventType
+import com.kq.acdos.data.local.PickupExceptionType
 import com.kq.acdos.data.local.RouteEntity
 import com.kq.acdos.data.local.RouteStopEntity
 import com.kq.acdos.data.local.inMemoryDatabase
@@ -10,6 +13,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -116,5 +121,75 @@ class RouteStateTest {
         dao.purgeRoute("r1")
 
         assertEquals(RouteUiState.NoRoute, routeState(dao).first())
+    }
+
+    private fun event(
+        node: String,
+        exception: PickupExceptionType? = null,
+        minute: Long = 0,
+        synced: Boolean = false,
+        conflict: String? = null
+    ) = PendingPickupEventEntity(
+        idempotencyKey = "$node-$minute",
+        driverId = "d1",
+        routeNodeId = node,
+        eventType = if (exception == null) {
+            PickupEventType.PICKUP_CONFIRMED
+        } else {
+            PickupEventType.EXCEPTION
+        },
+        exceptionType = exception,
+        confirmedAt = t0.plusSeconds(60 * minute),
+        syncedAt = if (synced) t0 else null,
+        conflict = conflict
+    )
+
+    @Test
+    fun recordedEvents_showOnTheirStops() = runTest {
+        dao.saveActiveRoute(
+            route("r1", "KDA 123A"),
+            listOf(stop("n1", "r1", 1), stop("n2", "r1", 2), stop("n3", "r1", 3))
+        )
+        val events = listOf(
+            event("n1"),
+            event("n2", PickupExceptionType.TRAFFIC_DELAY, synced = true)
+        )
+
+        val stops = (routeState(dao, flowOf(events)).first() as RouteUiState.Route).stops
+
+        assertEquals(
+            StopProgress(PickupEventType.PICKUP_CONFIRMED, null, false, null, done = true),
+            stops[0].progress
+        )
+        assertEquals(
+            StopProgress(
+                PickupEventType.EXCEPTION,
+                PickupExceptionType.TRAFFIC_DELAY,
+                sent = true,
+                conflict = null,
+                done = false
+            ),
+            stops[1].progress
+        )
+        assertNull(stops[2].progress)
+    }
+
+    @Test
+    fun stopProgress_showsTheLatestEventAndEndsOnlyOnAnAcceptedPickupOrNoShow() {
+        val progress = stopProgress(
+            listOf(
+                event("delayed-then-picked", PickupExceptionType.TRAFFIC_DELAY, minute = 1),
+                event("delayed-then-picked", minute = 2),
+                event("no-show", PickupExceptionType.NO_SHOW),
+                event("refused", conflict = "already_confirmed")
+            )
+        )
+
+        val picked = progress.getValue("delayed-then-picked")
+        assertEquals(PickupEventType.PICKUP_CONFIRMED, picked.type)
+        assertEquals(true, picked.done)
+        assertEquals(true, progress.getValue("no-show").done)
+        assertEquals("already_confirmed", progress.getValue("refused").conflict)
+        assertEquals(false, progress.getValue("refused").done)
     }
 }

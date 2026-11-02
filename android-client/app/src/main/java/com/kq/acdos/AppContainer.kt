@@ -9,6 +9,10 @@ import com.kq.acdos.auth.SupabaseAuthRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.local.AcdosDatabase
+import com.kq.acdos.data.outbox.ApiPickupEventUploader
+import com.kq.acdos.data.outbox.BatchResult
+import com.kq.acdos.data.outbox.PickupEventOutbox
+import com.kq.acdos.data.outbox.PickupEventUploader
 import com.kq.acdos.data.remote.ApiClient
 import com.kq.acdos.data.remote.DispatcherApi
 import com.kq.acdos.data.remote.MeApi
@@ -18,6 +22,10 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.ktor.client.engine.okhttp.OkHttp
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import retrofit2.create
 
 /** Hand-wired dependencies, one per process (no DI framework). */
@@ -73,6 +81,28 @@ class AppContainer(context: Context) {
     /** One per process, so its 60 s throttle holds across screens. Null without an API URL. */
     val driverRouteRepository: DriverRouteRepository? by lazy {
         if (isApiConfigured) DriverRouteRepository(meApi, database.driverRouteDao()) else null
+    }
+
+    /** Without an API URL, events are recorded but wait on the phone. */
+    val pickupEventOutbox: PickupEventOutbox by lazy {
+        val uploader = if (isApiConfigured) {
+            ApiPickupEventUploader(meApi)
+        } else {
+            PickupEventUploader { BatchResult.Retry }
+        }
+        PickupEventOutbox(
+            database.pendingPickupEventDao(),
+            uploader,
+            currentUserId = { authRepository.storedSessionUserId() }
+        )
+    }
+
+    /** Outlives screens, so an upload started by a tap finishes after the driver moves on. */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Starts uploading the signed-in driver's pending pickup events; returns at once. */
+    fun uploadPickupEvents() {
+        appScope.launch { pickupEventOutbox.uploadPending() }
     }
 
     val sessionRouter: SessionRouter by lazy {

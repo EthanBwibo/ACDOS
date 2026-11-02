@@ -59,7 +59,11 @@ class OpenApiContractTest {
         "DispatcherRoute" to DispatcherRouteDto::class.java,
         "DispatcherRoutePage" to DispatcherRoutePageDto::class.java,
         "PickupReportTimeUpdate" to PickupReportTimeUpdateDto::class.java,
-        "VehicleStatusUpdate" to VehicleStatusUpdateDto::class.java
+        "VehicleStatusUpdate" to VehicleStatusUpdateDto::class.java,
+        "PickupEventBatch" to PickupEventBatchDto::class.java,
+        "PickupEventIn" to PickupEventInDto::class.java,
+        "PickupEventResults" to PickupEventResultsDto::class.java,
+        "PickupEventResult" to PickupEventResultDto::class.java
     )
 
     private val enums: Map<String, Class<out Enum<*>>> = mapOf(
@@ -68,7 +72,10 @@ class OpenApiContractTest {
         "OptimizationJobStatus" to OptimizationJobStatusDto::class.java,
         "OptimizationTriggerType" to OptimizationTriggerTypeDto::class.java,
         "ErrorCode" to ErrorCode::class.java,
-        "VehicleStatus" to VehicleStatusDto::class.java
+        "VehicleStatus" to VehicleStatusDto::class.java,
+        "PickupEventType" to PickupEventTypeDto::class.java,
+        "PickupExceptionType" to PickupExceptionTypeDto::class.java,
+        "PickupEventOutcome" to PickupEventOutcomeDto::class.java
     )
 
     @Test

@@ -4,7 +4,9 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import java.time.Instant
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 /**
@@ -24,6 +26,12 @@ interface MeApi {
 
     @GET("crew/me/pickup")
     suspend fun crewPickup(): Response<CrewPickupResponseDto>
+
+    /** The outbox's pickup events (#29), 1 to 50 per call; one result per event. */
+    @POST("drivers/me/pickup-events")
+    suspend fun uploadPickupEvents(
+        @Body batch: PickupEventBatchDto
+    ): Response<PickupEventResultsDto>
 }
 
 // DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
@@ -115,3 +123,69 @@ data class CrewPickupDto(
 /** [pickup] is null when nothing is coming up. needs_ack arrives with #53. */
 @JsonClass(generateAdapter = true)
 data class CrewPickupResponseDto(val pickup: CrewPickupDto?)
+
+enum class PickupEventTypeDto {
+    @Json(name = "pickup_confirmed")
+    PICKUP_CONFIRMED,
+
+    @Json(name = "exception")
+    EXCEPTION
+}
+
+enum class PickupExceptionTypeDto {
+    @Json(name = "no_show")
+    NO_SHOW,
+
+    @Json(name = "vehicle_issue")
+    VEHICLE_ISSUE,
+
+    @Json(name = "traffic_delay")
+    TRAFFIC_DELAY
+}
+
+enum class PickupEventOutcomeDto {
+    @Json(name = "accepted")
+    ACCEPTED,
+
+    /** The key was already stored: an earlier upload got through. */
+    @Json(name = "duplicate")
+    DUPLICATE,
+
+    /** Final: retrying can't fix it. */
+    @Json(name = "rejected")
+    REJECTED
+}
+
+@JsonClass(generateAdapter = true)
+data class PickupEventInDto(
+    @Json(name = "idempotency_key") val idempotencyKey: String,
+    @Json(name = "route_node_id") val routeNodeId: String,
+    /** As stored with the event, not whoever is signed in now. */
+    @Json(name = "driver_id") val driverId: String,
+    @Json(name = "event_type") val eventType: PickupEventTypeDto,
+    @Json(name = "exception_type") val exceptionType: PickupExceptionTypeDto? = null,
+    /** When the driver tapped, from the device clock. */
+    @Json(name = "occurred_at") val occurredAt: Instant
+)
+
+@JsonClass(generateAdapter = true)
+data class PickupEventBatchDto(val events: List<PickupEventInDto>)
+
+/**
+ * One event's outcome. The optional fields are left out, never null, when
+ * they don't apply, hence the defaults.
+ */
+@JsonClass(generateAdapter = true)
+data class PickupEventResultDto(
+    @Json(name = "idempotency_key") val idempotencyKey: String,
+    val status: PickupEventOutcomeDto,
+    @Json(name = "event_id") val eventId: String = "",
+    /** The stop was re-planned after the event; not shown yet (#135). */
+    @Json(name = "stop_replanned") val stopReplanned: Boolean = false,
+    /** Only for [PickupEventOutcomeDto.REJECTED]. */
+    val code: ErrorCode = ErrorCode.UNKNOWN,
+    val detail: String = ""
+)
+
+@JsonClass(generateAdapter = true)
+data class PickupEventResultsDto(val results: List<PickupEventResultDto>)
