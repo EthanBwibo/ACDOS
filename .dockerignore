@@ -1,0 +1,10 @@
+# The backend image needs only backend/requirements.txt, backend/app and
+# data/ (backend/Dockerfile). Everything else stays out of the build
+# context, secrets above all.
+**
+!backend/requirements.txt
+!backend/app/**
+!data/**
+**/__pycache__
+**/*.pyc
+**/.env

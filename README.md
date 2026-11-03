@@ -70,6 +70,87 @@ Retrofit dependencies automatically.
 Requires a Supabase project with the PostGIS extension enabled. Schema migrations live
 in `backend/migrations/`.
 
+## Deploy
+
+The backend runs on Azure App Service (Azure for Students): Linux, plan B1, North Europe (next
+to Supabase in eu-west-1), as one container built by Azure Container Registry from
+`backend/Dockerfile` (#148). One uvicorn process with a solver pool of 2, Always On, health
+check on `/health`, HTTPS only. Cost: about $13 a month for B1 plus about $5 for the registry
+(Basic), taken from the student credit.
+
+Run these in Git Bash from the repository root, signed in with `az login`. `ACR` and `APP` must
+be globally unique; the app's address is printed by `az webapp show` at the end.
+
+```bash
+RG=acdos-rg LOC=northeurope PLAN=acdos-plan ACR=<registry> APP=<app> TAG=$(git rev-parse --short HEAD)
+
+# Once: the resource group, the registry and the plan.
+az group create -n $RG -l $LOC
+az acr create -g $RG -n $ACR --sku Basic
+az appservice plan create -g $RG -n $PLAN --is-linux --sku B1
+
+# Build the image in Azure (no local Docker). The log prints "rf fingerprint: ...":
+# it must equal `cd backend && python -m app.ml.fingerprint` run locally.
+az acr build -r $ACR -t acdos-api:$TAG -f backend/Dockerfile .
+
+# Once: the app, pulling from the registry with its managed identity.
+az webapp create -g $RG -p $PLAN -n $APP --assign-identity '[system]' \
+  --container-image-name $ACR.azurecr.io/acdos-api:$TAG
+az role assignment create --role AcrPull \
+  --assignee $(az webapp identity show -g $RG -n $APP --query principalId -o tsv) \
+  --scope $(az acr show -n $ACR --query id -o tsv)
+az webapp config set -g $RG -n $APP --always-on true \
+  --generic-configurations '{"acrUseManagedIdentityCreds": true, "healthCheckPath": "/health"}'
+az webapp update -g $RG -n $APP --https-only true
+az webapp config appsettings set -g $RG -n $APP --settings WEBSITES_PORT=8000 SOLVER_POOL_SIZE=2
+```
+
+`DATABASE_URL` is set by hand, never committed: Supabase dashboard, Connect, **Session
+pooler** (port 5432), as `postgres`. Type it in your own terminal:
+
+```bash
+az webapp config appsettings set -g $RG -n $APP --settings DATABASE_URL='<session pooler URL>'
+```
+
+Redeploy after a change: build a new tag, point the app at it, check it.
+
+```bash
+TAG=$(git rev-parse --short HEAD)
+az acr build -r $ACR -t acdos-api:$TAG -f backend/Dockerfile .
+az webapp config container set -g $RG -n $APP --container-image-name $ACR.azurecr.io/acdos-api:$TAG
+curl https://$(az webapp show -g $RG -n $APP --query defaultHostName -o tsv)/health
+```
+
+The app's HTTPS address goes in `android-client/local.properties` as `api.baseUrl=https://...`.
+
+### After the defence
+
+Stopping the app (`az webapp stop`) does **not** stop the bill: the B1 plan and the registry
+charge whether the app runs or not. To stop all charges, delete the resource group, which
+deletes the app, the plan and the registry together (Supabase is not in it):
+
+```bash
+az group delete -n acdos-rg --yes
+```
+
+### Demo-day fallback: run locally behind a Cloudflare quick tunnel
+
+If the Azure app is down, run the backend on the laptop and give the phone a public HTTPS
+address with a Cloudflare quick tunnel (no Cloudflare account; the address changes every
+run, so this is for the demo only).
+
+```bash
+# Once: winget install --id Cloudflare.cloudflared
+cd backend && venv\Scripts\activate         # DATABASE_URL in backend/.env, as in Setup
+uvicorn app.main:app --workers 1 --port 8000
+# In a second terminal:
+cloudflared tunnel --url http://localhost:8000
+```
+
+`cloudflared` prints `https://<random words>.trycloudflare.com`. Check
+`https://<that address>/health`, put it in `android-client/local.properties` as
+`api.baseUrl=...`, and rebuild the app. The laptop must stay awake and online for the demo.
+
 ## Data note
 
 Real Kenya Airways trip-log data was not confirmed available within the project timeline.
