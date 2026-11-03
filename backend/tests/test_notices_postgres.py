@@ -384,7 +384,7 @@ def test_only_its_crew_member_may_acknowledge_a_notice(client, world, user, stat
     assert world.notices("C")[0]["acknowledged_at"] is None
 
 
-# RLS (026), as each role, in a transaction rolled back at the end.
+# RLS (027), as each role, in a transaction rolled back at the end.
 
 
 def as_role(world: World, name: str, steps):

@@ -4,3 +4,6 @@
 
 # Solomon instances and SINTEF solutions are kept byte for byte as downloaded.
 backend/benchmarks/solomon_data/**/*.txt -text
+
+# The live migration 026 is kept byte for byte as it is in Supabase (#143).
+backend/migrations/026_stop_travel_time_logger.sql text eol=lf
