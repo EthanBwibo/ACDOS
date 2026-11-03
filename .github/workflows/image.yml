@@ -1,0 +1,89 @@
+name: image
+
+# The backend's container image (#148), for Azure App Service.
+#
+# On a PR that touches it: build only, no push. On main, or run by hand:
+# build and push ghcr.io/<owner>/acdos-api:<commit sha> and :latest. Deploys
+# use the SHA tag (README, "Deploy"); latest is only a convenience.
+#
+# Every run prints the Random Forest's fingerprint (app/ml/fingerprint.py),
+# trained inside the image, and fails if it is not the expected one below:
+# the model the app serves must be the one trained and checked locally. If
+# the training data, the hyperparameters or a pinned library changes the
+# model on purpose, run `cd backend && python -m app.ml.fingerprint` locally
+# and update RF_FINGERPRINT in the same PR.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - backend/Dockerfile
+      - backend/requirements.txt
+      - backend/app/**
+      - data/**
+      - .dockerignore
+      - .github/workflows/image.yml
+  push:
+    branches: [main]
+    paths:
+      - backend/Dockerfile
+      - backend/requirements.txt
+      - backend/app/**
+      - data/**
+      - .dockerignore
+      - .github/workflows/image.yml
+  workflow_dispatch:
+
+# Only the token GitHub gives each run: read the code, write packages.
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RF_FINGERPRINT: c4aaa8b0c3953600c04a0d12fe1b735d69588fd89226381c7c5fe4048af103d2
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Image name
+        id: name
+        # GHCR names are lowercase.
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/acdos-api" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          docker build --progress=plain --file backend/Dockerfile \
+            --tag "${{ steps.name.outputs.image }}:${{ github.sha }}" . 2>&1 | tee build.log
+
+      - name: RF fingerprint matches the local build
+        run: |
+          found=$(docker run --rm "${{ steps.name.outputs.image }}:${{ github.sha }}" \
+            python -m app.ml.fingerprint | tee /dev/stderr | sed -n 's/^rf fingerprint: //p')
+          echo "expected: $RF_FINGERPRINT"
+          echo "found:    $found"
+          test "$found" = "$RF_FINGERPRINT"
+
+      - name: Nothing secret in the image
+        run: |
+          # Only requirements, app code and data are copied (.dockerignore);
+          # check the image holds no env file or key.
+          ! docker run --rm "${{ steps.name.outputs.image }}:${{ github.sha }}" \
+            sh -c 'find / -xdev \( -name ".env" -o -name "*.pem" -o -name "*.key" \) \
+                   -not -path "/proc/*" -not -path "/usr/*" -not -path "/etc/ssl/*" 2>/dev/null' \
+            | grep .
+
+      - name: Push
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "${{ steps.name.outputs.image }}:${{ github.sha }}" "${{ steps.name.outputs.image }}:latest"
+          docker push "${{ steps.name.outputs.image }}:${{ github.sha }}"
+          docker push "${{ steps.name.outputs.image }}:latest"
+          echo "pushed ${{ steps.name.outputs.image }}:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"

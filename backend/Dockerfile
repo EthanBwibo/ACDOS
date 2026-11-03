@@ -1,11 +1,15 @@
 # The ACDOS backend as one container (#148). Built from the repository root,
 # because the app reads data/ (the RF's training data and the zone matrix):
 #
-#     az acr build --registry <registry> --image acdos-api:<tag> --file backend/Dockerfile .
+#     docker build --file backend/Dockerfile .
 #
+# GitHub Actions builds and pushes it to GHCR (.github/workflows/image.yml).
 # Secrets are not here: DATABASE_URL comes from the host's settings at run
 # time (README, "Deploy").
 FROM python:3.14.2-slim
+
+# Links the GHCR package to the repository.
+LABEL org.opencontainers.image.source="https://github.com/EthanBwibo/ACDOS"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

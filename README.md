@@ -72,35 +72,39 @@ in `backend/migrations/`.
 
 ## Deploy
 
-The backend runs on Azure App Service (Azure for Students): Linux, plan B1, North Europe (next
-to Supabase in eu-west-1), as one container built by Azure Container Registry from
-`backend/Dockerfile` (#148). One uvicorn process with a solver pool of 2, Always On, health
-check on `/health`, HTTPS only. Cost: about $13 a month for B1 plus about $5 for the registry
-(Basic), taken from the student credit.
+The backend runs on Azure App Service (Azure for Students) as one container: Linux, plan B1,
+**Spain Central**, one uvicorn process with a solver pool of 2, Always On, health check on
+`/health`, HTTPS only (#148). Cost: about $13 a month for B1 ($0.018 an hour), from the student
+credit.
 
-Run these in Git Bash from the repository root, signed in with `az login`. `ACR` and `APP` must
-be globally unique; the app's address is printed by `az webapp show` at the end.
+- **Region.** The Azure for Students subscription only allows Poland Central, India South
+  Central, Switzerland North, UAE North and Spain Central. Spain Central is one of the closest
+  to Supabase (eu-west-1, Ireland), which matters because each request makes several database
+  round trips.
+- **Image.** Student subscriptions cannot use Azure Container Registry's build service (ACR
+  Tasks), so GitHub Actions builds the image (`.github/workflows/image.yml`) and pushes it to
+  GHCR as a public package: `ghcr.io/ethanbwibo/acdos-api:<commit sha>`, and `:latest`. The repo
+  is public and the image holds no secrets (`.dockerignore` lets in only the requirements,
+  `backend/app` and `data/`; the workflow checks for env files and keys), so App Service pulls
+  it anonymously. The workflow runs on every push to `main` that touches the backend, and can
+  be run by hand (Actions, image, Run workflow).
+- **RF fingerprint.** The image trains the Random Forest at build time. The workflow prints its
+  fingerprint and fails unless it equals `RF_FINGERPRINT` in the workflow, which is what
+  `cd backend && python -m app.ml.fingerprint` prints locally.
+- **Deploy by SHA**, never by `latest`, so the app runs exactly the image whose fingerprint was
+  checked.
+
+Run these in Git Bash, signed in with `az login`:
 
 ```bash
-RG=acdos-rg LOC=northeurope PLAN=acdos-plan ACR=<registry> APP=<app> TAG=$(git rev-parse --short HEAD)
+RG=acdos-rg LOC=spaincentral PLAN=acdos-plan APP=acdos-api
+IMAGE=ghcr.io/ethanbwibo/acdos-api SHA=<full commit sha the image workflow pushed>
 
-# Once: the resource group, the registry and the plan.
+# Once: the resource group, the plan and the app.
 az group create -n $RG -l $LOC
-az acr create -g $RG -n $ACR --sku Basic
-az appservice plan create -g $RG -n $PLAN --is-linux --sku B1
-
-# Build the image in Azure (no local Docker). The log prints "rf fingerprint: ...":
-# it must equal `cd backend && python -m app.ml.fingerprint` run locally.
-az acr build -r $ACR -t acdos-api:$TAG -f backend/Dockerfile .
-
-# Once: the app, pulling from the registry with its managed identity.
-az webapp create -g $RG -p $PLAN -n $APP --assign-identity '[system]' \
-  --container-image-name $ACR.azurecr.io/acdos-api:$TAG
-az role assignment create --role AcrPull \
-  --assignee $(az webapp identity show -g $RG -n $APP --query principalId -o tsv) \
-  --scope $(az acr show -n $ACR --query id -o tsv)
-az webapp config set -g $RG -n $APP --always-on true \
-  --generic-configurations '{"acrUseManagedIdentityCreds": true, "healthCheckPath": "/health"}'
+az appservice plan create -g $RG -n $PLAN --is-linux --sku B1 -l $LOC
+az webapp create -g $RG -p $PLAN -n $APP --container-image-name $IMAGE:$SHA
+az webapp config set -g $RG -n $APP --always-on true   --generic-configurations '{"healthCheckPath": "/health"}'
 az webapp update -g $RG -n $APP --https-only true
 az webapp config appsettings set -g $RG -n $APP --settings WEBSITES_PORT=8000 SOLVER_POOL_SIZE=2
 ```
@@ -112,12 +116,11 @@ pooler** (port 5432), as `postgres`. Type it in your own terminal:
 az webapp config appsettings set -g $RG -n $APP --settings DATABASE_URL='<session pooler URL>'
 ```
 
-Redeploy after a change: build a new tag, point the app at it, check it.
+Redeploy after a change: merge to `main`, wait for the image workflow to pass (it pushes
+`$IMAGE:<sha>`), then point the app at that SHA and check it:
 
 ```bash
-TAG=$(git rev-parse --short HEAD)
-az acr build -r $ACR -t acdos-api:$TAG -f backend/Dockerfile .
-az webapp config container set -g $RG -n $APP --container-image-name $ACR.azurecr.io/acdos-api:$TAG
+az webapp config container set -g $RG -n $APP --container-image-name $IMAGE:$SHA
 curl https://$(az webapp show -g $RG -n $APP --query defaultHostName -o tsv)/health
 ```
 
@@ -125,13 +128,15 @@ The app's HTTPS address goes in `android-client/local.properties` as `api.baseUr
 
 ### After the defence
 
-Stopping the app (`az webapp stop`) does **not** stop the bill: the B1 plan and the registry
-charge whether the app runs or not. To stop all charges, delete the resource group, which
-deletes the app, the plan and the registry together (Supabase is not in it):
+Stopping the app (`az webapp stop`) does **not** stop the bill: the B1 plan charges whether
+the app runs or not. To stop all charges, delete the resource group, which deletes the app
+and the plan together (Supabase is not in it):
 
 ```bash
 az group delete -n acdos-rg --yes
 ```
+
+The GHCR images cost nothing; delete them in the repo's Packages page if wanted.
 
 ### Demo-day fallback: run locally behind a Cloudflare quick tunnel
 
