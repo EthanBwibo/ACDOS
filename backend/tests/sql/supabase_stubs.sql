@@ -14,7 +14,9 @@ alter database acdos_ci set search_path = "$user", public, extensions;
 -- dashboard into public. 000 then has to move it, so CI tests that move.
 create extension postgis;
 
-create table auth.users (id uuid primary key);
+-- email as in Supabase, for scripts that find the test accounts by it
+-- (benchmarks/demo_seed.py).
+create table auth.users (id uuid primary key, email text);
 
 create role authenticated nologin;
 create role anon nologin;
