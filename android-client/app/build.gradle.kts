@@ -17,6 +17,9 @@ val localProperties = Properties().apply {
 fun localSetting(property: String, env: String): String =
     localProperties.getProperty(property) ?: providers.environmentVariable(env).orNull ?: ""
 
+// The deployed backend (#149). Release builds call it unless api.releaseBaseUrl says otherwise.
+val deployedApiUrl = "https://acdos-api.azurewebsites.net"
+
 android {
     namespace = "com.kq.acdos"
     compileSdk {
@@ -36,8 +39,6 @@ android {
         val supabaseKey = localSetting("supabase.publishableKey", "SUPABASE_PUBLISHABLE_KEY")
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"$supabaseKey\"")
-        val apiBaseUrl = localSetting("api.baseUrl", "API_BASE_URL")
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
     buildFeatures {
@@ -45,7 +46,17 @@ android {
     }
 
     buildTypes {
+        // api.baseUrl as given: a local backend over adb reverse, a tunnel or Azure.
+        // Empty (as in CI) leaves the app without an API.
+        debug {
+            val apiBaseUrl = localSetting("api.baseUrl", "API_BASE_URL")
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        }
+        // Never api.baseUrl, so a laptop's local address can't end up in a release.
         release {
+            val apiBaseUrl = localSetting("api.releaseBaseUrl", "API_RELEASE_BASE_URL")
+                .ifEmpty { deployedApiUrl }
+            buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
             optimization {
                 enable = false
             }

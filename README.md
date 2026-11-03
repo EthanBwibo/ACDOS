@@ -124,7 +124,9 @@ az webapp config container set -g $RG -n $APP --container-image-name $IMAGE:$SHA
 curl https://$(az webapp show -g $RG -n $APP --query defaultHostName -o tsv)/health
 ```
 
-The app's HTTPS address goes in `android-client/local.properties` as `api.baseUrl=https://...`.
+Release builds of the app call `https://acdos-api.azurewebsites.net` by default
+(`api.releaseBaseUrl` in `android-client/local.properties` overrides it). Debug builds call
+whatever `api.baseUrl` says there, e.g. `api.baseUrl=https://acdos-api.azurewebsites.net`.
 
 ### After the defence
 
