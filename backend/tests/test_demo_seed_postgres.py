@@ -65,9 +65,15 @@ def db(query):
     return asyncio.run(run())
 
 
-async def snapshot(conn) -> dict[str, list[str]]:
+async def snapshot(conn, without: str = "") -> dict[str, list[str]]:
+    """Every row of TABLES as JSON, optionally without one column."""
     return {
-        t: [r[0] for r in await conn.fetch(f"select to_jsonb(t)::text from {t} t order by 1")]
+        t: [
+            r[0]
+            for r in await conn.fetch(
+                f"select (to_jsonb(t) - $1::text)::text from {t} t order by 1", without
+            )
+        ]
         for t in TABLES
     }
 
@@ -250,10 +256,12 @@ def test_seed_creates_the_demo_morning(world):
 
 
 def test_seed_twice_gives_the_same_rows(world):
+    # The second seed deletes and inserts the same rows: equal but for when
+    # they were created.
     db(lambda conn: demo_seed.seed(conn, DAY))
-    once = db(snapshot)
+    once = db(lambda conn: snapshot(conn, without="created_at"))
     db(lambda conn: demo_seed.seed(conn, DAY))
-    assert db(snapshot) == once
+    assert db(lambda conn: snapshot(conn, without="created_at")) == once
 
 
 def test_seed_and_a_played_demo_then_reset_leave_the_database_as_it_was(world):
