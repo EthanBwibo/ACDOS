@@ -44,7 +44,9 @@ class CrewPickupRepositoryTest {
         reportTime = t0.plusSeconds(5400),
         scheduledPickup = t0.plusSeconds(1680),
         eta = eta,
-        vehiclePlate = plate
+        vehiclePlate = plate,
+        needsAck = false,
+        notice = null
     )
 
     private fun answer(pickup: CrewPickupDto?) {
