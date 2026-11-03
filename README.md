@@ -70,6 +70,92 @@ Retrofit dependencies automatically.
 Requires a Supabase project with the PostGIS extension enabled. Schema migrations live
 in `backend/migrations/`.
 
+## Deploy
+
+The backend runs on Azure App Service (Azure for Students) as one container: Linux, plan B1,
+**Spain Central**, one uvicorn process with a solver pool of 2, Always On, health check on
+`/health`, HTTPS only (#148). Cost: about $13 a month for B1 ($0.018 an hour), from the student
+credit.
+
+- **Region.** The Azure for Students subscription only allows Poland Central, India South
+  Central, Switzerland North, UAE North and Spain Central. Spain Central is one of the closest
+  to Supabase (eu-west-1, Ireland), which matters because each request makes several database
+  round trips.
+- **Image.** Student subscriptions cannot use Azure Container Registry's build service (ACR
+  Tasks), so GitHub Actions builds the image (`.github/workflows/image.yml`) and pushes it to
+  GHCR as a public package: `ghcr.io/ethanbwibo/acdos-api:<commit sha>`, and `:latest`. The repo
+  is public and the image holds no secrets (`.dockerignore` lets in only the requirements,
+  `backend/app` and `data/`; the workflow checks for env files and keys), so App Service pulls
+  it anonymously. The workflow runs on every push to `main` that touches the backend, and can
+  be run by hand (Actions, image, Run workflow).
+- **RF fingerprint.** The image trains the Random Forest at build time. The workflow prints its
+  fingerprint and fails unless it equals `RF_FINGERPRINT` in the workflow, which is what
+  `cd backend && python -m app.ml.fingerprint` prints locally.
+- **Deploy by SHA**, never by `latest`, so the app runs exactly the image whose fingerprint was
+  checked.
+
+Run these in Git Bash, signed in with `az login`:
+
+```bash
+RG=acdos-rg LOC=spaincentral PLAN=acdos-plan APP=acdos-api
+IMAGE=ghcr.io/ethanbwibo/acdos-api SHA=<full commit sha the image workflow pushed>
+
+# Once: the resource group, the plan and the app.
+az group create -n $RG -l $LOC
+az appservice plan create -g $RG -n $PLAN --is-linux --sku B1 -l $LOC
+az webapp create -g $RG -p $PLAN -n $APP --container-image-name $IMAGE:$SHA
+az webapp config set -g $RG -n $APP --always-on true   --generic-configurations '{"healthCheckPath": "/health"}'
+az webapp update -g $RG -n $APP --https-only true
+az webapp config appsettings set -g $RG -n $APP --settings WEBSITES_PORT=8000 SOLVER_POOL_SIZE=2
+```
+
+`DATABASE_URL` is set by hand, never committed: Supabase dashboard, Connect, **Session
+pooler** (port 5432), as `postgres`. Type it in your own terminal:
+
+```bash
+az webapp config appsettings set -g $RG -n $APP --settings DATABASE_URL='<session pooler URL>'
+```
+
+Redeploy after a change: merge to `main`, wait for the image workflow to pass (it pushes
+`$IMAGE:<sha>`), then point the app at that SHA and check it:
+
+```bash
+az webapp config container set -g $RG -n $APP --container-image-name $IMAGE:$SHA
+curl https://$(az webapp show -g $RG -n $APP --query defaultHostName -o tsv)/health
+```
+
+The app's HTTPS address goes in `android-client/local.properties` as `api.baseUrl=https://...`.
+
+### After the defence
+
+Stopping the app (`az webapp stop`) does **not** stop the bill: the B1 plan charges whether
+the app runs or not. To stop all charges, delete the resource group, which deletes the app
+and the plan together (Supabase is not in it):
+
+```bash
+az group delete -n acdos-rg --yes
+```
+
+The GHCR images cost nothing; delete them in the repo's Packages page if wanted.
+
+### Demo-day fallback: run locally behind a Cloudflare quick tunnel
+
+If the Azure app is down, run the backend on the laptop and give the phone a public HTTPS
+address with a Cloudflare quick tunnel (no Cloudflare account; the address changes every
+run, so this is for the demo only).
+
+```bash
+# Once: winget install --id Cloudflare.cloudflared
+cd backend && venv\Scripts\activate         # DATABASE_URL in backend/.env, as in Setup
+uvicorn app.main:app --workers 1 --port 8000
+# In a second terminal:
+cloudflared tunnel --url http://localhost:8000
+```
+
+`cloudflared` prints `https://<random words>.trycloudflare.com`. Check
+`https://<that address>/health`, put it in `android-client/local.properties` as
+`api.baseUrl=...`, and rebuild the app. The laptop must stay awake and online for the demo.
+
 ## Data note
 
 Real Kenya Airways trip-log data was not confirmed available within the project timeline.
