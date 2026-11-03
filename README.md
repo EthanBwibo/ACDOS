@@ -109,11 +109,37 @@ az webapp update -g $RG -n $APP --https-only true
 az webapp config appsettings set -g $RG -n $APP --settings WEBSITES_PORT=8000 SOLVER_POOL_SIZE=2
 ```
 
-`DATABASE_URL` is set by hand, never committed: Supabase dashboard, Connect, **Session
-pooler** (port 5432), as `postgres`. Type it in your own terminal:
+`DATABASE_URL` is set by hand and never committed. Copy it from the Supabase dashboard:
+Connect, **Session pooler** (port 5432), as `postgres`, with the password filled in. It must
+look like `postgresql://postgres.<ref>:<password>@aws-….pooler.supabase.com:5432/postgres`.
+
+**Don't pass it on the command line** (`az … --settings DATABASE_URL='…'`). On Windows, `az` is
+`az.cmd`, so `cmd.exe` parses the arguments again, from Git Bash or PowerShell alike. Characters
+such as `&`, `%`, `^`, `!` or quotes in the URL or password then cut or garble the value.
+`az` reports success anyway. The app then exits at startup with
+`invalid DSN: scheme is expected to be either "postgresql" or "postgres"`, and `/health`
+returns 503. Use one of these instead:
+
+- **Azure Portal (simplest).** App Services, `acdos-api`, Settings, **Environment variables**.
+  Add or edit `DATABASE_URL`, paste the URL as the value, then Apply, Apply and Confirm. The
+  app restarts by itself.
+- **A JSON file**, so no shell parses the URL. In PowerShell:
+
+  ```powershell
+  notepad $env:TEMP\dburl.json
+  #   contents: [{"name":"DATABASE_URL","value":"postgresql://...","slotSetting":false}]
+  az webapp config appsettings set -g acdos-rg -n acdos-api --output none --settings "@$env:TEMP\dburl.json"
+  Remove-Item $env:TEMP\dburl.json
+  ```
+
+  Keep `--output none`: without it, `az` prints every setting back, the URL included.
+
+Then check the app started. Download the logs and look for `Application startup complete`
+in the newest `*_default_docker.log` under `LogFiles/`:
 
 ```bash
-az webapp config appsettings set -g $RG -n $APP --settings DATABASE_URL='<session pooler URL>'
+az webapp log config -g $RG -n $APP --docker-container-logging filesystem   # once
+az webapp log download -g $RG -n $APP --log-file logs.zip
 ```
 
 Redeploy after a change: merge to `main`, wait for the image workflow to pass (it pushes
