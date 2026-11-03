@@ -461,3 +461,41 @@ class PickupReportTimeUpdate(BaseModel):
 
 class VehicleStatusUpdate(BaseModel):
     status: VehicleStatus
+
+
+# Crew-to-dispatcher preset messages (#54). No free text anywhere: a message
+# names a preset by its code.
+
+
+class PresetMessage(BaseModel):
+    code: str  # what POST /messages takes
+    label: str  # what the screens show
+
+
+class PresetMessageList(BaseModel):
+    items: list[PresetMessage]  # the fixed set, in code order: no pages
+
+
+class CrewMessageCreate(BaseModel):
+    preset_code: str = Field(min_length=1, max_length=64)
+
+
+class CrewMessage(BaseModel):
+    id: UUID
+    crew_member_id: UUID
+    crew_name: str
+    preset_code: str
+    label: str
+    sent_at: datetime
+    read_at: datetime | None  # null until the dispatcher has read it
+
+
+class CrewMessagePage(BaseModel):
+    items: list[CrewMessage]  # newest first
+    next_cursor: str | None
+
+
+class CrewMessageRead(BaseModel):
+    id: UUID
+    # When the dispatcher first read it: the same on a retry.
+    read_at: datetime

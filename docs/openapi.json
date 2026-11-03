@@ -1,6 +1,123 @@
 {
   "components": {
     "schemas": {
+      "CrewMessage": {
+        "properties": {
+          "crew_member_id": {
+            "format": "uuid",
+            "title": "Crew Member Id",
+            "type": "string"
+          },
+          "crew_name": {
+            "title": "Crew Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "preset_code": {
+            "title": "Preset Code",
+            "type": "string"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "title": "Sent At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "crew_member_id",
+          "crew_name",
+          "preset_code",
+          "label",
+          "sent_at",
+          "read_at"
+        ],
+        "title": "CrewMessage",
+        "type": "object"
+      },
+      "CrewMessageCreate": {
+        "properties": {
+          "preset_code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Preset Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preset_code"
+        ],
+        "title": "CrewMessageCreate",
+        "type": "object"
+      },
+      "CrewMessagePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CrewMessage"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "CrewMessagePage",
+        "type": "object"
+      },
+      "CrewMessageRead": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "read_at": {
+            "format": "date-time",
+            "title": "Read At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "read_at"
+        ],
+        "title": "CrewMessageRead",
+        "type": "object"
+      },
       "CrewPickup": {
         "properties": {
           "eta": {
@@ -887,6 +1004,40 @@
         "title": "PlannedRoute",
         "type": "object"
       },
+      "PresetMessage": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ],
+        "title": "PresetMessage",
+        "type": "object"
+      },
+      "PresetMessageList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PresetMessage"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PresetMessageList",
+        "type": "object"
+      },
       "RouteStatus": {
         "enum": [
           "active",
@@ -1508,6 +1659,330 @@
         ]
       }
     },
+    "/messages": {
+      "get": {
+        "description": "Newest first. Crew get their own; the dispatcher gets every crew\nmember's, ?unread=true for those not yet read.",
+        "operationId": "list_messages_messages_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unread",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unread",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewMessagePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List Messages",
+        "tags": [
+          "messages"
+        ]
+      },
+      "post": {
+        "description": "Crew send a preset to the dispatcher. Safe to retry with the same\nIdempotency-Key: the retry gets the message already sent.",
+        "operationId": "send_message_messages_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrewMessageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewMessage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused",
+            "x-error-codes": [
+              "validation_failed",
+              "idempotency_key_reused"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Send Message",
+        "tags": [
+          "messages"
+        ]
+      }
+    },
+    "/messages/{message_id}/ack": {
+      "post": {
+        "description": "The dispatcher has read a message. Safe to retry: the first time\nstands.",
+        "operationId": "ack_message_messages__message_id__ack_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewMessageRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Ack Message",
+        "tags": [
+          "messages"
+        ]
+      }
+    },
     "/optimisation-jobs": {
       "post": {
         "operationId": "create_job_optimisation_jobs_post",
@@ -1970,6 +2445,72 @@
         "summary": "Set Report Time",
         "tags": [
           "dispatcher"
+        ]
+      }
+    },
+    "/preset-messages": {
+      "get": {
+        "description": "The presets crew may send. A fixed set, so not paginated.",
+        "operationId": "list_presets_preset_messages_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetMessageList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List Presets",
+        "tags": [
+          "messages"
         ]
       }
     },

@@ -25,7 +25,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app import contract, dispatch, reads
+from app import contract, dispatch, messages, reads
 from app.config import settings
 from app.errors import ErrorBody, ErrorCode
 from app.jobs.runner import JobRunner
@@ -52,6 +52,9 @@ TOKEN_ROUTES = {
     "/vehicles",
     "/vehicles/{vehicle_id}",
     "/routes",
+    "/preset-messages",
+    "/messages",
+    "/messages/{message_id}/ack",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
@@ -332,6 +335,53 @@ def _ack(setup: Callable[[World], None] | None, token: bool = True, notice: str 
     return run
 
 
+MESSAGE_ACK = "/messages/{message_id}/ack"
+MESSAGE = {"preset_code": "running_late"}
+
+
+def _crew_with_record(w: World) -> None:
+    """A crew caller with a crew_members row (no real queries run)."""
+
+    @asynccontextmanager
+    async def as_caller(pool, user_id):
+        yield None, reads.Profile("crew", uuid4())
+
+    w.monkeypatch.setattr(app.state, "db", object(), raising=False)
+    w.monkeypatch.setattr(reads, "as_caller", as_caller)
+
+
+def _messages(
+    method: str,
+    path: str,
+    setup: Callable[[World], None] | None = None,
+    token: bool = True,
+    body: dict | None = None,
+    key: str | None = "contract-message",
+    stub: tuple[str, object] | None = None,
+):
+    """A message route (#54). stub replaces one app.messages function with
+    one that returns, or raises, the given value."""
+
+    def run(w: World):
+        if setup:
+            setup(w)
+        if stub:
+            name, outcome = stub
+
+            async def fake(*args, outcome=outcome):
+                if isinstance(outcome, Exception):
+                    raise outcome
+                return outcome
+
+            w.monkeypatch.setattr(messages, name, fake)
+        headers = (w.token() if token else {}) | ({"Idempotency-Key": key} if key else {})
+        if method == "GET":
+            return w.client.get(path, headers=headers)
+        return w.client.post(path, json=body, headers=headers)
+
+    return run
+
+
 # (method, path, status, code, how to make the route send it, ids expected)
 CASES = (
     [
@@ -419,6 +469,94 @@ CASES = (
             422,
             "validation_failed",
             _me("/drivers/me/routes", None, token=True, query="?cursor=not-a-cursor"),
+            False,
+        ),
+    ]
+    + [
+        case
+        for method, spec_path, path, body in [
+            ("GET", "/preset-messages", "/preset-messages", None),
+            ("POST", "/messages", "/messages", MESSAGE),
+            ("GET", "/messages", "/messages", None),
+            ("POST", MESSAGE_ACK, f"/messages/{uuid4()}/ack", None),
+        ]
+        for case in [
+            (
+                method,
+                spec_path,
+                401,
+                "unauthorized",
+                _messages(method, path, token=False, body=body),
+                False,
+            ),
+            (
+                method,
+                spec_path,
+                403,
+                "forbidden",
+                _messages(method, path, lambda w: w.as_profile("driver"), body=body),
+                False,
+            ),
+            (
+                method,
+                spec_path,
+                503,
+                "unavailable",
+                _messages(method, path, World.without_db, body=body),
+                False,
+            ),
+        ]
+    ]
+    + [
+        (
+            "POST",
+            "/messages",
+            422,
+            "validation_failed",
+            _messages("POST", "/messages", _crew_with_record, body=MESSAGE, key=None),
+            False,
+        ),
+        (
+            "POST",
+            "/messages",
+            422,
+            "idempotency_key_reused",
+            _messages(
+                "POST",
+                "/messages",
+                _crew_with_record,
+                body=MESSAGE,
+                stub=("send", messages.KeyReused("contract-message")),
+            ),
+            False,
+        ),
+        (
+            "GET",
+            "/messages",
+            422,
+            "validation_failed",
+            _messages("GET", "/messages?cursor=not-a-cursor", _crew_with_record),
+            False,
+        ),
+        (
+            "POST",
+            MESSAGE_ACK,
+            404,
+            "not_found",
+            _messages(
+                "POST",
+                f"/messages/{uuid4()}/ack",
+                lambda w: w.as_profile("dispatcher"),
+                stub=("mark_read", None),
+            ),
+            False,
+        ),
+        (
+            "POST",
+            MESSAGE_ACK,
+            422,
+            "validation_failed",
+            _messages("POST", "/messages/not-a-uuid/ack", lambda w: w.as_profile("dispatcher")),
             False,
         ),
     ]
