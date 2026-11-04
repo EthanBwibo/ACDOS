@@ -43,7 +43,15 @@ class DispatcherViewModelTest {
     private val t0 = Instant.parse("2026-11-03T05:30:00Z")
 
     private fun pickup(id: String, status: PickupRequestStatusDto) =
-        DispatcherPickupDto(id, "Crew $id", "Kilimani, Nairobi", t0, status)
+        DispatcherPickupDto(
+            id,
+            "Crew $id",
+            "Kilimani, Nairobi",
+            t0,
+            status,
+            needsAck = false,
+            acknowledgedAt = null
+        )
 
     private fun van(id: String, status: VehicleStatusDto, onTheRoad: Boolean = false) =
         DispatcherVehicleDto(id, "KDA $id", 4, status, onTheRoad)

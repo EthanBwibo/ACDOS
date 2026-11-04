@@ -63,9 +63,16 @@ def time_key(cursor: str | None) -> tuple[datetime, UUID] | None:
 
 
 # One pickup with what the dashboard lists. The zone is the nearest of
-# pickup_zones by PostGIS, as on the driver's route (reads._STOPS).
+# pickup_zones by PostGIS, as on the driver's route (reads._STOPS). needs_ack
+# is the crew's rule (reads.next_pickup): any notice not acknowledged.
+# acknowledged_at is the latest notice's, in the crew's order (issued_at, id).
 _PICKUPS = """
-    select p.id, c.name as crew_name, z.label as zone_label, p.report_time, p.status
+    select p.id, c.name as crew_name, z.label as zone_label, p.report_time, p.status,
+        exists (
+            select 1 from public.schedule_change_notices s
+            where s.pickup_request_id = p.id and s.acknowledged_at is null
+        ) as needs_ack,
+        latest.acknowledged_at
     from public.pickup_requests p
     join public.crew_members c on c.id = p.crew_member_id
     left join lateral (
@@ -73,6 +80,12 @@ _PICKUPS = """
         order by extensions.st_distance(location, p.pickup_location)
         limit 1
     ) z on true
+    left join lateral (
+        select acknowledged_at from public.schedule_change_notices
+        where pickup_request_id = p.id
+        order by issued_at desc, id desc
+        limit 1
+    ) latest on true
 """
 
 
@@ -83,6 +96,8 @@ def _pickup(row: asyncpg.Record) -> DispatcherPickup:
         zone_label=row["zone_label"],
         report_time=row["report_time"],
         status=row["status"],
+        needs_ack=row["needs_ack"],
+        acknowledged_at=row["acknowledged_at"],
     )
 
 

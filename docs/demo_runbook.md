@@ -32,13 +32,13 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    `demo-KDH 102A` and `demo-KDH 103A`, plus 14 pending pickups across Westlands, Kilimani,
    Lavington, Karen, South C, Embakasi and Kasarani, reporting at JKIA 05:00 to 07:30.
    One of them is `crew@acdos.test`'s (Westlands, 06:15).
-   **Read the warnings it prints.** If it lists non-demo vans that are not broken down (for
-   example `KDA 001T`), open Vehicles on the dispatcher phone and **Mark broken down** each of
-   them. Otherwise Run optimisation plans them too, and `reset` later refuses to remove that
-   mixed plan.
+   **Read the warnings it prints.** The test vans `KDA 001T` and `KDA 002T` (fixtures of
+   `plan_test_route.py`) stay in the database, so it may list them; step 3 leaves them out.
 3. **Dispatcher plans** (dispatcher phone): tap **Next** to tomorrow. Pickups shows 14
-   pending. Tap **Run optimisation** and wait for the job to finish. Routes then shows the
-   demo vans' routes, with stops, times and crew names.
+   pending. Tap **Run optimisation**, **untick the test vans `KDA 001T` and `KDA 002T`** so
+   only the three `demo-` vans are selected, and start the job. A plan that includes a test
+   van can't be removed by `reset` later. When the job finishes, Routes shows the demo vans'
+   routes, with stops, times and crew names.
 4. **Crew sees the pickup** (crew phone): refresh. It shows the pickup time, the van and
    "Report at JKIA 06:15". Note which van it's on: it's the one whose route lists
    "Test Crew" on the dispatcher's Routes.
@@ -62,8 +62,7 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
 
    After a refresh, the notice is gone from the crew's pickup.
 
-**After the demo:** run `reset`, and **Mark available** any non-demo van you marked broken down
-in step 2. To run the demo again, start from step 1.
+**After the demo:** run `reset`. To run the demo again, start from step 1.
 
 ## If something goes wrong
 
