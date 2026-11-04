@@ -2,7 +2,8 @@
 migrations: seed then reset leaves every table as it was, seeding is
 idempotent, and non-demo rows are never touched.
 
-They insert auth.users rows for driver@ and crew@, so they run only on a
+They insert auth.users rows for the three van drivers and crew@, so they run
+only on a
 throwaway database: when DATABASE_URL is set in the environment (CI's
 PostGIS service), never against a Supabase host.
 
@@ -119,7 +120,10 @@ async def plan(conn, vans: list[UUID], pickups: list[UUID], trigger="scheduled")
 
 class World:
     def __init__(self) -> None:
-        self.driver, self.crew_user = uuid4(), uuid4()
+        self.drivers = {email: uuid4() for email in demo_seed.DRIVER_EMAILS}
+        # demo-KDH 101A's driver, who also drives the bystander van.
+        self.driver = self.drivers[demo_seed.DRIVER_EMAILS[0]]
+        self.crew_user = uuid4()
         self.crew_member: UUID | None = None
         self.van: UUID | None = None
         self.bystander_crew: UUID | None = None
@@ -130,7 +134,7 @@ class World:
 async def seed_world(conn, w: World) -> None:
     async with conn.transaction():
         for uid, email, role in [
-            (w.driver, demo_seed.DRIVER_EMAIL, "driver"),
+            *((uid, email, "driver") for email, uid in w.drivers.items()),
             (w.crew_user, demo_seed.CREW_EMAIL, "crew"),
         ]:
             await conn.execute("insert into auth.users (id, email) values ($1, $2)", uid, email)
@@ -138,7 +142,7 @@ async def seed_world(conn, w: World) -> None:
                 "insert into public.profiles (id, role, full_name) values ($1, $2, $3)",
                 uid,
                 role,
-                f"test-{RUN} {role}",
+                f"test-{RUN} {email}",
             )
         w.crew_member = await conn.fetchval(
             "insert into public.crew_members (profile_id, name, role, home_location) "
@@ -147,7 +151,7 @@ async def seed_world(conn, w: World) -> None:
             f"test-{RUN} crew",
             HOME,
         )
-        # The bystander: driver@'s non-demo van with a planned route.
+        # The bystander: a non-demo van with a planned route, driven by a demo driver.
         w.van = await conn.fetchval(
             "insert into public.vehicles (assigned_driver_id, plate_number, capacity) "
             "values ($1, $2, 4) returning id",
@@ -189,7 +193,7 @@ async def clean_world(conn, w: World) -> None:
             "delete from public.crew_members where id = any($1)", [w.crew_member, w.bystander_crew]
         )
         await conn.execute("delete from public.vehicles where id = $1", w.van)
-        users = [w.driver, w.crew_user]
+        users = [*w.drivers.values(), w.crew_user]
         await conn.execute("delete from public.profiles where id = any($1)", users)
         await conn.execute("delete from auth.users where id = any($1)", users)
 
@@ -232,15 +236,18 @@ def test_seed_creates_the_demo_morning(world):
     summary = db(lambda conn: demo_seed.seed(conn, DAY))
     state = db(demo_state)
 
-    # The bystander van is available and has driver@'s active route: both
-    # reported, neither changed.
+    # The bystander van is available and has a demo driver's active route:
+    # both reported, neither changed.
     assert any(f"test-{RUN}" in w for w in summary["warnings"])
-    assert any(w.startswith(demo_seed.DRIVER_EMAIL) for w in summary["warnings"])
+    assert any(w.startswith("the demo drivers have 1 active route") for w in summary["warnings"])
 
     assert [v["plate_number"] for v in state["vans"]] == demo_seed.VANS
     assert {v["capacity"] for v in state["vans"]} == {14}
     assert {v["status"] for v in state["vans"]} == {"available"}
-    assert [v["assigned_driver_id"] for v in state["vans"]] == [world.driver, None, None]
+    # Each van its own driver account, by email.
+    assert [v["assigned_driver_id"] for v in state["vans"]] == [
+        world.drivers[email] for email in demo_seed.DRIVER_EMAILS
+    ]
 
     assert len(state["crew"]) == 13
     pickups = state["pickups"]
@@ -369,7 +376,7 @@ def test_seed_stops_without_the_test_accounts():
         try:
             await conn.execute(
                 "update auth.users set email = null where email = any($1)",
-                [demo_seed.DRIVER_EMAIL, demo_seed.CREW_EMAIL],
+                [*demo_seed.DRIVER_EMAILS, demo_seed.CREW_EMAIL],
             )
             with pytest.raises(SystemExit, match="seed_test_accounts"):
                 await demo_seed.seed(conn, DAY)
@@ -377,3 +384,26 @@ def test_seed_stops_without_the_test_accounts():
             await tr.rollback()
 
     db(run)
+
+
+def test_seed_names_a_missing_van_driver_and_writes_nothing(world):
+    before = db(snapshot)
+
+    async def run(conn):
+        tr = conn.transaction()
+        await tr.start()
+        try:
+            await conn.execute(
+                "update auth.users set email = null where email = 'driver-103a@acdos.test'"
+            )
+            with pytest.raises(
+                SystemExit,
+                match=r"missing test account\(s\): driver-103a@acdos.test\. "
+                r"Run scripts/seed_test_accounts.py first",
+            ):
+                await demo_seed.seed(conn, DAY)
+        finally:
+            await tr.rollback()
+
+    db(run)
+    assert db(snapshot) == before

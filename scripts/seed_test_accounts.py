@@ -8,6 +8,10 @@ its profiles row, and links the crew account to a crew_members row so crew RLS
     dispatcher@acdos.test   profiles.role = dispatcher
     driver@acdos.test       profiles.role = driver
     driver2@acdos.test      profiles.role = driver (the spare van's, for the demo)
+    driver-101a@acdos.test  profiles.role = driver, demo-KDH 101A's
+    driver-102a@acdos.test  profiles.role = driver, demo-KDH 102A's
+    driver-103a@acdos.test  profiles.role = driver, demo-KDH 103A's
+                            (the demo morning, backend/benchmarks/demo_seed.py)
     crew@acdos.test         profiles.role = crew, crew_members row in Westlands
 
 The app never sets a role: profiles has only SELECT policies, so roles are
@@ -39,6 +43,11 @@ ACCOUNTS = [
     {"email": "driver@acdos.test", "role": "driver", "full_name": "Test Driver"},
     # KDA 002T's driver, for the breakdown in the end-to-end demo (plan_test_route.py).
     {"email": "driver2@acdos.test", "role": "driver", "full_name": "Test Driver 2"},
+    # One per demo van (backend/benchmarks/demo_seed.py assigns them by email):
+    # the time-limited GA can give any van any stops, so each needs a phone.
+    {"email": "driver-101a@acdos.test", "role": "driver", "full_name": "Demo Driver 101A"},
+    {"email": "driver-102a@acdos.test", "role": "driver", "full_name": "Demo Driver 102A"},
+    {"email": "driver-103a@acdos.test", "role": "driver", "full_name": "Demo Driver 103A"},
     {"email": "crew@acdos.test", "role": "crew", "full_name": "Test Crew"},
 ]
 
