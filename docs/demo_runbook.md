@@ -1,15 +1,21 @@
 # Demo runbook
 
 The defence demo, start to finish: one morning of crew pickups, planned, driven, disrupted
-by a breakdown and re-planned. It takes three phones (or emulators), each signed in to one
-test account, with the app built against the Azure URL
-(`api.baseUrl=https://acdos-api.azurewebsites.net` in `android-client/local.properties`).
+by a breakdown and re-planned, then acknowledged by the crew member and answered with a preset
+message. It takes two devices, with the app built against the Azure URL
+(`api.baseUrl=https://acdos-api.azurewebsites.net` in `android-client/local.properties`):
+the dispatcher on the laptop's emulator, and one phone that is the driver first and the crew
+member at the end.
 
-| Phone | Account | Shows |
+| Device | Account | Shows |
 |---|---|---|
-| Dispatcher | `dispatcher@acdos.test` | Pickups, Vehicles and Routes for a day; plans and re-plans |
-| Driver | `driver@acdos.test` | its van's route, stop by stop |
-| Crew | `crew@acdos.test` | its next pickup: time, van, report time |
+| Emulator (`Dispatcher_API34`) | `dispatcher@acdos.test` | Crew messages, Routes, Pickups and Vehicles for a day; plans and re-plans |
+| Phone, steps 5–7 | `driver@acdos.test` | its van's route, stop by stop |
+| Phone, steps 8–9 | `crew@acdos.test` | Pickup: its next pickup and any change to acknowledge. Message: the presets |
+
+Close Android Studio before starting the emulator: the laptop does not have the memory for
+both. Start it from PowerShell:
+`& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Dispatcher_API34 -gpu host -no-boot-anim`.
 
 The password for all three is `SEED_PASSWORD` (`scripts/seed_test_accounts.py`).
 
@@ -18,7 +24,8 @@ The password for all three is `SEED_PASSWORD` (`scripts/seed_test_accounts.py`).
 1. `https://acdos-api.azurewebsites.net/health` returns `{"status":"ok"}`. If it doesn't, see
    README, "Deploy", or use the fallback below.
 2. The accounts exist: `python scripts/seed_test_accounts.py` (safe to re-run).
-3. Sign in on each phone once and check that it loads.
+3. Sign in once with each account (dispatcher on the emulator; driver, then crew, on the
+   phone) and check that it loads. Leave the phone signed in as the driver.
 
 ## The demo
 
@@ -39,31 +46,30 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
 3. **Dispatcher plans** (dispatcher phone): tap **Next** to tomorrow. Pickups shows 14
    pending. Tap **Run optimisation** and wait for the job to finish. Routes then shows the
    demo vans' routes, with stops, times and crew names.
-4. **Crew sees the pickup** (crew phone): refresh. It shows the pickup time, the van and
-   "Report at JKIA 06:15". Note which van it's on: it's the one whose route lists
-   "Test Crew" on the dispatcher's Routes.
-5. **Driver confirms** (driver phone): refresh. The route for `demo-KDH 101A` appears. Tap
-   **Picked up** on the first stop. The dispatcher's Pickups shows it `picked_up`.
-6. **Breakdown** (dispatcher phone): in Vehicles, **Mark broken down** the van carrying
+4. **Find the crew member's van** (dispatcher): in Routes, note the van whose route lists
+   "Test Crew". That is the van to break down in step 6.
+5. **Driver confirms** (phone, as the driver): refresh. The route for `demo-KDH 101A` appears. Tap
+   **Picked up** on the first stop. After **Refresh**, the dispatcher's Pickups shows it
+   `picked_up`.
+6. **Breakdown** (dispatcher): in Vehicles, **Mark broken down** the van carrying
    Test Crew. The banner says it is broken down and asks for a re-plan.
-7. **Re-plan** (dispatcher phone): tap **Re-plan**. The broken van's uncollected pickups move
+7. **Re-plan** (dispatcher): tap **Re-plan**. The broken van's uncollected pickups move
    to the other vans. Crew already on board stay where they are. Routes shows the new plan.
    If the broken van was `demo-KDH 101A`, the driver phone shows the shortened route, or
    "No route assigned", on refresh.
-8. **Crew acknowledges** (crew phone): refresh. It shows the new pickup time and van. The app
-   has no Acknowledge button yet, so acknowledge from the laptop with the crew's token from
-   `python scripts/seed_test_accounts.py --tokens`. In PowerShell:
-
-   ```powershell
-   $api = "https://acdos-api.azurewebsites.net"; $h = @{ Authorization = "Bearer <crew token>" }
-   $p = Invoke-RestMethod "$api/crew/me/pickup" -Headers $h; $p | ConvertTo-Json -Depth 5
-   Invoke-RestMethod -Method Post "$api/crew/me/notices/<notice id from above>/acknowledge" -Headers $h
-   ```
-
-   After a refresh, the notice is gone from the crew's pickup.
+8. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
+   Pickup tab opens with a card on top, "Your pickup has changed": the reason (Vehicle
+   breakdown), the new pickup time with the old one, and the new van. Below it, the pickup
+   time, "Report at JKIA 06:15" and the van. Tap **Acknowledge**: "Acknowledged. The
+   dispatcher can see it." and the card goes. It stays gone after a pull to refresh.
+9. **Crew messages the dispatcher** (phone, then dispatcher): open the **Message** tab. It
+   lists the presets as buttons and has no text field. Tap **I am running late**: "Sent to
+   the dispatcher." On the emulator, tap **Refresh**: Crew messages, at the top, shows
+   "Test Crew: I am running late" with the time it was sent.
 
 **After the demo:** run `reset`, and **Mark available** any non-demo van you marked broken down
-in step 2. To run the demo again, start from step 1.
+in step 2. On the phone, sign out and sign back in as the driver. To run the demo again, start
+from step 1.
 
 ## If something goes wrong
 
@@ -72,6 +78,9 @@ in step 2. To run the demo again, start from step 1.
   `seed --date YYYY-MM-DD` and tap Next to that day on the dispatcher phone.
 - **Reset says a job mixed demo and non-demo rows.** A plan included a non-demo van or pickup.
   Nothing was deleted. Remove that job's routes by hand, or leave it and seed another day.
+- **No change card in step 8.** The re-plan didn't move Test Crew's pickup time, or the
+  notice was acknowledged on an earlier run. Pull to refresh; if it still doesn't show, the
+  rest of the demo still works, and the Message tab does not depend on it.
 - **The driver phone shows another route.** `driver@acdos.test` also drives `KDA 001T`.
   The phone shows the active route that starts first. `python scripts/plan_test_route.py
   --complete` clears the test routes.
@@ -89,6 +98,6 @@ cloudflared tunnel --url http://localhost:8000      # second terminal; keep both
 ```
 
 Check `https://<words>.trycloudflare.com/health`, then set `api.baseUrl` to that address in
-`android-client/local.properties`, rebuild, and install on the three phones. The demo steps are
+`android-client/local.properties`, rebuild, and install on the emulator and the phone. The demo steps are
 the same. The database is the same Supabase project, so the seeded rows are already there.
 Keep the laptop awake and on power.
