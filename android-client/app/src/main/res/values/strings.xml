@@ -95,12 +95,16 @@
     <string name="dispatch_failed">Couldn\'t do that: %1$s</string>
     <string name="dispatch_nothing_to_plan">No pickups to plan.</string>
     <string name="dispatch_no_free_vans">No van is free to plan with.</string>
+    <string name="dispatch_pick_vans">Vans to plan with</string>
+    <string name="dispatch_start_job">Start</string>
     <string name="dispatch_route_title">%1$s · %2$.1f km</string>
     <string name="dispatch_route_times">Leaves %1$s, at JKIA %2$s</string>
     <string name="dispatch_route_stop">%1$d. %2$s, %3$s</string>
     <string name="dispatch_unknown_crew">Unknown crew</string>
     <string name="dispatch_pickup_title">%1$s · %2$s</string>
     <string name="dispatch_pickup_subtitle">Reports %1$s · %2$s</string>
+    <string name="dispatch_acknowledged">Acknowledged</string>
+    <string name="dispatch_awaiting_ack">Awaiting acknowledgement</string>
     <string name="dispatch_vehicle_title">%1$s · %2$d seats</string>
     <string name="dispatch_on_the_road">%1$s · on the road</string>
     <string name="dispatch_flight_delay">Flight delay: change report time</string>

@@ -54,7 +54,7 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
 5. **Re-plan** (dispatcher): tap **Re-plan**, untick the test vans again as in step 3, and
    start the job. The broken van's pickups move to the other demo vans, and Routes shows the
    new plan. Nobody has been picked up yet, so every pickup on the
-   broken van is re-planned.
+   broken van is re-planned. In Pickups, Test Crew's row now says "Awaiting acknowledgement".
 6. **Driver confirms** (phone): sign in as the driver of one of the vans in the new plan
    (`demo-KDH 10xA` → `driver-10xa@acdos.test`) and refresh. That van's re-planned route
    appears. Tap **Picked up** on the first stop. After **Refresh**, the
@@ -63,7 +63,8 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    Pickup tab opens with a card on top, "Your pickup has changed": the reason (Vehicle
    breakdown), the new pickup time with the old one, and the new van. Below it are the pickup
    time, "Report at JKIA 06:15" and the van. Tap **Acknowledge**: "Acknowledged. The
-   dispatcher can see it." The card goes, and it stays gone after a pull to refresh.
+   dispatcher can see it." The card goes, and it stays gone after a pull to refresh. On the
+   emulator, tap **Refresh**: Test Crew's row in Pickups now says "Acknowledged".
 8. **Crew messages the dispatcher** (phone, then dispatcher): open the **Message** tab. It
    lists the presets as buttons and has no text field. Tap **I am running late**: "Sent to
    the dispatcher." On the emulator, tap **Refresh**: Crew messages, at the top, shows

@@ -227,4 +227,28 @@ class DispatcherViewModelTest {
         assertEquals(OptimizationTriggerTypeDto.SCHEDULED, jobs.created.single().triggerType)
         assertEquals(listOf("p4"), jobs.created.single().pickupRequestIds)
     }
+
+    @Test
+    fun ackLabel_followsTheNotice() {
+        val none = pickup("p1", PickupRequestStatusDto.ASSIGNED)
+        val pending = none.copy(needsAck = true)
+        val done = none.copy(acknowledgedAt = t0)
+
+        assertEquals(null, ackLabel(none))
+        assertEquals(R.string.dispatch_awaiting_ack, ackLabel(pending))
+        assertEquals(R.string.dispatch_acknowledged, ackLabel(done))
+    }
+
+    @Test
+    fun aVanUntickedInThePicker_isLeftOutOfTheJob() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        // v2 unticked; v4 is broken down, so it never goes in even if asked for.
+        viewModel.runOptimisation(listOf("v1", "v4"))
+        advanceUntilIdle()
+
+        assertEquals(listOf("v1"), jobs.created.single().vehicleIds)
+    }
 }
