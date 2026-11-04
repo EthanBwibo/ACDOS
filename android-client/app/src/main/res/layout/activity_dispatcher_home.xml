@@ -107,6 +107,16 @@
 
             <TextView
                 style="@style/DispatchSection"
+                android:text="@string/dispatch_messages" />
+
+            <LinearLayout
+                android:id="@+id/inbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                style="@style/DispatchSection"
                 android:text="@string/dispatch_routes" />
 
             <LinearLayout

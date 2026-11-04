@@ -64,7 +64,12 @@ class OpenApiContractTest {
         "PickupEventBatch" to PickupEventBatchDto::class.java,
         "PickupEventIn" to PickupEventInDto::class.java,
         "PickupEventResults" to PickupEventResultsDto::class.java,
-        "PickupEventResult" to PickupEventResultDto::class.java
+        "PickupEventResult" to PickupEventResultDto::class.java,
+        "PresetMessageList" to PresetMessageListDto::class.java,
+        "PresetMessage" to PresetMessageDto::class.java,
+        "CrewMessageCreate" to CrewMessageCreateDto::class.java,
+        "CrewMessage" to CrewMessageDto::class.java,
+        "CrewMessagePage" to CrewMessagePageDto::class.java
     )
 
     private val enums: Map<String, Class<out Enum<*>>> = mapOf(
@@ -82,8 +87,12 @@ class OpenApiContractTest {
     @Test
     fun everyEndpointTheAppCalls_isInTheContractWithTheSameBodies() {
         // Static methods are Kotlin's $default helpers for parameters with defaults.
-        val services =
-            listOf(MeApi::class.java, OptimisationJobsApi::class.java, DispatcherApi::class.java)
+        val services = listOf(
+            MeApi::class.java,
+            OptimisationJobsApi::class.java,
+            DispatcherApi::class.java,
+            MessagesApi::class.java
+        )
         val methods = services.flatMap { it.declaredMethods.toList() }
             .filterNot { Modifier.isStatic(it.modifiers) }
         for (method in methods) {

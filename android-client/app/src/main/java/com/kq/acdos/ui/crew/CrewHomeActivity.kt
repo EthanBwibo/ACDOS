@@ -12,14 +12,12 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
-import com.kq.acdos.ui.driver.ComingSoonFragment
 import com.kq.acdos.ui.openLoginWhenSessionEnds
 import kotlinx.coroutines.launch
 
 /**
  * The Crew role's home (#56): Pickup and Message tabs, and Sign out in the
- * overflow menu. Reached only through the role in profiles (#30). The
- * Message tab waits for the preset messages (#57).
+ * overflow menu. Reached only through the role in profiles (#30).
  */
 class CrewHomeActivity : AppCompatActivity() {
     private val container by lazy { (application as AcdosApplication).container }
@@ -43,7 +41,9 @@ class CrewHomeActivity : AppCompatActivity() {
         }
 
         findViewById<BottomNavigationView>(R.id.bottom_nav).setOnItemSelectedListener { item ->
-            show(if (item.itemId == R.id.tab_pickup) CrewPickupFragment() else ComingSoonFragment())
+            show(
+                if (item.itemId == R.id.tab_pickup) CrewPickupFragment() else CrewMessageFragment()
+            )
             true
         }
         // After a rotation the FragmentManager restores the open tab by itself.
