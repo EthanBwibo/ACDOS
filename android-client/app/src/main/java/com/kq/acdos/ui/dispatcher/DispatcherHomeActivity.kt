@@ -23,6 +23,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
+import com.kq.acdos.data.plannableVans
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.DispatcherPickupDto
 import com.kq.acdos.data.remote.DispatcherVehicleDto
@@ -80,8 +81,8 @@ class DispatcherHomeActivity : AppCompatActivity() {
         findViewById<Button>(R.id.previous_day).setOnClickListener { viewModel.showDay(-1) }
         findViewById<Button>(R.id.next_day).setOnClickListener { viewModel.showDay(1) }
         val run = findViewById<Button>(R.id.run_optimisation)
-        run.setOnClickListener { viewModel.runOptimisation() }
-        findViewById<Button>(R.id.replan).setOnClickListener { viewModel.replan() }
+        run.setOnClickListener { pickVans(viewModel::runOptimisation) }
+        findViewById<Button>(R.id.replan).setOnClickListener { pickVans(viewModel::replan) }
 
         val loading = findViewById<LinearProgressIndicator>(R.id.loading)
         val date = findViewById<TextView>(R.id.date)
@@ -158,14 +159,16 @@ class DispatcherHomeActivity : AppCompatActivity() {
             )
         }
         for (pickup in board.pickups) {
+            val subtitle = getString(
+                R.string.dispatch_pickup_subtitle,
+                Times.clock(pickup.reportTime),
+                getString(pickupStatusLabel(pickup.status))
+            )
+            val ack = ackLabel(pickup)?.let { "\n" + getString(it) } ?: ""
             addRow(
                 pickups,
                 getString(R.string.dispatch_pickup_title, pickup.crewName, pickup.zoneLabel ?: "-"),
-                getString(
-                    R.string.dispatch_pickup_subtitle,
-                    Times.clock(pickup.reportTime),
-                    getString(pickupStatusLabel(pickup.status))
-                )
+                subtitle + ack
             ) { askAboutPickup(pickup) }
         }
         for (vehicle in board.vehicles) {
@@ -212,6 +215,30 @@ class DispatcherHomeActivity : AppCompatActivity() {
         list.addView(row)
     }
 
+    /**
+     * The vans the job may use, all ticked: untick one to leave it out, e.g. a
+     * van that isn't part of today's plan. Broken-down vans and vans out on a
+     * route that has left are not offered.
+     */
+    private fun pickVans(start: (List<String>) -> Unit) {
+        val board = viewModel.state.value.board ?: return
+        val plannable = plannableVans(board)
+        val vans = board.vehicles.filter { it.id in plannable }
+        // None to offer: let the ViewModel say so.
+        if (vans.isEmpty()) return start(emptyList())
+        val ticked = BooleanArray(vans.size) { true }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.dispatch_pick_vans)
+            .setMultiChoiceItems(vans.map { it.plateNumber }.toTypedArray(), ticked) { _, i, on ->
+                ticked[i] = on
+            }
+            .setPositiveButton(R.string.dispatch_start_job) { _, _ ->
+                start(vans.filterIndexed { i, _ -> ticked[i] }.map { it.id })
+            }
+            .setNegativeButton(R.string.action_cancel, null)
+            .show()
+    }
+
     /** A flight delay: pick the new report time, same day. */
     private fun askAboutPickup(pickup: DispatcherPickupDto) {
         val plannable = pickup.status == PickupRequestStatusDto.PENDING ||
@@ -255,6 +282,17 @@ private fun pickupStatusLabel(status: PickupRequestStatusDto): Int = when (statu
     PickupRequestStatusDto.PICKED_UP -> R.string.pickup_status_picked_up
     PickupRequestStatusDto.MISSED -> R.string.pickup_status_missed
     PickupRequestStatusDto.CANCELLED -> R.string.pickup_status_cancelled
+}
+
+/**
+ * Where the crew member is with the latest schedule-change notice (#53, #56):
+ * acknowledged, still to acknowledge, or no line when there is no notice.
+ */
+@StringRes
+internal fun ackLabel(pickup: DispatcherPickupDto): Int? = when {
+    pickup.acknowledgedAt != null -> R.string.dispatch_acknowledged
+    pickup.needsAck -> R.string.dispatch_awaiting_ack
+    else -> null
 }
 
 @StringRes

@@ -131,10 +131,13 @@ class DispatcherViewModel(
         }
     }
 
-    /** A first plan for the day's pickups not on a route yet. */
-    fun runOptimisation() {
+    /**
+     * A first plan for the day's pickups not on a route yet. [vehicleIds] are the
+     * vans ticked in the picker; by default every plannable one.
+     */
+    fun runOptimisation(vehicleIds: List<String>? = null) {
         val board = uiState.value.board ?: return
-        startJob(OptimizationTriggerTypeDto.SCHEDULED, unplannedPickups(board))
+        startJob(OptimizationTriggerTypeDto.SCHEDULED, unplannedPickups(board), vehicleIds)
     }
 
     fun delayFlight(pickup: DispatcherPickupDto, reportTime: Instant) {
@@ -181,10 +184,10 @@ class DispatcherViewModel(
     fun markAvailable(vehicle: DispatcherVehicleDto) =
         setVehicleStatus(vehicle, VehicleStatusDto.AVAILABLE) { uiState.value.replan }
 
-    /** Runs the job for the recorded disruption. */
-    fun replan() {
+    /** Runs the job for the recorded disruption, with the ticked vans as for [runOptimisation]. */
+    fun replan(vehicleIds: List<String>? = null) {
         val replan = uiState.value.replan ?: return
-        startJob(replan.trigger, replan.pickupIds)
+        startJob(replan.trigger, replan.pickupIds, vehicleIds)
     }
 
     private fun setVehicleStatus(
@@ -207,10 +210,15 @@ class DispatcherViewModel(
         }
     }
 
-    private fun startJob(trigger: OptimizationTriggerTypeDto, pickupIds: List<String>) {
+    private fun startJob(
+        trigger: OptimizationTriggerTypeDto,
+        pickupIds: List<String>,
+        vehicleIds: List<String>?
+    ) {
         val repository = repository ?: return
         val board = uiState.value.board ?: return
-        val vans = plannableVans(board)
+        // Only plannable vans, even if the board changed while the picker was open.
+        val vans = plannableVans(board).filter { vehicleIds == null || it in vehicleIds }
         when {
             pickupIds.isEmpty() -> send(DispatcherMessage(R.string.dispatch_nothing_to_plan))
 
