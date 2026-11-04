@@ -2,7 +2,8 @@
 ACDOS — the demo morning for the defence (docs/demo_runbook.md).
 
     seed    one realistic morning, for tomorrow (Nairobi time) unless --date:
-            3 vans of 14 seats (driver@acdos.test drives the first),
+            3 vans of 14 seats, each with its own driver account
+            (driver-101a@, driver-102a@, driver-103a@acdos.test),
             13 crew without accounts across 7 of the 28 pickup zones, and
             one pending pickup each, reporting at JKIA between 05:00 and
             07:30 EAT; plus one pickup for crew@acdos.test (Westlands), so
@@ -17,14 +18,15 @@ Demo rows are tagged: vans' plates and crew names start with "demo-". The
 pickups carry no name, so they are the demo crew's pickups plus crew@'s demo
 pickup, whose id is fixed. Every demo row has a fixed id (uuid5 of its name),
 and reset deletes by those ids and the tag only. Non-demo rows are never
-written: the three accounts, their profiles, crew@'s crew record and the
+written: the test accounts, their profiles, crew@'s crew record and the
 vans and pickups of plan_test_route.py stay as they are. A job that planned
 demo and non-demo rows together cannot be removed by id without touching
 non-demo rows, so reset then stops and deletes nothing.
 
 Runs as the database owner from DATABASE_URL (backend/.env, as the app),
 which bypasses RLS like the service role. Run seed_test_accounts.py first:
-seed looks up driver@ and crew@ by email in auth.users.
+seed looks up the three van drivers and crew@ by email in auth.users,
+and stops if one is missing. Reset leaves the accounts as they are.
 
 Usage (from backend/):
     python -m benchmarks.demo_seed seed [--date 2026-11-25]
@@ -45,7 +47,6 @@ import asyncpg
 EAT = timezone(timedelta(hours=3))
 TAG = "demo-"
 CAPACITY = 14
-DRIVER_EMAIL = "driver@acdos.test"
 CREW_EMAIL = "crew@acdos.test"
 
 # Fixed ids: uuid5 of each row's name in this namespace (itself uuid5 of a
@@ -57,8 +58,16 @@ def demo_id(name: str) -> UUID:
     return uuid.uuid5(NAMESPACE, name)
 
 
-# The first van is driver@acdos.test's; the other two have no driver account.
-VANS = ["demo-KDH 101A", "demo-KDH 102A", "demo-KDH 103A"]
+# (plate, driver account). One account per van: the GA's plan is time-limited,
+# so which van gets which stops varies between runs, and every van's route
+# needs a phone that can show it.
+VAN_DRIVERS = [
+    ("demo-KDH 101A", "driver-101a@acdos.test"),
+    ("demo-KDH 102A", "driver-102a@acdos.test"),
+    ("demo-KDH 103A", "driver-103a@acdos.test"),
+]
+VANS = [plate for plate, _ in VAN_DRIVERS]
+DRIVER_EMAILS = [email for _, email in VAN_DRIVERS]
 
 # (name, zone label, metres east and north of the zone's point, report time
 # at JKIA in EAT). Homes sit a few hundred metres off the zone point, so two
@@ -246,8 +255,8 @@ async def reset(conn: asyncpg.Connection) -> dict[str, int]:
         return await _reset(conn)
 
 
-async def account_ids(conn: asyncpg.Connection) -> tuple[UUID, UUID]:
-    """driver@'s profile id and crew@'s crew record id."""
+async def account_ids(conn: asyncpg.Connection) -> tuple[dict[str, UUID], UUID]:
+    """Each van driver's profile id by email, and crew@'s crew record id."""
     found = {
         r["email"]: r
         for r in await conn.fetch(
@@ -258,21 +267,24 @@ async def account_ids(conn: asyncpg.Connection) -> tuple[UUID, UUID]:
             left join public.crew_members c on c.profile_id = p.id
             where u.email = any($1)
             """,
-            [DRIVER_EMAIL, CREW_EMAIL],
+            [*DRIVER_EMAILS, CREW_EMAIL],
         )
     }
-    driver, crew = found.get(DRIVER_EMAIL), found.get(CREW_EMAIL)
-    if driver is None or crew is None or crew["crew_member_id"] is None:
+    missing = [email for email in DRIVER_EMAILS if email not in found]
+    crew = found.get(CREW_EMAIL)
+    if crew is None or crew["crew_member_id"] is None:
+        missing.append(f"{CREW_EMAIL} (with its crew record)")
+    if missing:
         raise SystemExit(
-            f"{DRIVER_EMAIL} and {CREW_EMAIL} (with its crew record) must exist: "
-            "run scripts/seed_test_accounts.py first."
+            f"missing test account(s): {', '.join(missing)}. "
+            "Run scripts/seed_test_accounts.py first."
         )
-    return driver["profile_id"], crew["crew_member_id"]
+    return {email: found[email]["profile_id"] for email in DRIVER_EMAILS}, crew["crew_member_id"]
 
 
 async def seed(conn: asyncpg.Connection, day: date) -> dict:
     """Resets, then seeds the demo morning for `day`, all in one transaction."""
-    driver_id, account_crew_id = await account_ids(conn)
+    driver_ids, account_crew_id = await account_ids(conn)
     zones = {
         r["label"]: (r["lat"], r["lon"])
         for r in await conn.fetch(
@@ -291,14 +303,14 @@ async def seed(conn: asyncpg.Connection, day: date) -> dict:
 
     async with conn.transaction():
         deleted = await _reset(conn)
-        for i, plate in enumerate(VANS):
+        for plate, email in VAN_DRIVERS:
             await conn.execute(
                 """
                 insert into public.vehicles (id, assigned_driver_id, plate_number, capacity, status)
                 values ($1, $2, $3, $4, 'available')
                 """,
                 demo_id(plate),
-                driver_id if i == 0 else None,
+                driver_ids[email],
                 plate,
                 CAPACITY,
             )
@@ -343,12 +355,12 @@ async def seed(conn: asyncpg.Connection, day: date) -> dict:
         "vans": len(VANS),
         "crew": len(CREW),
         "pickups": len(CREW) + 1,
-        "warnings": await warnings(conn, day, driver_id, account_crew_id),
+        "warnings": await warnings(conn, day, list(driver_ids.values()), account_crew_id),
     }
 
 
 async def warnings(
-    conn: asyncpg.Connection, day: date, driver_id: UUID, account_crew_id: UUID
+    conn: asyncpg.Connection, day: date, driver_ids: list[UUID], account_crew_id: UUID
 ) -> list[str]:
     """Non-demo rows that would change the demo. Reported, never changed."""
     fixed = fixed_rows()
@@ -402,15 +414,15 @@ async def warnings(
     routes = await conn.fetchval(
         """
         select count(*) from public.routes r join public.vehicles v on v.id = r.vehicle_id
-        where v.assigned_driver_id = $1 and r.status = 'active' and not v.id = any($2)
+        where v.assigned_driver_id = any($1) and r.status = 'active' and not v.id = any($2)
         """,
-        driver_id,
+        driver_ids,
         fixed.vans,
     )
     if routes:
         found.append(
-            f"{DRIVER_EMAIL} has {routes} active route(s) on non-demo vans: its phone "
-            "shows the one that starts first (plan_test_route.py --complete clears them)."
+            f"the demo drivers have {routes} active route(s) on non-demo vans: a driver's "
+            "phone shows the route that starts first."
         )
     return found
 
@@ -440,8 +452,9 @@ async def main_async(args: argparse.Namespace) -> None:
             except MixedDemoData as e:
                 sys.exit(f"seed: {e}")
             print(
-                f"seed: {summary['vans']} vans ({CAPACITY} seats, {VANS[0]} for {DRIVER_EMAIL}), "
-                f"{summary['crew']} demo crew, {summary['pickups']} pickups "
+                f"seed: {summary['vans']} vans of {CAPACITY} seats ("
+                + ", ".join(f"{plate} for {email}" for plate, email in VAN_DRIVERS)
+                + f"), {summary['crew']} demo crew, {summary['pickups']} pickups "
                 f"reporting on {day} 05:00-07:30 EAT (incl. {CREW_EMAIL} at "
                 f"{CREW_ACCOUNT_PICKUP[1]})"
             )
