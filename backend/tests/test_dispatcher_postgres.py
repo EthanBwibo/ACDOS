@@ -15,7 +15,9 @@ Seeded world (fresh ids each run, deleted afterwards by id):
 - van VA, driven by A, on the road now (its route left 10 minutes ago), and
   van VB at the depot;
 - on DAY: an active route rDay on VB (Kilimani's stop live, Westlands' stop
-  superseded) and a superseded route; an active route the day after.
+  superseded) and a superseded route; an active route the day after;
+- schedule-change notices (#53): none for Westlands, one not acknowledged
+  for Kilimani, two acknowledged for South B (the later one at ACKED).
 """
 
 import asyncio
@@ -45,6 +47,7 @@ pytestmark = [
 KEY = SigningKey("dispatcher-key")
 NOW = datetime.now(UTC)
 DAY = date(2031, 3, 4)
+ACKED = datetime(2031, 3, 3, 18, 0, tzinfo=UTC)
 RUN = uuid4().hex[:6]
 POINTS = {
     "Westlands": (-1.2675, 36.8120),
@@ -77,7 +80,7 @@ def point(name: str) -> str:
 def world():
     users = {"D": uuid4(), "A": uuid4()}
     rows: dict[str, list] = {
-        k: [] for k in ["crew", "pickups", "vehicles", "jobs", "routes", "nodes"]
+        k: [] for k in ["crew", "pickups", "vehicles", "jobs", "routes", "nodes", "notices"]
     }
     w: dict = {"users": users, "rows": rows, "pickups": {}, "vans": {}, "routes": {}}
 
@@ -118,6 +121,23 @@ def world():
             await pickup("before", "Kilimani", at(DAY - timedelta(days=1), 23, 59))
             await pickup("after", "Kilimani", at(DAY + timedelta(days=1), 0))
             await pickup("now", "South B", NOW + timedelta(hours=1))
+
+            async def notice(key, issued, acknowledged):
+                rows["notices"].append(
+                    await conn.fetchval(
+                        "insert into public.schedule_change_notices (pickup_request_id, "
+                        "reason, previous_pickup_time, new_pickup_time, issued_at, "
+                        "acknowledged_at) values ($1, 'vehicle_breakdown', $2, $2, $2, $3) "
+                        "returning id",
+                        w["pickups"][key],
+                        issued,
+                        acknowledged,
+                    )
+                )
+
+            await notice("kilimani", at(DAY, 4), None)
+            await notice("south_b", at(DAY, 3), ACKED - timedelta(hours=1))
+            await notice("south_b", at(DAY, 4), ACKED)
 
             for van, driver in [("VA", users["A"]), ("VB", None)]:
                 w["vans"][van] = await conn.fetchval(
@@ -179,6 +199,9 @@ def world():
 
     async def clean(conn):
         async with conn.transaction():
+            await conn.execute(
+                "delete from public.schedule_change_notices where id = any($1)", rows["notices"]
+            )
             await conn.execute("delete from public.route_nodes where id = any($1)", rows["nodes"])
             await conn.execute("delete from public.routes where id = any($1)", rows["routes"])
             await conn.execute(
@@ -251,9 +274,25 @@ def test_the_days_pickups_in_report_order_with_their_zone(client, world):
         "zone_label": "Westlands, Nairobi",
         "report_time": first["report_time"],
         "status": "picked_up",
+        "needs_ack": False,
+        "acknowledged_at": None,
     }
     assert datetime.fromisoformat(first["report_time"]) == at(DAY, 5)
     assert [i["zone_label"] for i in items[1:]] == ["Kilimani, Nairobi", "South B, Nairobi"]
+
+
+def test_each_pickup_says_whether_its_notice_is_acknowledged(client, world):
+    items = {i["id"]: i for i in walk(client, f"/pickup-requests?date={DAY}", 50)}
+    p = world["pickups"]
+
+    def ack(key):
+        item = items[str(p[key])]
+        at_ = item["acknowledged_at"]
+        return item["needs_ack"], at_ and datetime.fromisoformat(at_)
+
+    assert ack("westlands") == (False, None)  # no notices
+    assert ack("kilimani") == (True, None)  # pending
+    assert ack("south_b") == (False, ACKED)  # acknowledged: the latest one's time
 
 
 def test_pages_of_any_size_give_the_same_pickups(client, world):

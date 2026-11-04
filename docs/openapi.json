@@ -216,6 +216,18 @@
       },
       "DispatcherPickup": {
         "properties": {
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          },
           "crew_name": {
             "title": "Crew Name",
             "type": "string"
@@ -224,6 +236,10 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "needs_ack": {
+            "title": "Needs Ack",
+            "type": "boolean"
           },
           "report_time": {
             "format": "date-time",
@@ -250,7 +266,9 @@
           "crew_name",
           "zone_label",
           "report_time",
-          "status"
+          "status",
+          "needs_ack",
+          "acknowledged_at"
         ],
         "title": "DispatcherPickup",
         "type": "object"

@@ -76,7 +76,11 @@ data class DispatcherPickupDto(
     @Json(name = "crew_name") val crewName: String,
     @Json(name = "zone_label") val zoneLabel: String?,
     @Json(name = "report_time") val reportTime: Instant,
-    val status: PickupRequestStatusDto
+    val status: PickupRequestStatusDto,
+    /** True while a schedule-change notice is not acknowledged by the crew (#53). */
+    @Json(name = "needs_ack") val needsAck: Boolean,
+    /** When the latest notice was acknowledged; null with none, or while it is pending. */
+    @Json(name = "acknowledged_at") val acknowledgedAt: Instant?
 )
 
 @JsonClass(generateAdapter = true)

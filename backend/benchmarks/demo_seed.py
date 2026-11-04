@@ -366,9 +366,8 @@ async def warnings(
         found.append(
             "non-demo vans not broken down: "
             + ", ".join(v["plate_number"] for v in vans)
-            + ". Run optimisation plans every van that is not broken down, and reset "
-            "cannot remove a job that mixed demo and non-demo vans: mark them broken "
-            "down in the app before planning (Mark available after the demo)."
+            + ". Untick them when you run the optimisation: reset cannot remove a job "
+            "that mixed demo and non-demo vans."
         )
     pickups = await conn.fetchval(
         """
