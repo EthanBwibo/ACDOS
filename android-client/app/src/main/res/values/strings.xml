@@ -36,6 +36,17 @@
     <string name="crew_refresh_failed">Couldn\'t refresh your pickup. Try again shortly.</string>
     <string name="crew_refresh_sign_in_again">Sign in again to refresh your pickup.</string>
     <string name="crew_refresh_not_allowed">This account can\'t load a crew pickup.</string>
+    <string name="crew_notice_title">Your pickup has changed</string>
+    <string name="crew_notice_flight_delay">Flight delay</string>
+    <string name="crew_notice_standby">Standby activation</string>
+    <string name="crew_notice_breakdown">Vehicle breakdown</string>
+    <string name="crew_notice_replanned">Routes re-planned</string>
+    <string name="crew_notice_change">New pickup %1$s (was %2$s) · %3$s</string>
+    <string name="crew_notice_unassigned">No new pickup time yet (was %1$s). The dispatcher will update you.</string>
+    <string name="crew_notice_acknowledge">Acknowledge</string>
+    <string name="crew_notice_acknowledged">Acknowledged. The dispatcher can see it.</string>
+    <string name="crew_notice_ack_offline">Couldn\'t acknowledge. Check your connection and tap again.</string>
+    <string name="crew_notice_ack_failed">Couldn\'t acknowledge. Pull to refresh and try again.</string>
     <string name="coming_soon">Coming soon</string>
     <string name="route_none">No route assigned</string>
     <string name="route_loading">Loading your route…</string>
@@ -103,4 +114,12 @@
     <string name="vehicle_status_available">Available</string>
     <string name="vehicle_status_in_service">In service</string>
     <string name="vehicle_status_broken_down">Broken down</string>
+    <string name="crew_message_title">Message the dispatcher</string>
+    <string name="crew_message_hint">Tap a message to send it. The dispatcher sees it straight away.</string>
+    <string name="crew_message_no_presets">No messages to send yet. Open this tab again with a connection.</string>
+    <string name="crew_message_sent">Sent to the dispatcher.</string>
+    <string name="crew_message_offline">Not sent: no connection. Tap it again to retry.</string>
+    <string name="crew_message_failed">Couldn\'t send that message. Try again shortly.</string>
+    <string name="dispatch_messages">Crew messages</string>
+    <string name="dispatch_message_title">%1$s: %2$s</string>
 </resources>

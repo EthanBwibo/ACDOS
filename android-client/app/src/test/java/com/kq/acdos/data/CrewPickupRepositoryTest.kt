@@ -5,7 +5,10 @@ import com.kq.acdos.data.local.CrewPickupEntity
 import com.kq.acdos.data.local.inMemoryDatabase
 import com.kq.acdos.data.remote.CrewPickupDto
 import com.kq.acdos.data.remote.CrewPickupResponseDto
+import com.kq.acdos.data.remote.NoticeAcknowledgedDto
+import com.kq.acdos.data.remote.OptimizationTriggerTypeDto
 import com.kq.acdos.data.remote.PickupRequestStatusDto
+import com.kq.acdos.data.remote.ScheduleChangeNoticeDto
 import java.io.IOException
 import java.time.Instant
 import kotlinx.coroutines.flow.first
@@ -38,15 +41,27 @@ class CrewPickupRepositoryTest {
     @After
     fun tearDown() = db.close()
 
-    private fun pickup(eta: Instant?, plate: String? = "KDA 002T") = CrewPickupDto(
+    private val notice = ScheduleChangeNoticeDto(
+        id = "n1",
+        reason = OptimizationTriggerTypeDto.VEHICLE_BREAKDOWN,
+        previousPickupTime = t0.plusSeconds(1680),
+        newPickupTime = t0.plusSeconds(2100),
+        issuedAt = t0
+    )
+
+    private fun pickup(
+        eta: Instant?,
+        plate: String? = "KDA 002T",
+        notice: ScheduleChangeNoticeDto? = null
+    ) = CrewPickupDto(
         pickupRequestId = "p1",
         status = PickupRequestStatusDto.ASSIGNED,
         reportTime = t0.plusSeconds(5400),
         scheduledPickup = t0.plusSeconds(1680),
         eta = eta,
         vehiclePlate = plate,
-        needsAck = false,
-        notice = null
+        needsAck = notice != null,
+        notice = notice
     )
 
     private fun answer(pickup: CrewPickupDto?) {
@@ -54,6 +69,8 @@ class CrewPickupRepositoryTest {
     }
 
     private suspend fun cached() = db.crewDao().observePickup().first()
+
+    private suspend fun openNotice() = db.crewDao().observeOpenNotice().first()
 
     @Test
     fun aPickup_isSavedWithTheScheduledTimeUntilThereIsAnEta() = runTest {
@@ -99,5 +116,35 @@ class CrewPickupRepositoryTest {
         assertEquals(RefreshResult.SIGN_IN_AGAIN, repository.refresh())
 
         assertEquals(before, cached())
+    }
+
+    @Test
+    fun aNotice_showsUntilAcknowledged() = runTest {
+        answer(pickup(eta = null, plate = "KDA 003T", notice = notice))
+        repository.refresh()
+
+        assertEquals("vehicle_breakdown", openNotice()?.reason)
+        assertEquals(t0.plusSeconds(2100), openNotice()?.newPickupTime)
+
+        api.nextAck = { Response.success(NoticeAcknowledgedDto(it, t0.plusSeconds(60))) }
+        assertEquals(RefreshResult.UPDATED, repository.acknowledge("n1"))
+
+        assertEquals(listOf("n1"), api.acknowledged)
+        assertNull(openNotice())
+    }
+
+    @Test
+    fun aFailedAcknowledge_keepsTheNotice_andARefreshWithoutOneClearsIt() = runTest {
+        answer(pickup(eta = null, notice = notice))
+        repository.refresh()
+
+        api.nextAck = { throw IOException("offline") }
+        assertEquals(RefreshResult.OFFLINE, repository.acknowledge("n1"))
+        assertEquals("n1", openNotice()?.id)
+
+        // Acknowledged elsewhere: the server stops sending it.
+        answer(pickup(eta = null))
+        repository.refresh()
+        assertNull(openNotice())
     }
 }

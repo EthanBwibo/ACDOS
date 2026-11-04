@@ -23,6 +23,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
+import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.DispatcherPickupDto
 import com.kq.acdos.data.remote.DispatcherVehicleDto
 import com.kq.acdos.data.remote.PickupRequestStatusDto
@@ -40,11 +41,13 @@ import kotlinx.coroutines.launch
  * The dispatcher's hub (#27): one Nairobi day's routes, pickups and vans.
  * Run optimisation plans the day; a flight delay (tap a pickup) or a
  * breakdown (tap a van) is recorded first, then re-planned with an explicit
- * tap. Online only: nothing here is cached.
+ * tap. Crew messages (#57) show read-only at the top, newest first. Online
+ * only: nothing here is cached.
  */
 class DispatcherHomeActivity : AppCompatActivity() {
     private val container by lazy { (application as AcdosApplication).container }
     private val viewModel: DispatcherViewModel by viewModels { DispatcherViewModel.Factory }
+    private val inbox: InboxViewModel by viewModels { InboxViewModel.Factory }
 
     private val dayFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.UK)
 
@@ -61,6 +64,7 @@ class DispatcherHomeActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.action_refresh -> {
                     viewModel.load()
+                    inbox.load()
                     true
                 }
 
@@ -97,6 +101,11 @@ class DispatcherHomeActivity : AppCompatActivity() {
                     state.replan?.let { replanText.text = getString(it.label, it.subject) }
                     showBoard(state.board)
                 }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                inbox.messages.collect { showInbox(it) }
             }
         }
         lifecycleScope.launch {
@@ -170,6 +179,21 @@ class DispatcherHomeActivity : AppCompatActivity() {
         for (list in listOf(routes, pickups, vehicles)) {
             if (list.childCount == 0) addRow(list, getString(R.string.dispatch_none), null)
         }
+    }
+
+    /** Read-only: crew names, the preset's words and when it was sent. */
+    private fun showInbox(messages: List<CrewMessageDto>?) {
+        val list = findViewById<LinearLayout>(R.id.inbox)
+        list.removeAllViews()
+        if (messages == null) return
+        for (message in messages) {
+            addRow(
+                list,
+                getString(R.string.dispatch_message_title, message.crewName, message.label),
+                Times.clock(message.sentAt)
+            )
+        }
+        if (list.childCount == 0) addRow(list, getString(R.string.dispatch_none), null)
     }
 
     private fun addRow(

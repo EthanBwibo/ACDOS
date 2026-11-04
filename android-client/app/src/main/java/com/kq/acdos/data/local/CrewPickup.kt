@@ -61,6 +61,19 @@ interface CrewDao {
     @Query("SELECT * FROM schedule_change_notice ORDER BY issued_at DESC")
     fun observeNotices(): Flow<List<ScheduleChangeNoticeEntity>>
 
+    /** The latest notice still to acknowledge, or null. */
+    @Query(
+        "SELECT * FROM schedule_change_notice WHERE acknowledged_at IS NULL " +
+            "ORDER BY issued_at DESC LIMIT 1"
+    )
+    fun observeOpenNotice(): Flow<ScheduleChangeNoticeEntity?>
+
+    @Query("UPDATE schedule_change_notice SET acknowledged_at = :at WHERE id = :id")
+    suspend fun markAcknowledged(id: String, at: Instant)
+
+    @Query("DELETE FROM schedule_change_notice")
+    suspend fun deleteNotices()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertNotices(notices: List<ScheduleChangeNoticeEntity>)
 

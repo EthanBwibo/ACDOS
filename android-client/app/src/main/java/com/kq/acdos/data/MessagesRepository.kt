@@ -1,0 +1,47 @@
+package com.kq.acdos.data
+
+import com.kq.acdos.data.local.CrewDao
+import com.kq.acdos.data.local.PresetMessageEntity
+import com.kq.acdos.data.remote.ApiResult
+import com.kq.acdos.data.remote.CrewMessageCreateDto
+import com.kq.acdos.data.remote.CrewMessageDto
+import com.kq.acdos.data.remote.MessagesApi
+import com.kq.acdos.data.remote.apiCall
+
+/**
+ * Preset messages (#57). The presets are kept in Room so the Message tab
+ * still lists them with no signal; sending needs the network.
+ */
+class MessagesRepository(private val api: MessagesApi, private val dao: CrewDao) {
+    /** Replaces the cached presets with the server's. A failure keeps the cache. */
+    suspend fun refreshPresets(): ApiResult<Unit> = when (val result = apiCall { api.presets() }) {
+        is ApiResult.Success -> {
+            // The server's presets have no id; the code is unique, so it is the key.
+            dao.replacePresets(
+                result.body.items.map { PresetMessageEntity(it.code, it.code, it.label) }
+            )
+            ApiResult.Success(Unit)
+        }
+
+        is ApiResult.Error -> result
+
+        is ApiResult.NetworkError -> result
+    }
+
+    /** [idempotencyKey] stays the same across retries of one tap, so it is sent once. */
+    suspend fun send(presetCode: String, idempotencyKey: String): ApiResult<CrewMessageDto> =
+        apiCall { api.send(idempotencyKey, CrewMessageCreateDto(presetCode)) }
+
+    /** The dispatcher's inbox: the latest page, newest first. */
+    suspend fun inbox(): ApiResult<List<CrewMessageDto>> =
+        when (val result = apiCall { api.messages(limit = INBOX_SIZE) }) {
+            is ApiResult.Success -> ApiResult.Success(result.body.items)
+            is ApiResult.Error -> result
+            is ApiResult.NetworkError -> result
+        }
+
+    private companion object {
+        /** The server's largest page; enough for a morning's messages. */
+        const val INBOX_SIZE = 50
+    }
+}
