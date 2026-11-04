@@ -7,6 +7,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -26,6 +27,12 @@ interface MeApi {
 
     @GET("crew/me/pickup")
     suspend fun crewPickup(): Response<CrewPickupResponseDto>
+
+    /** Safe to retry: a notice already acknowledged keeps its first time (#53). */
+    @POST("crew/me/notices/{notice_id}/acknowledge")
+    suspend fun acknowledgeNotice(
+        @Path("notice_id") noticeId: String
+    ): Response<NoticeAcknowledgedDto>
 
     /** The outbox's pickup events (#29), 1 to 50 per call; one result per event. */
     @POST("drivers/me/pickup-events")
@@ -132,6 +139,12 @@ data class ScheduleChangeNoticeDto(
     @Json(name = "previous_pickup_time") val previousPickupTime: Instant,
     @Json(name = "new_pickup_time") val newPickupTime: Instant?,
     @Json(name = "issued_at") val issuedAt: Instant
+)
+
+@JsonClass(generateAdapter = true)
+data class NoticeAcknowledgedDto(
+    val id: String,
+    @Json(name = "acknowledged_at") val acknowledgedAt: Instant
 )
 
 /** [pickup] is null when nothing is coming up. */
