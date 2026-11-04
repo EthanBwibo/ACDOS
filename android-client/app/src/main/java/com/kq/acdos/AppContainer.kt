@@ -9,6 +9,7 @@ import com.kq.acdos.auth.SupabaseAuthRepository
 import com.kq.acdos.data.CrewPickupRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
+import com.kq.acdos.data.MessagesRepository
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.outbox.ApiPickupEventUploader
 import com.kq.acdos.data.outbox.BatchResult
@@ -17,6 +18,7 @@ import com.kq.acdos.data.outbox.PickupEventUploader
 import com.kq.acdos.data.remote.ApiClient
 import com.kq.acdos.data.remote.DispatcherApi
 import com.kq.acdos.data.remote.MeApi
+import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.OptimisationJobsApi
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
@@ -72,6 +74,8 @@ class AppContainer(context: Context) {
 
     val dispatcherApi: DispatcherApi by lazy { retrofit.create() }
 
+    val messagesApi: MessagesApi by lazy { retrofit.create() }
+
     /** Null without an API URL; the dispatcher screen then shows nothing. */
     val dispatchRepository: DispatchRepository? by lazy {
         if (isApiConfigured) DispatchRepository(dispatcherApi, optimisationJobsApi) else null
@@ -109,6 +113,11 @@ class AppContainer(context: Context) {
     /** Null without an API URL; the Pickup tab then shows only the cache. */
     val crewPickupRepository: CrewPickupRepository? by lazy {
         if (isApiConfigured) CrewPickupRepository(meApi, database.crewDao()) else null
+    }
+
+    /** Null without an API URL; the Message tab then lists only cached presets. */
+    val messagesRepository: MessagesRepository? by lazy {
+        if (isApiConfigured) MessagesRepository(messagesApi, database.crewDao()) else null
     }
 
     val sessionRouter: SessionRouter by lazy {

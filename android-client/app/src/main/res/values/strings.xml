@@ -114,4 +114,12 @@
     <string name="vehicle_status_available">Available</string>
     <string name="vehicle_status_in_service">In service</string>
     <string name="vehicle_status_broken_down">Broken down</string>
+    <string name="crew_message_title">Message the dispatcher</string>
+    <string name="crew_message_hint">Tap a message to send it. The dispatcher sees it straight away.</string>
+    <string name="crew_message_no_presets">No messages to send yet. Open this tab again with a connection.</string>
+    <string name="crew_message_sent">Sent to the dispatcher.</string>
+    <string name="crew_message_offline">Not sent: no connection. Tap it again to retry.</string>
+    <string name="crew_message_failed">Couldn\'t send that message. Try again shortly.</string>
+    <string name="dispatch_messages">Crew messages</string>
+    <string name="dispatch_message_title">%1$s: %2$s</string>
 </resources>
