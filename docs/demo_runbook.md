@@ -10,8 +10,8 @@ member at the end.
 | Device | Account | Shows |
 |---|---|---|
 | Emulator (`Dispatcher_API34`) | `dispatcher@acdos.test` | Crew messages, Routes, Pickups and Vehicles for a day; plans and re-plans |
-| Phone, steps 5–7 | `driver@acdos.test` | its van's route, stop by stop |
-| Phone, steps 8–9 | `crew@acdos.test` | Pickup: its next pickup and any change to acknowledge. Message: the presets |
+| Phone, step 6 | `driver@acdos.test` | its van's route, stop by stop |
+| Phone, steps 7–8 | `crew@acdos.test` | Pickup: its next pickup and any change to acknowledge. Message: the presets |
 
 Close Android Studio before starting the emulator: the laptop does not have the memory for
 both. Start it from PowerShell:
@@ -46,23 +46,26 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    three `demo-` vans are selected, and start the job. A plan that includes a test van can't
    be removed by `reset` later. When the job finishes, Routes shows the demo vans' routes,
    with stops, times and crew names.
-4. **Find the crew member's van** (dispatcher): in Routes, note the van whose route lists
-   "Test Crew". That is the van to break down in step 6.
-5. **Driver confirms** (phone, as the driver): refresh. The route for `demo-KDH 101A` appears. Tap
-   **Picked up** on the first stop. After **Refresh**, the dispatcher's Pickups shows it
-   `picked_up`.
-6. **Breakdown** (dispatcher): in Vehicles, **Mark broken down** the van carrying
-   Test Crew. The banner says it is broken down and asks for a re-plan.
-7. **Re-plan** (dispatcher): tap **Re-plan**. The broken van's uncollected pickups move
-   to the other vans. Crew already on board stay where they are. Routes shows the new plan.
-   If the broken van was `demo-KDH 101A`, the driver phone shows the shortened route, or
-   "No route assigned", on refresh.
-8. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
+4. **Breakdown** (dispatcher), before anyone is picked up: in Routes, find the van whose
+   route lists "Test Crew". In Vehicles, **Mark broken down** that van. The banner says it is
+   broken down and asks for a re-plan.
+   If Test Crew is on `demo-KDH 101A`, the driver's van, break `demo-KDH 102A` instead, so
+   the driver still has a route for step 6. The re-plan then moves 102A's pickups onto the
+   other two vans, and Test Crew only gets a change card if that moves her pickup by a minute
+   or more (see "If something goes wrong").
+5. **Re-plan** (dispatcher): tap **Re-plan**, untick the test vans again as in step 3, and
+   start the job. The broken van's pickups move to the other demo vans, and Routes shows the
+   new plan. Nobody has been picked up yet, so every pickup on the
+   broken van is re-planned.
+6. **Driver confirms** (phone, as the driver): refresh. The re-planned route for
+   `demo-KDH 101A` appears. Tap **Picked up** on the first stop. After **Refresh**, the
+   dispatcher's Pickups shows it `picked_up`.
+7. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
    Pickup tab opens with a card on top, "Your pickup has changed": the reason (Vehicle
-   breakdown), the new pickup time with the old one, and the new van. Below it, the pickup
+   breakdown), the new pickup time with the old one, and the new van. Below it are the pickup
    time, "Report at JKIA 06:15" and the van. Tap **Acknowledge**: "Acknowledged. The
-   dispatcher can see it." and the card goes. It stays gone after a pull to refresh.
-9. **Crew messages the dispatcher** (phone, then dispatcher): open the **Message** tab. It
+   dispatcher can see it." The card goes, and it stays gone after a pull to refresh.
+8. **Crew messages the dispatcher** (phone, then dispatcher): open the **Message** tab. It
    lists the presets as buttons and has no text field. Tap **I am running late**: "Sent to
    the dispatcher." On the emulator, tap **Refresh**: Crew messages, at the top, shows
    "Test Crew: I am running late" with the time it was sent.
@@ -77,8 +80,9 @@ run the demo again, start from step 1.
   `seed --date YYYY-MM-DD` and tap Next to that day on the dispatcher phone.
 - **Reset says a job mixed demo and non-demo rows.** A plan included a non-demo van or pickup.
   Nothing was deleted. Remove that job's routes by hand, or leave it and seed another day.
-- **No change card in step 8.** The re-plan didn't move Test Crew's pickup time, or the
-  notice was acknowledged on an earlier run. Pull to refresh; if it still doesn't show, the
+- **No change card in step 7.** The re-plan didn't move Test Crew's pickup time or van
+  (this can happen when step 4 broke `demo-KDH 102A` instead of her van), or the notice was
+  acknowledged on an earlier run. Pull to refresh; if it still doesn't show, the
   rest of the demo still works, and the Message tab does not depend on it.
 - **The driver phone shows another route.** `driver@acdos.test` also drives `KDA 001T`.
   The phone shows the active route that starts first. `python scripts/plan_test_route.py
