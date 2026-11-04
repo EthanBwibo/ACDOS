@@ -10,22 +10,22 @@ member at the end.
 | Device | Account | Shows |
 |---|---|---|
 | Emulator (`Dispatcher_API34`) | `dispatcher@acdos.test` | Crew messages, Routes, Pickups and Vehicles for a day; plans and re-plans |
-| Phone, step 6 | `driver@acdos.test` | its van's route, stop by stop |
+| Phone, step 6 | `driver-101a@`, `driver-102a@` or `driver-103a@acdos.test` (the driver of a van in the new plan) | its van's route, stop by stop |
 | Phone, steps 7–8 | `crew@acdos.test` | Pickup: its next pickup and any change to acknowledge. Message: the presets |
 
 Close Android Studio before starting the emulator: the laptop does not have the memory for
 both. Start it from PowerShell:
 `& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Dispatcher_API34 -gpu host -no-boot-anim`.
 
-The password for all three is `SEED_PASSWORD` (`scripts/seed_test_accounts.py`).
+The password for every account is `SEED_PASSWORD` (`scripts/seed_test_accounts.py`).
 
 ## The day before
 
 1. `https://acdos-api.azurewebsites.net/health` returns `{"status":"ok"}`. If it doesn't, see
    README, "Deploy", or use the fallback below.
 2. The accounts exist: `python scripts/seed_test_accounts.py` (safe to re-run).
-3. Sign in once with each account (dispatcher on the emulator; driver, then crew, on the
-   phone) and check that it loads. Leave the phone signed in as the driver.
+3. Sign in once with each account (dispatcher on the emulator; the three van drivers, then
+   crew, on the phone) and check that it loads.
 
 ## The demo
 
@@ -33,12 +33,14 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
 
 1. **Reset** (laptop): `python -m benchmarks.demo_seed reset`. It deletes the previous run's
    demo rows (vans and crew named `demo-…`) and everything planned from them. It never touches
-   the three accounts or other rows.
+   the test accounts or other rows.
 2. **Seed** (laptop): `python -m benchmarks.demo_seed seed`. This creates tomorrow's morning
-   (Nairobi time): 3 vans of 14 seats, `demo-KDH 101A` (driven by `driver@acdos.test`),
-   `demo-KDH 102A` and `demo-KDH 103A`, plus 14 pending pickups across Westlands, Kilimani,
-   Lavington, Karen, South C, Embakasi and Kasarani, reporting at JKIA 05:00 to 07:30.
-   One of them is `crew@acdos.test`'s (Westlands, 06:15).
+   (Nairobi time): 3 vans of 14 seats, `demo-KDH 101A`, `demo-KDH 102A` and `demo-KDH 103A`,
+   driven by `driver-101a@`, `driver-102a@` and `driver-103a@acdos.test`, plus 14 pending
+   pickups across Westlands, Kilimani, Lavington, Karen, South C, Embakasi and Kasarani,
+   reporting at JKIA 05:00 to 07:30.
+   One of them is `crew@acdos.test`'s (Westlands, 06:15). If it stops with
+   `missing test account(s): …`, run `python scripts/seed_test_accounts.py` and seed again.
    **Read the warnings it prints.** The test vans `KDA 001T` and `KDA 002T` (fixtures of
    `plan_test_route.py`) stay in the database, so it may list them; step 3 leaves them out.
 3. **Dispatcher plans** (dispatcher): tap **Next** to tomorrow. Pickups shows 14 pending.
@@ -49,16 +51,13 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
 4. **Breakdown** (dispatcher), before anyone is picked up: in Routes, find the van whose
    route lists "Test Crew". In Vehicles, **Mark broken down** that van. The banner says it is
    broken down and asks for a re-plan.
-   If Test Crew is on `demo-KDH 101A`, the driver's van, break `demo-KDH 102A` instead, so
-   the driver still has a route for step 6. The re-plan then moves 102A's pickups onto the
-   other two vans, and Test Crew only gets a change card if that moves her pickup by a minute
-   or more (see "If something goes wrong").
 5. **Re-plan** (dispatcher): tap **Re-plan**, untick the test vans again as in step 3, and
    start the job. The broken van's pickups move to the other demo vans, and Routes shows the
    new plan. Nobody has been picked up yet, so every pickup on the
    broken van is re-planned.
-6. **Driver confirms** (phone, as the driver): refresh. The re-planned route for
-   `demo-KDH 101A` appears. Tap **Picked up** on the first stop. After **Refresh**, the
+6. **Driver confirms** (phone): sign in as the driver of one of the vans in the new plan
+   (`demo-KDH 10xA` → `driver-10xa@acdos.test`) and refresh. That van's re-planned route
+   appears. Tap **Picked up** on the first stop. After **Refresh**, the
    dispatcher's Pickups shows it `picked_up`.
 7. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
    Pickup tab opens with a card on top, "Your pickup has changed": the reason (Vehicle
@@ -70,8 +69,8 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    the dispatcher." On the emulator, tap **Refresh**: Crew messages, at the top, shows
    "Test Crew: I am running late" with the time it was sent.
 
-**After the demo:** run `reset`. On the phone, sign out and sign back in as the driver. To
-run the demo again, start from step 1.
+**After the demo:** run `reset`. To run the demo again, start from step 1 (the phone signs
+in as that run's driver in step 6).
 
 ## If something goes wrong
 
@@ -81,12 +80,12 @@ run the demo again, start from step 1.
 - **Reset says a job mixed demo and non-demo rows.** A plan included a non-demo van or pickup.
   Nothing was deleted. Remove that job's routes by hand, or leave it and seed another day.
 - **No change card in step 7.** The re-plan didn't move Test Crew's pickup time or van
-  (this can happen when step 4 broke `demo-KDH 102A` instead of her van), or the notice was
-  acknowledged on an earlier run. Pull to refresh; if it still doesn't show, the
-  rest of the demo still works, and the Message tab does not depend on it.
-- **The driver phone shows another route.** `driver@acdos.test` also drives `KDA 001T`.
-  The phone shows the active route that starts first. `python scripts/plan_test_route.py
-  --complete` clears the test routes.
+  (check that step 4 broke her van), or the notice was acknowledged on an earlier run. Pull
+  to refresh; if it still doesn't show, the rest of the demo still works, and the Message
+  tab does not depend on it.
+- **The driver phone shows no route.** It is signed in as a driver whose van has no stops
+  in the new plan (the broken van's driver, for example). Check Routes on the dispatcher and
+  sign in as the driver of a van listed there.
 
 ## Fallback: Azure is down
 
