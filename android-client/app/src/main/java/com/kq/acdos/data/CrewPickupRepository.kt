@@ -77,13 +77,12 @@ class CrewPickupRepository(
     }
 }
 
-private fun ScheduleChangeNoticeDto.toEntity(pickupRequestId: String) =
-    ScheduleChangeNoticeEntity(
-        id = id,
-        pickupRequestId = pickupRequestId,
-        reason = reason.name.lowercase(),
-        previousPickupTime = previousPickupTime,
-        newPickupTime = newPickupTime,
-        issuedAt = issuedAt,
-        acknowledgedAt = null
-    )
+private fun ScheduleChangeNoticeDto.toEntity(pickupRequestId: String) = ScheduleChangeNoticeEntity(
+    id = id,
+    pickupRequestId = pickupRequestId,
+    reason = reason.name.lowercase(),
+    previousPickupTime = previousPickupTime,
+    newPickupTime = newPickupTime,
+    issuedAt = issuedAt,
+    acknowledgedAt = null
+)
