@@ -131,8 +131,10 @@ class DispatcherViewModel(
         }
     }
 
-    /** A first plan for the day's pickups not on a route yet. */
-    /** [vehicleIds] are the vans ticked in the picker; by default every plannable one. */
+    /**
+     * A first plan for the day's pickups not on a route yet. [vehicleIds] are the
+     * vans ticked in the picker; by default every plannable one.
+     */
     fun runOptimisation(vehicleIds: List<String>? = null) {
         val board = uiState.value.board ?: return
         startJob(OptimizationTriggerTypeDto.SCHEDULED, unplannedPickups(board), vehicleIds)
