@@ -46,6 +46,7 @@ class OpenApiContractTest {
         "CrewPickupResponse" to CrewPickupResponseDto::class.java,
         "CrewPickup" to CrewPickupDto::class.java,
         "ScheduleChangeNotice" to ScheduleChangeNoticeDto::class.java,
+        "NoticeAcknowledged" to NoticeAcknowledgedDto::class.java,
         "ErrorBody" to ErrorBodyDto::class.java,
         "OptimisationJobCreate" to OptimisationJobCreateDto::class.java,
         "OptimisationJobAccepted" to OptimisationJobAcceptedDto::class.java,
