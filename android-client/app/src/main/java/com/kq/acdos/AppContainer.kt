@@ -10,6 +10,7 @@ import com.kq.acdos.data.ConnectivityMonitor
 import com.kq.acdos.data.CrewPickupRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
+import com.kq.acdos.data.DriverScheduleRepository
 import com.kq.acdos.data.MessagesRepository
 import com.kq.acdos.data.ThemeStore
 import com.kq.acdos.data.local.AcdosDatabase
@@ -30,6 +31,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import retrofit2.create
 
@@ -110,6 +112,15 @@ class AppContainer(context: Context) {
     /** Starts uploading the signed-in driver's pending pickup events; returns at once. */
     fun uploadPickupEvents() {
         appScope.launch { pickupEventOutbox.uploadPending() }
+    }
+
+    /** Sync now: waits for the upload, which still finishes if the driver leaves the tab. */
+    suspend fun sendPickupEvents(): Int =
+        appScope.async { pickupEventOutbox.uploadPending() }.await()
+
+    /** Null without an API URL; the Schedule tab is then empty. */
+    val driverScheduleRepository: DriverScheduleRepository? by lazy {
+        if (isApiConfigured) DriverScheduleRepository(meApi) else null
     }
 
     /** Null without an API URL; the Pickup tab then shows only the cache. */

@@ -1,6 +1,7 @@
 package com.kq.acdos.ui
 
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -19,6 +20,22 @@ object Times {
 
     private val clock = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT).withZone(ZONE)
 
+    private val day = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH).withZone(ZONE)
+
+    private val dayOfMonth = DateTimeFormatter.ofPattern("d", Locale.ROOT).withZone(ZONE)
+
     /** "06:50 EAT" */
     fun clock(instant: Instant): String = "${clock.format(instant)} $LABEL"
+
+    /** "06:50", where the same row has already said EAT. */
+    fun shortClock(instant: Instant): String = clock.format(instant)
+
+    /** "Sat 31 Oct" */
+    fun day(instant: Instant): String = day.format(instant)
+
+    /** "31" */
+    fun dayOfMonth(instant: Instant): String = dayOfMonth.format(instant)
+
+    /** The date in Nairobi, which isn't always the date in UTC. */
+    fun date(instant: Instant): LocalDate = instant.atZone(ZONE).toLocalDate()
 }
