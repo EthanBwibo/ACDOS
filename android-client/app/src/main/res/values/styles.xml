@@ -1,35 +1,51 @@
 <resources>
-    <!-- Type scale. Roboto, Material's sizes, heavier titles so a screen reads at a glance. -->
+    <!-- Type scale. Roboto, Material's sizes, heavier titles so a screen reads at a glance.
+         Both font attributes are needed: Material sets fontFamily, which beats android:fontFamily. -->
     <style name="TextAppearance.ACDOS.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextAppearance.ACDOS.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextAppearance.ACDOS.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextAppearance.ACDOS.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextAppearance.ACDOS.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextAppearance.ACDOS.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <style name="TextAppearance.ACDOS.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
     </style>
 
     <!-- Supporting text under a title: zones, times, "updated at". -->
     <style name="TextAppearance.ACDOS.Secondary" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.Secondary.Small" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.FieldLabel" parent="TextAppearance.ACDOS.LabelMedium">
         <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
@@ -74,6 +90,13 @@
         <item name="shapeAppearance">@style/ShapeAppearance.ACDOS.Button</item>
     </style>
 
+    <!-- A text button that lines up with the text around it, as "Forgot password?" does. -->
+    <style name="Widget.ACDOS.Button.Text.Inline">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+    </style>
+
     <style name="Widget.ACDOS.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
         <item name="materialThemeOverlay">@style/ThemeOverlay.ACDOS.Button.Outlined</item>
         <item name="shapeAppearance">@style/ShapeAppearance.ACDOS.Button</item>
@@ -97,6 +120,24 @@
         <item name="startIconTint">@color/text_field_label</item>
         <item name="endIconTint">@color/text_field_label</item>
         <item name="cursorColor">?attr/colorOnPrimaryContainer</item>
+        <item name="boxBackgroundColor">?attr/colorSurface</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.ACDOS.Small</item>
+    </style>
+
+    <!-- 48dp tall, as the wireframes draw inputs. -->
+    <style name="Widget.ACDOS.TextInputEditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:textColorHint">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- A label above its field, for fields that don't use a floating hint. -->
+    <style name="Widget.ACDOS.FieldLabel" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">6dp</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.ACDOS.FieldLabel</item>
     </style>
 
     <!-- Cards -->

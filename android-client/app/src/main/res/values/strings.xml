@@ -11,10 +11,16 @@
     <string name="startup_profile_unavailable">Signed in, but your account details could not be loaded. Check your connection and retry.</string>
     <string name="startup_not_configured">This build has no Supabase URL or key. Add supabase.url and supabase.publishableKey to local.properties.</string>
 
-    <string name="login_title">Sign in</string>
-    <string name="login_email">Email</string>
+    <string name="login_tagline">Crew transport to JKIA</string>
+    <string name="login_email">Work email</string>
+    <string name="login_email_hint">name@kenya-airways.com</string>
     <string name="login_password">Password</string>
     <string name="login_sign_in">Sign in</string>
+    <string name="login_signing_in">Signing in</string>
+    <string name="login_forgot">Forgot password?</string>
+    <string name="login_forgot_message">Your dispatcher manages accounts. Ask them to reset your password.</string>
+    <string name="login_theme">Theme: %1$s</string>
+    <string name="login_role_note">Your role (dispatcher, driver or crew) comes from your account.</string>
     <string name="login_error_empty">Enter your email and password.</string>
     <string name="login_error_credentials">Wrong email or password.</string>
     <string name="login_error_network">No connection to the server. Check your network and try again.</string>
@@ -24,6 +30,7 @@
     <string name="role_driver">Driver</string>
 
     <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
     <string name="action_navigate">Navigate</string>
     <string name="tab_route">Route</string>
     <string name="tab_schedule">Schedule</string>
