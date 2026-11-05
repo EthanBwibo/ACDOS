@@ -55,10 +55,8 @@ fun projectRoute(points: List<MapPoint>, width: Float, height: Float, margin: Fl
  * street map, so it needs no Maps key and no signal, and costs nothing on 2G. [Navigate]
  * hands over to the phone's maps app for directions.
  */
-class RouteMapView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null
-) : View(context, attrs) {
+class RouteMapView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
+    View(context, attrs) {
     private var stops: List<MapPoint> = emptyList()
 
     /** Position in [stops] of the next pickup, or -1. Earlier stops are drawn as done. */
