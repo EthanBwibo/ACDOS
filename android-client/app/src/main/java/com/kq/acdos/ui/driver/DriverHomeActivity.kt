@@ -19,6 +19,9 @@ import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
 import com.kq.acdos.ui.showThemeDialog
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -60,6 +63,7 @@ class DriverHomeActivity : AppCompatActivity() {
         val tabs = findViewById<BottomNavigationView>(R.id.bottom_nav)
         tabs.setOnItemSelectedListener { item ->
             show(if (item.itemId == R.id.tab_route) RouteFragment() else ComingSoonFragment())
+            if (item.itemId != R.id.tab_route) showHeader(item.title?.toString(), null)
             true
         }
         // After a rotation the FragmentManager restores the open tab by itself.
@@ -75,7 +79,23 @@ class DriverHomeActivity : AppCompatActivity() {
             }
         }
 
+        // What makes "Sends when signal returns" true: the outbox tries again on reconnect.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                container.connectivity.network.map { it.isOnline }.distinctUntilChanged()
+                    .filter { it }
+                    .collect { container.uploadPickupEvents() }
+            }
+        }
+
         openLoginWhenSessionEnds(container)
+    }
+
+    /** Each tab names itself. Null falls back to the driver's name. */
+    fun showHeader(title: String?, subtitle: String?) {
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar.title = title ?: intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()
+        toolbar.subtitle = subtitle
     }
 
     override fun onStart() {

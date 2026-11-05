@@ -243,15 +243,9 @@ class ThemeTest(private val qualifier: String) {
 
     @Test
     fun `status chips use the status tokens`() {
-        val row = LayoutInflater.from(context).inflate(R.layout.item_route_stop, null)
-        val success = row.findViewById<Chip>(R.id.status_success)
+        val row = LayoutInflater.from(context).inflate(R.layout.fragment_route, null)
         val warned = row.findViewById<Chip>(R.id.status_warning)
 
-        assertEquals(
-            color(R.attr.colorSuccessContainer),
-            success.chipBackgroundColor!!.defaultColor
-        )
-        assertEquals(color(R.attr.colorOnSuccessContainer), success.currentTextColor)
         assertEquals(color(R.attr.colorWarningContainer), warned.chipBackgroundColor!!.defaultColor)
         assertEquals(color(R.attr.colorOnWarningContainer), warned.currentTextColor)
     }

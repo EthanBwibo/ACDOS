@@ -6,6 +6,7 @@ import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
 import com.kq.acdos.auth.SharedPreferencesSessionManager
 import com.kq.acdos.auth.SupabaseAuthRepository
+import com.kq.acdos.data.ConnectivityMonitor
 import com.kq.acdos.data.CrewPickupRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
@@ -120,6 +121,8 @@ class AppContainer(context: Context) {
     val messagesRepository: MessagesRepository? by lazy {
         if (isApiConfigured) MessagesRepository(messagesApi, database.crewDao()) else null
     }
+
+    val connectivity: ConnectivityMonitor by lazy { ConnectivityMonitor(appContext) }
 
     val themeStore: ThemeStore by lazy { ThemeStore(prefs(ThemeStore.PREFS_NAME)) }
 
