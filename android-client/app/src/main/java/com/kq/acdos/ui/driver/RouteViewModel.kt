@@ -46,7 +46,10 @@ data class StopProgress(
     val conflict: String?,
     /** Picked up or a no-show, and not refused: nothing more to record here. */
     val done: Boolean
-)
+) {
+    /** A pickup the server has accepted. Anything else still needs someone's attention. */
+    val isGoodNews: Boolean get() = exception == null && sent && conflict == null
+}
 
 /** Each stop's progress by route node id, from the driver's events, oldest first. */
 fun stopProgress(events: List<PendingPickupEventEntity>): Map<String, StopProgress> =

@@ -1,6 +1,11 @@
 package com.kq.acdos
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.preferencesDataStore
 import com.kq.acdos.auth.AuthRepository
 import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
@@ -10,6 +15,7 @@ import com.kq.acdos.data.CrewPickupRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.MessagesRepository
+import com.kq.acdos.data.ThemeStore
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.outbox.ApiPickupEventUploader
 import com.kq.acdos.data.outbox.BatchResult
@@ -30,6 +36,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import retrofit2.create
+
+private val Context.themeDataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "theme",
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
+)
 
 /** Hand-wired dependencies, one per process (no DI framework). */
 class AppContainer(context: Context) {
@@ -119,6 +130,8 @@ class AppContainer(context: Context) {
     val messagesRepository: MessagesRepository? by lazy {
         if (isApiConfigured) MessagesRepository(messagesApi, database.crewDao()) else null
     }
+
+    val themeStore: ThemeStore by lazy { ThemeStore(appContext.themeDataStore) }
 
     val sessionRouter: SessionRouter by lazy {
         SessionRouter(

@@ -70,6 +70,8 @@ android {
     // OpenApiContractTest reads the backend's contract. Declared as an input so
     // a changed spec reruns the tests instead of reusing an up-to-date result.
     testOptions {
+        // ThemeTest reads the real theme and inflates real layouts under Robolectric.
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             val spec = rootProject.file("../docs/openapi.json")
             it.inputs.file(spec)
@@ -117,6 +119,8 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     // Pull to refresh on the Route tab (#123)
     implementation(libs.androidx.swiperefreshlayout)
+    // The saved theme choice (#165)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.kotlinx.coroutines.test)
     kspTest(libs.moshi.kotlin.codegen)
     // Supabase Auth (sign-in, token refresh) and PostgREST (reading profiles.role).

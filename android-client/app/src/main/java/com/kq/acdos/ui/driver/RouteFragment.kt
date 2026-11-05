@@ -30,6 +30,7 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.data.local.PickupExceptionType
 import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.useThemeColors
 import java.util.Locale
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -68,6 +69,7 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
             it.adapter = adapter
         }
         val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipe.useThemeColors()
         swipe.setOnRefreshListener {
             container.uploadPickupEvents()
             if (!refresh.refreshByPull()) swipe.isRefreshing = false
@@ -154,7 +156,8 @@ private class StopAdapter(
         val zone: TextView = view.findViewById(R.id.zone)
         val pickupTime: TextView = view.findViewById(R.id.pickup_time)
         val navigate: Button = view.findViewById(R.id.navigate)
-        val status: TextView = view.findViewById(R.id.status)
+        val statusSuccess: TextView = view.findViewById(R.id.status_success)
+        val statusWarning: TextView = view.findViewById(R.id.status_warning)
         val actions: View = view.findViewById(R.id.actions)
         val pickedUp: Button = view.findViewById(R.id.picked_up)
         val problem: Button = view.findViewById(R.id.problem)
@@ -177,8 +180,12 @@ private class StopAdapter(
         holder.problem.setOnClickListener { onProblem(stop) }
 
         val progress = stop.progress
-        holder.status.isVisible = progress != null
-        holder.status.text = progress?.let { statusText(context, it) }
+        val status = progress?.let { statusText(context, it) }
+        val good = progress?.isGoodNews == true
+        holder.statusSuccess.isVisible = status != null && good
+        holder.statusWarning.isVisible = status != null && !good
+        holder.statusSuccess.text = status
+        holder.statusWarning.text = status
         holder.actions.isVisible = progress?.done != true
     }
 

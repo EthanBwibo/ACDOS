@@ -18,6 +18,7 @@ import com.kq.acdos.R
 import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.showThemeDialog
 import kotlinx.coroutines.launch
 
 /**
@@ -42,6 +43,11 @@ class DriverHomeActivity : AppCompatActivity() {
         toolbar.title = intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
+                R.id.action_theme -> {
+                    showThemeDialog(container.themeStore)
+                    true
+                }
+
                 R.id.action_sign_out -> {
                     confirmSignOut()
                     true

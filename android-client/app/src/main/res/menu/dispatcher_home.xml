@@ -6,6 +6,10 @@
         android:title="@string/action_refresh"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_theme"
+        android:title="@string/action_theme"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_sign_out"
         android:title="@string/action_sign_out"
         app:showAsAction="never" />

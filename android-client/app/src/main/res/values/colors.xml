@@ -1,5 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Colour tokens, approved in #165. Layouts and styles read these through theme attributes
+    (?attr/colorSurface), never directly. values-night/colors.xml overrides the role_ colours.
+-->
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- The one accent. Same value in both themes, so it is not in values-night. It is a fill:
+         #E01A22 is under 4.5:1 on dark surfaces, so text never uses it. -->
+    <color name="kq_red">#E01A22</color>
+    <color name="on_kq_red">#FFFFFF</color>
+
+    <!-- "Fixed" Material roles keep their value in both themes. -->
+    <color name="fixed_primary_fixed">#FDE7E9</color>
+    <color name="fixed_primary_fixed_dim">#FFB3B8</color>
+    <color name="fixed_on_primary_fixed">#3F0007</color>
+    <color name="fixed_on_primary_fixed_variant">#7A0012</color>
+    <color name="fixed_neutral_fixed">#E8E8EB</color>
+    <color name="fixed_neutral_fixed_dim">#D0D0D5</color>
+    <color name="fixed_on_neutral_fixed">#1A1A1C</color>
+    <color name="fixed_on_neutral_fixed_variant">#55555B</color>
+
+    <!-- Light roles. -->
+    <color name="role_primary_container">#FDE7E9</color>
+    <color name="role_on_primary_container">#7A0012</color>
+    <color name="role_primary_inverse">#FFB3B8</color>
+    <color name="role_secondary">#55555B</color>
+    <color name="role_on_secondary">#FFFFFF</color>
+    <color name="role_tertiary">#55555B</color>
+    <color name="role_on_tertiary">#FFFFFF</color>
+    <color name="role_tertiary_container">#E8E8EB</color>
+    <color name="role_on_tertiary_container">#1A1A1C</color>
+    <color name="role_background">#F7F7F8</color>
+    <color name="role_surface">#FFFFFF</color>
+    <color name="role_surface_container_lowest">#FFFFFF</color>
+    <color name="role_surface_container_low">#F4F4F5</color>
+    <color name="role_surface_container">#EFEFF1</color>
+    <color name="role_surface_container_high">#E8E8EB</color>
+    <color name="role_surface_container_highest">#E1E1E5</color>
+    <color name="role_surface_variant">#E8E8EB</color>
+    <color name="role_surface_bright">#FFFFFF</color>
+    <color name="role_surface_dim">#DADADE</color>
+    <color name="role_surface_inverse">#2E2E33</color>
+    <color name="role_on_surface">#1A1A1C</color>
+    <color name="role_on_surface_variant">#55555B</color>
+    <color name="role_on_surface_inverse">#F1F1F3</color>
+    <color name="role_outline">#75757C</color>
+    <color name="role_outline_variant">#DEDEE2</color>
+    <color name="role_error">#8C1D18</color>
+    <color name="role_on_error">#FFFFFF</color>
+    <color name="role_error_container">#F9DEDC</color>
+    <color name="role_on_error_container">#8C1D18</color>
+    <color name="role_warning_container">#FCEFC7</color>
+    <color name="role_on_warning_container">#6B4500</color>
+    <color name="role_success_container">#DCF3E3</color>
+    <color name="role_on_success_container">#14532D</color>
 </resources>

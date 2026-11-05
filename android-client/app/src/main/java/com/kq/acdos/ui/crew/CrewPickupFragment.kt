@@ -14,6 +14,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.R
 import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.useThemeColors
 import kotlinx.coroutines.launch
 
 /**
@@ -36,6 +37,7 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
         val changeText = view.findViewById<TextView>(R.id.notice_change)
         val acknowledge = view.findViewById<Button>(R.id.acknowledge)
         val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipe.useThemeColors()
         swipe.setOnRefreshListener {
             if (!viewModel.refresh(manual = true)) swipe.isRefreshing = false
         }

@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
+    android:background="?attr/colorSurface"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -22,7 +23,8 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:background="?android:attr/colorBackground">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -72,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
                 android:visibility="gone" />
 
             <com.google.android.material.card.MaterialCardView
@@ -106,7 +108,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                style="@style/DispatchSection"
+                style="@style/Widget.ACDOS.SectionHeader"
                 android:text="@string/dispatch_messages" />
 
             <LinearLayout
@@ -116,7 +118,7 @@
                 android:orientation="vertical" />
 
             <TextView
-                style="@style/DispatchSection"
+                style="@style/Widget.ACDOS.SectionHeader"
                 android:text="@string/dispatch_routes" />
 
             <LinearLayout
@@ -126,7 +128,7 @@
                 android:orientation="vertical" />
 
             <TextView
-                style="@style/DispatchSection"
+                style="@style/Widget.ACDOS.SectionHeader"
                 android:text="@string/dispatch_pickups" />
 
             <LinearLayout
@@ -136,7 +138,7 @@
                 android:orientation="vertical" />
 
             <TextView
-                style="@style/DispatchSection"
+                style="@style/Widget.ACDOS.SectionHeader"
                 android:text="@string/dispatch_vehicles" />
 
             <LinearLayout

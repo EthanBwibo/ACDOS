@@ -50,10 +50,10 @@
 
         <TextView
             android:id="@+id/error"
+            style="@style/Widget.ACDOS.Banner.Error"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:textColor="?attr/colorError"
             android:visibility="gone" />
 
         <Button
