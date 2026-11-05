@@ -9,7 +9,6 @@ import com.kq.acdos.data.local.PendingPickupEventDao
 import com.kq.acdos.data.local.PendingPickupEventEntity
 import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
-import com.kq.acdos.data.outbox.PickupEventOutbox
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 /** One row of the Route tab. */
 data class StopRow(
@@ -46,10 +44,7 @@ data class StopProgress(
     val conflict: String?,
     /** Picked up or a no-show, and not refused: nothing more to record here. */
     val done: Boolean
-) {
-    /** A pickup the server has accepted. Anything else still needs someone's attention. */
-    val isGoodNews: Boolean get() = exception == null && sent && conflict == null
-}
+)
 
 /** Each stop's progress by route node id, from the driver's events, oldest first. */
 fun stopProgress(events: List<PendingPickupEventEntity>): Map<String, StopProgress> =
@@ -81,8 +76,37 @@ sealed interface RouteUiState {
 
     data object NoRoute : RouteUiState
 
-    data class Route(val plate: String, val updatedAt: Instant, val stops: List<StopRow>) :
-        RouteUiState
+    data class Route(
+        val plate: String,
+        val updatedAt: Instant,
+        val stops: List<StopRow>,
+        /** Events waiting to upload, on this route or an older one. */
+        val queued: Int = 0
+    ) : RouteUiState
+}
+
+/** The Route tab's one job at a time: the next pickup, and what follows it. */
+data class RouteProgress(val next: StopRow?, val then: List<StopRow>, val pickedUp: Int)
+
+/**
+ * A stop stays open until it is done, so one the server refused comes back as the next
+ * pickup. A no-show is done but isn't counted as picked up.
+ */
+fun routeProgress(stops: List<StopRow>): RouteProgress {
+    val open = stops.filter { it.progress?.done != true }
+    val pickedUp = stops.count { it.progress?.done == true && it.progress.exception == null }
+    return RouteProgress(open.firstOrNull(), open.drop(1), pickedUp)
+}
+
+/** "Westlands" from "Westlands, Nairobi". */
+fun shortZone(label: String): String = label.substringBefore(',')
+
+/** The sync chip is always on screen, so the driver knows queued events are safe. */
+@StringRes
+fun syncChipText(online: Boolean, queued: Int): Int = when {
+    !online -> R.string.sync_chip_offline
+    queued > 0 -> R.string.sync_chip_online
+    else -> R.string.sync_chip_all_sent
 }
 
 /**
@@ -112,7 +136,8 @@ fun routeState(
                     lon = it.pickupLon,
                     progress = progress[it.routeNodeId]
                 )
-            }
+            },
+            queued = recorded.count { it.syncedAt == null && it.conflict == null }
         )
     }
 }.distinctUntilChanged()
@@ -126,29 +151,11 @@ private fun driverEvents(
     if (id == null) emit(emptyList()) else emitAll(dao.observeAll(id))
 }
 
-/**
- * [upload] starts an upload that outlives this screen; it runs after every
- * pickup the driver records.
- */
 class RouteViewModel(
     dao: DriverRouteDao,
     outboxDao: PendingPickupEventDao,
-    driverId: suspend () -> String?,
-    private val outbox: PickupEventOutbox,
-    private val upload: () -> Unit
+    driverId: suspend () -> String?
 ) : ViewModel() {
     val state: StateFlow<RouteUiState> = routeState(dao, driverEvents(outboxDao, driverId))
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), RouteUiState.Loading)
-
-    fun confirmPickup(stop: StopRow) = record { outbox.recordConfirmation(stop.routeNodeId) }
-
-    fun reportProblem(stop: StopRow, type: PickupExceptionType) =
-        record { outbox.recordException(stop.routeNodeId, type) }
-
-    private fun record(event: suspend () -> Unit) {
-        viewModelScope.launch {
-            event()
-            upload()
-        }
-    }
 }

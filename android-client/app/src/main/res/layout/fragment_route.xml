@@ -1,53 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Figma frame 3:142. -->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/swipe_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:fillViewport="true">
 
-        <LinearLayout
-            android:id="@+id/route_header"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="12dp"
-            android:visibility="gone">
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/route"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/progress_chip"
+                        style="@style/Widget.ACDOS.Chip.Neutral"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/sync_chip"
+                        style="@style/Widget.ACDOS.Chip.Neutral"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp" />
+
+                </LinearLayout>
+
+                <com.kq.acdos.ui.driver.RouteMapView
+                    android:id="@+id/map"
+                    android:layout_width="match_parent"
+                    android:layout_height="190dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_map" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/next_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="14dp">
+
+                        <TextView
+                            style="@style/Widget.ACDOS.Overline"
+                            android:layout_marginTop="0dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="@string/route_next" />
+
+                        <TextView
+                            android:id="@+id/next_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                        <include
+                            android:id="@+id/next_time"
+                            layout="@layout/view_detail_row" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/status_warning"
+                            style="@style/Widget.ACDOS.Chip.Warning"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/navigate"
+                                style="?attr/materialButtonOutlinedStyle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:maxLines="1"
+                                android:paddingHorizontal="8dp"
+                                android:text="@string/action_navigate" />
+
+                            <Button
+                                android:id="@+id/confirm"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:maxLines="1"
+                                android:paddingHorizontal="8dp"
+                                android:text="@string/action_confirm_pickup" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/all_done"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:gravity="center"
+                    android:text="@string/route_all_done"
+                    android:textAppearance="?attr/textAppearanceBodyLarge"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/then_label"
+                    style="@style/Widget.ACDOS.Overline"
+                    android:text="@string/route_then" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/then_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:id="@+id/then_rows"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:divider="@drawable/divider_hairline"
+                        android:orientation="vertical"
+                        android:showDividers="middle" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/plate"
-                android:layout_width="wrap_content"
+                android:id="@+id/empty"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceTitleLarge" />
+                android:layout_gravity="center"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginTop="96dp"
+                android:gravity="center"
+                android:text="@string/route_none"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/updated"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
+        </FrameLayout>
 
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/stops"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/empty"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="@string/route_none"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:visibility="gone" />
-
-    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
