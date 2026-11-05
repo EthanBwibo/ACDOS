@@ -1,18 +1,11 @@
 package com.kq.acdos.data
 
 import android.app.UiModeManager
+import android.content.SharedPreferences
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.core.content.edit
 import com.kq.acdos.R
-import java.io.IOException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 
 /** The user's theme choice, in the order the Theme dialog lists it. */
 enum class ThemeMode(
@@ -33,19 +26,22 @@ enum class ThemeMode(
 
 /**
  * Saves the theme choice on this phone. It belongs to the phone rather than the user, so
- * it stays when someone signs out.
+ * it stays when someone signs out. SharedPreferences because [mode] has to be readable
+ * synchronously in Application.onCreate, before the first activity draws.
  */
-class ThemeStore(private val store: DataStore<Preferences>) {
-    /** Falls back to [ThemeMode.SYSTEM], so an unreadable file can never stop the app opening. */
-    val mode: Flow<ThemeMode> = store.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
-        .map { saved -> ThemeMode.entries.find { it.name == saved[KEY] } ?: ThemeMode.SYSTEM }
-
-    suspend fun save(mode: ThemeMode) {
-        store.edit { it[KEY] = mode.name }
+class ThemeStore(private val prefs: SharedPreferences) {
+    /** [ThemeMode.SYSTEM] when nothing is saved, or the saved value is not a mode. */
+    fun mode(): ThemeMode {
+        val saved = prefs.getString(KEY_MODE, null)
+        return ThemeMode.entries.find { it.name == saved } ?: ThemeMode.SYSTEM
     }
 
-    private companion object {
-        val KEY = stringPreferencesKey("theme_mode")
+    fun save(mode: ThemeMode) {
+        prefs.edit { putString(KEY_MODE, mode.name) }
+    }
+
+    companion object {
+        const val PREFS_NAME = "acdos_theme"
+        private const val KEY_MODE = "theme_mode"
     }
 }

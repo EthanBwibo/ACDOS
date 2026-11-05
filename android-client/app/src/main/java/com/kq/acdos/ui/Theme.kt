@@ -6,15 +6,12 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.getSystemService
-import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kq.acdos.R
 import com.kq.acdos.data.ThemeMode
 import com.kq.acdos.data.ThemeStore
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 /**
  * AppCompat only changes what the app draws. The system draws an activity's starting window
@@ -30,23 +27,18 @@ fun Context.applyTheme(mode: ThemeMode) {
 
 /** System, Light or Dark. The choice is saved, then applied straight away. */
 fun AppCompatActivity.showThemeDialog(store: ThemeStore) {
-    lifecycleScope.launch {
-        val current = store.mode.first()
-        val labels = ThemeMode.entries.map { getString(it.label) }.toTypedArray()
-        MaterialAlertDialogBuilder(this@showThemeDialog)
-            .setTitle(R.string.action_theme)
-            .setSingleChoiceItems(labels, current.ordinal) { dialog, index ->
-                dialog.dismiss()
-                val chosen = ThemeMode.entries[index]
-                lifecycleScope.launch {
-                    // In this order: applying the mode recreates the activity.
-                    store.save(chosen)
-                    applyTheme(chosen)
-                }
-            }
-            .setNegativeButton(R.string.action_cancel, null)
-            .show()
-    }
+    val labels = ThemeMode.entries.map { getString(it.label) }.toTypedArray()
+    MaterialAlertDialogBuilder(this)
+        .setTitle(R.string.action_theme)
+        .setSingleChoiceItems(labels, store.mode().ordinal) { dialog, index ->
+            dialog.dismiss()
+            val chosen = ThemeMode.entries[index]
+            // In this order: applying the mode recreates the activity.
+            store.save(chosen)
+            applyTheme(chosen)
+        }
+        .setNegativeButton(R.string.action_cancel, null)
+        .show()
 }
 
 /** SwipeRefreshLayout has no theme attributes for these; its defaults are black on white. */

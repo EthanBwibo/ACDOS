@@ -1,64 +1,49 @@
 package com.kq.acdos.data
 
 import android.app.UiModeManager
+import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import java.io.IOException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
+import androidx.core.content.edit
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
 class ThemeStoreTest {
-    @get:Rule
-    val folder = TemporaryFolder()
+    private val prefs = ApplicationProvider.getApplicationContext<Context>()
+        .getSharedPreferences(ThemeStore.PREFS_NAME, Context.MODE_PRIVATE)
 
-    private fun dataStore() = PreferenceDataStoreFactory.create {
-        folder.newFile("theme.preferences_pb").also { it.delete() }
-    }
-
-    /** A DataStore whose file can't be read. */
-    private object Unreadable : DataStore<Preferences> {
-        override val data: Flow<Preferences> = flow { throw IOException("disk") }
-
-        override suspend fun updateData(
-            transform: suspend (t: Preferences) -> Preferences
-        ): Preferences = throw IOException("disk")
+    @Test
+    fun `nothing saved means follow the system`() {
+        assertEquals(ThemeMode.SYSTEM, ThemeStore(prefs).mode())
     }
 
     @Test
-    fun `nothing saved means follow the system`() = runBlocking {
-        assertEquals(ThemeMode.SYSTEM, ThemeStore(dataStore()).mode.first())
+    fun `a saved choice reads back from a new store`() {
+        ThemeStore(prefs).save(ThemeMode.DARK)
+
+        assertEquals(ThemeMode.DARK, ThemeStore(prefs).mode())
     }
 
     @Test
-    fun `a saved choice reads back`() = runBlocking {
-        val store = ThemeStore(dataStore())
-
+    fun `a saved choice can be changed`() {
+        val store = ThemeStore(prefs)
         store.save(ThemeMode.DARK)
 
-        assertEquals(ThemeMode.DARK, store.mode.first())
+        store.save(ThemeMode.LIGHT)
+
+        assertEquals(ThemeMode.LIGHT, store.mode())
     }
 
     @Test
-    fun `an unknown saved value means follow the system`() = runBlocking {
-        val data = dataStore()
-        data.edit { it[stringPreferencesKey("theme_mode")] = "SEPIA" }
+    fun `an unknown saved value means follow the system`() {
+        prefs.edit { putString("theme_mode", "SEPIA") }
 
-        assertEquals(ThemeMode.SYSTEM, ThemeStore(data).mode.first())
-    }
-
-    @Test
-    fun `an unreadable file still opens the app`() = runBlocking {
-        assertEquals(ThemeMode.SYSTEM, ThemeStore(Unreadable).mode.first())
+        assertEquals(ThemeMode.SYSTEM, ThemeStore(prefs).mode())
     }
 
     @Test

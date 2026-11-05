@@ -1,11 +1,6 @@
 package com.kq.acdos
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.preferencesDataStore
 import com.kq.acdos.auth.AuthRepository
 import com.kq.acdos.auth.SessionRouter
 import com.kq.acdos.auth.SharedPreferencesProfileCache
@@ -36,11 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import retrofit2.create
-
-private val Context.themeDataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "theme",
-    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() }
-)
 
 /** Hand-wired dependencies, one per process (no DI framework). */
 class AppContainer(context: Context) {
@@ -131,7 +121,7 @@ class AppContainer(context: Context) {
         if (isApiConfigured) MessagesRepository(messagesApi, database.crewDao()) else null
     }
 
-    val themeStore: ThemeStore by lazy { ThemeStore(appContext.themeDataStore) }
+    val themeStore: ThemeStore by lazy { ThemeStore(prefs(ThemeStore.PREFS_NAME)) }
 
     val sessionRouter: SessionRouter by lazy {
         SessionRouter(
