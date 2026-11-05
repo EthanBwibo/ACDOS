@@ -2,15 +2,17 @@ package com.kq.acdos.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +20,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.MainActivity
 import com.kq.acdos.R
@@ -42,7 +46,14 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow<LoginState>(LoginState.Idle)
     val state: StateFlow<LoginState> = _state.asStateFlow()
 
+    /** The account signed in but has no profiles row. Held here so it survives a recreate. */
+    fun showAccountNotSetUp() {
+        _state.value = LoginState.Error(R.string.login_error_not_set_up)
+    }
+
     fun signIn(email: String, password: String) {
+        val inProgress = _state.value == LoginState.Busy || _state.value == LoginState.SignedIn
+        if (inProgress) return
         if (email.isBlank() || password.isEmpty()) {
             _state.value = LoginState.Error(R.string.login_error_empty)
             return
@@ -67,12 +78,14 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
 /**
  * Email and password only: accounts are created by the dispatcher, and the
  * role comes from profiles.role, so there is no sign-up and no role choice.
+ * The theme is on this screen too, so it can be set before signing in.
  */
 class LoginActivity : AppCompatActivity() {
+    private val container by lazy { (application as AcdosApplication).container }
     private val viewModel: LoginViewModel by viewModels {
         viewModelFactory {
             initializer {
-                LoginViewModel((application as AcdosApplication).container.authRepository)
+                LoginViewModel(container.authRepository)
             }
         }
     }
@@ -85,31 +98,43 @@ class LoginActivity : AppCompatActivity() {
 
         val email = findViewById<EditText>(R.id.email)
         val password = findViewById<EditText>(R.id.password)
-        val signIn = findViewById<Button>(R.id.sign_in)
-        val progress = findViewById<ProgressBar>(R.id.progress)
+        val signIn = findViewById<MaterialButton>(R.id.sign_in)
         val error = findViewById<TextView>(R.id.error)
 
         if (intent.getBooleanExtra(EXTRA_ACCOUNT_NOT_SET_UP, false) && savedInstanceState == null) {
-            error.setText(R.string.login_error_not_set_up)
-            error.visibility = View.VISIBLE
+            viewModel.showAccountNotSetUp()
         }
 
-        signIn.setOnClickListener {
+        val submit = {
+            hideKeyboard()
             viewModel.signIn(email.text.toString(), password.text.toString())
+        }
+        signIn.setOnClickListener { submit() }
+        password.setOnEditorActionListener { _, action, _ ->
+            if (action == EditorInfo.IME_ACTION_DONE) submit()
+            action == EditorInfo.IME_ACTION_DONE
+        }
+        findViewById<Button>(R.id.forgot_password).setOnClickListener { explainPasswordReset() }
+        findViewById<Button>(R.id.theme).apply {
+            val store = container.themeStore
+            text = getString(R.string.login_theme, getString(store.mode().label))
+            setOnClickListener { showThemeDialog(store) }
         }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     val busy = state == LoginState.Busy || state == LoginState.SignedIn
-                    progress.visibility = if (busy) View.VISIBLE else View.GONE
-                    signIn.isEnabled = !busy
+                    signIn.showLoading(
+                        busy,
+                        if (busy) R.string.login_signing_in else R.string.login_sign_in
+                    )
+                    email.isEnabled = !busy
+                    password.isEnabled = !busy
+                    error.isVisible = state is LoginState.Error
                     if (state is LoginState.Error) {
                         val text = getString(state.message)
                         error.text = if (state.detail == null) text else "$text\n${state.detail}"
-                        error.visibility = View.VISIBLE
-                    } else if (state != LoginState.Idle) {
-                        error.visibility = View.GONE
                     }
                     if (state == LoginState.SignedIn) {
                         // MainActivity reads profiles.role and opens the right screen.
@@ -121,6 +146,19 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /** There is no reset flow: accounts are created for users, not by them. */
+    private fun explainPasswordReset() {
+        MaterialAlertDialogBuilder(this)
+            .setMessage(R.string.login_forgot_message)
+            .setPositiveButton(R.string.action_ok, null)
+            .show()
+    }
+
+    private fun hideKeyboard() {
+        WindowCompat.getInsetsController(window, window.decorView)
+            .hide(WindowInsetsCompat.Type.ime())
     }
 
     companion object {

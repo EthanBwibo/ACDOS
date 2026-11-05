@@ -3,12 +3,16 @@ package com.kq.acdos.ui
 import android.app.UiModeManager
 import android.content.Context
 import android.os.Build
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.getSystemService
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.CircularProgressIndicatorSpec
+import com.google.android.material.progressindicator.IndeterminateDrawable
 import com.kq.acdos.R
 import com.kq.acdos.data.ThemeMode
 import com.kq.acdos.data.ThemeStore
@@ -39,6 +43,28 @@ fun AppCompatActivity.showThemeDialog(store: ThemeStore) {
         }
         .setNegativeButton(R.string.action_cancel, null)
         .show()
+}
+
+/**
+ * Loading shown on the button itself. It stops taking taps but stays enabled, because a
+ * disabled button turns grey and the white spinner would no longer show. The caller still
+ * has to ignore a repeat, because the keyboard's Done key can get past this.
+ */
+fun MaterialButton.showLoading(loading: Boolean, @StringRes label: Int) {
+    isClickable = !loading
+    setText(label)
+    icon = if (loading) spinner() else null
+}
+
+private fun MaterialButton.spinner(): IndeterminateDrawable<*> {
+    val spec = CircularProgressIndicatorSpec(
+        context,
+        null,
+        0,
+        com.google.android.material.R.style.Widget_Material3_CircularProgressIndicator_ExtraSmall
+    )
+    spec.indicatorColors = intArrayOf(currentTextColor)
+    return IndeterminateDrawable.createCircularDrawable(context, spec)
 }
 
 /** SwipeRefreshLayout has no theme attributes for these; its defaults are black on white. */
