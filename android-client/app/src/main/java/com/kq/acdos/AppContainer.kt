@@ -33,8 +33,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import retrofit2.create
 
-/** Hand-wired dependencies, one per process (no DI framework). */
-class AppContainer(context: Context) {
+/** Hand-wired dependencies, one per process (no DI framework). Tests can replace one. */
+open class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
     /** False in builds without a Supabase URL and key, such as CI. */
@@ -86,12 +86,12 @@ class AppContainer(context: Context) {
     val database: AcdosDatabase by lazy { AcdosDatabase.build(appContext) }
 
     /** One per process, so its 60 s throttle holds across screens. Null without an API URL. */
-    val driverRouteRepository: DriverRouteRepository? by lazy {
+    open val driverRouteRepository: DriverRouteRepository? by lazy {
         if (isApiConfigured) DriverRouteRepository(meApi, database.driverRouteDao()) else null
     }
 
     /** Without an API URL, events are recorded but wait on the phone. */
-    val pickupEventOutbox: PickupEventOutbox by lazy {
+    open val pickupEventOutbox: PickupEventOutbox by lazy {
         val uploader = if (isApiConfigured) {
             ApiPickupEventUploader(meApi)
         } else {

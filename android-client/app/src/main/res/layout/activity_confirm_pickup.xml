@@ -68,6 +68,15 @@
                         android:gravity="center"
                         android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/no_show_chip"
+                        style="@style/Widget.ACDOS.Chip.Warning"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/confirm_recorded_no_show"
+                        android:visibility="gone" />
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

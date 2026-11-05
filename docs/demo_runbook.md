@@ -57,7 +57,7 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    broken van is re-planned. In Pickups, Test Crew's row now says "Awaiting acknowledgement".
 6. **Driver confirms** (phone): sign in as the driver of one of the vans in the new plan
    (`demo-KDH 10xA` → `driver-10xa@acdos.test`) and refresh. That van's re-planned route
-   appears. Tap **Picked up** on the first stop. After **Refresh**, the
+   appears. Tap **Confirm pickup**, then **Crew on board**. After **Refresh**, the
    dispatcher's Pickups shows it `picked_up`.
 7. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
    Pickup tab opens with a card on top, "Your pickup has changed": the reason (Vehicle

@@ -1,5 +1,6 @@
 package com.kq.acdos.ui.driver
 
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -10,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
@@ -22,6 +24,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.data.local.DriverRouteDao
+import com.kq.acdos.data.local.PendingPickupEventEntity
 import com.kq.acdos.data.local.PickupExceptionType
 import com.kq.acdos.data.local.RouteStopEntity
 import com.kq.acdos.data.outbox.PickupEventOutbox
@@ -44,14 +47,19 @@ fun initials(name: String): String = name.split(' ').filter { it.isNotBlank() }
 /** Saves to the outbox first, so all of this works with no signal. */
 class ConfirmPickupViewModel(
     dao: DriverRouteDao,
+    events: Flow<List<PendingPickupEventEntity>>,
     private val routeNodeId: String,
     private val outbox: PickupEventOutbox,
-    private val upload: () -> Unit
+    private val upload: () -> Unit,
+    private val refreshRoute: suspend () -> Unit
 ) : ViewModel() {
     /** Null once a re-plan has taken this stop off the driver's route. */
     val stop: Flow<RouteStopEntity?> = dao.observeRouteWithStops().map { cached ->
         cached?.stops?.find { it.routeNodeId == routeNodeId }
     }
+
+    /** The driver already recorded a no-show here, so all that's left is a late arrival. */
+    val alreadyNoShow: Flow<Boolean> = events.map { stopProgress(it)[routeNodeId]?.noShow == true }
 
     private val finishedState = MutableStateFlow(false)
 
@@ -60,6 +68,15 @@ class ConfirmPickupViewModel(
 
     private var recording = false
 
+    /**
+     * Only the driver home refreshes the route, and it is stopped while this screen is open, so
+     * without this a re-plan would never reach [stop]. Throttled like the home's own refresh.
+     */
+    fun checkStillOnRoute() {
+        viewModelScope.launch { refreshRoute() }
+    }
+
+    /** A new event: a no-show before it stays in the log, and the server applies both in order. */
     fun crewOnBoard() = record { outbox.recordConfirmation(routeNodeId) }
 
     fun report(type: PickupExceptionType) = record { outbox.recordException(routeNodeId, type) }
@@ -87,11 +104,14 @@ class ConfirmPickupActivity : AppCompatActivity() {
     private val viewModel: ConfirmPickupViewModel by viewModels {
         viewModelFactory {
             initializer {
+                val routeNodeId = checkNotNull(intent.getStringExtra(EXTRA_ROUTE_NODE_ID))
                 ConfirmPickupViewModel(
                     container.database.driverRouteDao(),
-                    checkNotNull(intent.getStringExtra(EXTRA_ROUTE_NODE_ID)),
+                    container.database.pendingPickupEventDao().observeForStop(routeNodeId),
+                    routeNodeId,
                     container.pickupEventOutbox,
-                    container::uploadPickupEvents
+                    container::uploadPickupEvents,
+                    refreshRoute = { container.driverRouteRepository?.refresh(force = false) }
                 )
             }
         }
@@ -99,6 +119,8 @@ class ConfirmPickupActivity : AppCompatActivity() {
 
     /** For the dialogs' titles. */
     private var crewNameText = ""
+
+    private var openDialog: Dialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +162,15 @@ class ConfirmPickupActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.alreadyNoShow.collect { noShow ->
+                    findViewById<View>(R.id.no_show_chip).isVisible = noShow
+                    findViewById<View>(R.id.not_at_point).isVisible = !noShow
+                    toolbar.menu.findItem(R.id.action_report_problem).isVisible = !noShow
+                }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.finished.collect { if (it) finish() }
             }
         }
@@ -153,6 +184,11 @@ class ConfirmPickupActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.checkStillOnRoute()
+    }
+
     private fun detailRow(id: Int, label: Int): TextView {
         val row = findViewById<View>(id)
         row.findViewById<TextView>(R.id.detail_label).setText(label)
@@ -160,14 +196,15 @@ class ConfirmPickupActivity : AppCompatActivity() {
     }
 
     private fun leaveBecauseStopIsGone() {
-        if (viewModel.finished.value) return
+        if (viewModel.finished.value || isFinishing) return
+        openDialog?.dismiss()
         Toast.makeText(this, R.string.confirm_stop_gone, Toast.LENGTH_LONG).show()
         finish()
     }
 
     /** A no-show moves the pickup to missed at once, so it is checked first. */
     private fun confirmNoShow() {
-        MaterialAlertDialogBuilder(this)
+        openDialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.confirm_no_show_title, crewNameText))
             .setMessage(R.string.confirm_no_show_message)
             .setPositiveButton(R.string.confirm_no_show_action) { _, _ ->
@@ -183,7 +220,7 @@ class ConfirmPickupActivity : AppCompatActivity() {
             PickupExceptionType.VEHICLE_ISSUE to R.string.route_problem_vehicle_issue,
             PickupExceptionType.TRAFFIC_DELAY to R.string.route_problem_traffic_delay
         )
-        MaterialAlertDialogBuilder(this)
+        openDialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.route_problem_title, crewNameText))
             .setItems(problems.map { getString(it.second) }.toTypedArray()) { _, which ->
                 viewModel.report(problems[which].first)

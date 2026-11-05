@@ -80,6 +80,10 @@
                             android:id="@+id/next_time"
                             layout="@layout/view_detail_row" />
 
+                        <include
+                            android:id="@+id/next_leg"
+                            layout="@layout/view_detail_row" />
+
                         <com.google.android.material.chip.Chip
                             android:id="@+id/status_warning"
                             style="@style/Widget.ACDOS.Chip.Warning"
@@ -142,6 +146,28 @@
 
                     <LinearLayout
                         android:id="@+id/then_rows"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:divider="@drawable/divider_hairline"
+                        android:orientation="vertical"
+                        android:showDividers="middle" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/no_show_label"
+                    style="@style/Widget.ACDOS.Overline"
+                    android:text="@string/route_no_shows"
+                    android:visibility="gone" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/no_show_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:id="@+id/no_show_rows"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:divider="@drawable/divider_hairline"

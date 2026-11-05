@@ -50,7 +50,7 @@
     <string name="confirm_not_at_point">Crew not at pickup point</string>
     <string name="confirm_saved_first">Saved on this phone first. Sends when signal returns.</string>
     <string name="confirm_no_show_title">Record %1$s as a no-show?</string>
-    <string name="confirm_no_show_message">The dispatcher will see this as a missed pickup.</string>
+    <string name="confirm_no_show_message">The dispatcher will see this as a missed pickup. If they turn up later, you can still record them on board.</string>
     <string name="confirm_no_show_action">Record no-show</string>
     <string name="confirm_report_problem">Report a problem</string>
     <string name="confirm_stop_gone">This stop is no longer on your route.</string>
@@ -96,6 +96,12 @@
     <string name="route_status_traffic_delay">Traffic delay reported</string>
     <string name="route_status_not_sent">%1$s · not sent yet</string>
     <string name="route_status_rejected">Not accepted (%1$s)</string>
+    <string name="route_no_shows">No-shows</string>
+    <string name="route_crew_arrived">Crew arrived</string>
+    <string name="route_leg_label">From previous stop</string>
+    <string name="route_leg_minutes">About %1$d min</string>
+    <string name="route_then_subtitle">%1$s · about %2$d min</string>
+    <string name="confirm_recorded_no_show">Recorded as a no-show</string>
     <string name="route_refresh_offline">Couldn\'t refresh the route. Check your connection.</string>
     <string name="route_refresh_failed">Couldn\'t refresh the route. Try again shortly.</string>
     <string name="route_refresh_sign_in_again">Sign in again to refresh the route.</string>

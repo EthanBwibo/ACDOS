@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -127,13 +128,54 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         val rows = view.findViewById<LinearLayout>(R.id.then_rows)
         rows.removeAllViews()
         for (stop in progress.then) {
-            val row = LayoutInflater.from(rows.context).inflate(R.layout.item_list_row, rows, false)
-            row.findViewById<TextView>(R.id.row_lead).text = stop.number.toString()
-            row.findViewById<TextView>(R.id.row_title).text = zoneName(stop)
-            row.findViewById<TextView>(R.id.row_subtitle).text = stop.crewName
+            val row = stopRow(rows, stop)
+            row.findViewById<TextView>(R.id.row_subtitle).text = stop.minutesFromPrevious?.let {
+                getString(R.string.route_then_subtitle, stop.crewName, it)
+            } ?: stop.crewName
             row.findViewById<TextView>(R.id.row_value).text = Times.clock(stop.pickupTime)
             rows.addView(row)
         }
+        showNoShows(view, progress.noShows)
+    }
+
+    /**
+     * A no-show can turn up late, so the stop stays on screen. Tapping it opens Confirm pickup,
+     * which records a new event; the no-show itself is never edited.
+     */
+    private fun showNoShows(view: View, noShows: List<StopRow>) {
+        view.findViewById<View>(R.id.no_show_label).isVisible = noShows.isNotEmpty()
+        view.findViewById<View>(R.id.no_show_card).isVisible = noShows.isNotEmpty()
+        val rows = view.findViewById<LinearLayout>(R.id.no_show_rows)
+        rows.removeAllViews()
+        for (stop in noShows) {
+            val row = stopRow(rows, stop)
+            row.findViewById<TextView>(R.id.row_subtitle).text = getString(
+                R.string.route_next_title,
+                stop.crewName,
+                stop.progress?.let(::statusText)
+            )
+            row.findViewById<TextView>(R.id.row_value).setText(R.string.route_crew_arrived)
+            val ripple = TypedValue()
+            row.context.theme.resolveAttribute(
+                android.R.attr.selectableItemBackground,
+                ripple,
+                true
+            )
+            row.setBackgroundResource(ripple.resourceId)
+            row.setOnClickListener { openConfirm(stop) }
+            rows.addView(row)
+        }
+    }
+
+    private fun stopRow(rows: LinearLayout, stop: StopRow): View {
+        val row = LayoutInflater.from(rows.context).inflate(R.layout.item_list_row, rows, false)
+        row.findViewById<TextView>(R.id.row_lead).text = stop.number.toString()
+        row.findViewById<TextView>(R.id.row_title).text = zoneName(stop)
+        return row
+    }
+
+    private fun openConfirm(stop: StopRow) {
+        startActivity(ConfirmPickupActivity.intent(requireContext(), stop.routeNodeId))
     }
 
     private fun showNext(view: View, stop: StopRow) {
@@ -143,14 +185,19 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         time.findViewById<TextView>(R.id.detail_label).setText(R.string.route_pickup_by)
         time.findViewById<TextView>(R.id.detail_value).text = Times.clock(stop.pickupTime)
 
+        val leg = view.findViewById<View>(R.id.next_leg)
+        leg.isVisible = stop.minutesFromPrevious != null
+        leg.findViewById<TextView>(R.id.detail_label).setText(R.string.route_leg_label)
+        leg.findViewById<TextView>(R.id.detail_value).text = stop.minutesFromPrevious?.let {
+            getString(R.string.route_leg_minutes, it)
+        }
+
         val warning = view.findViewById<TextView>(R.id.status_warning)
         warning.isVisible = stop.progress != null
         warning.text = stop.progress?.let(::statusText)
 
         view.findViewById<Button>(R.id.navigate).setOnClickListener { navigateTo(stop) }
-        view.findViewById<Button>(R.id.confirm).setOnClickListener {
-            startActivity(ConfirmPickupActivity.intent(requireContext(), stop.routeNodeId))
-        }
+        view.findViewById<Button>(R.id.confirm).setOnClickListener { openConfirm(stop) }
     }
 
     private fun zoneName(stop: StopRow) =
