@@ -1,0 +1,188 @@
+<resources>
+    <!-- Type scale. Roboto, Material's sizes, heavier titles so a screen reads at a glance. -->
+    <style name="TextAppearance.ACDOS.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.ACDOS.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- Supporting text under a title: zones, times, "updated at". -->
+    <style name="TextAppearance.ACDOS.Secondary" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- Shapes -->
+    <style name="ShapeAppearance.ACDOS.ExtraSmall" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">4dp</item>
+    </style>
+
+    <style name="ShapeAppearance.ACDOS.Small" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="ShapeAppearance.ACDOS.Button" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
+
+    <style name="ShapeAppearance.ACDOS.Medium" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <style name="ShapeAppearance.ACDOS.Large" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="ShapeAppearance.ACDOS.ExtraLarge" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <!-- Buttons -->
+    <style name="Widget.ACDOS.Button" parent="Widget.Material3.Button">
+        <item name="shapeAppearance">@style/ShapeAppearance.ACDOS.Button</item>
+    </style>
+
+    <style name="Widget.ACDOS.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.ACDOS.Button.Text</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.ACDOS.Button</item>
+    </style>
+
+    <style name="Widget.ACDOS.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.ACDOS.Button.Outlined</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.ACDOS.Button</item>
+        <item name="strokeColor">@color/button_outline</item>
+    </style>
+
+    <style name="Widget.ACDOS.Button.Dialog" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.ACDOS.Button.Text</item>
+    </style>
+
+    <!-- Text field. The focus outline stays red; everything that is text does not. -->
+    <style name="Widget.ACDOS.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.ACDOS.TextInputEditText</item>
+        <item name="hintTextColor">@color/text_field_label</item>
+        <item name="android:textColorHint">@color/text_field_label</item>
+        <item name="helperTextTextColor">@color/text_field_label</item>
+        <item name="counterTextColor">@color/text_field_label</item>
+        <item name="placeholderTextColor">@color/text_field_label</item>
+        <item name="prefixTextColor">@color/text_field_label</item>
+        <item name="suffixTextColor">@color/text_field_label</item>
+        <item name="startIconTint">@color/text_field_label</item>
+        <item name="endIconTint">@color/text_field_label</item>
+        <item name="cursorColor">?attr/colorOnPrimaryContainer</item>
+    </style>
+
+    <!-- Cards -->
+    <style name="Widget.ACDOS.CardView" parent="Widget.Material3.CardView.Outlined">
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="strokeColor">?attr/colorOutlineVariant</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <!-- Something that needs the reader's attention, such as a schedule change. -->
+    <style name="Widget.ACDOS.CardView.Notice">
+        <item name="cardBackgroundColor">?attr/colorPrimaryContainer</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+
+    <!-- Status chips: labels, not controls. -->
+    <style name="Widget.ACDOS.Chip" parent="Widget.Material3.Chip.Assist">
+        <item name="android:clickable">false</item>
+        <item name="android:focusable">false</item>
+        <item name="android:textAppearance">?attr/textAppearanceLabelMedium</item>
+        <item name="chipMinHeight">24dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+    </style>
+
+    <style name="Widget.ACDOS.Chip.Warning">
+        <item name="chipBackgroundColor">?attr/colorWarningContainer</item>
+        <item name="android:textColor">?attr/colorOnWarningContainer</item>
+    </style>
+
+    <style name="Widget.ACDOS.Chip.Success">
+        <item name="chipBackgroundColor">?attr/colorSuccessContainer</item>
+        <item name="android:textColor">?attr/colorOnSuccessContainer</item>
+    </style>
+
+    <!-- Errors are a tinted banner with an icon, so they can't be taken for a red button. -->
+    <style name="Widget.ACDOS.Banner.Error" parent="">
+        <item name="android:background">@drawable/bg_banner_error</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:drawableStart">@drawable/ic_error</item>
+        <item name="android:drawableTint">?attr/colorOnErrorContainer</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnErrorContainer</item>
+    </style>
+
+    <!-- List rows -->
+    <style name="Widget.ACDOS.ListRow" parent="">
+        <item name="android:background">@drawable/bg_list_row</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <style name="Widget.ACDOS.SectionHeader" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:layout_marginBottom">4dp</item>
+        <item name="android:textAppearance">?attr/textAppearanceTitleMedium</item>
+    </style>
+
+    <!-- Top bar and bottom nav -->
+    <style name="Widget.ACDOS.Toolbar" parent="Widget.Material3.Toolbar.Surface">
+        <item name="titleTextAppearance">?attr/textAppearanceTitleLarge</item>
+    </style>
+
+    <style name="Widget.ACDOS.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">?attr/colorSurface</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.ACDOS.BottomNavigationView.ActiveIndicator</item>
+        <item name="itemIconTint">@color/nav_icon</item>
+        <item name="itemTextColor">@color/nav_label</item>
+    </style>
+
+    <!-- The selected tab: white icon on solid red. -->
+    <style name="Widget.ACDOS.BottomNavigationView.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">?attr/colorPrimary</item>
+    </style>
+
+    <!-- No screen has tabs yet; this stops TabLayout's default red text arriving with one. -->
+    <style name="Widget.ACDOS.TabLayout" parent="Widget.Material3.TabLayout">
+        <item name="tabIconTint">@color/nav_label</item>
+        <item name="tabSelectedTextColor">?attr/colorOnPrimaryContainer</item>
+        <item name="tabTextColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- Plain ProgressBars are tinted by colorControlActivated, which is not red in this theme. -->
+    <style name="Widget.ACDOS.ProgressBar" parent="Widget.AppCompat.ProgressBar">
+        <item name="android:indeterminateTint">?attr/colorPrimary</item>
+    </style>
+</resources>

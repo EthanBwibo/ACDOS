@@ -10,6 +10,7 @@ import com.kq.acdos.data.CrewPickupRepository
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.MessagesRepository
+import com.kq.acdos.data.ThemeStore
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.outbox.ApiPickupEventUploader
 import com.kq.acdos.data.outbox.BatchResult
@@ -119,6 +120,8 @@ class AppContainer(context: Context) {
     val messagesRepository: MessagesRepository? by lazy {
         if (isApiConfigured) MessagesRepository(messagesApi, database.crewDao()) else null
     }
+
+    val themeStore: ThemeStore by lazy { ThemeStore(prefs(ThemeStore.PREFS_NAME)) }
 
     val sessionRouter: SessionRouter by lazy {
         SessionRouter(

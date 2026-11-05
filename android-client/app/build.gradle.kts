@@ -70,6 +70,8 @@ android {
     // OpenApiContractTest reads the backend's contract. Declared as an input so
     // a changed spec reruns the tests instead of reusing an up-to-date result.
     testOptions {
+        // ThemeTest reads the real theme and inflates real layouts under Robolectric.
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             val spec = rootProject.file("../docs/openapi.json")
             it.inputs.file(spec)

@@ -13,6 +13,7 @@ import com.kq.acdos.R
 import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.showThemeDialog
 import kotlinx.coroutines.launch
 
 /**
@@ -31,12 +32,19 @@ class CrewHomeActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.title = intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()
         toolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_sign_out) {
-                // Only ends the session; openLoginWhenSessionEnds does the navigating.
-                lifecycleScope.launch { container.sessionRouter.signOut() }
-                true
-            } else {
-                false
+            when (item.itemId) {
+                R.id.action_theme -> {
+                    showThemeDialog(container.themeStore)
+                    true
+                }
+
+                R.id.action_sign_out -> {
+                    // Only ends the session; openLoginWhenSessionEnds does the navigating.
+                    lifecycleScope.launch { container.sessionRouter.signOut() }
+                    true
+                }
+
+                else -> false
             }
         }
 

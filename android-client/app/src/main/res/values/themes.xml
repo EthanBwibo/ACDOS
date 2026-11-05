@@ -1,17 +1,129 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<resources>
+    <!--
+        One theme for both modes: DayNight picks the light or dark tokens through
+        values-night/colors.xml. Every Material colour role is set here, because a role left
+        unset falls back to the Material 3 baseline purple.
+    -->
     <style name="Base.Theme.ACDOS" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Accent -->
+        <item name="colorPrimary">@color/kq_red</item>
+        <item name="colorOnPrimary">@color/on_kq_red</item>
+        <item name="colorPrimaryContainer">@color/role_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/role_on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/role_primary_inverse</item>
+        <item name="colorPrimaryFixed">@color/fixed_primary_fixed</item>
+        <item name="colorPrimaryFixedDim">@color/fixed_primary_fixed_dim</item>
+        <item name="colorOnPrimaryFixed">@color/fixed_on_primary_fixed</item>
+        <item name="colorOnPrimaryFixedVariant">@color/fixed_on_primary_fixed_variant</item>
+
+        <!-- Secondary and tertiary are neutral: red is the only accent. The secondary container
+             is the red tint, because Material draws selected states with it. -->
+        <item name="colorSecondary">@color/role_secondary</item>
+        <item name="colorOnSecondary">@color/role_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/role_primary_container</item>
+        <item name="colorOnSecondaryContainer">@color/role_on_primary_container</item>
+        <item name="colorSecondaryFixed">@color/fixed_neutral_fixed</item>
+        <item name="colorSecondaryFixedDim">@color/fixed_neutral_fixed_dim</item>
+        <item name="colorOnSecondaryFixed">@color/fixed_on_neutral_fixed</item>
+        <item name="colorOnSecondaryFixedVariant">@color/fixed_on_neutral_fixed_variant</item>
+        <item name="colorTertiary">@color/role_tertiary</item>
+        <item name="colorOnTertiary">@color/role_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/role_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/role_on_tertiary_container</item>
+        <item name="colorTertiaryFixed">@color/fixed_neutral_fixed</item>
+        <item name="colorTertiaryFixedDim">@color/fixed_neutral_fixed_dim</item>
+        <item name="colorOnTertiaryFixed">@color/fixed_on_neutral_fixed</item>
+        <item name="colorOnTertiaryFixedVariant">@color/fixed_on_neutral_fixed_variant</item>
+
+        <!-- Surfaces -->
+        <item name="android:colorBackground">@color/role_background</item>
+        <item name="colorOnBackground">@color/role_on_surface</item>
+        <item name="colorSurface">@color/role_surface</item>
+        <item name="colorSurfaceContainerLowest">@color/role_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/role_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/role_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/role_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/role_surface_container_highest</item>
+        <item name="colorSurfaceVariant">@color/role_surface_variant</item>
+        <item name="colorSurfaceBright">@color/role_surface_bright</item>
+        <item name="colorSurfaceDim">@color/role_surface_dim</item>
+        <item name="colorSurfaceInverse">@color/role_surface_inverse</item>
+        <item name="colorOnSurface">@color/role_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/role_on_surface_variant</item>
+        <item name="colorOnSurfaceInverse">@color/role_on_surface_inverse</item>
+        <item name="colorOutline">@color/role_outline</item>
+        <item name="colorOutlineVariant">@color/role_outline_variant</item>
+        <!-- Otherwise raised surfaces would pick up a red cast from colorPrimary. -->
+        <item name="elevationOverlayEnabled">false</item>
+
+        <!-- Error and status -->
+        <item name="colorError">@color/role_error</item>
+        <item name="colorOnError">@color/role_on_error</item>
+        <item name="colorErrorContainer">@color/role_error_container</item>
+        <item name="colorOnErrorContainer">@color/role_on_error_container</item>
+        <item name="colorWarningContainer">@color/role_warning_container</item>
+        <item name="colorOnWarningContainer">@color/role_on_warning_container</item>
+        <item name="colorSuccessContainer">@color/role_success_container</item>
+        <item name="colorOnSuccessContainer">@color/role_on_success_container</item>
+
+        <!-- Things Material colours with colorPrimary that are text, or sit next to it. Red is
+             only 3.12:1 to 3.87:1 on dark surfaces, under the 4.5:1 text target. -->
+        <item name="colorControlActivated">?attr/colorOnPrimaryContainer</item>
+        <item name="android:textColorLink">?attr/colorOnPrimaryContainer</item>
+        <item name="android:textColorLinkInverse">?attr/colorPrimaryInverse</item>
+        <item name="android:textColorHighlight">?attr/colorPrimaryContainer</item>
+
+        <!-- Type scale -->
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.ACDOS.DisplaySmall</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.ACDOS.HeadlineMedium</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.ACDOS.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.ACDOS.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.ACDOS.TitleSmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.ACDOS.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.ACDOS.LabelMedium</item>
+
+        <!-- Shapes -->
+        <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.ACDOS.ExtraSmall</item>
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.ACDOS.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.ACDOS.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.ACDOS.Large</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.ACDOS.ExtraLarge</item>
+
+        <!-- Components -->
+        <item name="materialButtonStyle">@style/Widget.ACDOS.Button</item>
+        <item name="borderlessButtonStyle">@style/Widget.ACDOS.Button.Text</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.ACDOS.Button.Outlined</item>
+        <item name="buttonBarButtonStyle">@style/Widget.ACDOS.Button.Dialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.ACDOS.MaterialAlertDialog</item>
+        <item name="textInputOutlinedStyle">@style/Widget.ACDOS.TextInputLayout</item>
+        <item name="materialCardViewOutlinedStyle">@style/Widget.ACDOS.CardView</item>
+        <item name="bottomNavigationStyle">@style/Widget.ACDOS.BottomNavigationView</item>
+        <item name="toolbarStyle">@style/Widget.ACDOS.Toolbar</item>
+        <item name="tabStyle">@style/Widget.ACDOS.TabLayout</item>
+        <item name="android:progressBarStyle">@style/Widget.ACDOS.ProgressBar</item>
     </style>
 
     <style name="Theme.ACDOS" parent="Base.Theme.ACDOS" />
 
-    <!-- A section heading on the dispatcher's day board. -->
-    <style name="DispatchSection">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">24dp</item>
-        <item name="android:textAppearance">?attr/textAppearanceTitleMedium</item>
+    <!-- Text and outlined buttons colour their text with colorOnContainer. Material sets it to
+         colorPrimary. -->
+    <style name="ThemeOverlay.ACDOS.Button.Text" parent="ThemeOverlay.Material3.Button.TextButton">
+        <item name="colorOnContainer">?attr/colorOnPrimaryContainer</item>
+    </style>
+
+    <style name="ThemeOverlay.ACDOS.Button.Outlined" parent="ThemeOverlay.Material3.Button.TextButton">
+        <item name="colorOnContainer">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="ThemeOverlay.ACDOS.MaterialAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.ACDOS.Button.Dialog</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.ACDOS.Button.Dialog</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.ACDOS.Button.Dialog</item>
+    </style>
+
+    <!-- The caret and selection handles. Material sets colorControlActivated to colorPrimary
+         again for text fields, so the theme-wide value above does not reach them. -->
+    <style name="ThemeOverlay.ACDOS.TextInputEditText" parent="ThemeOverlay.Material3.TextInputEditText.OutlinedBox">
+        <item name="colorControlActivated">?attr/colorOnPrimaryContainer</item>
     </style>
 </resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark values of the role_ colours in values/colors.xml. -->
+<resources>
+    <color name="role_primary_container">#4A0A12</color>
+    <color name="role_on_primary_container">#FFD9DC</color>
+    <color name="role_primary_inverse">#7A0012</color>
+    <color name="role_secondary">#B4B4BB</color>
+    <color name="role_on_secondary">#1A1A1C</color>
+    <color name="role_tertiary">#B4B4BB</color>
+    <color name="role_on_tertiary">#1A1A1C</color>
+    <color name="role_tertiary_container">#2E2E33</color>
+    <color name="role_on_tertiary_container">#ECECEF</color>
+    <color name="role_background">#121214</color>
+    <color name="role_surface">#1C1C1F</color>
+    <color name="role_surface_container_lowest">#0E0E10</color>
+    <color name="role_surface_container_low">#18181B</color>
+    <color name="role_surface_container">#26262A</color>
+    <color name="role_surface_container_high">#2E2E33</color>
+    <color name="role_surface_container_highest">#36363C</color>
+    <color name="role_surface_variant">#2E2E33</color>
+    <color name="role_surface_bright">#36363C</color>
+    <color name="role_surface_dim">#121214</color>
+    <color name="role_surface_inverse">#ECECEF</color>
+    <color name="role_on_surface">#ECECEF</color>
+    <color name="role_on_surface_variant">#B4B4BB</color>
+    <color name="role_on_surface_inverse">#1A1A1C</color>
+    <color name="role_outline">#8A8A92</color>
+    <color name="role_outline_variant">#3A3A40</color>
+    <color name="role_error">#FFB4AB</color>
+    <color name="role_on_error">#5C1411</color>
+    <color name="role_error_container">#5C1411</color>
+    <color name="role_on_error_container">#F9DEDC</color>
+    <color name="role_warning_container">#4A3000</color>
+    <color name="role_on_warning_container">#FCEFC7</color>
+    <color name="role_success_container">#123D22</color>
+    <color name="role_on_success_container">#DCF3E3</color>
+</resources>

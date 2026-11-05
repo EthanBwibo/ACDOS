@@ -33,6 +33,7 @@ import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.showThemeDialog
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -66,6 +67,11 @@ class DispatcherHomeActivity : AppCompatActivity() {
                 R.id.action_refresh -> {
                     viewModel.load()
                     inbox.load()
+                    true
+                }
+
+                R.id.action_theme -> {
+                    showThemeDialog(container.themeStore)
                     true
                 }
 

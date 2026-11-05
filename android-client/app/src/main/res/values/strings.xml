@@ -3,6 +3,10 @@
 
     <string name="action_retry">Retry</string>
     <string name="action_sign_out">Sign out</string>
+    <string name="action_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 
     <string name="startup_profile_unavailable">Signed in, but your account details could not be loaded. Check your connection and retry.</string>
     <string name="startup_not_configured">This build has no Supabase URL or key. Add supabase.url and supabase.publishableKey to local.properties.</string>
