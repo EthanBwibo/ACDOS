@@ -408,9 +408,11 @@ def test_drivers_see_nothing_and_crew_only_their_own(client, world):
 
         return as_role(world, name, steps)
 
+    # Both sets are readable; GET /preset-messages picks the caller's.
+    presets = len(PRESETS) + len(REPLIES)
     assert seen("A") == (0, 0, 0)
-    assert seen("C") == (1, len(PRESETS), 1)
-    assert seen("D") == (2, len(PRESETS), 2)
+    assert seen("C") == (1, presets, 1)
+    assert seen("D") == (2, presets, 2)
 
 
 def test_crew_cannot_mark_read_edit_or_delete_and_nobody_edits_presets(client, world):

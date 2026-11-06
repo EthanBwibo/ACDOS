@@ -50,6 +50,7 @@ TABLES = [
     "public.trip_records",
     "public.schedule_change_notices",
     "public.crew_messages",
+    "public.message_replies",
     "public.preset_messages",
     "public.pickup_zones",
 ]
