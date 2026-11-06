@@ -91,6 +91,7 @@ data class DriverRouteDto(
     @Json(name = "route_id") val routeId: String,
     val status: RouteStatusDto,
     @Json(name = "vehicle_plate") val vehiclePlate: String,
+    @Json(name = "planned_arrival") val plannedArrival: Instant,
     val stops: List<DriverStopDto>
 )
 

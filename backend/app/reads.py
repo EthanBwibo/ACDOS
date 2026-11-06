@@ -123,7 +123,7 @@ _STOPS = """
 # The caller's ($1) active routes, each with its first live stop's time.
 # The join on assigned_driver_id is the explicit second check.
 _DRIVER_ROUTES = """
-    select r.id, r.status, r.total_distance_km, v.plate_number,
+    select r.id, r.status, r.total_distance_km, r.planned_arrival, v.plate_number,
         min(n.estimated_arrival) as first_pickup, count(n.id) as stop_count
     from public.routes r
     join public.vehicles v on v.id = r.vehicle_id
@@ -145,6 +145,7 @@ async def current_route(conn: asyncpg.Connection, driver_id: UUID) -> DriverRout
         route_id=route["id"],
         status=route["status"],
         vehicle_plate=route["plate_number"],
+        planned_arrival=route["planned_arrival"],
         stops=[
             DriverStop(
                 route_node_id=s["route_node_id"],

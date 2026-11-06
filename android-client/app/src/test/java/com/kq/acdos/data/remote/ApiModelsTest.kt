@@ -42,6 +42,7 @@ class ApiModelsTest {
     fun driverRoute_parsesStopsAndFractionalSeconds() = runBlocking {
         reply(
             """{"route":{"route_id":"r1","status":"active","vehicle_plate":"KDA 123A",
+            "planned_arrival":"2026-10-30T08:00:00Z",
             "stops":[{"route_node_id":"n1","seq_order":1,"crew_name":"Test Crew",
             "zone_label":"Westlands, Nairobi","scheduled_pickup":"2026-10-30T06:50:34.037197Z",
             "eta":null,"lat":-1.2675,"lon":36.81202},
@@ -54,6 +55,7 @@ class ApiModelsTest {
         assertEquals("/drivers/me/route", server.takeRequest().url.encodedPath)
         assertEquals(RouteStatusDto.ACTIVE, route.status)
         assertEquals("KDA 123A", route.vehiclePlate)
+        assertEquals(Instant.parse("2026-10-30T08:00:00Z"), route.plannedArrival)
         val first = route.stops[0]
         assertEquals("n1", first.routeNodeId)
         assertEquals("Westlands, Nairobi", first.zoneLabel)

@@ -291,6 +291,7 @@ class DriverRoute(BaseModel):
     route_id: UUID
     status: RouteStatus
     vehicle_plate: str
+    planned_arrival: datetime  # when the van reaches JKIA
     stops: list[DriverStop]
 
 
