@@ -51,6 +51,9 @@ data class RouteStop(
     val pickupId: String,
     val zoneLabel: String?,
     val crewName: String?,
+    /** Where the stop is on the map; null if its pickup isn't on the day's board. */
+    val lat: Double?,
+    val lon: Double?,
     val pickupAt: Instant,
     val reportTime: Instant?
 )
@@ -64,10 +67,18 @@ fun routeStops(board: DayBoard, route: DispatcherRouteDto): List<RouteStop> {
             pickupId = node.pickupRequestId,
             zoneLabel = pickup?.zoneLabel,
             crewName = pickup?.crewName,
+            lat = pickup?.lat,
+            lon = pickup?.lon,
             pickupAt = node.estimatedArrival,
             reportTime = pickup?.reportTime
         )
     }
+}
+
+/** Position in [stops] of the first pickup still to collect, or -1 when none is left. */
+fun nextStopIndex(board: DayBoard, stops: List<RouteStop>): Int {
+    val waiting = board.pickups.filter { it.status in REPLANNABLE }.map { it.id }.toSet()
+    return stops.indexOfFirst { it.pickupId in waiting }
 }
 
 /** Minutes between reaching JKIA and the first report time; negative when late. */

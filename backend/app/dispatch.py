@@ -29,6 +29,7 @@ from app.models.schemas import (
     PlannedNode,
     VehicleStatus,
 )
+from app.reads import COORDINATE_DECIMALS
 
 
 def day_bounds(day: date) -> tuple[datetime, datetime]:
@@ -68,6 +69,8 @@ def time_key(cursor: str | None) -> tuple[datetime, UUID] | None:
 # acknowledged_at is the latest notice's, in the crew's order (issued_at, id).
 _PICKUPS = """
     select p.id, c.name as crew_name, z.label as zone_label, p.report_time, p.status,
+        extensions.st_y(p.pickup_location::extensions.geometry) as lat,
+        extensions.st_x(p.pickup_location::extensions.geometry) as lon,
         exists (
             select 1 from public.schedule_change_notices s
             where s.pickup_request_id = p.id and s.acknowledged_at is null
@@ -94,6 +97,8 @@ def _pickup(row: asyncpg.Record) -> DispatcherPickup:
         id=row["id"],
         crew_name=row["crew_name"],
         zone_label=row["zone_label"],
+        lat=round(row["lat"], COORDINATE_DECIMALS),
+        lon=round(row["lon"], COORDINATE_DECIMALS),
         report_time=row["report_time"],
         status=row["status"],
         needs_ack=row["needs_ack"],
