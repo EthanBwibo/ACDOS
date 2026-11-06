@@ -60,14 +60,15 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    appears. Tap **Confirm pickup**, then **Crew on board**. After **Refresh**, the
    dispatcher's Pickups shows it `picked_up`.
 7. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
-   Pickup tab opens with a card on top, "Your pickup has changed": the reason (Vehicle
-   breakdown), the new pickup time with the old one, and the new van. Below it are the pickup
-   time, "Report at JKIA 06:15" and the van. Tap **Acknowledge**: "Acknowledged. The
+   Pickup tab opens with a card on top, "Pickup changed": the old pickup time, the new one,
+   and the reason (a vehicle breakdown). Below it are the pickup time, "Report at JKIA" 06:15
+   and the new van. Tap **Acknowledge**: "Acknowledged. The
    dispatcher can see it." The card goes, and it stays gone after a pull to refresh. On the
    emulator, tap **Refresh**: Test Crew's row in Pickups now says "Acknowledged".
 8. **Crew messages the dispatcher** (phone, then dispatcher): open the **Message** tab. It
    lists the presets as buttons and has no text field. Tap **I am running late**: "Sent to
-   the dispatcher." On the emulator, tap **Refresh**: Crew messages, at the top, shows
+   the dispatcher.", and it appears under **Recent**. On the emulator, tap **Refresh**: Crew
+   messages, at the top, shows
    "Test Crew: I am running late" with the time it was sent.
 
 **After the demo:** run `reset`. To run the demo again, start from step 1 (the phone signs

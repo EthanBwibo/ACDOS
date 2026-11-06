@@ -2,6 +2,7 @@ package com.kq.acdos.ui.crew
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -10,7 +11,6 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
-import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
 import com.kq.acdos.ui.showThemeDialog
@@ -30,7 +30,6 @@ class CrewHomeActivity : AppCompatActivity() {
         applySystemBarPadding(findViewById(R.id.main))
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        toolbar.title = intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_theme -> {
@@ -58,6 +57,11 @@ class CrewHomeActivity : AppCompatActivity() {
         if (savedInstanceState == null) show(CrewPickupFragment())
 
         openLoginWhenSessionEnds(container)
+    }
+
+    /** Each tab names itself, including when a rotation restores it. */
+    fun showTitle(@StringRes title: Int) {
+        findViewById<MaterialToolbar>(R.id.toolbar).setTitle(title)
     }
 
     private fun show(tab: Fragment) {

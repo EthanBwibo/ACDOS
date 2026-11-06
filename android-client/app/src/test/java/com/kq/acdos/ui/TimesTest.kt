@@ -38,6 +38,17 @@ class TimesTest {
     }
 
     @Test
+    fun clockWithDay_addsTheDayOnlyWhenItIsNotToday() {
+        val at = Instant.parse("2026-10-31T03:50:00Z")
+
+        assertEquals("06:50 EAT", Times.clockWithDay(at, now = at.plusSeconds(3_600)))
+        assertEquals(
+            "Sat 31 Oct, 06:50 EAT",
+            Times.clockWithDay(at, now = at.plusSeconds(86_400))
+        )
+    }
+
+    @Test
     fun clock_is24HourAcrossMidnight() {
         assertEquals("00:05 EAT", Times.clock(Instant.parse("2026-10-30T21:05:00Z")))
         assertEquals("15:00 EAT", Times.clock(Instant.parse("2026-10-30T12:00:00Z")))

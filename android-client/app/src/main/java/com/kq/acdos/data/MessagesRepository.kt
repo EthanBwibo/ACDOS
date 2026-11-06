@@ -33,15 +33,23 @@ class MessagesRepository(private val api: MessagesApi, private val dao: CrewDao)
         apiCall { api.send(idempotencyKey, CrewMessageCreateDto(presetCode)) }
 
     /** The dispatcher's inbox: the latest page, newest first. */
-    suspend fun inbox(): ApiResult<List<CrewMessageDto>> =
-        when (val result = apiCall { api.messages(limit = INBOX_SIZE) }) {
+    suspend fun inbox(): ApiResult<List<CrewMessageDto>> = latest(INBOX_SIZE)
+
+    /** The crew member's own latest messages, newest first. The server filters by caller. */
+    suspend fun recent(): ApiResult<List<CrewMessageDto>> = latest(RECENT_SIZE)
+
+    private suspend fun latest(limit: Int): ApiResult<List<CrewMessageDto>> =
+        when (val result = apiCall { api.messages(limit = limit) }) {
             is ApiResult.Success -> ApiResult.Success(result.body.items)
             is ApiResult.Error -> result
             is ApiResult.NetworkError -> result
         }
 
-    private companion object {
+    companion object {
+        /** How many messages the crew member's RECENT list shows. */
+        const val RECENT_SIZE = 5
+
         /** The server's largest page; enough for a morning's messages. */
-        const val INBOX_SIZE = 50
+        private const val INBOX_SIZE = 50
     }
 }

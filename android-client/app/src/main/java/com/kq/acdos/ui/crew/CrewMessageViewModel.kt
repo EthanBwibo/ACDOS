@@ -12,6 +12,7 @@ import com.kq.acdos.data.MessagesRepository
 import com.kq.acdos.data.local.CrewDao
 import com.kq.acdos.data.local.PresetMessageEntity
 import com.kq.acdos.data.remote.ApiResult
+import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.ErrorCode
 import java.util.UUID
 import kotlinx.coroutines.channels.Channel
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** What the crew member is told after tapping a preset. */
@@ -66,10 +68,18 @@ class CrewMessageViewModel(
      */
     private val pendingKeys = mutableMapOf<String, String>()
 
+    private val recentState = MutableStateFlow<List<CrewMessageDto>>(emptyList())
+
+    /** The crew member's own latest messages, newest first. */
+    val recent: StateFlow<List<CrewMessageDto>> = recentState.asStateFlow()
+
     fun refresh() {
         val repository = repository ?: return
-        // Quiet on failure: the cached presets still show.
+        // Quiet on failure: the cached presets and the messages already shown stay.
         viewModelScope.launch { repository.refreshPresets() }
+        viewModelScope.launch {
+            (repository.recent() as? ApiResult.Success)?.let { recentState.value = it.body }
+        }
     }
 
     fun send(presetCode: String) {
@@ -81,10 +91,19 @@ class CrewMessageViewModel(
             try {
                 val result = repository.send(presetCode, key)
                 if (result !is ApiResult.NetworkError) pendingKeys.remove(presetCode)
+                if (result is ApiResult.Success) addToRecent(result.body)
                 messageChannel.send(sendMessage(result))
             } finally {
                 sendingState.value = false
             }
+        }
+    }
+
+    /** A retry returns the message already sent, so it replaces rather than repeats. */
+    private fun addToRecent(message: CrewMessageDto) {
+        recentState.update { messages ->
+            (listOf(message) + messages.filter { it.id != message.id })
+                .take(MessagesRepository.RECENT_SIZE)
         }
     }
 

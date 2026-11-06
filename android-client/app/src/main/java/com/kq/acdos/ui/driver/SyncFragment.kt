@@ -21,7 +21,6 @@ import com.kq.acdos.R
 import com.kq.acdos.data.NetworkKind
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.showLoading
-import java.time.Instant
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -151,16 +150,8 @@ class SyncFragment : Fragment(R.layout.fragment_sync) {
             resources.getQuantityString(R.plurals.sync_waiting, queue.waiting, queue.waiting)
         }
         val synced = queue.lastSynced ?: return getString(R.string.sync_never, waiting)
-        return getString(R.string.sync_last_synced, lastSyncedTime(synced), waiting)
+        return getString(R.string.sync_last_synced, Times.clockWithDay(synced), waiting)
     }
-
-    /** With the day once it isn't today, so an old sync can't pass for a recent one. */
-    private fun lastSyncedTime(at: Instant): String =
-        if (Times.date(at) == Times.date(Instant.now())) {
-            Times.clock(at)
-        } else {
-            getString(R.string.sync_day_time, Times.day(at), Times.clock(at))
-        }
 
     private fun showResult(view: View, stillWaiting: Int) {
         val message = if (stillWaiting == 0) {
