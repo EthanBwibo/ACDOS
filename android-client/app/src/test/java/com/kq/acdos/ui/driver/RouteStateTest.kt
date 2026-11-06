@@ -43,7 +43,7 @@ class RouteStateTest {
     @After
     fun tearDown() = db.close()
 
-    private fun route(id: String, plate: String) = RouteEntity(id, plate, t0)
+    private fun route(id: String, plate: String) = RouteEntity(id, plate, t0.plusSeconds(3_600), t0)
 
     private fun stop(node: String, route: String, seq: Int, eta: Instant? = null) = RouteStopEntity(
         routeNodeId = node,
@@ -73,6 +73,7 @@ class RouteStateTest {
 
         assertEquals("KDA 123A", state.plate)
         assertEquals(t0, state.updatedAt)
+        assertEquals(t0.plusSeconds(3_600), state.arriveBy)
         assertEquals(listOf(1, 2, 3), state.stops.map { it.number })
         assertEquals(listOf("n1", "n2", "n3"), state.stops.map { it.routeNodeId })
         assertEquals("Westlands, Nairobi", state.stops[0].zoneLabel)

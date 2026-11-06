@@ -236,7 +236,7 @@ class SyncQueueTest {
             BatchResult.Answered(batch.associate { it.idempotencyKey to UploadResult.Synced })
         }
         database.driverRouteDao().saveActiveRoute(
-            RouteEntity("route-1", "KDH 101A", t0),
+            RouteEntity("route-1", "KDH 101A", t0, t0),
             listOf(stop("node-a"))
         )
         recorder.recordConfirmation("node-a")

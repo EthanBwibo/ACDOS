@@ -22,6 +22,11 @@ import kotlinx.coroutines.flow.Flow
 data class RouteEntity(
     @PrimaryKey val id: String,
     @ColumnInfo(name = "plate_number") val plateNumber: String,
+    /**
+     * When the van reaches JKIA, the route's time rather than any one crew
+     * member's. Null on a route cached before version 3, until the next refresh.
+     */
+    @ColumnInfo(name = "planned_arrival") val plannedArrival: Instant?,
     @ColumnInfo(name = "fetched_at") val fetchedAt: Instant
 )
 

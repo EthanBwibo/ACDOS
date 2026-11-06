@@ -74,7 +74,7 @@ class RefreshMessageTest {
 
     @Test
     fun spinner_showsForAPullAndForTheFirstLoadOnlyWhenNothingIsCached() {
-        val cached = RouteUiState.Route("KDA 001T", Instant.EPOCH, emptyList())
+        val cached = RouteUiState.Route("KDA 001T", Instant.EPOCH, Instant.EPOCH, emptyList())
         assertTrue(routeSpinner(pulling = true, firstLoadPending = false, cached))
         assertTrue(routeSpinner(pulling = false, firstLoadPending = true, RouteUiState.NoRoute))
         assertFalse(routeSpinner(pulling = false, firstLoadPending = true, cached))

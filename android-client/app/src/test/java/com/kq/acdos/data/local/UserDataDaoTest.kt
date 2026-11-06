@@ -39,7 +39,7 @@ class UserDataDaoTest {
     @Test
     fun clearUserData_removesCachedDataAndKeepsUnsyncedEvents() = runTest {
         db.driverRouteDao().saveActiveRoute(
-            RouteEntity("r1", "KDA 001A", t0),
+            RouteEntity("r1", "KDA 001A", t0, t0),
             listOf(RouteStopEntity("n1", "r1", 1, "Crew C", null, t0, null, -1.2675, 36.81202))
         )
         val crew = db.crewDao()
