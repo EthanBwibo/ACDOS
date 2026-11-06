@@ -25,8 +25,9 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 
 | Table | Columns | Keys and constraints |
 |---|---|---|
-| preset_messages | id UUID; code TEXT; label TEXT; created_at TIMESTAMPTZ | PK id; code unique |
+| preset_messages | id UUID; code TEXT; label TEXT; sender TEXT; created_at TIMESTAMPTZ | PK id; code unique; sender is crew or dispatcher |
 | crew_messages | id UUID; crew_member_id UUID; preset_message_id UUID; sent_at TIMESTAMPTZ; read_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK crew_member_id, preset_message_id; read_at null until reviewed by the dispatcher; idempotency_key unique (the crew app's retry key, #54) |
+| message_replies | id UUID; crew_message_id UUID; preset_message_id UUID; dispatcher_id UUID; sent_at TIMESTAMPTZ; idempotency_key TEXT; created_at TIMESTAMPTZ | PK id; FK crew_message_id (cascade), preset_message_id, dispatcher_id; idempotency_key unique |
 | schedule_change_notices | id UUID; pickup_request_id UUID; reason TEXT; previous_pickup_time TIMESTAMPTZ; new_pickup_time TIMESTAMPTZ; issued_at TIMESTAMPTZ; delivered_at TIMESTAMPTZ; acknowledged_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK pickup_request_id; reason in (flight_delay, standby_activation, vehicle_breakdown); pending while acknowledged_at is null |
 | device_tokens | id UUID; crew_member_id UUID; fcm_token TEXT; updated_at TIMESTAMPTZ | PK id; FK crew_member_id; fcm_token unique |
 
@@ -62,6 +63,7 @@ checks the two match exactly. No links to other tables: a pickup's zone is the n
 - route_nodes 1 to at most 1 trip_records (completed leg, feeds Random Forest retraining)
 - A driver reaches their route through the vehicle: vehicles.assigned_driver_id
 - crew_members 1 to many crew_messages, each from one preset_messages row
+- crew_messages 1 to many message_replies, each from one preset_messages row
 - crew_members 1 to many device_tokens
 - pickup_requests 1 to many schedule_change_notices
 
@@ -148,7 +150,12 @@ and `PUBLIC` may not.
   deletes a crew message, or sends one as someone else. Drivers see neither table.
 - A send carries the crew app's `Idempotency-Key`, stored as `idempotency_key`: a retry with
   the same key and preset returns the message already sent.
-- Messages never trigger re-optimisation: nothing reads them but the dispatcher's screen.
+- The dispatcher can reply to a crew message with one of the `dispatcher` presets (029), and
+  only those. A reply is a row in `message_replies`: no free text, it goes only to the crew
+  member who sent the message, and no client edits or deletes one. Replying marks the message
+  read. Crew can send `crew` presets only. Drivers see no replies.
+- Messages never trigger re-optimisation: nothing reads them but the dispatcher's screen and
+  the crew member's own message list.
 
 ## Conventions
 

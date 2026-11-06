@@ -478,7 +478,7 @@ class VehicleStatusUpdate(BaseModel):
 
 
 class PresetMessage(BaseModel):
-    code: str  # what POST /messages takes
+    code: str  # what POST /messages or POST /messages/{id}/replies takes
     label: str  # what the screens show
 
 
@@ -490,6 +490,17 @@ class CrewMessageCreate(BaseModel):
     preset_code: str = Field(min_length=1, max_length=64)
 
 
+class MessageReplyCreate(BaseModel):
+    preset_code: str = Field(min_length=1, max_length=64)
+
+
+class MessageReply(BaseModel):
+    id: UUID
+    preset_code: str
+    label: str
+    sent_at: datetime
+
+
 class CrewMessage(BaseModel):
     id: UUID
     crew_member_id: UUID
@@ -498,6 +509,7 @@ class CrewMessage(BaseModel):
     label: str
     sent_at: datetime
     read_at: datetime | None  # null until the dispatcher has read it
+    replies: list[MessageReply]  # the dispatcher's, oldest first
 
 
 class CrewMessagePage(BaseModel):

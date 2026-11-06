@@ -63,7 +63,17 @@ data class CrewMessageDto(
     val label: String,
     @Json(name = "sent_at") val sentAt: Instant,
     /** Null until the dispatcher has read it. */
-    @Json(name = "read_at") val readAt: Instant?
+    @Json(name = "read_at") val readAt: Instant?,
+    /** The dispatcher's preset replies, oldest first. */
+    val replies: List<MessageReplyDto>
+)
+
+@JsonClass(generateAdapter = true)
+data class MessageReplyDto(
+    val id: String,
+    @Json(name = "preset_code") val presetCode: String,
+    val label: String,
+    @Json(name = "sent_at") val sentAt: Instant
 )
 
 @JsonClass(generateAdapter = true)

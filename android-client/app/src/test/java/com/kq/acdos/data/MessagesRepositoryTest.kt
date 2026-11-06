@@ -93,6 +93,6 @@ class MessagesRepositoryTest {
 
     private companion object {
         fun message(id: String, code: String) =
-            CrewMessageDto(id, "c1", "Test Crew", code, code, Instant.EPOCH, null)
+            CrewMessageDto(id, "c1", "Test Crew", code, code, Instant.EPOCH, null, emptyList())
     }
 }

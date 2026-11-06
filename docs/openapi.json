@@ -37,6 +37,13 @@
             ],
             "title": "Read At"
           },
+          "replies": {
+            "items": {
+              "$ref": "#/components/schemas/MessageReply"
+            },
+            "title": "Replies",
+            "type": "array"
+          },
           "sent_at": {
             "format": "date-time",
             "title": "Sent At",
@@ -50,7 +57,8 @@
           "preset_code",
           "label",
           "sent_at",
-          "read_at"
+          "read_at",
+          "replies"
         ],
         "title": "CrewMessage",
         "type": "object"
@@ -656,6 +664,51 @@
           "late_sec"
         ],
         "title": "LatePickup",
+        "type": "object"
+      },
+      "MessageReply": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "preset_code": {
+            "title": "Preset Code",
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "title": "Sent At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "preset_code",
+          "label",
+          "sent_at"
+        ],
+        "title": "MessageReply",
+        "type": "object"
+      },
+      "MessageReplyCreate": {
+        "properties": {
+          "preset_code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Preset Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preset_code"
+        ],
+        "title": "MessageReplyCreate",
         "type": "object"
       },
       "NoticeAcknowledged": {
@@ -2017,6 +2070,132 @@
         ]
       }
     },
+    "/messages/{message_id}/replies": {
+      "post": {
+        "description": "The dispatcher replies with a preset, which also marks the message\nread. Safe to retry with the same Idempotency-Key: the retry gets the\nreply already sent.",
+        "operationId": "reply_to_message_messages__message_id__replies_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "message_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Message Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageReplyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageReply"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused",
+            "x-error-codes": [
+              "validation_failed",
+              "idempotency_key_reused"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reply To Message",
+        "tags": [
+          "messages"
+        ]
+      }
+    },
     "/optimisation-jobs": {
       "post": {
         "operationId": "create_job_optimisation_jobs_post",
@@ -2484,7 +2663,7 @@
     },
     "/preset-messages": {
       "get": {
-        "description": "The presets crew may send. A fixed set, so not paginated.",
+        "description": "The presets the caller may send: crew get the messages, the dispatcher\nthe replies. A fixed set, so not paginated.",
         "operationId": "list_presets_preset_messages_get",
         "responses": {
           "200": {

@@ -32,7 +32,8 @@ private fun message(id: String, readAt: Instant? = null) = CrewMessageDto(
     presetCode = "running_late",
     label = "I am running late",
     sentAt = Instant.EPOCH,
-    readAt = readAt
+    readAt = readAt,
+    replies = emptyList()
 )
 
 /** The RECENT list on the Message tab. */

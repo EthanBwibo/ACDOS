@@ -68,6 +68,7 @@ class OpenApiContractTest {
         "PickupEventResult" to PickupEventResultDto::class.java,
         "PresetMessageList" to PresetMessageListDto::class.java,
         "PresetMessage" to PresetMessageDto::class.java,
+        "MessageReply" to MessageReplyDto::class.java,
         "CrewMessageCreate" to CrewMessageCreateDto::class.java,
         "CrewMessage" to CrewMessageDto::class.java,
         "CrewMessageRead" to CrewMessageReadDto::class.java,

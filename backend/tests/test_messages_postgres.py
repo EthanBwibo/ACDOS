@@ -36,6 +36,7 @@ pytestmark = [
 KEY = SigningKey("messages-key")
 RUN = uuid4().hex[:8]
 PRESETS = ["at_pickup_point", "cannot_find_van", "flight_changed", "please_call_me", "running_late"]
+REPLIES = ["call_dispatcher", "noted", "van_rerouted"]
 
 
 def db(query):
@@ -129,12 +130,12 @@ def job_count() -> int:
     return db(lambda conn: conn.fetchval("select count(*) from public.optimization_jobs"))
 
 
-@pytest.mark.parametrize("user", ["C", "D"])
-def test_crew_and_the_dispatcher_get_the_fixed_presets(client, world, user):
+@pytest.mark.parametrize("user, presets", [("C", PRESETS), ("D", REPLIES)])
+def test_crew_and_the_dispatcher_get_the_presets_they_may_send(client, world, user, presets):
     response = client.get("/preset-messages", headers=as_user(world, user))
     assert response.status_code == 200, response.text
     items = response.json()["items"]
-    assert [i["code"] for i in items] == PRESETS
+    assert [i["code"] for i in items] == presets
     assert all(i["label"] for i in items)
 
 
@@ -172,8 +173,9 @@ def test_a_key_already_used_for_another_message_is_refused(client, world, sender
     assert len(stored(world)) == 1
 
 
-def test_an_unknown_preset_is_refused(client, world):
-    response = send(client, world, "C", "free text is not a preset")
+@pytest.mark.parametrize("code", ["free text is not a preset", "noted"])
+def test_an_unknown_preset_or_a_reply_preset_is_refused(client, world, code):
+    response = send(client, world, "C", code)
     assert (response.status_code, response.json()["code"]) == (422, "validation_failed")
     assert stored(world) == []
 
@@ -250,7 +252,93 @@ def test_an_unknown_message_is_404(client, world):
     assert (response.status_code, response.json()["code"]) == (404, "not_found")
 
 
-# RLS (028), as each role, in a transaction rolled back at the end.
+def reply(client, world, message, code="noted", user="D", key=None):
+    headers = as_user(world, user) | {"Idempotency-Key": key or f"test-{RUN}-{uuid4().hex}"}
+    return client.post(f"/messages/{message}/replies", json={"preset_code": code}, headers=headers)
+
+
+def own_messages(client, world, user):
+    return client.get("/messages", headers=as_user(world, user)).json()["items"]
+
+
+def test_a_reply_reaches_only_the_crew_member_who_sent_the_message(client, world):
+    theirs = send(client, world, "C").json()["id"]
+    send(client, world, "E")
+
+    response = reply(client, world, theirs, "van_rerouted")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["label"] == "Van rerouted"
+    mine = own_messages(client, world, "C")
+    assert [r["preset_code"] for r in mine[0]["replies"]] == ["van_rerouted"]
+    assert own_messages(client, world, "E")[0]["replies"] == []
+
+
+def test_replying_marks_the_message_read(client, world):
+    message = send(client, world, "C").json()["id"]
+    reply(client, world, message)
+    assert stored(world)[0]["read_at"] is not None
+
+
+def test_replies_come_oldest_first(client, world):
+    message = send(client, world, "C").json()["id"]
+    reply(client, world, message, "noted")
+    reply(client, world, message, "call_dispatcher")
+
+    replies = own_messages(client, world, "D")[0]["replies"]
+
+    assert [r["preset_code"] for r in replies] == ["noted", "call_dispatcher"]
+
+
+def test_a_retried_reply_is_sent_once(client, world):
+    message = send(client, world, "C").json()["id"]
+    key = f"test-{RUN}-reply"
+
+    first = reply(client, world, message, key=key)
+    second = reply(client, world, message, key=key)
+
+    assert first.status_code == 200, first.text
+    assert second.json() == first.json()
+    assert len(own_messages(client, world, "C")[0]["replies"]) == 1
+
+
+def test_a_key_used_for_another_reply_is_refused(client, world):
+    first, other = (send(client, world, "C").json()["id"] for _ in range(2))
+    key = f"test-{RUN}-reply-used"
+    reply(client, world, first, key=key)
+
+    for message, code in [(other, "noted"), (first, "van_rerouted")]:
+        response = reply(client, world, message, code, key=key)
+        assert (response.status_code, response.json()["code"]) == (422, "idempotency_key_reused")
+
+
+@pytest.mark.parametrize("code", ["free text is not a preset", "running_late"])
+def test_a_reply_must_be_a_reply_preset(client, world, code):
+    message = send(client, world, "C").json()["id"]
+    response = reply(client, world, message, code)
+    assert (response.status_code, response.json()["code"]) == (422, "validation_failed")
+    assert stored(world)[0]["read_at"] is None
+
+
+@pytest.mark.parametrize("user", ["C", "A"])
+def test_only_the_dispatcher_may_reply(client, world, user):
+    message = send(client, world, "C").json()["id"]
+    assert reply(client, world, message, user=user).status_code == 403
+
+
+def test_a_reply_to_an_unknown_message_is_404(client, world):
+    response = reply(client, world, uuid4())
+    assert (response.status_code, response.json()["code"]) == (404, "not_found")
+
+
+def test_a_reply_never_starts_a_job(client, world):
+    message = send(client, world, "C").json()["id"]
+    before = job_count()
+    reply(client, world, message)
+    assert job_count() == before
+
+
+# RLS (028, 029), as each role, in a transaction rolled back at the end.
 
 
 def as_role(world: World, name: str, steps):
@@ -320,9 +408,11 @@ def test_drivers_see_nothing_and_crew_only_their_own(client, world):
 
         return as_role(world, name, steps)
 
+    # Both sets are readable; GET /preset-messages picks the caller's.
+    presets = len(PRESETS) + len(REPLIES)
     assert seen("A") == (0, 0, 0)
-    assert seen("C") == (1, len(PRESETS), 1)
-    assert seen("D") == (2, len(PRESETS), 2)
+    assert seen("C") == (1, presets, 1)
+    assert seen("D") == (2, presets, 2)
 
 
 def test_crew_cannot_mark_read_edit_or_delete_and_nobody_edits_presets(client, world):
@@ -354,3 +444,86 @@ def test_crew_cannot_mark_read_edit_or_delete_and_nobody_edits_presets(client, w
         with pytest.raises(asyncpg.InsufficientPrivilegeError):
             as_role(world, name, attempt)
     assert stored(world)[0]["read_at"] is None
+
+
+def preset_id(code: str) -> UUID:
+    return db(
+        lambda conn: conn.fetchval("select id from public.preset_messages where code = $1", code)
+    )
+
+
+def insert_reply(world: World, user: str, message: str, code: str = "noted", sender: str = "D"):
+    preset = preset_id(code)  # read first: as_role is already inside a loop
+
+    async def attempt(conn):
+        await conn.execute(
+            "insert into public.message_replies "
+            "(crew_message_id, preset_message_id, dispatcher_id, idempotency_key) "
+            "values ($1, $2, $3, $4)",
+            UUID(message),
+            preset,
+            world.users[sender],
+            f"test-{RUN}-{uuid4().hex}",
+        )
+
+    as_role(world, user, attempt)
+
+
+@pytest.mark.parametrize(
+    "user, code, sender",
+    [
+        ("C", "noted", "C"),  # crew can't reply
+        ("A", "noted", "A"),  # nor can drivers
+        ("D", "running_late", "D"),  # a dispatcher can't send a crew preset
+        ("D", "noted", "C"),  # or reply as someone else
+    ],
+)
+def test_rls_keeps_replies_to_dispatchers_and_their_presets(client, world, user, code, sender):
+    message = send(client, world, "C").json()["id"]
+    with pytest.raises(asyncpg.InsufficientPrivilegeError):
+        insert_reply(world, user, message, code, sender)
+
+
+def test_rls_keeps_crew_to_crew_presets(client, world):
+    preset = preset_id("noted")
+
+    async def attempt(conn):
+        await conn.execute(
+            "insert into public.crew_messages "
+            "(crew_member_id, preset_message_id, idempotency_key) values ($1, $2, $3)",
+            world.crew["C"],
+            preset,
+            f"test-{RUN}-{uuid4().hex}",
+        )
+
+    with pytest.raises(asyncpg.InsufficientPrivilegeError):
+        as_role(world, "C", attempt)
+
+
+@pytest.mark.parametrize("user, seen", [("C", 1), ("D", 1), ("E", 0), ("A", 0)])
+def test_rls_shows_a_reply_to_its_crew_member_and_the_dispatcher(client, world, user, seen):
+    message = send(client, world, "C").json()["id"]
+    reply(client, world, message)
+
+    async def count(conn):
+        return await conn.fetchval(
+            "select count(*) from public.message_replies where crew_message_id = $1",
+            UUID(message),
+        )
+
+    assert as_role(world, user, count) == seen
+
+
+def test_nobody_edits_or_deletes_a_reply(client, world):
+    message = send(client, world, "C").json()["id"]
+    reply(client, world, message)
+    for query in [
+        "update public.message_replies set preset_message_id = preset_message_id",
+        "delete from public.message_replies",
+    ]:
+
+        async def attempt(conn, query=query):
+            await conn.execute(query)
+
+        with pytest.raises(asyncpg.InsufficientPrivilegeError):
+            as_role(world, "D", attempt)
