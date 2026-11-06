@@ -75,6 +75,8 @@ data class DispatcherPickupDto(
     val id: String,
     @Json(name = "crew_name") val crewName: String,
     @Json(name = "zone_label") val zoneLabel: String?,
+    val lat: Double,
+    val lon: Double,
     @Json(name = "report_time") val reportTime: Instant,
     val status: PickupRequestStatusDto,
     /** True while a schedule-change notice is not acknowledged by the crew (#53). */

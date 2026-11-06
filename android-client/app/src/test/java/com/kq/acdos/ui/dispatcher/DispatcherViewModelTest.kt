@@ -49,6 +49,8 @@ class DispatcherViewModelTest {
         id,
         "Crew $id",
         "Kilimani, Nairobi",
+        -1.3,
+        36.8,
         t0,
         status,
         needsAck = false,

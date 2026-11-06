@@ -16,20 +16,23 @@ import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
 import com.kq.acdos.data.RouteStop
 import com.kq.acdos.data.latePickups
+import com.kq.acdos.data.nextStopIndex
 import com.kq.acdos.data.orderedRoutes
 import com.kq.acdos.data.remote.DispatcherRouteDto
 import com.kq.acdos.data.routeStops
 import com.kq.acdos.data.slackMinutes
 import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.driver.MapPoint
+import com.kq.acdos.ui.driver.RouteMapView
 import com.kq.acdos.ui.driver.shortZone
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 /**
  * One route's stops, with each crew member's report time next to the pickup
- * so the slack is visible (Figma 2:132). The API has no coordinates or driver
- * for a route, so there is no map or driver chip, and no way to message a
- * driver: all messages go through the dispatcher's crew inbox.
+ * so the slack is visible (Figma 2:132). The map is the driver's schematic one.
+ * The API has no driver for a route, so there is no driver chip, and no way to
+ * message a driver: all messages go through the dispatcher's crew inbox.
  */
 class RouteDetailFragment : Fragment(R.layout.fragment_route_detail) {
     private val viewModel: DispatcherViewModel by activityViewModels {
@@ -49,6 +52,7 @@ class RouteDetailFragment : Fragment(R.layout.fragment_route_detail) {
                     if (board != null && index >= 0) {
                         val route = routes[index]
                         home.showTitle(routeName(index + 1, route.vehiclePlate))
+                        showMap(view, board, route)
                         showChips(view, board, route)
                         showStops(view, board, route)
                     } else if (board != null) {
@@ -57,6 +61,14 @@ class RouteDetailFragment : Fragment(R.layout.fragment_route_detail) {
                 }
             }
         }
+    }
+
+    private fun showMap(view: View, board: DayBoard, route: DispatcherRouteDto) {
+        val stops = routeStops(board, route)
+        val placed = stops.filter { it.lat != null && it.lon != null }
+        val map = view.findViewById<RouteMapView>(R.id.map)
+        map.contentDescription = getString(R.string.route_map_description, placed.size)
+        map.show(placed.map { MapPoint(it.lat!!, it.lon!!) }, nextStopIndex(board, placed))
     }
 
     private fun showChips(view: View, board: DayBoard, route: DispatcherRouteDto) {

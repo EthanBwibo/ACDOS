@@ -272,6 +272,8 @@ def test_the_days_pickups_in_report_order_with_their_zone(client, world):
         "id": str(p["westlands"]),
         "crew_name": f"Crew westlands {RUN}",
         "zone_label": "Westlands, Nairobi",
+        "lat": POINTS["Westlands"][0],
+        "lon": POINTS["Westlands"][1],
         "report_time": first["report_time"],
         "status": "picked_up",
         "needs_ack": False,

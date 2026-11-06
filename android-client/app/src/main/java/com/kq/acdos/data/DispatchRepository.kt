@@ -52,7 +52,7 @@ fun strandedPickups(board: DayBoard, vehicleId: String): List<String> {
     return board.pickups.filter { it.id in onVan && it.status in REPLANNABLE }.map { it.id }
 }
 
-private val REPLANNABLE = setOf(PickupRequestStatusDto.PENDING, PickupRequestStatusDto.ASSIGNED)
+internal val REPLANNABLE = setOf(PickupRequestStatusDto.PENDING, PickupRequestStatusDto.ASSIGNED)
 
 /** The dispatcher's calls (#137, #51). Online only: nothing is cached. */
 class DispatchRepository(

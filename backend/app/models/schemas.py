@@ -415,6 +415,9 @@ class DispatcherPickup(BaseModel):
     id: UUID
     crew_name: str
     zone_label: str | None  # nearest pickup zone; null only without zones
+    # For the dispatcher's route map, rounded as on the driver's route.
+    lat: float
+    lon: float
     report_time: datetime  # the deadline at JKIA
     status: PickupRequestStatus
     # A schedule-change notice (#53) the crew member has not acknowledged:

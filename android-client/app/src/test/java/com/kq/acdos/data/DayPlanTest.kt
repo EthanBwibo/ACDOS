@@ -17,16 +17,22 @@ class DayPlanTest {
 
     private fun at(minutes: Long) = t0.plusSeconds(minutes * 60)
 
-    private fun pickup(id: String, report: Long, zone: String? = "Karen, Nairobi") =
-        DispatcherPickupDto(
-            id = id,
-            crewName = "Crew $id",
-            zoneLabel = zone,
-            reportTime = at(report),
-            status = PickupRequestStatusDto.ASSIGNED,
-            needsAck = false,
-            acknowledgedAt = null
-        )
+    private fun pickup(
+        id: String,
+        report: Long,
+        zone: String? = "Karen, Nairobi",
+        status: PickupRequestStatusDto = PickupRequestStatusDto.ASSIGNED
+    ) = DispatcherPickupDto(
+        id = id,
+        crewName = "Crew $id",
+        zoneLabel = zone,
+        lat = -1.3,
+        lon = 36.8,
+        reportTime = at(report),
+        status = status,
+        needsAck = false,
+        acknowledgedAt = null
+    )
 
     private fun route(id: String, van: String, leaves: Long, arrives: Long, vararg stops: String) =
         DispatcherRouteDto(
@@ -83,6 +89,28 @@ class DayPlanTest {
         assertEquals("Crew p2", stop.crewName)
         assertEquals(at(50), stop.reportTime)
         assertEquals(at(31), stop.pickupAt)
+        assertEquals(-1.3, stop.lat!!, 0.0)
+        assertEquals(36.8, stop.lon!!, 0.0)
+    }
+
+    @Test
+    fun `the next stop is the first still to collect`() {
+        val picked = PickupRequestStatusDto.PICKED_UP
+        val partly = board.copy(
+            pickups = listOf(pickup("p3", 200, status = picked), pickup("p2", 50))
+        )
+        val route = partly.routes[0]
+
+        assertEquals(1, nextStopIndex(partly, routeStops(partly, route)))
+    }
+
+    @Test
+    fun `no stop is next once the route is finished`() {
+        val done = board.copy(
+            pickups = board.pickups.map { it.copy(status = PickupRequestStatusDto.PICKED_UP) }
+        )
+
+        assertEquals(-1, nextStopIndex(done, routeStops(done, done.routes[0])))
     }
 
     @Test

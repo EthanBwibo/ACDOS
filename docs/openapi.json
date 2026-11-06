@@ -237,6 +237,14 @@
             "title": "Id",
             "type": "string"
           },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
           "needs_ack": {
             "title": "Needs Ack",
             "type": "boolean"
@@ -265,6 +273,8 @@
           "id",
           "crew_name",
           "zone_label",
+          "lat",
+          "lon",
           "report_time",
           "status",
           "needs_ack",
