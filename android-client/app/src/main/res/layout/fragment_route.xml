@@ -84,6 +84,10 @@
                             android:id="@+id/next_leg"
                             layout="@layout/view_detail_row" />
 
+                        <include
+                            android:id="@+id/next_arrive"
+                            layout="@layout/view_detail_row" />
+
                         <com.google.android.material.chip.Chip
                             android:id="@+id/status_warning"
                             style="@style/Widget.ACDOS.Chip.Warning"

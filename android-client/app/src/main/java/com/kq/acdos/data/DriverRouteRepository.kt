@@ -99,7 +99,7 @@ class DriverRouteRepository(
             return RefreshResult.NO_ROUTE
         }
         dao.saveActiveRoute(
-            RouteEntity(route.routeId, route.vehiclePlate, fetchedAt),
+            RouteEntity(route.routeId, route.vehiclePlate, route.plannedArrival, fetchedAt),
             route.stops.map { stop ->
                 RouteStopEntity(
                     routeNodeId = stop.routeNodeId,

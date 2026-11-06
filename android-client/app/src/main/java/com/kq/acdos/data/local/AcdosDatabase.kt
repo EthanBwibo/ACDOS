@@ -24,7 +24,7 @@ import androidx.room.TypeConverters
         PresetMessageEntity::class,
         PendingPickupEventEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
