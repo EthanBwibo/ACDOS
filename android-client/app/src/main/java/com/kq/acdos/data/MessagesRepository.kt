@@ -6,7 +6,10 @@ import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.CrewMessageCreateDto
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.CrewMessageReadDto
+import com.kq.acdos.data.remote.MessageReplyCreateDto
+import com.kq.acdos.data.remote.MessageReplyDto
 import com.kq.acdos.data.remote.MessagesApi
+import com.kq.acdos.data.remote.PresetMessageDto
 import com.kq.acdos.data.remote.apiCall
 
 /**
@@ -36,6 +39,25 @@ class MessagesRepository(private val api: MessagesApi, private val dao: CrewDao)
     /** Safe to retry: the first read time stands. */
     suspend fun markRead(messageId: String): ApiResult<CrewMessageReadDto> =
         apiCall { api.markRead(messageId) }
+
+    /**
+     * The presets the dispatcher may reply with. The server picks them by
+     * caller. Not cached: replying needs the network anyway.
+     */
+    suspend fun replyPresets(): ApiResult<List<PresetMessageDto>> =
+        when (val result = apiCall { api.presets() }) {
+            is ApiResult.Success -> ApiResult.Success(result.body.items)
+            is ApiResult.Error -> result
+            is ApiResult.NetworkError -> result
+        }
+
+    /** [idempotencyKey] stays the same across retries of one tap, so it is sent once. */
+    suspend fun reply(
+        messageId: String,
+        presetCode: String,
+        idempotencyKey: String
+    ): ApiResult<MessageReplyDto> =
+        apiCall { api.reply(messageId, idempotencyKey, MessageReplyCreateDto(presetCode)) }
 
     /** The dispatcher's inbox: the latest page, newest first. */
     suspend fun inbox(): ApiResult<List<CrewMessageDto>> = latest(INBOX_SIZE)

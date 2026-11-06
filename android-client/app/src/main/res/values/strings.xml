@@ -228,6 +228,12 @@
     <string name="dispatch_filter_unread">Unread</string>
     <string name="dispatch_message_quote">“%1$s”</string>
     <string name="dispatch_message_new">New</string>
+    <string name="dispatch_reply_presets">Reply with preset</string>
+    <string name="dispatch_reply_to">To %1$s</string>
+    <string name="dispatch_replied">Replied: %1$s</string>
+    <string name="dispatch_reply_sent">Reply sent.</string>
+    <string name="dispatch_reply_offline">Not sent: no connection. Tap it again to retry.</string>
+    <string name="dispatch_reply_failed">Couldn\'t send that reply. Try again shortly.</string>
     <string name="dispatch_job_done">Plan ready: %1$d routes, %2$d late, %3$d unassigned</string>
     <string name="dispatch_job_failed">Optimisation failed: %1$s</string>
     <string name="dispatch_job_failed_unknown">Optimisation didn\'t finish. Refresh to check the routes.</string>
@@ -262,6 +268,7 @@
     <string name="crew_message_hint">Pick a message. It goes to the dispatcher.</string>
     <string name="crew_message_recent">Recent</string>
     <string name="crew_message_row">You · %1$s</string>
+    <string name="crew_message_reply_row">Dispatch · %1$s</string>
     <string name="crew_message_sent_at">Sent %1$s</string>
     <string name="crew_message_seen_at">Sent %1$s · seen</string>
     <string name="crew_message_no_presets">No messages to send yet. Open this tab again with a connection.</string>

@@ -74,6 +74,11 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    the dispatcher.", and it appears under **Recent**. On the emulator, tap **Refresh**: Alerts
    counts one unread, and **Messages** shows Test Crew's "I am running late" with the time it
    was sent.
+9. **Dispatcher replies** (dispatcher, then phone): tap that message. It's marked read, and
+   the presets appear under it. Tap **Noted**: "Reply sent.", and the row says "Replied: Noted".
+   On the phone, open the **Pickup** tab, then **Message** again: **Recent** shows
+   "Dispatch · Noted" above the message. Replies are presets only, go only to that crew member,
+   and don't start a re-plan.
 
 **After the demo:** run `reset`. To run the demo again, start from step 1 (the phone signs
 in as that run's driver in step 6).
