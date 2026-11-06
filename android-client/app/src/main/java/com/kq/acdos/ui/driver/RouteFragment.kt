@@ -179,7 +179,7 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         startActivity(ConfirmPickupActivity.intent(requireContext(), stop.routeNodeId))
     }
 
-    private fun showNext(view: View, stop: StopRow, arriveBy: Instant) {
+    private fun showNext(view: View, stop: StopRow, arriveBy: Instant?) {
         view.findViewById<TextView>(R.id.next_title).text =
             getString(R.string.route_next_title, zoneName(stop), stop.crewName)
         val time = view.findViewById<View>(R.id.next_time)
@@ -194,8 +194,9 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         }
 
         val arrive = view.findViewById<View>(R.id.next_arrive)
+        arrive.isVisible = arriveBy != null
         arrive.findViewById<TextView>(R.id.detail_label).setText(R.string.route_arrive_by)
-        arrive.findViewById<TextView>(R.id.detail_value).text = Times.clock(arriveBy)
+        arrive.findViewById<TextView>(R.id.detail_value).text = arriveBy?.let(Times::clock)
 
         val warning = view.findViewById<TextView>(R.id.status_warning)
         warning.isVisible = stop.progress != null

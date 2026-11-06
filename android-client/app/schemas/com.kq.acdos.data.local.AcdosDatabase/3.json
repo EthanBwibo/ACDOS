@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "8d0ce49ec6aab4cf23ab6610923b91b4",
+    "identityHash": "000274bffe1e05470c2e9d66e485254d",
     "entities": [
       {
         "tableName": "driver_route",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `plate_number` TEXT NOT NULL, `planned_arrival` INTEGER NOT NULL, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `plate_number` TEXT NOT NULL, `planned_arrival` INTEGER, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -23,8 +23,7 @@
           {
             "fieldPath": "plannedArrival",
             "columnName": "planned_arrival",
-            "affinity": "INTEGER",
-            "notNull": true
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "fetchedAt",
@@ -322,7 +321,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8d0ce49ec6aab4cf23ab6610923b91b4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '000274bffe1e05470c2e9d66e485254d')"
     ]
   }
 }

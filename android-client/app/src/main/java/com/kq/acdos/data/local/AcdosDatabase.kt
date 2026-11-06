@@ -1,6 +1,7 @@
 package com.kq.acdos.data.local
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -25,7 +26,9 @@ import androidx.room.TypeConverters
         PendingPickupEventEntity::class
     ],
     version = 3,
-    exportSchema = true
+    exportSchema = true,
+    // Keep every step from here on: an update must never lose queued pickup events.
+    autoMigrations = [AutoMigration(from = 2, to = 3)]
 )
 @TypeConverters(Converters::class)
 abstract class AcdosDatabase : RoomDatabase() {
@@ -38,11 +41,12 @@ abstract class AcdosDatabase : RoomDatabase() {
     abstract fun userDataDao(): UserDataDao
 
     companion object {
-        private const val NAME = "acdos.db"
+        const val NAME = "acdos.db"
 
         fun build(context: Context): AcdosDatabase =
             Room.databaseBuilder(context, AcdosDatabase::class.java, NAME)
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                // Only version 1, which never left development.
+                .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1)
                 .build()
     }
 }
