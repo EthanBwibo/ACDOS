@@ -5,6 +5,7 @@ import com.kq.acdos.data.local.PresetMessageEntity
 import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.CrewMessageCreateDto
 import com.kq.acdos.data.remote.CrewMessageDto
+import com.kq.acdos.data.remote.CrewMessageReadDto
 import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.apiCall
 
@@ -31,6 +32,10 @@ class MessagesRepository(private val api: MessagesApi, private val dao: CrewDao)
     /** [idempotencyKey] stays the same across retries of one tap, so it is sent once. */
     suspend fun send(presetCode: String, idempotencyKey: String): ApiResult<CrewMessageDto> =
         apiCall { api.send(idempotencyKey, CrewMessageCreateDto(presetCode)) }
+
+    /** Safe to retry: the first read time stands. */
+    suspend fun markRead(messageId: String): ApiResult<CrewMessageReadDto> =
+        apiCall { api.markRead(messageId) }
 
     /** The dispatcher's inbox: the latest page, newest first. */
     suspend fun inbox(): ApiResult<List<CrewMessageDto>> = latest(INBOX_SIZE)

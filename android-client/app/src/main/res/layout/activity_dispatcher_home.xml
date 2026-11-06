@@ -11,7 +11,8 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:menu="@menu/dispatcher_home" />
+        app:menu="@menu/dispatcher_home"
+        app:navigationIconTint="?attr/colorOnSurface" />
 
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/loading"
@@ -20,135 +21,11 @@
         android:indeterminate="true"
         android:visibility="invisible" />
 
-    <androidx.core.widget.NestedScrollView
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/screen"
+        android:background="?android:attr/colorBackground"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="?android:attr/colorBackground">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/previous_day"
-                    style="?attr/borderlessButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dispatch_previous_day" />
-
-                <TextView
-                    android:id="@+id/date"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:textAppearance="?attr/textAppearanceTitleMedium" />
-
-                <Button
-                    android:id="@+id/next_day"
-                    style="?attr/borderlessButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dispatch_next_day" />
-
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/run_optimisation"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/dispatch_run_optimisation" />
-
-            <TextView
-                android:id="@+id/job_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
-                android:visibility="gone" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/replan_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:id="@+id/replan_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBodyLarge" />
-
-                    <Button
-                        android:id="@+id/replan"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/dispatch_replan" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                style="@style/Widget.ACDOS.SectionHeader"
-                android:text="@string/dispatch_messages" />
-
-            <LinearLayout
-                android:id="@+id/inbox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <TextView
-                style="@style/Widget.ACDOS.SectionHeader"
-                android:text="@string/dispatch_routes" />
-
-            <LinearLayout
-                android:id="@+id/routes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <TextView
-                style="@style/Widget.ACDOS.SectionHeader"
-                android:text="@string/dispatch_pickups" />
-
-            <LinearLayout
-                android:id="@+id/pickups"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <TextView
-                style="@style/Widget.ACDOS.SectionHeader"
-                android:text="@string/dispatch_vehicles" />
-
-            <LinearLayout
-                android:id="@+id/vehicles"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
+        android:layout_weight="1" />
 
 </LinearLayout>

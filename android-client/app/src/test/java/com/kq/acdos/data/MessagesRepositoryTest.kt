@@ -7,6 +7,7 @@ import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.CrewMessageCreateDto
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.CrewMessagePageDto
+import com.kq.acdos.data.remote.CrewMessageReadDto
 import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.PresetMessageDto
 import com.kq.acdos.data.remote.PresetMessageListDto
@@ -44,6 +45,9 @@ class MessagesRepositoryTest {
 
         override suspend fun messages(cursor: String?, limit: Int?) =
             Response.success(CrewMessagePageDto(inbox, null))
+
+        override suspend fun markRead(messageId: String) =
+            Response.success(CrewMessageReadDto(messageId, Instant.EPOCH))
     }
 
     @Before
