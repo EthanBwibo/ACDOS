@@ -21,6 +21,8 @@
         android:indeterminate="true"
         android:visibility="invisible" />
 
+    <include layout="@layout/view_status_banners" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/screen"
         android:background="?android:attr/colorBackground"

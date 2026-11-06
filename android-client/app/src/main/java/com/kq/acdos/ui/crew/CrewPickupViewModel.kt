@@ -51,6 +51,28 @@ fun crewRefreshMessage(result: RefreshResult, manual: Boolean): Int? = when (res
     RefreshResult.UPDATED, RefreshResult.NO_ROUTE, RefreshResult.THROTTLED -> null
 }
 
+/** The Pickup tab around the pickup itself. */
+data class PickupChrome(val spinner: Boolean, val showEmpty: Boolean, @StringRes val error: Int?)
+
+/**
+ * "No pickup coming up" only once the server has said so. Until then the tab
+ * spins, and a failed load says it failed. A cached pickup hides both: its
+ * "Updated" time shows how old it is.
+ */
+fun pickupChrome(
+    state: CrewPickupState,
+    firstLoadPending: Boolean,
+    @StringRes loadError: Int?,
+    refreshing: Boolean
+): PickupChrome {
+    val noCopy = state !is CrewPickupState.Pickup
+    return PickupChrome(
+        spinner = refreshing || (noCopy && firstLoadPending),
+        showEmpty = state == CrewPickupState.NoPickup && !firstLoadPending && loadError == null,
+        error = loadError.takeIf { noCopy && !firstLoadPending }
+    )
+}
+
 /** What the crew member is told after tapping Acknowledge. */
 @StringRes
 fun acknowledgeMessage(result: RefreshResult): Int = when (result) {
@@ -82,6 +104,17 @@ class CrewPickupViewModel(dao: CrewDao, private val repository: CrewPickupReposi
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CrewPickupState.Loading)
 
+    private val firstLoadState = MutableStateFlow(repository != null)
+
+    /** True until the first refresh answers, so an empty cache doesn't read as "no pickup". */
+    val firstLoadPending: StateFlow<Boolean> = firstLoadState.asStateFlow()
+
+    private val failureState = MutableStateFlow<Int?>(null)
+
+    /** Why the last refresh failed, null once one works. Only shown with nothing cached. */
+    @StringRes
+    val loadError: StateFlow<Int?> = failureState.asStateFlow()
+
     private val refreshingState = MutableStateFlow(false)
 
     /** True while a pull to refresh is running, for the spinner. */
@@ -99,8 +132,10 @@ class CrewPickupViewModel(dao: CrewDao, private val repository: CrewPickupReposi
         viewModelScope.launch {
             try {
                 val result = repository.refresh()
+                failureState.value = crewRefreshMessage(result, manual = true)
                 crewRefreshMessage(result, manual)?.let { messageChannel.send(it) }
             } finally {
+                firstLoadState.value = false
                 if (manual) refreshingState.value = false
             }
         }

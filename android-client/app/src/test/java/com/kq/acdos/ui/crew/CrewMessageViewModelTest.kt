@@ -16,9 +16,12 @@ import java.io.IOException
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -77,6 +80,11 @@ class CrewMessageViewModelTest {
     }
 
     private fun ids() = viewModel.recent.value.map { it.id }
+
+    /** Room answers on its own thread. */
+    private fun refreshed() = runBlocking {
+        withTimeout(5_000) { viewModel.refreshing.first { !it } }
+    }
 
     @Before
     fun setUp() {
@@ -151,33 +159,63 @@ class CrewMessageViewModelTest {
     }
 
     @Test
-    fun `a reply sits with the messages in time order, newest first`() {
+    fun `each message is followed by its replies, oldest first`() {
         val older = message("m1", sentAt = Instant.ofEpochSecond(100))
-        val replied = message(
-            "m2",
-            sentAt = Instant.ofEpochSecond(200),
-            replies = listOf(MessageReplyDto("r1", "noted", "Noted", Instant.ofEpochSecond(300)))
-        )
+        val first = MessageReplyDto("r1", "noted", "Noted", Instant.ofEpochSecond(300))
+        val second = MessageReplyDto("r2", "van", "Van rerouted", Instant.ofEpochSecond(400))
+        val replied =
+            message("m2", sentAt = Instant.ofEpochSecond(200), replies = listOf(first, second))
 
         val rows = recentRows(listOf(replied, older))
 
-        assertEquals(RecentRow.Reply("Noted", Instant.ofEpochSecond(300)), rows[0])
-        assertEquals(RecentRow.Sent(replied), rows[1])
-        assertEquals(RecentRow.Sent(older), rows[2])
+        assertEquals(
+            listOf(
+                RecentRow.Sent(replied),
+                RecentRow.Reply("Noted", Instant.ofEpochSecond(300)),
+                RecentRow.Reply("Van rerouted", Instant.ofEpochSecond(400)),
+                RecentRow.Sent(older)
+            ),
+            rows
+        )
     }
 
     @Test
-    fun `replies count towards the list's length, and the newest rows stay`() {
+    fun `replies never push a message off the list`() {
         val messages = List(MessagesRepository.RECENT_SIZE) { i ->
             val at = Instant.ofEpochSecond(i * 10L)
-            val reply = MessageReplyDto("r$i", "noted", "Noted", at.plusSeconds(1))
-            message("m$i", sentAt = at, replies = listOf(reply))
+            val replies = List(3) { MessageReplyDto("r$i-$it", "noted", "Noted", at) }
+            message("m$i", sentAt = at, replies = replies)
         }
 
-        val rows = recentRows(messages)
+        val sent = recentRows(messages).filterIsInstance<RecentRow.Sent>()
 
-        assertEquals(MessagesRepository.RECENT_SIZE, rows.size)
-        assertEquals(Instant.ofEpochSecond(41), rows.first().at)
+        assertEquals(messages, sent.map { it.message })
+    }
+
+    @Test
+    fun `a pull spins until both lists answer, and failing says so`() {
+        api.mine = { throw IOException("no signal") }
+
+        viewModel.refresh()
+        refreshed()
+
+        assertEquals(true, viewModel.loadFailed.value)
+        assertEquals(false, viewModel.recentLoaded.value)
+    }
+
+    @Test
+    fun `a good refresh clears the failure and marks the list as loaded`() {
+        api.mine = { throw IOException("no signal") }
+        viewModel.refresh()
+        refreshed()
+        api.mine = { emptyList() }
+
+        viewModel.refresh()
+        refreshed()
+
+        assertEquals(false, viewModel.loadFailed.value)
+        assertEquals(true, viewModel.recentLoaded.value)
+        assertEquals(false, viewModel.firstLoadPending.value)
     }
 
     @Test

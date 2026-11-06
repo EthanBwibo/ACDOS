@@ -17,6 +17,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/replan_error"
+                style="@style/Widget.ACDOS.Banner.Error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone" />
+
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.ACDOS.CardView.Notice"
                 android:layout_width="match_parent"

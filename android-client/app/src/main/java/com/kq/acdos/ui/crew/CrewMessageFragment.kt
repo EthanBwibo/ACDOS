@@ -13,11 +13,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.R
 import com.kq.acdos.data.local.PresetMessageEntity
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.useThemeColors
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /** "Sent 05:20 EAT", with "seen" once the dispatcher has read the message. */
@@ -37,19 +40,41 @@ class CrewMessageFragment : Fragment(R.layout.fragment_crew_message) {
         (requireActivity() as CrewHomeActivity).showTitle(R.string.crew_message_title)
         val list = view.findViewById<LinearLayout>(R.id.presets)
         val empty = view.findViewById<TextView>(R.id.empty)
+        val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipe.useThemeColors()
+        swipe.setOnRefreshListener {
+            if (!viewModel.refresh()) swipe.isRefreshing = false
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.presets.collect { presets ->
                     list.removeAllViews()
-                    empty.isVisible = presets.isEmpty()
                     presets.forEach { list.addView(presetButton(list, it)) }
                 }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.recent.collect { showRecent(view, it) }
+                combine(
+                    viewModel.presets,
+                    viewModel.firstLoadPending,
+                    viewModel.loadFailed,
+                    viewModel.refreshing
+                ) { presets, firstLoad, failed, refreshing ->
+                    Triple(refreshing || firstLoad, failed, presets.isEmpty() && !firstLoad)
+                }.collect { (spinner, failed, noPresets) ->
+                    swipe.isRefreshing = spinner
+                    view.findViewById<View>(R.id.error).isVisible = failed
+                    empty.isVisible = noPresets && !failed
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(viewModel.recent, viewModel.recentLoaded, ::Pair).collect {
+                    showRecent(view, it.first, it.second)
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -81,8 +106,9 @@ class CrewMessageFragment : Fragment(R.layout.fragment_crew_message) {
         return button
     }
 
-    private fun showRecent(view: View, messages: List<CrewMessageDto>) {
-        view.findViewById<View>(R.id.recent_label).isVisible = messages.isNotEmpty()
+    private fun showRecent(view: View, messages: List<CrewMessageDto>, loaded: Boolean) {
+        view.findViewById<View>(R.id.recent_label).isVisible = messages.isNotEmpty() || loaded
+        view.findViewById<View>(R.id.recent_empty).isVisible = messages.isEmpty() && loaded
         view.findViewById<View>(R.id.recent_card).isVisible = messages.isNotEmpty()
         val rows = view.findViewById<LinearLayout>(R.id.recent_rows)
         rows.removeAllViews()

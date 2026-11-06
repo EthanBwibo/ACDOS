@@ -13,7 +13,9 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.showStatusBanners
 import com.kq.acdos.ui.showThemeDialog
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 /**
@@ -55,6 +57,9 @@ class CrewHomeActivity : AppCompatActivity() {
         }
         // After a rotation the FragmentManager restores the open tab by itself.
         if (savedInstanceState == null) show(CrewPickupFragment())
+
+        // Each tab reports its own failed load, so only offline shows here.
+        showStatusBanners(container, R.string.crew_offline_banner, flowOf(null))
 
         openLoginWhenSessionEnds(container)
     }

@@ -38,7 +38,7 @@ class PickupsFragment : Fragment(R.layout.fragment_dispatch_list) {
                     rows.removeAllViews()
                     val pickups = state.board?.pickups ?: return@collect
                     pickups.forEach { addPickup(rows, it) }
-                    if (pickups.isEmpty()) rows.addRow(getString(R.string.dispatch_none))
+                    if (pickups.isEmpty()) rows.addRow(getString(R.string.dispatch_no_pickups))
                 }
             }
         }

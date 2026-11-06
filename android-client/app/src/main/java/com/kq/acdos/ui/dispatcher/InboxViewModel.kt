@@ -71,15 +71,28 @@ class InboxViewModel(
      */
     private val pendingKeys = mutableMapOf<Pair<String, String>, String>()
 
+    private val loadingState = MutableStateFlow(false)
+
+    /** True while the inbox is on its way. */
+    val loading: StateFlow<Boolean> = loadingState.asStateFlow()
+
+    private val failedState = MutableStateFlow(false)
+
+    /** True when the last load failed. The list as it was stays on screen. */
+    val loadFailed: StateFlow<Boolean> = failedState.asStateFlow()
+
     init {
         load()
     }
 
     fun load() {
         val repository = repository ?: return
+        loadingState.value = true
         viewModelScope.launch {
             val result = repository.inbox()
             if (result is ApiResult.Success) inbox.value = result.body
+            failedState.value = result !is ApiResult.Success
+            loadingState.value = false
         }
         viewModelScope.launch {
             val result = repository.replyPresets()

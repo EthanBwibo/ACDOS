@@ -193,6 +193,7 @@
     <string name="dispatch_alerts">Alerts</string>
     <string name="dispatch_replan_link">Re-plan ›</string>
     <string name="dispatch_open_link">%1$d ›</string>
+    <string name="dispatch_open_arrow">›</string>
     <string name="dispatch_route_name">R%1$d · %2$s</string>
     <string name="dispatch_route_subtitle">%1$d crew · %2$s</string>
     <string name="dispatch_optimisation_title">Optimisation run</string>
@@ -240,6 +241,15 @@
     <string name="dispatch_replan_flight_delay">Flight delay for %1$s</string>
     <string name="dispatch_replan_breakdown">%1$s broken down</string>
     <string name="dispatch_offline">No connection. Try again.</string>
+    <string name="dispatch_offline_banner">No connection. This may be out of date, and changes can\'t be sent.</string>
+    <string name="dispatch_load_offline">Couldn\'t load this day. Check your connection and tap Refresh.</string>
+    <string name="dispatch_load_failed">Couldn\'t load this day: %1$s</string>
+    <string name="dispatch_inbox_failed">Couldn\'t load messages. Tap Refresh to try again.</string>
+    <string name="dispatch_no_routes">No routes planned for this day</string>
+    <string name="dispatch_no_pickups">No pickups for this day</string>
+    <string name="dispatch_no_vehicles">No vehicles</string>
+    <string name="dispatch_no_messages">No messages yet</string>
+    <string name="dispatch_no_unread">No unread messages</string>
     <string name="dispatch_not_allowed">This account can\'t dispatch.</string>
     <string name="dispatch_failed">Couldn\'t do that: %1$s</string>
     <string name="dispatch_nothing_to_plan">No pickups to plan.</string>
@@ -271,7 +281,10 @@
     <string name="crew_message_reply_row">Dispatch · %1$s</string>
     <string name="crew_message_sent_at">Sent %1$s</string>
     <string name="crew_message_seen_at">Sent %1$s · seen</string>
-    <string name="crew_message_no_presets">No messages to send yet. Open this tab again with a connection.</string>
+    <string name="crew_message_no_presets">No messages to send yet. Pull down to try again.</string>
+    <string name="crew_message_load_failed">Couldn\'t load your messages. Pull down to try again.</string>
+    <string name="crew_message_recent_empty">Nothing sent yet.</string>
+    <string name="crew_offline_banner">No connection. This may be out of date, and messages can\'t be sent.</string>
     <string name="crew_message_sent">Sent to the dispatcher.</string>
     <string name="crew_message_offline">Not sent: no connection. Tap it again to retry.</string>
     <string name="crew_message_failed">Couldn\'t send that message. Try again shortly.</string>

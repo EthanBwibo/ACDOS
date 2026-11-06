@@ -67,7 +67,13 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
         val unreadOnly = view.findViewById<Chip>(R.id.filter_unread).isChecked
         val shown = if (unreadOnly) all.filter { it.readAt == null } else all
         shown.forEach { addMessage(rows, it) }
-        if (shown.isEmpty()) rows.addRow(getString(R.string.dispatch_none))
+        if (shown.isEmpty()) {
+            rows.addRow(
+                getString(
+                    if (unreadOnly) R.string.dispatch_no_unread else R.string.dispatch_no_messages
+                )
+            )
+        }
 
         val selected = all.firstOrNull { it.id == inbox.selected.value }
         view.findViewById<View>(R.id.reply_group).isVisible = selected != null
