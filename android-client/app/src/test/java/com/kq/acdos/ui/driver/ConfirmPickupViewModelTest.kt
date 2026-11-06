@@ -18,9 +18,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -71,15 +73,17 @@ class ConfirmPickupViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = ConfirmPickupViewModel(
+    private fun viewModel(refresh: suspend () -> Unit = {}) = ConfirmPickupViewModel(
         database.driverRouteDao(),
+        database.pendingPickupEventDao().observeForStop(NODE),
         NODE,
         PickupEventOutbox(
             database.pendingPickupEventDao(),
             uploader = { BatchResult.Retry },
             currentUserId = { DRIVER }
         ),
-        upload = { uploads++ }
+        upload = { uploads++ },
+        refreshRoute = refresh
     )
 
     private fun waitUntilFinished(viewModel: ConfirmPickupViewModel) = runBlocking {
@@ -128,6 +132,37 @@ class ConfirmPickupViewModelTest {
         waitUntilFinished(viewModel)
 
         assertEquals(PickupExceptionType.NO_SHOW, outbox().single().exceptionType)
+    }
+
+    @Test
+    fun `crew on board after a no-show is a new event and the no-show stays`() {
+        val first = viewModel()
+        first.report(PickupExceptionType.NO_SHOW)
+        waitUntilFinished(first)
+        val second = viewModel()
+        assertTrue(runBlocking { second.alreadyNoShow.first() })
+
+        second.crewOnBoard()
+        waitUntilFinished(second)
+
+        val events = outbox()
+        assertEquals(2, events.size)
+        assertEquals(PickupExceptionType.NO_SHOW, events[0].exceptionType)
+        assertEquals(PickupEventType.PICKUP_CONFIRMED, events[1].eventType)
+        assertNotEquals(events[0].idempotencyKey, events[1].idempotencyKey)
+        assertFalse(runBlocking { second.alreadyNoShow.first() })
+    }
+
+    @Test
+    fun `checking the route lets a re-plan reach the screen`() = runBlocking {
+        val viewModel = viewModel(refresh = { database.driverRouteDao().deleteAllRoutes() })
+        assertEquals("A. Sample", viewModel.stop.first()?.crewName)
+
+        viewModel.checkStillOnRoute()
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val gone = withTimeout(2_000) { viewModel.stop.first { it == null } }
+        assertNull(gone)
     }
 
     @Test

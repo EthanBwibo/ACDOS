@@ -9,6 +9,7 @@ import com.kq.acdos.data.local.PendingPickupEventDao
 import com.kq.acdos.data.local.PendingPickupEventEntity
 import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
+import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +32,9 @@ data class StopRow(
     val lat: Double,
     val lon: Double,
     /** Null until the driver records something here. */
-    val progress: StopProgress? = null
+    val progress: StopProgress? = null,
+    /** Planned minutes from the stop before. Null for the first stop or under a minute. */
+    val minutesFromPrevious: Int? = null
 )
 
 /** The latest thing the driver recorded at a stop, from the outbox. */
@@ -42,20 +45,26 @@ data class StopProgress(
     val sent: Boolean,
     /** The server's code when it refused the event for good. */
     val conflict: String?,
-    /** Picked up or a no-show, and not refused: nothing more to record here. */
-    val done: Boolean
+    /** Picked up or a no-show, and not refused: not the next pickup any more. */
+    val done: Boolean,
+    /** Marked a no-show and not picked up since, so a late arrival can still be recorded. */
+    val noShow: Boolean = false
 )
 
 /** Each stop's progress by route node id, from the driver's events, oldest first. */
 fun stopProgress(events: List<PendingPickupEventEntity>): Map<String, StopProgress> =
     events.groupBy { it.routeNodeId }.mapValues { (_, atStop) ->
         val latest = atStop.last()
+        val accepted = atStop.filter { it.conflict == null }
+        val confirmed = accepted.any { it.eventType == PickupEventType.PICKUP_CONFIRMED }
+        val noShow = !confirmed && accepted.any { it.exceptionType == PickupExceptionType.NO_SHOW }
         StopProgress(
             type = latest.eventType,
             exception = latest.exceptionType,
             sent = latest.syncedAt != null,
             conflict = latest.conflict,
-            done = atStop.any { it.conflict == null && it.endsTheStop() }
+            done = confirmed || noShow,
+            noShow = noShow
         )
     }
 
@@ -68,8 +77,14 @@ fun progressLabel(progress: StopProgress): Int = when (progress.exception) {
     PickupExceptionType.TRAFFIC_DELAY -> R.string.route_status_traffic_delay
 }
 
-private fun PendingPickupEventEntity.endsTheStop() =
-    eventType == PickupEventType.PICKUP_CONFIRMED || exceptionType == PickupExceptionType.NO_SHOW
+/**
+ * Whole minutes between two planned stop times, or null under a minute (two crew at the same
+ * address). The plan's gap, so it includes any wait at the earlier stop.
+ */
+fun legMinutes(from: Instant, to: Instant): Int? {
+    val minutes = Duration.between(from, to).plusSeconds(30).toMinutes().toInt()
+    return minutes.takeIf { it > 0 }
+}
 
 sealed interface RouteUiState {
     data object Loading : RouteUiState
@@ -86,7 +101,13 @@ sealed interface RouteUiState {
 }
 
 /** The Route tab's one job at a time: the next pickup, and what follows it. */
-data class RouteProgress(val next: StopRow?, val then: List<StopRow>, val pickedUp: Int)
+data class RouteProgress(
+    val next: StopRow?,
+    val then: List<StopRow>,
+    val pickedUp: Int,
+    /** Still reachable, because the crew member may yet turn up. */
+    val noShows: List<StopRow> = emptyList()
+)
 
 /**
  * A stop stays open until it is done, so one the server refused comes back as the next
@@ -94,8 +115,9 @@ data class RouteProgress(val next: StopRow?, val then: List<StopRow>, val picked
  */
 fun routeProgress(stops: List<StopRow>): RouteProgress {
     val open = stops.filter { it.progress?.done != true }
-    val pickedUp = stops.count { it.progress?.done == true && it.progress.exception == null }
-    return RouteProgress(open.firstOrNull(), open.drop(1), pickedUp)
+    val pickedUp = stops.count { it.progress?.done == true && !it.progress.noShow }
+    val noShows = stops.filter { it.progress?.noShow == true }
+    return RouteProgress(open.firstOrNull(), open.drop(1), pickedUp, noShows)
 }
 
 /** "Westlands" from "Westlands, Nairobi". */
@@ -122,19 +144,23 @@ fun routeState(
     if (cached == null) {
         RouteUiState.NoRoute
     } else {
+        val inOrder = cached.stops.sortedBy { it.seqOrder }
         RouteUiState.Route(
             plate = cached.route.plateNumber,
             updatedAt = cached.route.fetchedAt,
-            stops = cached.stops.sortedBy { it.seqOrder }.map {
+            stops = inOrder.mapIndexed { index, stop ->
                 StopRow(
-                    routeNodeId = it.routeNodeId,
-                    number = it.seqOrder,
-                    crewName = it.crewName,
-                    zoneLabel = it.zoneLabel,
-                    pickupTime = it.eta ?: it.scheduledPickup,
-                    lat = it.pickupLat,
-                    lon = it.pickupLon,
-                    progress = progress[it.routeNodeId]
+                    routeNodeId = stop.routeNodeId,
+                    number = stop.seqOrder,
+                    crewName = stop.crewName,
+                    zoneLabel = stop.zoneLabel,
+                    pickupTime = stop.eta ?: stop.scheduledPickup,
+                    lat = stop.pickupLat,
+                    lon = stop.pickupLon,
+                    progress = progress[stop.routeNodeId],
+                    minutesFromPrevious = inOrder.getOrNull(index - 1)?.let { previous ->
+                        legMinutes(previous.scheduledPickup, stop.scheduledPickup)
+                    }
                 )
             },
             queued = recorded.count { it.syncedAt == null && it.conflict == null }

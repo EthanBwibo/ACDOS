@@ -3,11 +3,13 @@ package com.kq.acdos.ui.driver
 import android.net.NetworkCapabilities
 import com.kq.acdos.R
 import com.kq.acdos.data.NetworkKind
+import com.kq.acdos.data.local.PendingPickupEventEntity
 import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
 import com.kq.acdos.data.networkKind
 import java.time.Instant
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,6 +41,88 @@ class RouteProgressTest {
         progress = progress
     )
 
+    private fun event(
+        key: String,
+        exception: PickupExceptionType? = null,
+        conflict: String? = null
+    ) = PendingPickupEventEntity(
+        idempotencyKey = key,
+        driverId = "driver-1",
+        routeNodeId = "node-1",
+        eventType = if (exception == null) {
+            PickupEventType.PICKUP_CONFIRMED
+        } else {
+            PickupEventType.EXCEPTION
+        },
+        exceptionType = exception,
+        confirmedAt = Instant.EPOCH,
+        conflict = conflict
+    )
+
+    private fun progressOf(vararg events: PendingPickupEventEntity) =
+        stopProgress(events.toList()).getValue("node-1")
+
+    @Test
+    fun `a no-show stays listed, and leaves the next pickup`() {
+        val noShow = progressOf(event("a", PickupExceptionType.NO_SHOW))
+
+        val progress = routeProgress(listOf(stop(1, noShow), stop(2)))
+
+        assertEquals("node-1", progress.noShows.single().routeNodeId)
+        assertEquals("node-2", progress.next?.routeNodeId)
+    }
+
+    @Test
+    fun `crew on board after a no-show counts as picked up`() {
+        val late = progressOf(event("a", PickupExceptionType.NO_SHOW), event("b"))
+
+        val progress = routeProgress(listOf(stop(1, late)))
+
+        assertTrue(progress.noShows.isEmpty())
+        assertEquals(1, progress.pickedUp)
+    }
+
+    @Test
+    fun `a refused late pickup leaves the no-show standing`() {
+        val refused = progressOf(
+            event("a", PickupExceptionType.NO_SHOW),
+            event("b", conflict = "already_confirmed")
+        )
+
+        val progress = routeProgress(listOf(stop(1, refused)))
+
+        assertEquals(1, progress.noShows.size)
+        assertEquals(0, progress.pickedUp)
+        assertEquals("already_confirmed", refused.conflict)
+    }
+
+    @Test
+    fun `a refused no-show isn't a no-show`() {
+        val refused = progressOf(
+            event("a", PickupExceptionType.NO_SHOW, conflict = "not_your_stop")
+        )
+
+        assertFalse(refused.noShow)
+        assertFalse(refused.done)
+    }
+
+    @Test
+    fun `stop minutes round to the nearest minute`() {
+        val t0 = Instant.EPOCH
+
+        assertEquals(7, legMinutes(t0, t0.plusSeconds(7 * 60 + 29)))
+        assertEquals(8, legMinutes(t0, t0.plusSeconds(7 * 60 + 30)))
+    }
+
+    @Test
+    fun `stops at the same place have no minutes`() {
+        val t0 = Instant.EPOCH
+
+        assertNull(legMinutes(t0, t0))
+        assertNull(legMinutes(t0, t0.plusSeconds(29)))
+        assertNull(legMinutes(t0.plusSeconds(600), t0))
+    }
+
     @Test
     fun `the next pickup is the first stop still open`() {
         val stops = listOf(stop(1, PICKED_UP), stop(2), stop(3))
@@ -54,7 +138,8 @@ class RouteProgressTest {
     fun `a no-show is finished but is not a pickup`() {
         val noShow = PICKED_UP.copy(
             type = PickupEventType.EXCEPTION,
-            exception = PickupExceptionType.NO_SHOW
+            exception = PickupExceptionType.NO_SHOW,
+            noShow = true
         )
 
         val progress = routeProgress(listOf(stop(1, noShow), stop(2)))

@@ -3,8 +3,8 @@ package com.kq.acdos
 import android.app.Application
 import com.kq.acdos.ui.applyTheme
 
-class AcdosApplication : Application() {
-    val container: AppContainer by lazy { AppContainer(this) }
+open class AcdosApplication : Application() {
+    open val container: AppContainer by lazy { AppContainer(this) }
 
     override fun onCreate() {
         super.onCreate()

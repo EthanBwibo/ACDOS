@@ -88,6 +88,12 @@ interface PendingPickupEventDao {
     )
     fun observeConflicts(driverId: String): Flow<List<PendingPickupEventEntity>>
 
+    /** The events at one stop, oldest first. A stop belongs to one driver's route. */
+    @Query(
+        "SELECT * FROM pickup_event_outbox WHERE route_node_id = :routeNodeId ORDER BY confirmed_at"
+    )
+    fun observeForStop(routeNodeId: String): Flow<List<PendingPickupEventEntity>>
+
     /** All of [driverId]'s events, for the Route tab's status line on each stop. */
     @Query("SELECT * FROM pickup_event_outbox WHERE driver_id = :driverId ORDER BY confirmed_at")
     fun observeAll(driverId: String): Flow<List<PendingPickupEventEntity>>
