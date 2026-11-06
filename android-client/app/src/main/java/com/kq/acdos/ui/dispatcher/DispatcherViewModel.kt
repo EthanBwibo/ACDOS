@@ -10,6 +10,8 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
 import com.kq.acdos.data.DispatchRepository
+import com.kq.acdos.data.PlanSummary
+import com.kq.acdos.data.planSummary
 import com.kq.acdos.data.plannableVans
 import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.DispatcherPickupDto
@@ -42,14 +44,19 @@ import kotlinx.coroutines.launch
 data class PendingReplan(
     val trigger: OptimizationTriggerTypeDto,
     val pickupIds: List<String>,
-    /** "Flight delay recorded for %1$s…", with [subject] for %1$s. */
+    /** "Flight delay for %1$s", with [subject] for %1$s. */
     @StringRes val label: Int,
     val subject: String
 )
 
 /** The latest optimisation job started from this screen. */
 sealed interface JobUi {
+    /** True until the job ends, so a second one can't be started on top of it. */
+    val isActive: Boolean get() = this == Queued || this == Running
+
     data object None : JobUi
+
+    data object Queued : JobUi
 
     data object Running : JobUi
 
@@ -64,7 +71,9 @@ data class DispatcherUiState(
     val board: DayBoard? = null,
     val loading: Boolean = false,
     val job: JobUi = JobUi.None,
-    val replan: PendingReplan? = null
+    val replan: PendingReplan? = null,
+    /** The plan as it was when the latest job started, for Re-plan's Before and After. */
+    val before: PlanSummary? = null
 )
 
 /** A Snackbar: [text], with the server's [detail] for %1$s when there is one. */
@@ -190,6 +199,9 @@ class DispatcherViewModel(
         startJob(replan.trigger, replan.pickupIds, vehicleIds)
     }
 
+    /** Drops the alert. What was recorded stays recorded: only the re-plan is skipped. */
+    fun discardReplan() = uiState.update { it.copy(replan = null) }
+
     private fun setVehicleStatus(
         vehicle: DispatcherVehicleDto,
         status: VehicleStatusDto,
@@ -227,7 +239,9 @@ class DispatcherViewModel(
             else -> viewModelScope.launch {
                 when (val result = repository.startJob(trigger, pickupIds, vans)) {
                     is ApiResult.Success -> {
-                        uiState.update { it.copy(replan = null, job = JobUi.Running) }
+                        uiState.update {
+                            it.copy(replan = null, job = JobUi.Queued, before = planSummary(board))
+                        }
                         follow(repository, result.body.id)
                     }
 
@@ -247,7 +261,10 @@ class DispatcherViewModel(
                 is ApiResult.Success -> {
                     val job = result.body
                     when (job.status) {
-                        OptimizationJobStatusDto.QUEUED, OptimizationJobStatusDto.RUNNING -> Unit
+                        OptimizationJobStatusDto.QUEUED -> Unit
+
+                        OptimizationJobStatusDto.RUNNING ->
+                            uiState.update { it.copy(job = JobUi.Running) }
 
                         OptimizationJobStatusDto.COMPLETED -> {
                             val done =

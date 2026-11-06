@@ -3,6 +3,7 @@ package com.kq.acdos.ui.dispatcher
 import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
 import com.kq.acdos.data.DispatchRepository
+import com.kq.acdos.data.planSummary
 import com.kq.acdos.data.plannableVans
 import com.kq.acdos.data.remote.DispatcherApi
 import com.kq.acdos.data.remote.DispatcherPickupDto
@@ -34,6 +35,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.Response
 
@@ -213,6 +216,34 @@ class DispatcherViewModelTest {
             ),
             jobs.created.single()
         )
+    }
+
+    @Test
+    fun discardingAReplan_dropsTheAlertAndStartsNoJob() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.markBrokenDown(api.vans.first { it.id == "v1" })
+        advanceUntilIdle()
+        viewModel.discardReplan()
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.replan)
+        assertTrue(jobs.created.isEmpty())
+    }
+
+    @Test
+    fun aJob_remembersThePlanItStartedFrom() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+        val before = planSummary(viewModel.state.value.board!!)
+
+        viewModel.runOptimisation()
+        advanceUntilIdle()
+
+        assertEquals(before, viewModel.state.value.before)
     }
 
     @Test

@@ -8,6 +8,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -33,9 +34,16 @@ interface MessagesApi {
         @Query("cursor") cursor: String? = null,
         @Query("limit") limit: Int? = null
     ): Response<CrewMessagePageDto>
+
+    /** The dispatcher has read a message. Safe to retry. */
+    @POST("messages/{message_id}/ack")
+    suspend fun markRead(@Path("message_id") messageId: String): Response<CrewMessageReadDto>
 }
 
 // DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
+
+@JsonClass(generateAdapter = true)
+data class CrewMessageReadDto(val id: String, @Json(name = "read_at") val readAt: Instant)
 
 @JsonClass(generateAdapter = true)
 data class PresetMessageDto(val code: String, val label: String)

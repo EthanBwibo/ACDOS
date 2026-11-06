@@ -9,7 +9,7 @@ member at the end.
 
 | Device | Account | Shows |
 |---|---|---|
-| Emulator (`Dispatcher_API34`) | `dispatcher@acdos.test` | Crew messages, Routes, Pickups and Vehicles for a day; plans and re-plans |
+| Emulator (`Dispatcher_API34`) | `dispatcher@acdos.test` | The hub for a day, its messages, routes, pickups and vehicles; plans and re-plans |
 | Phone, step 6 | `driver-101a@`, `driver-102a@` or `driver-103a@acdos.test` (the driver of a van in the new plan) | its van's route, stop by stop |
 | Phone, steps 7–8 | `crew@acdos.test` | Pickup: its next pickup and any change to acknowledge. Message: the presets |
 
@@ -43,35 +43,37 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    `missing test account(s): …`, run `python scripts/seed_test_accounts.py` and seed again.
    **Read the warnings it prints.** The test vans `KDA 001T` and `KDA 002T` (fixtures of
    `plan_test_route.py`) stay in the database, so it may list them; step 3 leaves them out.
-3. **Dispatcher plans** (dispatcher): tap **Next** to tomorrow. Pickups shows 14 pending.
-   Tap **Run optimisation**, **untick the test vans `KDA 001T` and `KDA 002T`** so only the
-   three `demo-` vans are selected, and start the job. A plan that includes a test van can't
-   be removed by `reset` later. When the job finishes, Routes shows the demo vans' routes,
-   with stops, times and crew names.
-4. **Breakdown** (dispatcher), before anyone is picked up: in Routes, find the van whose
-   route lists "Test Crew". In Vehicles, **Mark broken down** that van. The banner says it is
-   broken down and asks for a re-plan.
-5. **Re-plan** (dispatcher): tap **Re-plan**, untick the test vans again as in step 3, and
-   start the job. The broken van's pickups move to the other demo vans, and Routes shows the
-   new plan. Nobody has been picked up yet, so every pickup on the
-   broken van is re-planned. In Pickups, Test Crew's row now says "Awaiting acknowledgement".
+3. **Dispatcher plans** (dispatcher): tap **Next** to tomorrow. The **crew pickups** tile
+   says 14, and tapping it lists them as Not planned. Back on the hub, tap **Run
+   optimisation**, then **Start**, **untick the test vans `KDA 001T` and `KDA 002T`** so only
+   the three `demo-` vans are selected, and tap **Start**. A plan that includes a test van
+   can't be removed by `reset` later. When the job shows Done, go back: Routes lists the demo
+   vans' routes. Tap one for its stops, times and crew names.
+4. **Breakdown** (dispatcher), before anyone is picked up: in Routes, open each route to find
+   the van that lists "Test Crew". Tap the **vehicles** tile, tap that van and **Mark broken
+   down**. Back on the hub, Alerts says it is broken down.
+5. **Re-plan** (dispatcher): tap that alert. The screen shows what will re-solve. Tap
+   **Re-plan**, untick the test vans again as in step 3, and tap **Start**. The broken van's
+   pickups move to the other demo vans, and Before and After compare the plans. Nobody has been
+   picked up yet, so every pickup on the broken van is re-planned. Back on the hub, in the
+   **crew pickups** list, Test Crew's row now says "Awaiting acknowledgement".
 6. **Driver confirms** (phone): sign in as the driver of one of the vans in the new plan
    (`demo-KDH 10xA` → `driver-10xa@acdos.test`). After the breakdown re-plan, pull down on
    the Route tab to refresh: the app isn't told about a re-plan, so a driver already signed
    in can show the old route until then. That van's re-planned route appears. Tap **Confirm
    pickup**, then **Crew on board**. After **Refresh**, the
-   dispatcher's Pickups shows it `picked_up`.
+   dispatcher's crew pickups list shows it Picked up.
 7. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
    Pickup tab opens with a card on top, "Pickup changed": the old pickup time, the new one,
    and the reason (a vehicle breakdown). Below it are the pickup time, "Report at JKIA" 06:15
    and the new van. Tap **Acknowledge**: "Acknowledged. The
    dispatcher can see it." The card goes, and it stays gone after a pull to refresh. On the
-   emulator, tap **Refresh**: Test Crew's row in Pickups now says "Acknowledged".
+   emulator, tap **Refresh**: Test Crew's row in the crew pickups list now says "Acknowledged".
 8. **Crew messages the dispatcher** (phone, then dispatcher): open the **Message** tab. It
    lists the presets as buttons and has no text field. Tap **I am running late**: "Sent to
-   the dispatcher.", and it appears under **Recent**. On the emulator, tap **Refresh**: Crew
-   messages, at the top, shows
-   "Test Crew: I am running late" with the time it was sent.
+   the dispatcher.", and it appears under **Recent**. On the emulator, tap **Refresh**: Alerts
+   counts one unread, and **Messages** shows Test Crew's "I am running late" with the time it
+   was sent.
 
 **After the demo:** run `reset`. To run the demo again, start from step 1 (the phone signs
 in as that run's driver in step 6).

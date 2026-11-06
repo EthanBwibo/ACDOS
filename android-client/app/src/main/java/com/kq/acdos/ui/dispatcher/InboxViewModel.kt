@@ -12,12 +12,13 @@ import com.kq.acdos.data.remote.CrewMessageDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * The dispatcher's read-only inbox of crew messages (#57), newest first.
- * Loaded when the screen opens and on Refresh; a failed load keeps the list
- * as it was. [repository] is null without an API URL.
+ * The dispatcher's inbox of crew messages (#57), newest first. Loaded when
+ * the screen opens and on Refresh; a failed load keeps the list as it was.
+ * [repository] is null without an API URL.
  */
 class InboxViewModel(private val repository: MessagesRepository?) : ViewModel() {
     private val inbox = MutableStateFlow<List<CrewMessageDto>?>(null)
@@ -34,6 +35,21 @@ class InboxViewModel(private val repository: MessagesRepository?) : ViewModel() 
         viewModelScope.launch {
             val result = repository.inbox()
             if (result is ApiResult.Success) inbox.value = result.body
+        }
+    }
+
+    /** Quiet on failure: the message stays unread, and the next tap tries again. */
+    fun markRead(messageId: String) {
+        val repository = repository ?: return
+        viewModelScope.launch {
+            val result = repository.markRead(messageId)
+            if (result is ApiResult.Success) {
+                inbox.update { messages ->
+                    messages?.map {
+                        if (it.id == messageId) it.copy(readAt = result.body.readAt) else it
+                    }
+                }
+            }
         }
     }
 

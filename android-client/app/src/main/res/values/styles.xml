@@ -190,19 +190,6 @@
     </style>
 
     <!-- List rows -->
-    <style name="Widget.ACDOS.ListRow" parent="">
-        <item name="android:background">@drawable/bg_list_row</item>
-        <item name="android:minHeight">48dp</item>
-    </style>
-
-    <style name="Widget.ACDOS.SectionHeader" parent="">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">24dp</item>
-        <item name="android:layout_marginBottom">4dp</item>
-        <item name="android:textAppearance">?attr/textAppearanceTitleMedium</item>
-    </style>
-
     <!-- A small capitalised heading, such as "NEXT PICKUP". -->
     <style name="Widget.ACDOS.Overline" parent="">
         <item name="android:layout_width">match_parent</item>

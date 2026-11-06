@@ -7,6 +7,7 @@ import com.kq.acdos.data.local.inMemoryDatabase
 import com.kq.acdos.data.remote.CrewMessageCreateDto
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.CrewMessagePageDto
+import com.kq.acdos.data.remote.CrewMessageReadDto
 import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.PresetMessageListDto
 import java.io.IOException
@@ -56,6 +57,9 @@ class CrewMessageViewModelTest {
             askedFor = limit
             return Response.success(CrewMessagePageDto(mine(), null))
         }
+
+        override suspend fun markRead(messageId: String) =
+            Response.success(CrewMessageReadDto(messageId, Instant.EPOCH))
     }
 
     private fun ids() = viewModel.recent.value.map { it.id }
