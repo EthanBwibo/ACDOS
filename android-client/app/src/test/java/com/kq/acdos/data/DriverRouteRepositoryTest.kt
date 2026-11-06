@@ -76,7 +76,7 @@ class DriverRouteRepositoryTest {
     /** A cached route as #28 left it, and one unsynced pickup event for its first stop. */
     private suspend fun cacheRouteWithPendingEvent(key: String = "key-1") {
         db.driverRouteDao().saveActiveRoute(
-            RouteEntity("old", "KDA old", t0),
+            RouteEntity("old", "KDA old", t0, t0),
             listOf(
                 RouteStopEntity("old-n1", "old", 1, "Crew old-n1", null, t0, null, -1.2, 36.8)
             )
@@ -99,12 +99,13 @@ class DriverRouteRepositoryTest {
     @Test
     fun activeRoute_isSavedWithEveryField() = runTest {
         val eta = t0.plusSeconds(700)
+        val arrival = t0.plusSeconds(3_600)
         answer(
             DriverRouteDto(
                 "r1",
                 RouteStatusDto.ACTIVE,
                 "KDA 123A",
-                t0,
+                arrival,
                 listOf(stop("n1", 1, eta = eta), stop("n2", 2))
             )
         )
@@ -113,7 +114,7 @@ class DriverRouteRepositoryTest {
         assertEquals(RefreshResult.UPDATED, repository.refresh(force = true))
 
         val saved = cached()!!
-        assertEquals(RouteEntity("r1", "KDA 123A", t0.plusSeconds(42)), saved.route)
+        assertEquals(RouteEntity("r1", "KDA 123A", arrival, t0.plusSeconds(42)), saved.route)
         assertEquals(
             setOf(
                 RouteStopEntity(

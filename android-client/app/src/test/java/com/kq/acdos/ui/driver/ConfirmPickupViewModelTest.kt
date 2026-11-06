@@ -61,7 +61,7 @@ class ConfirmPickupViewModelTest {
         database = inMemoryDatabase()
         runBlocking {
             database.driverRouteDao().saveActiveRoute(
-                RouteEntity("route-1", "KDH 101A", Instant.EPOCH),
+                RouteEntity("route-1", "KDH 101A", Instant.EPOCH, Instant.EPOCH),
                 listOf(stop)
             )
         }

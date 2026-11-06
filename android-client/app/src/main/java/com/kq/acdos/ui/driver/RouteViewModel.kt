@@ -94,6 +94,7 @@ sealed interface RouteUiState {
     data class Route(
         val plate: String,
         val updatedAt: Instant,
+        val arriveBy: Instant,
         val stops: List<StopRow>,
         /** Events waiting to upload, on this route or an older one. */
         val queued: Int = 0
@@ -148,6 +149,7 @@ fun routeState(
         RouteUiState.Route(
             plate = cached.route.plateNumber,
             updatedAt = cached.route.fetchedAt,
+            arriveBy = cached.route.plannedArrival,
             stops = inOrder.mapIndexed { index, stop ->
                 StopRow(
                     routeNodeId = stop.routeNodeId,

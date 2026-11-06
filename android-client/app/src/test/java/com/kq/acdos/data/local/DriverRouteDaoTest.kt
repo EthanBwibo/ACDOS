@@ -29,7 +29,7 @@ class DriverRouteDaoTest {
 
     private val t0 = Instant.parse("2026-11-01T03:00:00Z")
 
-    private fun route(id: String) = RouteEntity(id, "KDA 001A", t0)
+    private fun route(id: String) = RouteEntity(id, "KDA 001A", t0, t0)
 
     private fun stop(node: String, route: String, seq: Int) = RouteStopEntity(
         routeNodeId = node,

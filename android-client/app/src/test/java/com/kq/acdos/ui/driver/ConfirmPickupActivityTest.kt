@@ -101,7 +101,7 @@ class ConfirmPickupActivityTest {
     fun setUp() = runBlocking {
         serverHas(listOf(stopDto))
         routes.saveActiveRoute(
-            RouteEntity("route-1", "KDH 101A", Instant.EPOCH),
+            RouteEntity("route-1", "KDH 101A", Instant.EPOCH, Instant.EPOCH),
             listOf(
                 RouteStopEntity(
                     routeNodeId = NODE,

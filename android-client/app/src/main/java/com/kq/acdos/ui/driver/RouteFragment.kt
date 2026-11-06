@@ -25,6 +25,7 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.useThemeColors
+import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -121,7 +122,7 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
 
         view.findViewById<View>(R.id.next_card).isVisible = progress.next != null
         view.findViewById<View>(R.id.all_done).isVisible = progress.next == null
-        progress.next?.let { showNext(view, it) }
+        progress.next?.let { showNext(view, it, route.arriveBy) }
 
         view.findViewById<View>(R.id.then_label).isVisible = progress.then.isNotEmpty()
         view.findViewById<View>(R.id.then_card).isVisible = progress.then.isNotEmpty()
@@ -178,7 +179,7 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         startActivity(ConfirmPickupActivity.intent(requireContext(), stop.routeNodeId))
     }
 
-    private fun showNext(view: View, stop: StopRow) {
+    private fun showNext(view: View, stop: StopRow, arriveBy: Instant) {
         view.findViewById<TextView>(R.id.next_title).text =
             getString(R.string.route_next_title, zoneName(stop), stop.crewName)
         val time = view.findViewById<View>(R.id.next_time)
@@ -191,6 +192,10 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         leg.findViewById<TextView>(R.id.detail_value).text = stop.minutesFromPrevious?.let {
             getString(R.string.route_leg_minutes, it)
         }
+
+        val arrive = view.findViewById<View>(R.id.next_arrive)
+        arrive.findViewById<TextView>(R.id.detail_label).setText(R.string.route_arrive_by)
+        arrive.findViewById<TextView>(R.id.detail_value).text = Times.clock(arriveBy)
 
         val warning = view.findViewById<TextView>(R.id.status_warning)
         warning.isVisible = stop.progress != null
