@@ -22,18 +22,17 @@ class DayPlanTest {
         report: Long,
         zone: String? = "Karen, Nairobi",
         status: PickupRequestStatusDto = PickupRequestStatusDto.ASSIGNED
-    ) =
-        DispatcherPickupDto(
-            id = id,
-            crewName = "Crew $id",
-            zoneLabel = zone,
-            lat = -1.3,
-            lon = 36.8,
-            reportTime = at(report),
-            status = status,
-            needsAck = false,
-            acknowledgedAt = null
-        )
+    ) = DispatcherPickupDto(
+        id = id,
+        crewName = "Crew $id",
+        zoneLabel = zone,
+        lat = -1.3,
+        lon = 36.8,
+        reportTime = at(report),
+        status = status,
+        needsAck = false,
+        acknowledgedAt = null
+    )
 
     private fun route(id: String, van: String, leaves: Long, arrives: Long, vararg stops: String) =
         DispatcherRouteDto(
