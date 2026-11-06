@@ -15,13 +15,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
+import com.kq.acdos.data.outbox.uploadOnReconnect
 import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
 import com.kq.acdos.ui.showThemeDialog
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -84,12 +82,9 @@ class DriverHomeActivity : AppCompatActivity() {
             }
         }
 
-        // What makes "Sends when signal returns" true: the outbox tries again on reconnect.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                container.connectivity.network.map { it.isOnline }.distinctUntilChanged()
-                    .filter { it }
-                    .collect { container.uploadPickupEvents() }
+                uploadOnReconnect(container.connectivity.network, container::sendPickupEvents)
             }
         }
 
