@@ -36,6 +36,10 @@ object Times {
     /** "31" */
     fun dayOfMonth(instant: Instant): String = dayOfMonth.format(instant)
 
+    /** "06:50 EAT" today, "Sat 31 Oct, 06:50 EAT" on any other day, so old can't pass as new. */
+    fun clockWithDay(instant: Instant, now: Instant = Instant.now()): String =
+        if (date(instant) == date(now)) clock(instant) else "${day(instant)}, ${clock(instant)}"
+
     /** The date in Nairobi, which isn't always the date in UTC. */
     fun date(instant: Instant): LocalDate = instant.atZone(ZONE).toLocalDate()
 }

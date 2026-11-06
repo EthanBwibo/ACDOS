@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Figma frame 3:333. -->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/swipe_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="24dp">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:id="@+id/details"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
+                android:padding="16dp"
                 android:visibility="gone">
 
                 <com.google.android.material.card.MaterialCardView
@@ -26,78 +27,86 @@
                     style="@style/Widget.ACDOS.CardView.Notice"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="24dp"
+                    android:layout_marginBottom="12dp"
                     android:visibility="gone">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="14dp">
 
                         <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/crew_notice_title"
-                            android:textAppearance="?attr/textAppearanceTitleMedium" />
-
-                        <TextView
-                            android:id="@+id/notice_reason"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:textAppearance="?attr/textAppearanceBodyLarge" />
+                            style="@style/Widget.ACDOS.Overline"
+                            android:layout_marginTop="0dp"
+                            android:text="@string/crew_notice_title" />
 
                         <TextView
                             android:id="@+id/notice_change"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:textAppearance="?attr/textAppearanceBodyLarge" />
+                            android:textAppearance="?attr/textAppearanceTitleSmall" />
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/acknowledge"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="8dp"
                             android:text="@string/crew_notice_acknowledge" />
 
                     </LinearLayout>
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/crew_pickup_label"
-                    android:textAppearance="?attr/textAppearanceTitleMedium" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/pickup_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceDisplaySmall" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="14dp">
 
-                <TextView
-                    android:id="@+id/report_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/crew_pickup_label"
+                            android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
-                <TextView
-                    android:id="@+id/vehicle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textAppearance="?attr/textAppearanceBodyLarge" />
+                        <TextView
+                            android:id="@+id/pickup_time"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium" />
+
+                        <include
+                            android:id="@+id/report_row"
+                            layout="@layout/view_detail_row"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" />
+
+                        <include
+                            android:id="@+id/vehicle_row"
+                            layout="@layout/view_detail_row"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
 
                 <TextView
                     android:id="@+id/updated"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
+                    android:layout_marginTop="12dp"
+                    android:textAppearance="@style/TextAppearance.ACDOS.Secondary.Small" />
 
             </LinearLayout>
 
@@ -107,12 +116,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="96dp"
                 android:gravity="center"
+                android:padding="16dp"
                 android:text="@string/crew_no_pickup"
                 android:textAppearance="?attr/textAppearanceBodyLarge"
                 android:visibility="gone" />
 
         </FrameLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
