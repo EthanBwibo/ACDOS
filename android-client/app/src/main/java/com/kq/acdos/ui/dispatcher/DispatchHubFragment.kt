@@ -110,7 +110,7 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
         }
         return getString(
             R.string.dispatch_plan_summary,
-            plan.vehicleMinutes,
+            plan.plannedDriveMinutes,
             plan.vansUsed,
             plan.vans,
             late

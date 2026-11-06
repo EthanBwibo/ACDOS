@@ -59,7 +59,7 @@ class DayPlanTest {
     @Test
     fun `the summary adds up the vans' time on the road`() {
         assertEquals(
-            PlanSummary(vehicleMinutes = 90, vansUsed = 2, vans = 3, late = 1),
+            PlanSummary(plannedDriveMinutes = 90, vansUsed = 2, vans = 3, late = 1),
             planSummary(board)
         )
     }

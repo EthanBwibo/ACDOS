@@ -6,8 +6,11 @@ import java.time.Instant
 
 /** The day's plan in the numbers the dispatcher compares before and after a re-plan. */
 data class PlanSummary(
-    /** Each van's time on the road, added up: what the solver minimises. */
-    val vehicleMinutes: Long,
+    /**
+     * Each route's departure to arrival, added up, waiting at stops included.
+     * Not the solver's objective: jobs don't store that.
+     */
+    val plannedDriveMinutes: Long,
     val vansUsed: Int,
     val vans: Int,
     val late: Int
@@ -24,7 +27,7 @@ fun latePickups(board: DayBoard): Set<String> {
 }
 
 fun planSummary(board: DayBoard) = PlanSummary(
-    vehicleMinutes = board.routes.sumOf {
+    plannedDriveMinutes = board.routes.sumOf {
         Duration.between(it.plannedDeparture, it.plannedArrival).toMinutes()
     },
     vansUsed = board.routes.map { it.vehicleId }.distinct().size,

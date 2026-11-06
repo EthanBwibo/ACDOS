@@ -131,7 +131,7 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
 
     private fun summary(plan: PlanSummary) = getString(
         R.string.dispatch_compare,
-        plan.vehicleMinutes,
+        plan.plannedDriveMinutes,
         plan.vansUsed,
         plan.late
     )

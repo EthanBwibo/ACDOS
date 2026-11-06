@@ -175,7 +175,7 @@
     <string name="dispatch_plan_none">Not planned</string>
     <string name="dispatch_plan_ready">Planned</string>
     <string name="dispatch_plan_running">Running</string>
-    <string name="dispatch_plan_summary">%1$d vehicle-min · %2$d of %3$d vehicles · %4$s</string>
+    <string name="dispatch_plan_summary">%1$d min planned drive time · %2$d of %3$d vehicles · %4$s</string>
     <string name="dispatch_all_on_time">all crew on time</string>
     <plurals name="dispatch_crew_late">
         <item quantity="one">%1$d crew late</item>
