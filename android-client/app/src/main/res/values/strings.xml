@@ -54,6 +54,50 @@
     <string name="confirm_no_show_action">Record no-show</string>
     <string name="confirm_report_problem">Report a problem</string>
     <string name="confirm_stop_gone">This stop is no longer on your route.</string>
+    <string name="schedule_today">Today</string>
+    <string name="schedule_upcoming">Upcoming</string>
+    <string name="schedule_empty">No routes planned yet</string>
+    <string name="schedule_load_failed">Couldn\'t load your schedule. Pull to retry.</string>
+    <string name="schedule_day_title">%1$s · %2$s</string>
+    <string name="schedule_in_progress">In progress</string>
+    <string name="schedule_row_subtitle">%1$d crew · from %2$s</string>
+    <string name="sync_online">Online</string>
+    <string name="sync_offline">Offline</string>
+    <string name="sync_network_wifi">Wi-Fi</string>
+    <string name="sync_network_mobile">Mobile data</string>
+    <string name="sync_network_none">No signal</string>
+    <string name="sync_queue">Queue (sent in order)</string>
+    <string name="sync_queue_empty">Pickups you record appear here.</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_all_sent">All sent.</string>
+    <string name="sync_nothing_waiting">nothing waiting</string>
+    <string name="sync_last_synced">Last synced %1$s · %2$s</string>
+    <string name="sync_never">Nothing sent yet · %1$s</string>
+    <string name="sync_day_time">%1$s, %2$s</string>
+    <string name="sync_action_pickup">Pickup</string>
+    <string name="sync_row_title">%1$s · %2$s</string>
+    <string name="sync_row_on_board">%1$s on board · %2$s</string>
+    <string name="sync_row_crew">%1$s · %2$s</string>
+    <string name="sync_status_queued">Queued</string>
+    <string name="sync_status_sent">Sent</string>
+    <string name="sync_status_refused">Not accepted</string>
+    <string name="sync_refused_already_confirmed">This pickup was already confirmed</string>
+    <string name="sync_refused_not_your_stop">This stop is not on your route</string>
+    <string name="sync_refused_other">The server refused this event</string>
+    <string name="sync_lead_sent" translatable="false">✓</string>
+    <string name="sync_lead_refused" translatable="false">!</string>
+    <plurals name="sync_waiting">
+        <item quantity="one">%d event waiting</item>
+        <item quantity="other">%d events waiting</item>
+    </plurals>
+    <plurals name="sync_still_waiting">
+        <item quantity="one">Couldn\'t send. %d event is still waiting.</item>
+        <item quantity="other">Couldn\'t send. %d events are still waiting.</item>
+    </plurals>
+    <plurals name="sync_older">
+        <item quantity="one">%d older event not shown</item>
+        <item quantity="other">%d older events not shown</item>
+    </plurals>
     <string name="tab_route">Route</string>
     <string name="tab_schedule">Schedule</string>
     <string name="tab_sync">Sync</string>
@@ -80,7 +124,6 @@
     <string name="crew_notice_acknowledged">Acknowledged. The dispatcher can see it.</string>
     <string name="crew_notice_ack_offline">Couldn\'t acknowledge. Check your connection and tap again.</string>
     <string name="crew_notice_ack_failed">Couldn\'t acknowledge. Pull to refresh and try again.</string>
-    <string name="coming_soon">Coming soon</string>
     <string name="route_none">No route assigned</string>
     <string name="route_loading">Loading your route…</string>
     <string name="route_load_failed">Couldn\'t load your route. Pull to retry</string>

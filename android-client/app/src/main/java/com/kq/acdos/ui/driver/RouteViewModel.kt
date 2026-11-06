@@ -142,8 +142,8 @@ fun routeState(
     }
 }.distinctUntilChanged()
 
-/** The signed-in driver's outbox events; none when nobody is signed in. */
-private fun driverEvents(
+/** The signed-in driver's outbox events, oldest first; none when nobody is signed in. */
+fun driverEvents(
     dao: PendingPickupEventDao,
     driverId: suspend () -> String?
 ): Flow<List<PendingPickupEventEntity>> = flow {

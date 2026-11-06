@@ -22,8 +22,10 @@ class FakeMeApi : MeApi {
         return next()
     }
 
+    var nextRoutes: suspend (String?) -> Response<RouteSummaryPageDto> = { error("no answer set") }
+
     override suspend fun driverRoutes(cursor: String?, limit: Int?): Response<RouteSummaryPageDto> =
-        error("not used")
+        nextRoutes(cursor)
 
     var nextCrew: suspend () -> Response<CrewPickupResponseDto> = { error("no answer set") }
 

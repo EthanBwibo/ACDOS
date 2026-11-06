@@ -62,8 +62,13 @@ class DriverHomeActivity : AppCompatActivity() {
 
         val tabs = findViewById<BottomNavigationView>(R.id.bottom_nav)
         tabs.setOnItemSelectedListener { item ->
-            show(if (item.itemId == R.id.tab_route) RouteFragment() else ComingSoonFragment())
-            if (item.itemId != R.id.tab_route) showHeader(item.title?.toString(), null)
+            show(
+                when (item.itemId) {
+                    R.id.tab_schedule -> ScheduleFragment()
+                    R.id.tab_sync -> SyncFragment()
+                    else -> RouteFragment()
+                }
+            )
             true
         }
         // After a rotation the FragmentManager restores the open tab by itself.

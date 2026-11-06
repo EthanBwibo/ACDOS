@@ -45,4 +45,29 @@
         android:layout_marginStart="12dp"
         android:textAppearance="?attr/textAppearanceLabelLarge" />
 
+    <!-- One per status colour, because a chip's style can't be set from code. -->
+    <com.google.android.material.chip.Chip
+        android:id="@+id/row_chip_neutral"
+        style="@style/Widget.ACDOS.Chip.Neutral"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:visibility="gone" />
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/row_chip_success"
+        style="@style/Widget.ACDOS.Chip.Success"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:visibility="gone" />
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/row_chip_warning"
+        style="@style/Widget.ACDOS.Chip.Warning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:visibility="gone" />
+
 </LinearLayout>
