@@ -443,6 +443,11 @@
       },
       "DriverRoute": {
         "properties": {
+          "planned_arrival": {
+            "format": "date-time",
+            "title": "Planned Arrival",
+            "type": "string"
+          },
           "route_id": {
             "format": "uuid",
             "title": "Route Id",
@@ -467,6 +472,7 @@
           "route_id",
           "status",
           "vehicle_plate",
+          "planned_arrival",
           "stops"
         ],
         "title": "DriverRoute",

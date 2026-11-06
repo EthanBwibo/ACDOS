@@ -59,7 +59,7 @@ class DriverRouteRepositoryTest {
     )
 
     private fun route(id: String, status: RouteStatusDto = RouteStatusDto.ACTIVE) =
-        DriverRouteDto(id, status, "KDA $id", listOf(stop("$id-n1", 1), stop("$id-n2", 2)))
+        DriverRouteDto(id, status, "KDA $id", t0, listOf(stop("$id-n1", 1), stop("$id-n2", 2)))
 
     private fun answer(route: DriverRouteDto?) {
         api.next = { Response.success(DriverRouteResponseDto(route)) }
@@ -104,6 +104,7 @@ class DriverRouteRepositoryTest {
                 "r1",
                 RouteStatusDto.ACTIVE,
                 "KDA 123A",
+                t0,
                 listOf(stop("n1", 1, eta = eta), stop("n2", 2))
             )
         )

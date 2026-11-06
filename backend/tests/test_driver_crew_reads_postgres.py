@@ -264,6 +264,12 @@ def test_driver_gets_their_current_route_with_live_stops_only(client, world):
 
     assert body["route_id"] == str(world["routes"]["A"])
     assert body["vehicle_plate"] == world["plates"]["A"]
+    planned_arrival = db(
+        lambda conn: conn.fetchval(
+            "select planned_arrival from public.routes where id = $1", world["routes"]["A"]
+        )
+    )
+    assert datetime.fromisoformat(body["planned_arrival"]) == planned_arrival
     assert [s["crew_name"] for s in body["stops"]] == ["Crew F", "Crew C"]
     assert [s["seq_order"] for s in body["stops"]] == [1, 2]
     stop_c = body["stops"][1]

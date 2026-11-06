@@ -86,7 +86,8 @@ class ConfirmPickupActivityTest {
 
     /** What the server says the route is now. */
     private fun serverHas(stops: List<DriverStopDto>) {
-        val route = DriverRouteDto("route-1", RouteStatusDto.ACTIVE, "KDH 101A", stops)
+        val route =
+            DriverRouteDto("route-1", RouteStatusDto.ACTIVE, "KDH 101A", Instant.EPOCH, stops)
         app.api.next = { Response.success(DriverRouteResponseDto(route)) }
     }
 
