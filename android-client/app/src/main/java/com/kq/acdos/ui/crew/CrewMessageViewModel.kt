@@ -16,6 +16,7 @@ import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.ErrorCode
 import java.time.Instant
 import java.util.UUID
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,14 +53,17 @@ sealed interface RecentRow {
     data class Reply(val label: String, override val at: Instant) : RecentRow
 }
 
-/** Messages and replies in one list, newest first, no longer than the list on screen. */
+/**
+ * The latest messages, newest first, each followed by its replies, oldest
+ * first. Only messages count towards the limit, so a reply can't push its own
+ * message off the list.
+ */
 fun recentRows(messages: List<CrewMessageDto>): List<RecentRow> = messages
+    .take(MessagesRepository.RECENT_SIZE)
     .flatMap { message ->
         val replies = message.replies.map { RecentRow.Reply(it.label, it.sentAt) }
         listOf(RecentRow.Sent(message)) + replies
     }
-    .sortedByDescending { it.at }
-    .take(MessagesRepository.RECENT_SIZE)
 
 /**
  * The Message tab (#57): the cached presets, refreshed when the tab opens,
@@ -94,13 +98,51 @@ class CrewMessageViewModel(
     /** The crew member's own latest messages, newest first. */
     val recent: StateFlow<List<CrewMessageDto>> = recentState.asStateFlow()
 
-    fun refresh() {
-        val repository = repository ?: return
-        // Quiet on failure: the cached presets and the messages already shown stay.
-        viewModelScope.launch { repository.refreshPresets() }
+    private val recentLoadedState = MutableStateFlow(false)
+
+    /** True once [recent] has come from the server, so an empty list really means none. */
+    val recentLoaded: StateFlow<Boolean> = recentLoadedState.asStateFlow()
+
+    private val firstLoadState = MutableStateFlow(repository != null)
+
+    /** True until the first refresh answers, so empty lists don't read as "nothing here". */
+    val firstLoadPending: StateFlow<Boolean> = firstLoadState.asStateFlow()
+
+    private val refreshingState = MutableStateFlow(false)
+
+    /** True while a refresh is running, for the spinner. */
+    val refreshing: StateFlow<Boolean> = refreshingState.asStateFlow()
+
+    private val failedState = MutableStateFlow(false)
+
+    /** True when the last refresh couldn't reach the presets or the messages. */
+    val loadFailed: StateFlow<Boolean> = failedState.asStateFlow()
+
+    /**
+     * Opening the tab and pulling down. A failure keeps the cached presets and
+     * the messages already shown. False when there is nothing to refresh from,
+     * so the spinner can stop at once.
+     */
+    fun refresh(): Boolean {
+        val repository = repository ?: return false
+        refreshingState.value = true
         viewModelScope.launch {
-            (repository.recent() as? ApiResult.Success)?.let { recentState.value = it.body }
+            try {
+                val presets = async { repository.refreshPresets() }
+                val recent = async { repository.recent() }
+                val messages = recent.await()
+                if (messages is ApiResult.Success) {
+                    recentState.value = messages.body
+                    recentLoadedState.value = true
+                }
+                failedState.value =
+                    presets.await() !is ApiResult.Success || messages !is ApiResult.Success
+            } finally {
+                firstLoadState.value = false
+                refreshingState.value = false
+            }
         }
+        return true
     }
 
     fun send(presetCode: String) {

@@ -189,6 +189,14 @@
         <item name="android:textColor">?attr/colorOnErrorContainer</item>
     </style>
 
+    <!-- Not a failure: the phone is offline, and what's on screen may be old. -->
+    <style name="Widget.ACDOS.Banner.Offline" parent="">
+        <item name="android:background">@drawable/bg_banner_warning</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:textAppearance">?attr/textAppearanceBodyMedium</item>
+        <item name="android:textColor">?attr/colorOnWarningContainer</item>
+    </style>
+
     <!-- List rows -->
     <!-- A small capitalised heading, such as "NEXT PICKUP". -->
     <style name="Widget.ACDOS.Overline" parent="">

@@ -25,6 +25,7 @@ import com.kq.acdos.data.remote.VehicleStatusDto
 import com.kq.acdos.data.remote.VehicleStatusUpdateDto
 import com.kq.acdos.data.strandedPickups
 import com.kq.acdos.data.unplannedPickups
+import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
@@ -78,12 +79,14 @@ class DispatcherViewModelTest {
     ) : DispatcherApi {
         val reportTimes = mutableListOf<Pair<String, Instant>>()
         val statuses = mutableListOf<Pair<String, VehicleStatusDto>>()
+        var failLoads = false
 
         override suspend fun pickups(
             date: LocalDate?,
             cursor: String?,
             limit: Int?
         ): Response<DispatcherPickupPageDto> {
+            if (failLoads) throw IOException("no signal")
             val from = cursor?.toInt() ?: 0
             val next = if (from + 2 < pickups.size) "${from + 2}" else null
             return Response.success(DispatcherPickupPageDto(pickups.drop(from).take(2), next))
@@ -116,6 +119,7 @@ class DispatcherViewModelTest {
     /** Every job completes on its first poll with one route. */
     private class FakeJobsApi : OptimisationJobsApi {
         val created = mutableListOf<OptimisationJobCreateDto>()
+        var status = OptimizationJobStatusDto.COMPLETED
 
         override suspend fun createJob(idempotencyKey: String, body: OptimisationJobCreateDto) =
             Response.success(OptimisationJobAcceptedDto("job-${created.size}")).also {
@@ -123,9 +127,7 @@ class DispatcherViewModelTest {
             }
 
         override suspend fun getJob(jobId: String): Response<OptimisationJobResultDto> =
-            Response.success(
-                OptimisationJobResultDto(jobId, OptimizationJobStatusDto.COMPLETED)
-            )
+            Response.success(OptimisationJobResultDto(jobId, status))
     }
 
     private val api = FakeDispatcherApi(
@@ -218,6 +220,44 @@ class DispatcherViewModelTest {
             ),
             jobs.created.single()
         )
+    }
+
+    @Test
+    fun aFailedLoad_saysWhy_keepsTheBoard_andClearsOnceALoadWorks() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+        val board = viewModel.state.value.board
+
+        api.failLoads = true
+        viewModel.load()
+        advanceUntilIdle()
+
+        assertEquals(R.string.dispatch_load_offline, viewModel.state.value.loadFailure?.text)
+        assertEquals(board, viewModel.state.value.board)
+
+        api.failLoads = false
+        viewModel.load()
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.loadFailure)
+    }
+
+    @Test
+    fun aFailedReplanJob_bringsTheAlertBack() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        jobs.status = OptimizationJobStatusDto.FAILED
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.markBrokenDown(api.vans.first { it.id == "v1" })
+        advanceUntilIdle()
+        val alert = viewModel.state.value.replan
+        viewModel.replan()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.job is JobUi.Failed)
+        assertEquals(alert, viewModel.state.value.replan)
     }
 
     @Test

@@ -74,7 +74,8 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
 
     private fun tile(view: View, id: Int, count: Int?, label: Int) {
         val tile = view.findViewById<View>(id)
-        tile.findViewById<TextView>(R.id.stat_value).text = count?.toString().orEmpty()
+        tile.findViewById<TextView>(R.id.stat_value).text =
+            count?.toString() ?: getString(R.string.dispatch_no_value)
         tile.findViewById<TextView>(R.id.stat_label).setText(label)
     }
 
@@ -87,13 +88,17 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
                 Times.shortClock(it.second)
             )
         } ?: getString(R.string.dispatch_plan)
-        view.findViewById<Chip>(R.id.plan_chip).setText(
-            when {
-                state.job.isActive -> R.string.dispatch_plan_running
-                board?.routes.isNullOrEmpty() -> R.string.dispatch_plan_none
-                else -> R.string.dispatch_plan_ready
-            }
-        )
+        view.findViewById<Chip>(R.id.plan_chip).apply {
+            // Nothing loaded isn't "Not planned", so the chip waits for the board.
+            isVisible = board != null || state.job.isActive
+            setText(
+                when {
+                    state.job.isActive -> R.string.dispatch_plan_running
+                    board?.routes.isNullOrEmpty() -> R.string.dispatch_plan_none
+                    else -> R.string.dispatch_plan_ready
+                }
+            )
+        }
         view.findViewById<TextView>(R.id.plan_summary).apply {
             text = board?.takeIf { it.routes.isNotEmpty() }?.let { summaryText(it) }
             isVisible = text.isNotEmpty()
@@ -131,15 +136,20 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
                 value = getString(R.string.dispatch_replan_link)
             ) { home.open(ReplanFragment()) }
         }
-        val unread = messages.orEmpty().count { it.readAt == null }
+        val unread = messages?.count { it.readAt == null }
         rows.addRow(
             title = getString(R.string.dispatch_messages),
-            subtitle = resources.getQuantityString(R.plurals.dispatch_unread, unread, unread),
-            value = getString(R.string.dispatch_open_link, unread)
+            subtitle = unread?.let {
+                resources.getQuantityString(R.plurals.dispatch_unread, it, it)
+            },
+            value = unread?.let { getString(R.string.dispatch_open_link, it) }
+                ?: getString(R.string.dispatch_open_arrow)
         ) { home.open(MessagesFragment()) }
     }
 
     private fun showRoutes(view: View, board: DayBoard?) {
+        view.findViewById<View>(R.id.routes_label).isVisible = board != null
+        view.findViewById<View>(R.id.routes_card).isVisible = board != null
         val rows = view.findViewById<LinearLayout>(R.id.routes)
         rows.removeAllViews()
         val routes = board?.let(::orderedRoutes).orEmpty()
@@ -150,7 +160,8 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
                 value = Times.shortClock(route.plannedArrival)
             ) { home.open(RouteDetailFragment.of(route.routeId)) }
         }
-        if (routes.isEmpty()) rows.addRow(getString(R.string.dispatch_none))
+        // Hidden with no board: that isn't "no routes", and the banner says the day didn't load.
+        if (routes.isEmpty()) rows.addRow(getString(R.string.dispatch_no_routes))
     }
 
     private fun routeSubtitle(board: DayBoard, route: DispatcherRouteDto): String {

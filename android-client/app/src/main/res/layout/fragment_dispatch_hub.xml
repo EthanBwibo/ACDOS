@@ -139,10 +139,12 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/routes_label"
             style="@style/Widget.ACDOS.Overline"
             android:text="@string/dispatch_routes" />
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/routes_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 

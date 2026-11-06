@@ -13,6 +13,8 @@
         android:layout_height="?attr/actionBarSize"
         app:menu="@menu/driver_home" />
 
+    <include layout="@layout/view_status_banners" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/tab_container"
         android:background="?android:attr/colorBackground"

@@ -19,6 +19,7 @@ import com.kq.acdos.data.local.ScheduleChangeNoticeEntity
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.showLoading
 import com.kq.acdos.ui.useThemeColors
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -33,6 +34,7 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
         (requireActivity() as CrewHomeActivity).showTitle(R.string.crew_pickup_title)
         val details = view.findViewById<View>(R.id.details)
         val empty = view.findViewById<TextView>(R.id.empty)
+        val error = view.findViewById<TextView>(R.id.error)
         val acknowledge = view.findViewById<MaterialButton>(R.id.acknowledge)
         val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
         swipe.useThemeColors()
@@ -47,7 +49,6 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
                 viewModel.state.collect { state ->
                     val shown = state as? CrewPickupState.Pickup
                     details.isVisible = shown != null
-                    empty.isVisible = state == CrewPickupState.NoPickup
                     if (shown != null) {
                         showPickup(view, shown.pickup)
                         showNotice(view, shown.notice, acknowledge)
@@ -57,7 +58,18 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
         }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.refreshing.collect { swipe.isRefreshing = it }
+                combine(
+                    viewModel.state,
+                    viewModel.firstLoadPending,
+                    viewModel.loadError,
+                    viewModel.refreshing,
+                    ::pickupChrome
+                ).collect { chrome ->
+                    swipe.isRefreshing = chrome.spinner
+                    empty.isVisible = chrome.showEmpty
+                    error.isVisible = chrome.error != null
+                    chrome.error?.let(error::setText)
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {

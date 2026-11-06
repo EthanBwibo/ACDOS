@@ -63,6 +63,10 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
                 )
             }
         }
+        view.findViewById<TextView>(R.id.replan_error).apply {
+            isVisible = state.job is JobUi.Failed
+            text = jobText(state.job)
+        }
         view.findViewById<View>(R.id.replan_actions).isVisible = replan != null
         view.findViewById<View>(R.id.replan_progress).isVisible = state.job.isActive
         view.findViewById<Button>(R.id.replan).isEnabled =

@@ -18,7 +18,9 @@ import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.showStatusBanners
 import com.kq.acdos.ui.showThemeDialog
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -72,9 +74,16 @@ class DispatcherHomeActivity : AppCompatActivity() {
         val loading = findViewById<LinearProgressIndicator>(R.id.loading)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect { loading.isVisible = it.loading }
+                combine(viewModel.state, inbox.loading) { state, inboxLoading ->
+                    state.loading || inboxLoading
+                }.collect { loading.isVisible = it }
             }
         }
+        val failure = combine(viewModel.state, inbox.loadFailed) { state, inboxFailed ->
+            state.loadFailure?.let { getString(it.text, it.detail) }
+                ?: getString(R.string.dispatch_inbox_failed).takeIf { inboxFailed }
+        }
+        showStatusBanners(container, R.string.dispatch_offline_banner, failure)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.messages.collect { message ->

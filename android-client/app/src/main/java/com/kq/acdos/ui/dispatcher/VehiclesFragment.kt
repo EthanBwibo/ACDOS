@@ -34,7 +34,7 @@ class VehiclesFragment : Fragment(R.layout.fragment_dispatch_list) {
                     rows.removeAllViews()
                     val vehicles = state.board?.vehicles ?: return@collect
                     vehicles.forEach { addVehicle(rows, it) }
-                    if (vehicles.isEmpty()) rows.addRow(getString(R.string.dispatch_none))
+                    if (vehicles.isEmpty()) rows.addRow(getString(R.string.dispatch_no_vehicles))
                 }
             }
         }

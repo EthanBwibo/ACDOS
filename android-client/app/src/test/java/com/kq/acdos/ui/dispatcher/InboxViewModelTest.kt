@@ -57,9 +57,14 @@ class InboxViewModelTest {
         override suspend fun send(idempotencyKey: String, body: CrewMessageCreateDto) =
             error("the dispatcher sends no messages")
 
-        override suspend fun messages(cursor: String?, limit: Int?) = Response.success(
-            CrewMessagePageDto(listOf(message("m1"), message("m2", SENT_AT)), null)
-        )
+        var failInbox = false
+
+        override suspend fun messages(cursor: String?, limit: Int?): Response<CrewMessagePageDto> {
+            if (failInbox) throw IOException("no signal")
+            return Response.success(
+                CrewMessagePageDto(listOf(message("m1"), message("m2", SENT_AT)), null)
+            )
+        }
 
         override suspend fun markRead(messageId: String): Response<CrewMessageReadDto> {
             read += messageId
@@ -164,6 +169,21 @@ class InboxViewModelTest {
         viewModel.reply("noted")
 
         assertEquals(emptyList<MessageReplyDto>(), inboxMessage("m1").replies)
+    }
+
+    @Test
+    fun `a failed load says so and keeps the list, until a load works`() {
+        api.failInbox = true
+        viewModel.load()
+
+        assertEquals(true, viewModel.loadFailed.value)
+        assertEquals(false, viewModel.loading.value)
+        assertEquals(2, viewModel.messages.value?.size)
+
+        api.failInbox = false
+        viewModel.load()
+
+        assertEquals(false, viewModel.loadFailed.value)
     }
 
     @Test

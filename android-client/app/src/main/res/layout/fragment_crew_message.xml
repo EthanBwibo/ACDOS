@@ -1,62 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Figma frame 3:372. -->
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipe_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="@string/crew_message_hint"
-            android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/presets"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/empty"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="48dp"
-            android:gravity="center"
-            android:text="@string/crew_message_no_presets"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/recent_label"
-            style="@style/Widget.ACDOS.Overline"
-            android:layout_marginTop="0dp"
-            android:text="@string/crew_message_recent"
-            android:visibility="gone" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/recent_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/recent_rows"
+            <TextView
+                android:id="@+id/error"
+                style="@style/Widget.ACDOS.Banner.Error"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:divider="@drawable/divider_hairline"
-                android:orientation="vertical"
-                android:paddingVertical="4dp"
-                android:showDividers="middle" />
+                android:layout_marginBottom="12dp"
+                android:text="@string/crew_message_load_failed"
+                android:visibility="gone" />
 
-        </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="@string/crew_message_hint"
+                android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/presets"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
 
-</androidx.core.widget.NestedScrollView>
+            <TextView
+                android:id="@+id/empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="24dp"
+                android:gravity="center"
+                android:text="@string/crew_message_no_presets"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/recent_label"
+                style="@style/Widget.ACDOS.Overline"
+                android:layout_marginTop="0dp"
+                android:text="@string/crew_message_recent"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/recent_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/crew_message_recent_empty"
+                android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
+                android:visibility="gone" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/recent_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/recent_rows"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:divider="@drawable/divider_hairline"
+                    android:orientation="vertical"
+                    android:paddingVertical="4dp"
+                    android:showDividers="middle" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -73,7 +73,9 @@ data class DispatcherUiState(
     val job: JobUi = JobUi.None,
     val replan: PendingReplan? = null,
     /** The plan as it was when the latest job started, for Re-plan's Before and After. */
-    val before: PlanSummary? = null
+    val before: PlanSummary? = null,
+    /** Why the last load failed, null once one works. The last board stays on screen. */
+    val loadFailure: DispatcherMessage? = null
 )
 
 /** A Snackbar: [text], with the server's [detail] for %1$s when there is one. */
@@ -91,6 +93,20 @@ fun failureMessage(failure: ApiResult<Nothing>): DispatcherMessage = when (failu
     }
 
     // ApiResult<Nothing> can't hold a body, so a Success never arrives here.
+    is ApiResult.Success -> error("not a failure")
+}
+
+/** What the dispatcher is told when the day can't load, until a load works. */
+fun loadFailureMessage(failure: ApiResult<Nothing>): DispatcherMessage = when (failure) {
+    is ApiResult.NetworkError -> DispatcherMessage(R.string.dispatch_load_offline)
+
+    is ApiResult.Error -> if (failure.code == ErrorCode.FORBIDDEN) {
+        DispatcherMessage(R.string.dispatch_not_allowed)
+    } else {
+        val detail = failure.body?.detail ?: "${failure.status}"
+        DispatcherMessage(R.string.dispatch_load_failed, detail)
+    }
+
     is ApiResult.Success -> error("not a failure")
 }
 
@@ -129,16 +145,19 @@ class DispatcherViewModel(
             when (val result = repository.loadDay(date)) {
                 // The dispatcher may have moved to another day meanwhile.
                 is ApiResult.Success -> uiState.update {
-                    if (it.date == date) it.copy(board = result.body) else it
+                    if (it.date == date) it.copy(board = result.body, loadFailure = null) else it
                 }
 
-                is ApiResult.Error -> report(result)
+                is ApiResult.Error -> failLoad(result)
 
-                is ApiResult.NetworkError -> report(result)
+                is ApiResult.NetworkError -> failLoad(result)
             }
             uiState.update { it.copy(loading = false) }
         }
     }
+
+    private fun failLoad(failure: ApiResult<Nothing>) =
+        uiState.update { it.copy(loadFailure = loadFailureMessage(failure)) }
 
     /**
      * A first plan for the day's pickups not on a route yet. [vehicleIds] are the
@@ -239,10 +258,11 @@ class DispatcherViewModel(
             else -> viewModelScope.launch {
                 when (val result = repository.startJob(trigger, pickupIds, vans)) {
                     is ApiResult.Success -> {
+                        val replan = uiState.value.replan
                         uiState.update {
                             it.copy(replan = null, job = JobUi.Queued, before = planSummary(board))
                         }
-                        follow(repository, result.body.id)
+                        follow(repository, result.body.id, replan)
                     }
 
                     is ApiResult.Error -> report(result)
@@ -253,8 +273,16 @@ class DispatcherViewModel(
         }
     }
 
-    /** Polls the job until it ends, then reloads the day to show the new routes. */
-    private suspend fun follow(repository: DispatchRepository, jobId: String) {
+    /**
+     * Polls the job until it ends, then reloads the day to show the new routes.
+     * If it fails, [replan] comes back, or a van left broken down would have no
+     * alert to re-plan from.
+     */
+    private suspend fun follow(
+        repository: DispatchRepository,
+        jobId: String,
+        replan: PendingReplan?
+    ) {
         repeat(maxPolls) {
             delay(pollEvery)
             when (val result = repository.job(jobId)) {
@@ -275,7 +303,9 @@ class DispatcherViewModel(
                         }
 
                         OptimizationJobStatusDto.FAILED -> {
-                            uiState.update { it.copy(job = JobUi.Failed(job.error)) }
+                            uiState.update {
+                                it.copy(job = JobUi.Failed(job.error), replan = replan)
+                            }
                             return
                         }
                     }
@@ -285,13 +315,13 @@ class DispatcherViewModel(
                 is ApiResult.NetworkError -> Unit
 
                 is ApiResult.Error -> {
-                    uiState.update { it.copy(job = JobUi.None) }
+                    uiState.update { it.copy(job = JobUi.None, replan = replan) }
                     report(result)
                     return
                 }
             }
         }
-        uiState.update { it.copy(job = JobUi.Failed(null)) }
+        uiState.update { it.copy(job = JobUi.Failed(null), replan = replan) }
     }
 
     private fun report(failure: ApiResult<Nothing>) = send(failureMessage(failure))
