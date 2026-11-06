@@ -8,6 +8,8 @@ import com.kq.acdos.data.remote.CrewMessageCreateDto
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.CrewMessagePageDto
 import com.kq.acdos.data.remote.CrewMessageReadDto
+import com.kq.acdos.data.remote.MessageReplyCreateDto
+import com.kq.acdos.data.remote.MessageReplyDto
 import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.PresetMessageListDto
 import java.io.IOException
@@ -25,15 +27,20 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import retrofit2.Response
 
-private fun message(id: String, readAt: Instant? = null) = CrewMessageDto(
+private fun message(
+    id: String,
+    readAt: Instant? = null,
+    sentAt: Instant = Instant.EPOCH,
+    replies: List<MessageReplyDto> = emptyList()
+) = CrewMessageDto(
     id = id,
     crewMemberId = "crew-1",
     crewName = "A. Sample",
     presetCode = "running_late",
     label = "I am running late",
-    sentAt = Instant.EPOCH,
+    sentAt = sentAt,
     readAt = readAt,
-    replies = emptyList()
+    replies = replies
 )
 
 /** The RECENT list on the Message tab. */
@@ -61,6 +68,12 @@ class CrewMessageViewModelTest {
 
         override suspend fun markRead(messageId: String) =
             Response.success(CrewMessageReadDto(messageId, Instant.EPOCH))
+
+        override suspend fun reply(
+            messageId: String,
+            idempotencyKey: String,
+            body: MessageReplyCreateDto
+        ) = Response.success(MessageReplyDto("r1", body.presetCode, "Noted", Instant.EPOCH))
     }
 
     private fun ids() = viewModel.recent.value.map { it.id }
@@ -135,6 +148,36 @@ class CrewMessageViewModelTest {
         viewModel.send("running_late")
 
         assertEquals(emptyList<String>(), ids())
+    }
+
+    @Test
+    fun `a reply sits with the messages in time order, newest first`() {
+        val older = message("m1", sentAt = Instant.ofEpochSecond(100))
+        val replied = message(
+            "m2",
+            sentAt = Instant.ofEpochSecond(200),
+            replies = listOf(MessageReplyDto("r1", "noted", "Noted", Instant.ofEpochSecond(300)))
+        )
+
+        val rows = recentRows(listOf(replied, older))
+
+        assertEquals(RecentRow.Reply("Noted", Instant.ofEpochSecond(300)), rows[0])
+        assertEquals(RecentRow.Sent(replied), rows[1])
+        assertEquals(RecentRow.Sent(older), rows[2])
+    }
+
+    @Test
+    fun `replies count towards the list's length, and the newest rows stay`() {
+        val messages = List(MessagesRepository.RECENT_SIZE) { i ->
+            val at = Instant.ofEpochSecond(i * 10L)
+            val reply = MessageReplyDto("r$i", "noted", "Noted", at.plusSeconds(1))
+            message("m$i", sentAt = at, replies = listOf(reply))
+        }
+
+        val rows = recentRows(messages)
+
+        assertEquals(MessagesRepository.RECENT_SIZE, rows.size)
+        assertEquals(Instant.ofEpochSecond(41), rows.first().at)
     }
 
     @Test

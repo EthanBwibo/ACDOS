@@ -27,8 +27,8 @@ fun sentLine(message: CrewMessageDto): Int =
 
 /**
  * Messages to the dispatcher (#57, Figma 3:372): one button per preset, and
- * what was sent. There is no text field anywhere: crew can only send a preset,
- * and only to the dispatcher.
+ * what was sent, with the dispatcher's replies. There is no text field
+ * anywhere: crew can only send a preset, and only to the dispatcher.
  */
 class CrewMessageFragment : Fragment(R.layout.fragment_crew_message) {
     private val viewModel: CrewMessageViewModel by viewModels { CrewMessageViewModel.Factory }
@@ -86,12 +86,17 @@ class CrewMessageFragment : Fragment(R.layout.fragment_crew_message) {
         view.findViewById<View>(R.id.recent_card).isVisible = messages.isNotEmpty()
         val rows = view.findViewById<LinearLayout>(R.id.recent_rows)
         rows.removeAllViews()
-        for (message in messages) {
+        for (recent in recentRows(messages)) {
             val row = LayoutInflater.from(rows.context).inflate(R.layout.item_list_row, rows, false)
-            row.findViewById<TextView>(R.id.row_title).text =
-                getString(R.string.crew_message_row, message.label)
-            row.findViewById<TextView>(R.id.row_subtitle).text =
-                getString(sentLine(message), Times.clockWithDay(message.sentAt))
+            row.findViewById<TextView>(R.id.row_title).text = when (recent) {
+                is RecentRow.Sent -> getString(R.string.crew_message_row, recent.message.label)
+                is RecentRow.Reply -> getString(R.string.crew_message_reply_row, recent.label)
+            }
+            val at = Times.clockWithDay(recent.at)
+            row.findViewById<TextView>(R.id.row_subtitle).text = when (recent) {
+                is RecentRow.Sent -> getString(sentLine(recent.message), at)
+                is RecentRow.Reply -> at
+            }
             row.findViewById<View>(R.id.row_value).isVisible = false
             rows.addView(row)
         }

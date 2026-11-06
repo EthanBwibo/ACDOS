@@ -14,6 +14,7 @@ import com.kq.acdos.data.local.PresetMessageEntity
 import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.ErrorCode
+import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +40,26 @@ fun sendMessage(result: ApiResult<*>): Int = when (result) {
         R.string.crew_message_failed
     }
 }
+
+/** One row of RECENT: something the crew member sent, or the dispatcher's reply. */
+sealed interface RecentRow {
+    val at: Instant
+
+    data class Sent(val message: CrewMessageDto) : RecentRow {
+        override val at: Instant get() = message.sentAt
+    }
+
+    data class Reply(val label: String, override val at: Instant) : RecentRow
+}
+
+/** Messages and replies in one list, newest first, no longer than the list on screen. */
+fun recentRows(messages: List<CrewMessageDto>): List<RecentRow> = messages
+    .flatMap { message ->
+        val replies = message.replies.map { RecentRow.Reply(it.label, it.sentAt) }
+        listOf(RecentRow.Sent(message)) + replies
+    }
+    .sortedByDescending { it.at }
+    .take(MessagesRepository.RECENT_SIZE)
 
 /**
  * The Message tab (#57): the cached presets, refreshed when the tab opens,

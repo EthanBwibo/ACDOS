@@ -8,6 +8,8 @@ import com.kq.acdos.data.remote.CrewMessageCreateDto
 import com.kq.acdos.data.remote.CrewMessageDto
 import com.kq.acdos.data.remote.CrewMessagePageDto
 import com.kq.acdos.data.remote.CrewMessageReadDto
+import com.kq.acdos.data.remote.MessageReplyCreateDto
+import com.kq.acdos.data.remote.MessageReplyDto
 import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.PresetMessageDto
 import com.kq.acdos.data.remote.PresetMessageListDto
@@ -48,6 +50,12 @@ class MessagesRepositoryTest {
 
         override suspend fun markRead(messageId: String) =
             Response.success(CrewMessageReadDto(messageId, Instant.EPOCH))
+
+        override suspend fun reply(
+            messageId: String,
+            idempotencyKey: String,
+            body: MessageReplyCreateDto
+        ) = Response.success(MessageReplyDto("r1", body.presetCode, "Noted", Instant.EPOCH))
     }
 
     @Before

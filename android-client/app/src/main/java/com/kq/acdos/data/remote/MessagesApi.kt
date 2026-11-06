@@ -38,6 +38,14 @@ interface MessagesApi {
     /** The dispatcher has read a message. Safe to retry. */
     @POST("messages/{message_id}/ack")
     suspend fun markRead(@Path("message_id") messageId: String): Response<CrewMessageReadDto>
+
+    /** The dispatcher's preset reply; it also marks the message read. Safe to retry. */
+    @POST("messages/{message_id}/replies")
+    suspend fun reply(
+        @Path("message_id") messageId: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body body: MessageReplyCreateDto
+    ): Response<MessageReplyDto>
 }
 
 // DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
@@ -67,6 +75,9 @@ data class CrewMessageDto(
     /** The dispatcher's preset replies, oldest first. */
     val replies: List<MessageReplyDto>
 )
+
+@JsonClass(generateAdapter = true)
+data class MessageReplyCreateDto(@Json(name = "preset_code") val presetCode: String)
 
 @JsonClass(generateAdapter = true)
 data class MessageReplyDto(
