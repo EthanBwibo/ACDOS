@@ -70,6 +70,7 @@ class OpenApiContractTest {
         "PresetMessage" to PresetMessageDto::class.java,
         "CrewMessageCreate" to CrewMessageCreateDto::class.java,
         "CrewMessage" to CrewMessageDto::class.java,
+        "MessageReply" to MessageReplyDto::class.java,
         "CrewMessagePage" to CrewMessagePageDto::class.java
     )
 

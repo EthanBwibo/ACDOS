@@ -55,6 +55,7 @@ TOKEN_ROUTES = {
     "/preset-messages",
     "/messages",
     "/messages/{message_id}/ack",
+    "/messages/{message_id}/replies",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
@@ -336,7 +337,9 @@ def _ack(setup: Callable[[World], None] | None, token: bool = True, notice: str 
 
 
 MESSAGE_ACK = "/messages/{message_id}/ack"
+MESSAGE_REPLY = "/messages/{message_id}/replies"
 MESSAGE = {"preset_code": "running_late"}
+REPLY = {"preset_code": "noted"}
 
 
 def _crew_with_record(w: World) -> None:
@@ -479,6 +482,7 @@ CASES = (
             ("POST", "/messages", "/messages", MESSAGE),
             ("GET", "/messages", "/messages", None),
             ("POST", MESSAGE_ACK, f"/messages/{uuid4()}/ack", None),
+            ("POST", MESSAGE_REPLY, f"/messages/{uuid4()}/replies", REPLY),
         ]
         for case in [
             (
@@ -557,6 +561,48 @@ CASES = (
             422,
             "validation_failed",
             _messages("POST", "/messages/not-a-uuid/ack", lambda w: w.as_profile("dispatcher")),
+            False,
+        ),
+        (
+            "POST",
+            MESSAGE_REPLY,
+            404,
+            "not_found",
+            _messages(
+                "POST",
+                f"/messages/{uuid4()}/replies",
+                lambda w: w.as_profile("dispatcher"),
+                body=REPLY,
+                stub=("reply", messages.UnknownMessage("contract-message")),
+            ),
+            False,
+        ),
+        (
+            "POST",
+            MESSAGE_REPLY,
+            422,
+            "validation_failed",
+            _messages(
+                "POST",
+                f"/messages/{uuid4()}/replies",
+                lambda w: w.as_profile("dispatcher"),
+                body=REPLY,
+                key=None,
+            ),
+            False,
+        ),
+        (
+            "POST",
+            MESSAGE_REPLY,
+            422,
+            "idempotency_key_reused",
+            _messages(
+                "POST",
+                f"/messages/{uuid4()}/replies",
+                lambda w: w.as_profile("dispatcher"),
+                body=REPLY,
+                stub=("reply", messages.KeyReused("contract-message")),
+            ),
             False,
         ),
     ]

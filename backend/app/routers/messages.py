@@ -1,8 +1,9 @@
-"""Crew-to-dispatcher preset messages (#54, minimal).
+"""Preset messages between crew and the dispatcher (#54, minimal).
 
 Crew send one of a fixed set of presets; every message goes to the
-dispatcher, who reads them and marks them read. No free text, no crew-to-
-crew or crew-to-driver channel: drivers get 403 on every route here. The
+dispatcher, who reads it, marks it read and may reply with a preset of their
+own. No free text, no crew-to-crew or crew-to-driver channel: drivers get
+403 on every route here. The
 caller's role comes from profiles.role (#127); rows are filtered by RLS
 (migration 028, app/reads.py).
 
@@ -25,6 +26,8 @@ from app.models.schemas import (
     CrewMessageCreate,
     CrewMessagePage,
     CrewMessageRead,
+    MessageReply,
+    MessageReplyCreate,
     PresetMessageList,
 )
 
@@ -52,10 +55,11 @@ def _require(profile: reads.Profile | None, *roles: str) -> reads.Profile:
 
 @router.get("/preset-messages", response_model=PresetMessageList, responses=errors(_CALLER_ERRORS))
 async def list_presets(request: Request, caller: CallerDep) -> PresetMessageList:
-    """The presets crew may send. A fixed set, so not paginated."""
+    """The presets the caller may send: crew get the messages, the dispatcher
+    the replies. A fixed set, so not paginated."""
     async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
-        _require(profile, "crew", "dispatcher")
-        return PresetMessageList(items=await messages.presets(conn))
+        profile = _require(profile, "crew", "dispatcher")
+        return PresetMessageList(items=await messages.presets(conn, profile.role))
 
 
 @router.post(
@@ -144,3 +148,53 @@ async def ack_message(request: Request, caller: CallerDep, message_id: UUID) -> 
     if read_at is None:
         raise ApiError(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "no such message")
     return CrewMessageRead(id=message_id, read_at=read_at)
+
+
+@router.post(
+    "/messages/{message_id}/replies",
+    response_model=MessageReply,
+    responses=errors(
+        _CALLER_ERRORS
+        | {
+            404: [ErrorCode.NOT_FOUND],
+            422: [ErrorCode.VALIDATION_FAILED, ErrorCode.IDEMPOTENCY_KEY_REUSED],
+        }
+    ),
+)
+async def reply_to_message(
+    request: Request,
+    caller: CallerDep,
+    message_id: UUID,
+    body: MessageReplyCreate,
+    idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)],
+) -> MessageReply:
+    """The dispatcher replies with a preset, which also marks the message
+    read. Safe to retry with the same Idempotency-Key: the retry gets the
+    reply already sent."""
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
+        _require(profile, "dispatcher")
+        try:
+            return await messages.reply(
+                conn,
+                message_id,
+                caller.user_id,
+                body.preset_code,
+                idempotency_key,
+                datetime.now(UTC),
+            )
+        except messages.UnknownMessage as error:
+            raise ApiError(
+                status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, "no such message"
+            ) from error
+        except messages.UnknownPreset as error:
+            raise ApiError(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                ErrorCode.VALIDATION_FAILED,
+                f"no reply preset {body.preset_code!r}; GET /preset-messages lists them",
+            ) from error
+        except messages.KeyReused as error:
+            raise ApiError(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                ErrorCode.IDEMPOTENCY_KEY_REUSED,
+                "this Idempotency-Key was used for another reply",
+            ) from error
