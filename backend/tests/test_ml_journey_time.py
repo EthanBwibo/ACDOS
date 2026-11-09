@@ -200,6 +200,38 @@ def test_rf_minus_baseline_is_below_0_when_the_rf_is_better():
     assert rv.rf_minus_baseline(rows) == pytest.approx(5 - 20)
 
 
+def test_relative_improvement_by_hand():
+    # Baseline 20% off, RF 5% off: the RF removes three quarters of the error.
+    assert rv.relative_improvement([row("r", 100, 105, baseline=120)]) == pytest.approx(75)
+
+
+def test_rf_minus_l2_is_above_0_when_layer_2_is_better():
+    assert rv.rf_minus_l2([row("r", 100, 110, l2=104)]) == pytest.approx(10 - 4)
+
+
+@pytest.mark.parametrize(
+    ("point", "low", "expected"),
+    [(20, 15, "yes"), (20, 14.9, "point estimate only"), (15, 10, "point estimate only"),
+     (14.9, 10, "no")],
+)  # fmt: skip
+def test_nfr3_is_met_only_if_the_whole_interval_clears_it(point, low, expected):
+    assert rv.nfr3_verdict(point, low) == expected
+
+
+def test_a_row_without_a_traffic_time_is_left_out_and_counted(tmp_path):
+    path = tmp_path / "obs.csv"
+    path.write_text(
+        "logged_at_utc,logged_at_eat,day_of_week,hour_eat,minute_eat,zone,distance_m,"
+        "duration_sec,duration_in_traffic_sec,run_id\n"
+        '2026-10-31T15:07:01Z,2026-10-31T18:07:01,Saturday,18,7,"A",1,2744,,run1\n'
+        '2026-10-31T15:07:01Z,2026-10-31T18:07:01,Saturday,18,7,"B",1,900,950,run1\n',
+        encoding="utf-8",
+    )
+
+    assert [o.zone for o in rv.load_observations(path)] == ["B"]
+    assert rv.count_without_traffic_time(path) == 1
+
+
 def test_observations_use_the_weekday_and_the_minute(tmp_path):
     path = tmp_path / "obs.csv"
     path.write_text(
