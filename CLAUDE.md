@@ -44,13 +44,13 @@ backend/tests/    pytest
 data/             pickup_zones.csv (L1), temporal_calibration.csv (L2), trip_records.csv (L3),
                   jkia_reachability.csv (record of why the Rising & Campbell grid was rejected)
 scripts/          generators for data/. Take the Maps API key as argv[1]
-logger/           GitHub Actions Distance Matrix logger (being retired, #81) and csv_to_sql.py
-supabase/functions/  Edge Functions (Deno): log-travel-times, the hourly logger, run by pg_cron
+logger/           GitHub Actions Distance Matrix logger (retired, #81) and csv_to_sql.py
+supabase/functions/  Edge Functions (Deno): log-travel-times, the hourly logger (finished 8 Nov 2026)
 docs/             design artefacts and chapter drafts
 ```
 
 The `data-logger` branch holds only `travel_time_log.csv`, written by the
-`travel-time-logger` workflow until the Supabase logger takes over (#81). Never merge it into
+`travel-time-logger` workflow before the Supabase logger took over (#81). Never merge it into
 `main` and never commit to it by hand.
 
 ## Coding standards
@@ -88,9 +88,12 @@ The `data-logger` branch holds only `travel_time_log.csv`, written by the
   zone, flat-speed artifacts, pre-Expressway). Cited in literature only.
 - Google Distance Matrix cannot query past departure times, so historical records cannot be
   pulled from it. That is why L3 is synthetic.
-- Real validation data: the hourly logger, running since 20 October 2026. Since #81 it is in
-  the `travel_time_observations` table, written by the `log-travel-times` Edge Function on a
-  pg_cron schedule; the GitHub Actions rows were imported into it.
+- Real validation data: the hourly logger, which ran from 20 October to 8 November 2026 and
+  has finished (443 runs, last at 07:07 EAT). Migration 026 removed its pg_cron schedule on 8
+  November, as planned, to stay within the Google free tier. The rows are in the
+  `travel_time_observations` table, written by the `log-travel-times` Edge Function since #81;
+  the GitHub Actions rows were imported into it. The snapshot used for validation is
+  `data/travel_time_observations.csv`.
 
 ## Data model decisions
 
