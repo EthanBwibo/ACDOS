@@ -284,21 +284,27 @@ def test_driver_gets_their_current_route_with_live_stops_only(client, world):
     }  # fmt: skip
 
 
+def set_status(pickups: dict, statuses: dict[str, str]) -> None:
+    async def run(conn):
+        for name, status in statuses.items():
+            await conn.execute(
+                "update public.pickup_requests set status = $2 where id = $1",
+                pickups[name],
+                status,
+            )
+
+    db(run)
+
+
 def test_the_route_shows_pickups_the_server_already_has(client, world):
     # Recorded from another phone, or before a reinstall (#196): this phone's
     # outbox has nothing, so the status is the only record.
-    async def record(conn):
-        await conn.execute(
-            "update public.pickup_requests set status = 'picked_up' where id = $1",
-            world["pickups"]["F"],
-        )
-        await conn.execute(
-            "update public.pickup_requests set status = 'missed' where id = $1",
-            world["pickups"]["C"],
-        )
-
-    db(record)
-    body = client.get("/drivers/me/route", headers=as_user(world, "A")).json()["route"]
+    set_status(world["pickups"], {"F": "picked_up", "C": "missed"})
+    try:
+        body = client.get("/drivers/me/route", headers=as_user(world, "A")).json()["route"]
+    finally:
+        # The world is module-scoped: later tests expect both still assigned.
+        set_status(world["pickups"], {"F": "assigned", "C": "assigned"})
 
     assert [(s["crew_name"], s["pickup_status"]) for s in body["stops"]] == [
         ("Crew F", "picked_up"), ("Crew C", "missed"),
