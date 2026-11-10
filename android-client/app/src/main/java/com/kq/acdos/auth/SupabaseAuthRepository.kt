@@ -13,9 +13,11 @@ import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.SerialName
@@ -49,6 +51,49 @@ internal suspend fun runSignIn(
 } catch (e: Exception) {
     onNetworkError(e)
     SignInResult.NetworkError
+}
+
+/** What a token refresh can do in each of supabase-kt's session states (#197). */
+internal sealed interface TokenState {
+    /** Authenticated: there is a session to refresh. */
+    data class SignedIn(val accessToken: String) : TokenState
+
+    /**
+     * Initializing or RefreshFailure: supabase-kt still holds the session but is loading or
+     * refreshing it, and shows none until it succeeds. After its access token expired offline,
+     * it retries every retryDelay (10 s by default) until the network is back.
+     */
+    data object Recovering : TokenState
+
+    /** NotAuthenticated: the session is gone. */
+    data object SignedOut : TokenState
+}
+
+internal fun SessionStatus.tokenState(): TokenState = when (this) {
+    is SessionStatus.Authenticated -> TokenState.SignedIn(session.accessToken)
+    is SessionStatus.NotAuthenticated -> TokenState.SignedOut
+    else -> TokenState.Recovering
+}
+
+/**
+ * A fresh access token for the 401 handler (#197). Signed in: [refresh] now. Signed out:
+ * none. Recovering: supabase-kt shows no session, so a refresh of our own would fail at once
+ * ("No refresh token found in current session"); instead wait up to [wait] for its own retry
+ * to bring the session back, and use that token.
+ */
+internal suspend fun refreshOrAwait(
+    states: Flow<TokenState>,
+    wait: Duration,
+    refresh: suspend () -> String?
+): String? = when (states.first()) {
+    is TokenState.SignedIn -> refresh()
+
+    TokenState.SignedOut -> null
+
+    TokenState.Recovering -> {
+        val settled = withTimeoutOrNull(wait) { states.first { it != TokenState.Recovering } }
+        (settled as? TokenState.SignedIn)?.accessToken
+    }
 }
 
 /**
@@ -130,8 +175,10 @@ class SupabaseAuthRepository(
     override suspend fun accessToken(): String? = client.auth.currentAccessTokenOrNull()
 
     override suspend fun refreshAccessToken(): String? = try {
-        client.auth.refreshCurrentSession()
-        client.auth.currentAccessTokenOrNull()
+        refreshOrAwait(client.auth.sessionStatus.map { it.tokenState() }, REFRESH_WAIT) {
+            client.auth.refreshCurrentSession()
+            client.auth.currentAccessTokenOrNull()
+        }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -145,5 +192,8 @@ class SupabaseAuthRepository(
     private companion object {
         const val TAG = "SupabaseAuth"
         val SESSION_WAIT = 15.seconds
+
+        // Longer than supabase-kt's retryDelay (10 s), so one retry of its own fits.
+        val REFRESH_WAIT = 15.seconds
     }
 }
