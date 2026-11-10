@@ -31,6 +31,15 @@ def trips_csv(tmp_path):
     return write_trips(tmp_path / "trips.csv")
 
 
+@pytest.fixture
+def zones_csv(tmp_path):
+    """Places for A, B and C, so training uses the app's own feature set."""
+    path = tmp_path / "zones.csv"
+    rows = [f"{z},{lat},{lon},{km}" for z, (lat, lon, km) in PLACES.items()]
+    path.write_text("\n".join(["zone,lat,lon,straight_line_km", *rows]), encoding="utf-8")
+    return path
+
+
 def test_encoding_is_one_hot_zone_and_corridor_then_hour_and_weekday(trips_csv):
     encoding = jt.Encoding.from_trips(jt.load_trips(trips_csv))
 
@@ -39,6 +48,68 @@ def test_encoding_is_one_hot_zone_and_corridor_then_hour_and_weekday(trips_csv):
     ]  # fmt: skip
     # Zone C on a Wednesday (2) at 07:00.
     assert encoding.encode([("C", 2, 7)]).tolist() == [[0, 0, 1, 0, 1, 7, 2]]
+
+
+PLACES = {"A": (-1.30, 36.80, 15.0), "B": (-1.25, 36.85, 12.5), "C": (-1.35, 36.90, 6.0)}
+
+
+def test_cyclic_features_replace_hour_and_weekday(trips_csv):
+    encoding = jt.Encoding.from_trips(jt.load_trips(trips_csv), jt.Features(cyclic=True))
+
+    assert encoding.columns[-4:] == ["hour_sin", "hour_cos", "weekday_sin", "weekday_cos"]
+    assert "hour" not in encoding.columns
+    # 06:00 is a quarter of the day round: sine 1, cosine 0. Monday is 0.
+    row = encoding.encode([("C", 0, 6)])[0]
+    assert row[-4:].tolist() == pytest.approx([1, 0, 0, 1], abs=1e-12)
+
+
+def test_cyclic_features_put_midnight_next_to_23_00(trips_csv):
+    encoding = jt.Encoding.from_trips(jt.load_trips(trips_csv), jt.Features(cyclic=True))
+    late, midnight, noon = encoding.encode([("A", 0, 23), ("A", 0, 0), ("A", 0, 12)])
+
+    assert sum((late - midnight) ** 2) < sum((noon - midnight) ** 2)
+
+
+def test_spatial_features_are_the_zones_place(trips_csv):
+    encoding = jt.Encoding.from_trips(jt.load_trips(trips_csv), jt.Features(spatial=True), PLACES)
+
+    assert encoding.columns[-5:] == ["hour", "weekday", "lat", "lon", "km_to_jkia"]
+    assert encoding.encode([("B", 3, 7)])[0][-5:].tolist() == [7, 3, -1.25, 36.85, 12.5]
+
+
+def test_a_zone_without_a_place_is_refused(trips_csv):
+    with pytest.raises(ValueError, match="no place in pickup_zones"):
+        jt.Encoding.from_trips(
+            jt.load_trips(trips_csv), jt.Features(spatial=True), {"A": PLACES["A"]}
+        )
+
+
+def test_the_real_zones_all_have_a_place():
+    zones = {t.zone for t in jt.load_trips()}
+
+    assert zones <= set(jt.load_places())
+
+
+def test_the_cache_key_follows_the_feature_set(trips_csv, tmp_path):
+    zones = tmp_path / "zones.csv"
+    zones.write_text("zone,lat,lon,straight_line_km\nA,0,0,1\n", encoding="utf-8")
+    plain = jt.cache_key(trips_csv, FAST, jt.PLAIN, zones)
+    spatial = jt.cache_key(trips_csv, FAST, jt.Features(spatial=True), zones)
+
+    assert len({plain, spatial, jt.cache_key(trips_csv, FAST, jt.Features(cyclic=True))}) == 3
+    zones.write_text("zone,lat,lon,straight_line_km\nA,0,0,2\n", encoding="utf-8")
+    # The zones file matters only when the model uses it.
+    assert jt.cache_key(trips_csv, FAST, jt.PLAIN, zones) == plain
+    assert jt.cache_key(trips_csv, FAST, jt.Features(spatial=True), zones) != spatial
+
+
+def test_split_trips_is_seeded_and_disjoint(trips_csv):
+    trips = jt.load_trips(trips_csv)
+    training, test = jt.split_trips(trips, 0.2, seed=42)
+
+    assert (len(training), len(test)) == (240, 60)
+    assert sorted(map(id, training + test)) == sorted(map(id, trips))
+    assert jt.split_trips(trips, 0.2, seed=42) == (training, test)
 
 
 def test_load_trips_reads_monday_as_0(trips_csv):
@@ -56,10 +127,10 @@ def test_a_zone_on_two_corridors_is_refused(tmp_path):
         jt.Encoding.from_trips(trips)
 
 
-def test_training_is_deterministic(trips_csv):
+def test_training_is_deterministic(trips_csv, zones_csv):
     cells = [(z, d, h) for z in "ABC" for d in (0, 6) for h in (3, 18)]
-    first = jt.train(trips_csv, FAST).predict(cells)
-    assert jt.train(trips_csv, FAST).predict(cells) == first
+    first = jt.train(trips_csv, FAST, zones_path=zones_csv).predict(cells)
+    assert jt.train(trips_csv, FAST, zones_path=zones_csv).predict(cells) == first
 
 
 def test_the_cache_key_follows_data_hyperparameters_and_version(trips_csv, tmp_path, monkeypatch):
@@ -72,29 +143,38 @@ def test_the_cache_key_follows_data_hyperparameters_and_version(trips_csv, tmp_p
     assert jt.cache_key(trips_csv, FAST) != key
 
 
-def test_load_or_train_trains_only_when_the_key_changes(trips_csv, tmp_path, monkeypatch):
+def test_load_or_train_trains_only_when_the_key_changes(
+    trips_csv, zones_csv, tmp_path, monkeypatch
+):
     cache = tmp_path / "models" / "model.joblib"
     trained = []
     real_train = jt.train
 
-    def spy(path, hyperparameters):
+    def spy(path, hyperparameters, *rest):
         trained.append(hyperparameters)
-        return real_train(path, hyperparameters)
+        return real_train(path, hyperparameters, *rest)
 
     monkeypatch.setattr(jt, "train", spy)
 
-    first = jt.load_or_train(trips_csv, FAST, cache)
-    again = jt.load_or_train(trips_csv, FAST, cache)
+    first = jt.load_or_train(trips_csv, FAST, cache, zones_path=zones_csv)
+    again = jt.load_or_train(trips_csv, FAST, cache, zones_path=zones_csv)
     assert len(trained) == 1 and cache.exists()
     assert again.key == first.key
     assert again.predict([("A", 0, 5)]) == first.predict([("A", 0, 5)])
 
-    jt.load_or_train(trips_csv, {**FAST, "n_estimators": 12}, cache)
+    jt.load_or_train(trips_csv, {**FAST, "n_estimators": 12}, cache, zones_path=zones_csv)
     assert len(trained) == 2
+    # Another feature set is another model, even with the same data.
+    jt.load_or_train(trips_csv, {**FAST, "n_estimators": 12}, cache, features=jt.PLAIN)
+    assert len(trained) == 3
 
 
-def test_predict_grid_covers_every_zone_weekday_and_hour(trips_csv):
-    model = jt.train(trips_csv, FAST)
+def test_the_app_uses_the_feature_set_cross_validation_chose():
+    assert jt.FEATURES == jt.FEATURE_SETS["cyclic_spatial"]  # docs/results/19-rf-features-cv
+
+
+def test_predict_grid_covers_every_zone_weekday_and_hour(trips_csv, zones_csv):
+    model = jt.train(trips_csv, FAST, zones_path=zones_csv)
     grid = jt.predict_grid(model)
 
     assert grid.zones == ["A", "B", "C"]

@@ -22,7 +22,9 @@ explain non-obvious decisions in the PR description and keep code readable over 
    population, with Shaw removal plus greedy re-insertion replacing mutation (Ropke and
    Pisinger, 2006). Fitness uses Random Forest journey time predictions.
 2. **Random Forest journey time service** (`backend/app/ml/`): predicts pickup-to-JKIA
-   duration from zone, hour, day of week and route corridor. Trained on `data/trip_records.csv`.
+   duration from zone, hour, day of week and route corridor, with hour and weekday as cyclic
+   features and the zone's position (#18). Trained on `data/trip_records.csv`; the logger is
+   held-out validation data only, never used to train or calibrate.
 3. **Android client** (`android-client/`): three roles. Driver: three-tab bottom nav (Route,
    Schedule, Sync). Crew: two tabs (Pickup, Message). Dispatcher: hub and drill-down, no nav
    bar. Role comes from the account (Supabase Auth + RLS); never add a role selector at

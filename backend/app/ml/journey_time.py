@@ -3,7 +3,9 @@
 Trained on data/trip_records.csv (Layer 3: synthetic trips built from Layer 1
 and Layer 2, see scripts/build_trip_records.py) with the features Chapter 3
 names: pickup zone, hour of day, day of week and route corridor. The target
-is the trip's duration in seconds.
+is the trip's duration in seconds. Two optional additions (#18), chosen by
+cross-validation on trip_records (#19, benchmarks/rf_features.py): hour and
+weekday as cyclic features, and the zone's position.
 
 Training is deterministic (a fixed random_state) and takes seconds, so the
 model is not kept in git: load_or_train() caches it in backend/models/
@@ -19,9 +21,10 @@ import bisect
 import csv
 import hashlib
 import json
+import math
 import random
 import statistics
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import joblib
@@ -31,6 +34,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 DATA_DIR = Path(__file__).resolve().parents[3] / "data"
 TRIP_RECORDS_CSV = DATA_DIR / "trip_records.csv"
+PICKUP_ZONES_CSV = DATA_DIR / "pickup_zones.csv"
 MODEL_CACHE = Path(__file__).resolve().parents[2] / "models" / "journey_time.joblib"
 
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
@@ -38,6 +42,48 @@ HOURS_PER_WEEK = 7 * 24
 
 # A starting point, not tuned (#14 tunes the solver, not the model).
 HYPERPARAMETERS = {"n_estimators": 200, "min_samples_leaf": 5, "random_state": 42, "n_jobs": 1}
+
+
+@dataclass(frozen=True)
+class Features:
+    """What the model sees besides one-hot zone and corridor (#18).
+
+    cyclic: hour and weekday as a sine and cosine each, instead of plain
+    numbers, so 23:00 sits next to 00:00 and Sunday next to Monday.
+    spatial: the zone's latitude, longitude and straight-line km to JKIA
+    (data/pickup_zones.csv), so zones near each other can share splits.
+    """
+
+    cyclic: bool = False
+    spatial: bool = False
+
+
+PLAIN = Features()  # #103's model, the "before" of #18/#19
+FEATURE_SETS = {
+    "plain": PLAIN,
+    "cyclic": Features(cyclic=True),
+    "spatial": Features(spatial=True),
+    "cyclic_spatial": Features(cyclic=True, spatial=True),
+}
+# The set the app uses, chosen by 5-fold cross-validation on trip_records
+# (docs/results/19-rf-features-cv). Changing it changes the RF fingerprint.
+FEATURES = FEATURE_SETS["cyclic_spatial"]
+
+Place = tuple[float, float, float]  # lat, lon, straight-line km to JKIA
+
+
+def load_places(path: Path = PICKUP_ZONES_CSV) -> dict[str, Place]:
+    with path.open(newline="", encoding="utf-8") as f:
+        return {
+            row["zone"]: (float(row["lat"]), float(row["lon"]), float(row["straight_line_km"]))
+            for row in csv.DictReader(f)
+        }
+
+
+def cyclic(value: float, period: float) -> tuple[float, float]:
+    """value on a circle of the given period, as (sine, cosine)."""
+    angle = 2 * math.pi * value / period
+    return math.sin(angle), math.cos(angle)
 
 
 @dataclass(frozen=True)
@@ -66,42 +112,67 @@ def load_trips(path: Path = TRIP_RECORDS_CSV) -> list[Trip]:
 @dataclass(frozen=True)
 class Encoding:
     """How a (zone, weekday, hour) becomes a feature row: one-hot zone, one-hot
-    corridor, then hour and weekday as numbers. One place for it, so training
-    and prediction cannot drift apart."""
+    corridor, then the time (hour and weekday, plain or cyclic), then the
+    zone's place if spatial. One place for it, so training and prediction
+    cannot drift apart."""
 
     zones: tuple[str, ...]  # sorted
     corridors: tuple[str, ...]  # sorted
     corridor_of: dict[str, str]
+    features: Features = PLAIN
+    places: dict[str, Place] | None = None  # only for spatial
 
     @classmethod
-    def from_trips(cls, trips: list[Trip]) -> "Encoding":
+    def from_trips(
+        cls, trips: list[Trip], features: Features = PLAIN, places: dict | None = None
+    ) -> "Encoding":
         corridor_of: dict[str, str] = {}
         for t in trips:
             if corridor_of.setdefault(t.zone, t.corridor) != t.corridor:
                 raise ValueError(f"{t.zone} has more than one route corridor")
+        if features.spatial:
+            missing = sorted(set(corridor_of) - set(places or {}))
+            if missing:
+                raise ValueError(f"no place in pickup_zones for {missing}")
         return cls(
-            tuple(sorted(corridor_of)), tuple(sorted(set(corridor_of.values()))), corridor_of
+            tuple(sorted(corridor_of)),
+            tuple(sorted(set(corridor_of.values()))),
+            corridor_of,
+            features,
+            places if features.spatial else None,
         )
 
     @property
     def columns(self) -> list[str]:
+        time = (
+            ["hour_sin", "hour_cos", "weekday_sin", "weekday_cos"]
+            if self.features.cyclic
+            else ["hour", "weekday"]
+        )
+        place = ["lat", "lon", "km_to_jkia"] if self.features.spatial else []
         return (
             [f"zone={z}" for z in self.zones]
             + [f"corridor={c}" for c in self.corridors]
-            + ["hour", "weekday"]
+            + time
+            + place
         )
 
     def encode(self, cells: list[tuple[str, int, int]]) -> np.ndarray:
-        """Feature rows for (zone, weekday, hour) cells."""
-        zone_col = {z: k for k, z in enumerate(self.zones)}
-        corridor_col = {c: len(self.zones) + k for k, c in enumerate(self.corridors)}
-        rows = np.zeros((len(cells), len(self.columns)))
-        for r, (zone, weekday, hour) in enumerate(cells):
-            rows[r, zone_col[zone]] = 1
-            rows[r, corridor_col[self.corridor_of[zone]]] = 1
-            rows[r, -2] = hour
-            rows[r, -1] = weekday
-        return rows
+        """Feature rows for (zone, weekday, hour) cells, in columns' order."""
+        return np.array([self._row(*cell) for cell in cells], dtype=float).reshape(
+            len(cells), len(self.columns)
+        )
+
+    def _row(self, zone: str, weekday: int, hour: int) -> list[float]:
+        one_hot = [float(z == zone) for z in self.zones] + [
+            float(c == self.corridor_of[zone]) for c in self.corridors
+        ]
+        if self.features.cyclic:
+            time = [*cyclic(hour, 24), *cyclic(weekday, 7)]
+        else:
+            time = [hour, weekday]
+        place = list(self.places[zone]) if self.features.spatial else []
+        return one_hot + time + place
 
 
 @dataclass(frozen=True)
@@ -115,8 +186,14 @@ class JourneyTimeModel:
         return [float(s) for s in self.forest.predict(self.encoding.encode(cells))]
 
 
-def fit(trips: list[Trip], hyperparameters: dict, key: str = "") -> JourneyTimeModel:
-    encoding = Encoding.from_trips(trips)
+def fit(
+    trips: list[Trip],
+    hyperparameters: dict,
+    key: str = "",
+    features: Features = PLAIN,
+    places: dict[str, Place] | None = None,
+) -> JourneyTimeModel:
+    encoding = Encoding.from_trips(trips, features, places)
     forest = RandomForestRegressor(**hyperparameters)
     forest.fit(
         encoding.encode([(t.zone, t.weekday, t.hour) for t in trips]),
@@ -125,38 +202,67 @@ def fit(trips: list[Trip], hyperparameters: dict, key: str = "") -> JourneyTimeM
     return JourneyTimeModel(forest, encoding, key)
 
 
-def cache_key(path: Path, hyperparameters: dict) -> str:
-    """Changes whenever the training data, the hyperparameters or the
-    scikit-learn version do."""
+def cache_key(
+    path: Path,
+    hyperparameters: dict,
+    features: Features = FEATURES,
+    zones_path: Path = PICKUP_ZONES_CSV,
+) -> str:
+    """Changes whenever the training data, the hyperparameters, the feature
+    set (and with spatial features, the zones file) or the scikit-learn
+    version do."""
     digest = hashlib.sha256(path.read_bytes())
     digest.update(json.dumps(hyperparameters, sort_keys=True).encode())
+    digest.update(json.dumps(asdict(features), sort_keys=True).encode())
+    if features.spatial:
+        digest.update(zones_path.read_bytes())
     digest.update(sklearn.__version__.encode())
     return digest.hexdigest()
 
 
 def train(
-    path: Path = TRIP_RECORDS_CSV, hyperparameters: dict = HYPERPARAMETERS
+    path: Path = TRIP_RECORDS_CSV,
+    hyperparameters: dict = HYPERPARAMETERS,
+    features: Features = FEATURES,
+    zones_path: Path = PICKUP_ZONES_CSV,
 ) -> JourneyTimeModel:
-    return fit(load_trips(path), hyperparameters, cache_key(path, hyperparameters))
+    places = load_places(zones_path) if features.spatial else None
+    key = cache_key(path, hyperparameters, features, zones_path)
+    return fit(load_trips(path), hyperparameters, key, features, places)
 
 
 def load_or_train(
     path: Path = TRIP_RECORDS_CSV,
     hyperparameters: dict = HYPERPARAMETERS,
     cache: Path = MODEL_CACHE,
+    features: Features = FEATURES,
+    zones_path: Path = PICKUP_ZONES_CSV,
 ) -> JourneyTimeModel:
     """The cached model if it was trained from exactly this data, these
-    hyperparameters and this scikit-learn version; otherwise train and cache.
-    The cache is only ever a file this function wrote."""
-    key = cache_key(path, hyperparameters)
+    hyperparameters, this feature set and this scikit-learn version;
+    otherwise train and cache. The cache is only ever a file this function
+    wrote."""
+    key = cache_key(path, hyperparameters, features, zones_path)
     if cache.exists():
         cached = joblib.load(cache)
         if cached.key == key:
             return cached
-    model = train(path, hyperparameters)
+    model = train(path, hyperparameters, features, zones_path)
     cache.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, cache)
     return model
+
+
+def split_trips(
+    trips: list[Trip], test_share: float = 0.2, seed: int = 42
+) -> tuple[list[Trip], list[Trip]]:
+    """(training, test): a seeded shuffle, the first test_share of it held
+    back. The same split for every feature set, so they are compared on the
+    same test trips (#19)."""
+    shuffled = trips[:]
+    random.Random(seed).shuffle(shuffled)
+    n_test = round(len(trips) * test_share)
+    return shuffled[n_test:], shuffled[:n_test]
 
 
 def internal_check(
@@ -164,16 +270,14 @@ def internal_check(
     hyperparameters: dict = HYPERPARAMETERS,
     test_share: float = 0.2,
     seed: int = 42,
+    features: Features = FEATURES,
 ) -> dict[str, float]:
     """MAPE and MAE on a seeded share of trip_records held back from training.
     Synthetic against synthetic: a check that the model learned Layer 3, not a
     validation (that is benchmarks/rf_validation.py, on real observations)."""
-    trips = load_trips(path)
-    shuffled = trips[:]
-    random.Random(seed).shuffle(shuffled)
-    n_test = round(len(trips) * test_share)
-    test, training = shuffled[:n_test], shuffled[n_test:]
-    model = fit(training, hyperparameters)
+    training, test = split_trips(load_trips(path), test_share, seed)
+    places = load_places() if features.spatial else None
+    model = fit(training, hyperparameters, features=features, places=places)
     predicted = model.predict([(t.zone, t.weekday, t.hour) for t in test])
     errors = [p - t.duration_sec for p, t in zip(predicted, test, strict=True)]
     return {
