@@ -130,10 +130,8 @@ private class ServerDouble {
  * The phone's network, as the last interceptor: each request draws a [Fault] from a seeded
  * random source, and gets through only to [server]. Off once [healed].
  */
-private class FlakyNetwork(
-    private val random: Random,
-    private val server: ServerDouble
-) : Interceptor {
+private class FlakyNetwork(private val random: Random, private val server: ServerDouble) :
+    Interceptor {
     var healed = false
     val attempts = Fault.entries.associateWith { 0 }.toMutableMap()
 
