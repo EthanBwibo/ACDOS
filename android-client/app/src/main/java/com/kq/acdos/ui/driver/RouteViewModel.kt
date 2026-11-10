@@ -9,6 +9,7 @@ import com.kq.acdos.data.local.PendingPickupEventDao
 import com.kq.acdos.data.local.PendingPickupEventEntity
 import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
+import com.kq.acdos.data.local.ServerStopStatus
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -67,6 +68,44 @@ fun stopProgress(events: List<PendingPickupEventEntity>): Map<String, StopProgre
             noShow = noShow
         )
     }
+
+/** A pickup the server already has, from another phone or before a reinstall (#196). */
+private val SERVER_PICKED_UP = StopProgress(
+    type = PickupEventType.PICKUP_CONFIRMED,
+    exception = null,
+    sent = true,
+    conflict = null,
+    done = true
+)
+
+/** A no-show the server already has. */
+private val SERVER_NO_SHOW = StopProgress(
+    type = PickupEventType.EXCEPTION,
+    exception = PickupExceptionType.NO_SHOW,
+    sent = true,
+    conflict = null,
+    done = true,
+    noShow = true
+)
+
+/**
+ * A stop's progress from this phone's own events ([local]) and what the server had recorded
+ * when the route was fetched ([server]). A reinstalled or new phone has no events, so without
+ * the server's status it would send the driver back for someone already collected (#196).
+ *
+ * A pickup wins over a no-show, whichever side has it: crew marked a no-show can still turn up
+ * late. Otherwise the phone's own events win, as they can be newer than the last fetch.
+ */
+fun withServerStatus(local: StopProgress?, server: ServerStopStatus?): StopProgress? {
+    val pickedUpHere = local?.done == true && !local.noShow
+    return when {
+        pickedUpHere -> local
+        server == ServerStopStatus.PICKED_UP -> SERVER_PICKED_UP
+        local?.done == true -> local
+        server == ServerStopStatus.NO_SHOW -> SERVER_NO_SHOW
+        else -> local
+    }
+}
 
 /** What the stop's status line says, before " · not sent yet" or a refusal. */
 @StringRes
@@ -159,7 +198,7 @@ fun routeState(
                     pickupTime = stop.eta ?: stop.scheduledPickup,
                     lat = stop.pickupLat,
                     lon = stop.pickupLon,
-                    progress = progress[stop.routeNodeId],
+                    progress = withServerStatus(progress[stop.routeNodeId], stop.serverStatus),
                     minutesFromPrevious = inOrder.getOrNull(index - 1)?.let { previous ->
                         legMinutes(previous.scheduledPickup, stop.scheduledPickup)
                     }

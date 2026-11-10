@@ -285,6 +285,10 @@ class DriverStop(BaseModel):
     # The only coordinates in these endpoints; crew get none.
     lat: float
     lon: float
+    # What the server has recorded, from any phone: picked_up or missed once
+    # a pickup event is in (migration 023's trigger). A reinstalled or new
+    # phone has no outbox, so this is its only record of progress (#196).
+    pickup_status: PickupRequestStatus
 
 
 class DriverRoute(BaseModel):

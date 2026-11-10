@@ -7,6 +7,7 @@ import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
 import com.kq.acdos.data.local.RouteEntity
 import com.kq.acdos.data.local.RouteStopEntity
+import com.kq.acdos.data.local.ServerStopStatus
 import com.kq.acdos.data.local.inMemoryDatabase
 import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
@@ -173,6 +174,22 @@ class RouteStateTest {
             stops[1].progress
         )
         assertNull(stops[2].progress)
+    }
+
+    @Test
+    fun serverStatus_reachesTheStopsWithNoEventsOnThisPhone() = runTest {
+        dao.saveActiveRoute(
+            route("r1", "KDA 002T"),
+            listOf(
+                stop("n1", "r1", 1).copy(serverStatus = ServerStopStatus.PICKED_UP),
+                stop("n2", "r1", 2)
+            )
+        )
+
+        val stops = (routeState(dao).first() as RouteUiState.Route).stops
+
+        assertEquals(true, stops[0].progress?.done)
+        assertNull(stops[1].progress)
     }
 
     @Test

@@ -541,6 +541,9 @@
             "title": "Lon",
             "type": "number"
           },
+          "pickup_status": {
+            "$ref": "#/components/schemas/PickupRequestStatus"
+          },
           "route_node_id": {
             "format": "uuid",
             "title": "Route Node Id",
@@ -574,7 +577,8 @@
           "zone_label",
           "scheduled_pickup",
           "lat",
-          "lon"
+          "lon",
+          "pickup_status"
         ],
         "title": "DriverStop",
         "type": "object"

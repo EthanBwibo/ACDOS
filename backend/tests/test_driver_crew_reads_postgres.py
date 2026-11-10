@@ -276,11 +276,33 @@ def test_driver_gets_their_current_route_with_live_stops_only(client, world):
     assert (stop_c["lat"], stop_c["lon"]) == (round(POINTS["C"][0], 5), round(POINTS["C"][1], 5))
     assert stop_c["zone_label"] == "Westlands, Nairobi"
     assert stop_c["eta"] is None
+    assert stop_c["pickup_status"] == "assigned"
     # Exactly what the driver's screen shows, no more.
     assert set(stop_c) == {
         "route_node_id", "seq_order", "crew_name", "zone_label",
-        "scheduled_pickup", "eta", "lat", "lon",
+        "scheduled_pickup", "eta", "lat", "lon", "pickup_status",
     }  # fmt: skip
+
+
+def test_the_route_shows_pickups_the_server_already_has(client, world):
+    # Recorded from another phone, or before a reinstall (#196): this phone's
+    # outbox has nothing, so the status is the only record.
+    async def record(conn):
+        await conn.execute(
+            "update public.pickup_requests set status = 'picked_up' where id = $1",
+            world["pickups"]["F"],
+        )
+        await conn.execute(
+            "update public.pickup_requests set status = 'missed' where id = $1",
+            world["pickups"]["C"],
+        )
+
+    db(record)
+    body = client.get("/drivers/me/route", headers=as_user(world, "A")).json()["route"]
+
+    assert [(s["crew_name"], s["pickup_status"]) for s in body["stops"]] == [
+        ("Crew F", "picked_up"), ("Crew C", "missed"),
+    ]  # fmt: skip
 
 
 def test_drivers_cannot_read_each_others_routes(client, world):

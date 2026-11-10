@@ -31,6 +31,15 @@ data class RouteEntity(
 )
 
 /**
+ * What the server had recorded at a stop when the route was fetched (#196), from any phone.
+ * Null when nothing settles it yet, and on a route cached before version 4.
+ */
+enum class ServerStopStatus {
+    PICKED_UP,
+    NO_SHOW
+}
+
+/**
  * One pickup on the driver's route: a stop of GET /drivers/me/route (#52),
  * kept so the Route tab works offline. Only what the screen shows: no crew id,
  * phone or address text, and no per-crew deadline (drivers don't see them).
@@ -60,7 +69,9 @@ data class RouteStopEntity(
     /** Null until live tracking can estimate it; shown instead of [scheduledPickup] when set. */
     val eta: Instant?,
     @ColumnInfo(name = "pickup_lat") val pickupLat: Double,
-    @ColumnInfo(name = "pickup_lon") val pickupLon: Double
+    @ColumnInfo(name = "pickup_lon") val pickupLon: Double,
+    /** See [ServerStopStatus]. The phone's own events can be newer; see withServerStatus. */
+    @ColumnInfo(name = "server_status") val serverStatus: ServerStopStatus? = null
 )
 
 /** The cached route with its stops, read together (see [DriverRouteDao.observeRouteWithStops]). */

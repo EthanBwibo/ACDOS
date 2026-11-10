@@ -6,6 +6,7 @@ import com.kq.acdos.data.NetworkKind
 import com.kq.acdos.data.local.PendingPickupEventEntity
 import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.PickupExceptionType
+import com.kq.acdos.data.local.ServerStopStatus
 import com.kq.acdos.data.networkKind
 import java.time.Instant
 import org.junit.Assert.assertEquals
@@ -172,6 +173,60 @@ class RouteProgressTest {
 
         assertNull(progress.next)
         assertTrue(progress.then.isEmpty())
+    }
+
+    @Test
+    fun `on a new phone, a pickup the server has is not offered again`() {
+        // #196: KDA 002T showed "0 of 4" and offered Upper Hill, picked up days before.
+        val stops = listOf(
+            stop(1, withServerStatus(null, ServerStopStatus.PICKED_UP)),
+            stop(2, withServerStatus(null, null))
+        )
+
+        val progress = routeProgress(stops)
+
+        assertEquals(1, progress.pickedUp)
+        assertEquals(2, progress.next?.number)
+        assertEquals(true, stops[0].progress?.sent)
+    }
+
+    @Test
+    fun `a no-show the server has is listed as one`() {
+        val progress = withServerStatus(null, ServerStopStatus.NO_SHOW)!!
+
+        assertTrue(progress.noShow && progress.done)
+        assertEquals(PickupExceptionType.NO_SHOW, progress.exception)
+    }
+
+    @Test
+    fun `a pickup beats a no-show, from either side`() {
+        val noShowHere = progressOf(event("a", PickupExceptionType.NO_SHOW))
+        val pickedUpHere = progressOf(event("a", PickupExceptionType.NO_SHOW), event("b"))
+
+        // Marked a no-show here, but another phone has the late pickup.
+        assertFalse(withServerStatus(noShowHere, ServerStopStatus.PICKED_UP)!!.noShow)
+        // The server had a no-show when fetched; the late pickup recorded here since wins.
+        assertEquals(pickedUpHere, withServerStatus(pickedUpHere, ServerStopStatus.NO_SHOW))
+    }
+
+    @Test
+    fun `the phone's own events win when the server has nothing that settles the stop`() {
+        val delay = progressOf(event("a", PickupExceptionType.TRAFFIC_DELAY))
+
+        assertEquals(delay, withServerStatus(delay, null))
+        assertNull(withServerStatus(null, null))
+        // A delay recorded here doesn't undo a pickup the server has.
+        assertTrue(withServerStatus(delay, ServerStopStatus.PICKED_UP)!!.done)
+    }
+
+    @Test
+    fun `a pickup refused as already confirmed shows as picked up once the server says so`() {
+        val refused = progressOf(event("a", conflict = "already_confirmed"))
+
+        val merged = withServerStatus(refused, ServerStopStatus.PICKED_UP)!!
+
+        assertTrue(merged.done)
+        assertNull(merged.conflict)
     }
 
     @Test

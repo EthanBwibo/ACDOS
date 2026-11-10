@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -58,8 +59,13 @@ class ConfirmPickupViewModel(
         cached?.stops?.find { it.routeNodeId == routeNodeId }
     }
 
-    /** The driver already recorded a no-show here, so all that's left is a late arrival. */
-    val alreadyNoShow: Flow<Boolean> = events.map { stopProgress(it)[routeNodeId]?.noShow == true }
+    /**
+     * A no-show is already recorded here, by this phone or on the server (#196), so all that's
+     * left is a late arrival.
+     */
+    val alreadyNoShow: Flow<Boolean> = combine(stop, events) { cached, recorded ->
+        withServerStatus(stopProgress(recorded)[routeNodeId], cached?.serverStatus)?.noShow == true
+    }
 
     private val finishedState = MutableStateFlow(false)
 

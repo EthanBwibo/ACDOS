@@ -3,10 +3,12 @@ package com.kq.acdos.data
 import com.kq.acdos.data.local.DriverRouteDao
 import com.kq.acdos.data.local.RouteEntity
 import com.kq.acdos.data.local.RouteStopEntity
+import com.kq.acdos.data.local.ServerStopStatus
 import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.DriverRouteDto
 import com.kq.acdos.data.remote.ErrorCode
 import com.kq.acdos.data.remote.MeApi
+import com.kq.acdos.data.remote.PickupRequestStatusDto
 import com.kq.acdos.data.remote.RouteStatusDto
 import com.kq.acdos.data.remote.apiCall
 import java.time.Duration
@@ -46,6 +48,16 @@ internal fun ApiResult.Error.asRefreshResult(): RefreshResult = when (code) {
     ErrorCode.UNAUTHORIZED -> RefreshResult.SIGN_IN_AGAIN
     ErrorCode.FORBIDDEN -> RefreshResult.NOT_ALLOWED
     else -> RefreshResult.FAILED
+}
+
+/**
+ * Only the statuses that settle a stop: picked up, or a no-show (the server's missed). The rest
+ * (pending, assigned, cancelled) leave it to the phone's own events.
+ */
+internal fun serverStopStatus(status: PickupRequestStatusDto): ServerStopStatus? = when (status) {
+    PickupRequestStatusDto.PICKED_UP -> ServerStopStatus.PICKED_UP
+    PickupRequestStatusDto.MISSED -> ServerStopStatus.NO_SHOW
+    else -> null
 }
 
 /**
@@ -110,7 +122,8 @@ class DriverRouteRepository(
                     scheduledPickup = stop.scheduledPickup,
                     eta = stop.eta,
                     pickupLat = stop.lat,
-                    pickupLon = stop.lon
+                    pickupLon = stop.lon,
+                    serverStatus = serverStopStatus(stop.pickupStatus)
                 )
             }
         )

@@ -104,6 +104,7 @@ async def become(conn: asyncpg.Connection, user_id: UUID) -> None:
 # screen shows. The zone is the nearest of pickup_zones by PostGIS.
 _STOPS = """
     select n.id as route_node_id, n.seq_order, n.estimated_arrival,
+        p.status as pickup_status,
         c.name as crew_name,
         z.label as zone_label,
         extensions.st_y(p.pickup_location::extensions.geometry) as lat,
@@ -155,6 +156,7 @@ async def current_route(conn: asyncpg.Connection, driver_id: UUID) -> DriverRout
                 scheduled_pickup=s["estimated_arrival"],
                 lat=round(s["lat"], COORDINATE_DECIMALS),
                 lon=round(s["lon"], COORDINATE_DECIMALS),
+                pickup_status=s["pickup_status"],
             )
             for s in stops
         ],

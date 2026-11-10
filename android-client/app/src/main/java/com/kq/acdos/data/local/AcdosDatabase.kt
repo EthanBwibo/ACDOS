@@ -25,10 +25,11 @@ import androidx.room.TypeConverters
         PresetMessageEntity::class,
         PendingPickupEventEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     // Keep every step from here on: an update must never lose queued pickup events.
-    autoMigrations = [AutoMigration(from = 2, to = 3)]
+    // 3 to 4: route_stop.server_status (#196).
+    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)]
 )
 @TypeConverters(Converters::class)
 abstract class AcdosDatabase : RoomDatabase() {
