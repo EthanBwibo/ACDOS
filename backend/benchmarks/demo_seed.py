@@ -8,15 +8,16 @@ ACDOS — the demo morning for the defence (docs/demo_runbook.md).
             one pending pickup each, reporting at JKIA between 05:00 and
             07:30 EAT; plus one pickup for crew@acdos.test (Westlands), so
             the crew phone has something to show. Takes the test vans
-            (TEST_VANS) out of planning: each one that is available becomes
-            unavailable, so the dispatcher's van picker cannot offer it (#198).
-            Runs reset first, in the same transaction, so seeding twice gives
-            the same rows.
+            (TEST_VANS) out of planning, whatever their status: each becomes
+            unavailable, so the dispatcher's van picker cannot offer it and
+            the hub's Alerts cannot list it as broken down (#198). Their
+            statuses before are recorded in HELD_FILE. Runs reset first, in
+            the same transaction, so seeding twice gives the same rows.
     reset   deletes every demo row and what hangs off it: the optimisation
             jobs that planned demo pickups or vans, their job pickups,
             routes, route nodes, pickup events and trip records, and the
-            demo pickups' notices and the demo crew's messages. Puts the test
-            vans back: each one still unavailable becomes available again.
+            demo pickups' notices and the demo crew's messages. Puts each
+            test van back to its status recorded in HELD_FILE.
 
 Demo rows are tagged: vans' plates and crew names start with "demo-". The
 pickups carry no name, so they are the demo crew's pickups plus crew@'s demo
@@ -26,9 +27,13 @@ written, with one exception: the test vans' status, as above. The test
 accounts, their profiles, crew@'s crew record and the pickups of
 plan_test_route.py stay as they are.
 
-Only available test vans are held, and only unavailable ones released, so
-reset restores each test van's earlier status: one broken down or in service
-is left alone (and named in the warnings). 'unavailable' is used by nothing
+The test vans' earlier statuses live in a file, HELD_FILE (gitignored), not
+the database: no column holds them, and demo tooling gets no migration.
+Reset restores only a test van that is still unavailable, so one the
+dispatcher brought back during the demo stays as they left it, and deletes
+the file once its transaction commits. With no file (seeded by an older
+version, or on another laptop), reset falls back to that version's rule:
+unavailable test vans become available. 'unavailable' is used by nothing
 else (migration 030), so a held van is always the seed's. A job that planned
 demo and non-demo rows together cannot be removed by id without touching
 non-demo rows, so reset then stops and deletes nothing.
@@ -45,11 +50,13 @@ Usage (from backend/):
 
 import argparse
 import asyncio
+import json
 import math
 import sys
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
+from pathlib import Path
 from uuid import UUID
 
 import asyncpg
@@ -81,6 +88,8 @@ DRIVER_EMAILS = [email for _, email in VAN_DRIVERS]
 
 # plan_test_route.py's vans: out of planning during the demo (#198).
 TEST_VANS = ["KDA 001T", "KDA 002T"]
+# Each held test van's status before the seed, {plate: status}, for reset.
+HELD_FILE = Path(__file__).resolve().parents[1] / ".demo_test_vans.json"
 
 # (name, zone label, metres east and north of the zone's point, report time
 # at JKIA in EAT). Homes sit a few hundred metres off the zone point, so two
@@ -259,18 +268,57 @@ async def _reset(conn: asyncpg.Connection) -> dict[str, int]:
             "delete from public.crew_members where id = any($1)", rows.crew
         ),
         "vehicles": await delete("delete from public.vehicles where id = any($1)", rows.vans),
-        "test_vans_released": await delete(
-            "update public.vehicles set status = 'available' "
-            "where plate_number = any($1) and status = 'unavailable'",
-            TEST_VANS,
-        ),
     }
 
 
+def read_held() -> dict[str, str] | None:
+    """What the last seed recorded, or None if no seed left a record."""
+    try:
+        return json.loads(HELD_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None
+
+
+async def release_test_vans(conn: asyncpg.Connection, held: dict[str, str] | None) -> int:
+    """Each test van still unavailable goes back to its recorded status (to
+    available with no record). Returns how many were put back."""
+    statuses = held if held is not None else dict.fromkeys(TEST_VANS, "available")
+    restored = 0
+    for plate, status in statuses.items():
+        result = await conn.execute(
+            "update public.vehicles set status = $2 "
+            "where plate_number = $1 and status = 'unavailable'",
+            plate,
+            status,
+        )
+        restored += int(result.split()[-1])
+    return restored
+
+
+async def hold_test_vans(conn: asyncpg.Connection) -> dict[str, str]:
+    """Every test van becomes unavailable. Returns each one's status before.
+    One already unavailable has no earlier status to record and is left out."""
+    before = await conn.fetch(
+        "select plate_number, status from public.vehicles "
+        "where plate_number = any($1) and status <> 'unavailable'",
+        TEST_VANS,
+    )
+    await conn.execute(
+        "update public.vehicles set status = 'unavailable' where plate_number = any($1)",
+        TEST_VANS,
+    )
+    return {r["plate_number"]: r["status"] for r in before}
+
+
 async def reset(conn: asyncpg.Connection) -> dict[str, int]:
-    """Deletes every demo row, all or nothing. Returns the rows deleted per table."""
+    """Deletes every demo row and puts the test vans back, all or nothing.
+    Returns the rows deleted per table, and test_vans_restored."""
+    held = read_held()
     async with conn.transaction():
-        return await _reset(conn)
+        counts = await _reset(conn)
+        counts["test_vans_restored"] = await release_test_vans(conn, held)
+    HELD_FILE.unlink(missing_ok=True)  # only once the transaction has committed
+    return counts
 
 
 async def account_ids(conn: asyncpg.Connection) -> tuple[dict[str, UUID], UUID]:
@@ -319,8 +367,12 @@ async def seed(conn: asyncpg.Connection, day: date) -> dict:
     if missing:
         raise SystemExit(f"pickup zones not found: {', '.join(sorted(missing))}")
 
+    earlier = read_held()
     async with conn.transaction():
         deleted = await _reset(conn)
+        # Back to their statuses before any earlier seed, then held again, so
+        # the record always holds the statuses from before the first seed.
+        await release_test_vans(conn, earlier)
         for plate, email in VAN_DRIVERS:
             await conn.execute(
                 """
@@ -367,15 +419,13 @@ async def seed(conn: asyncpg.Connection, day: date) -> dict:
             account_crew_id,
             report_at(day, CREW_ACCOUNT_PICKUP[1]),
         )
-        held = await conn.fetch(
-            "update public.vehicles set status = 'unavailable' "
-            "where plate_number = any($1) and status = 'available' returning plate_number",
-            TEST_VANS,
-        )
+        held = await hold_test_vans(conn)
+    # Written only once the transaction has committed.
+    HELD_FILE.write_text(json.dumps(held, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     return {
         "deleted": deleted,
-        "test_vans_held": sorted(r["plate_number"] for r in held),
+        "test_vans_held": held,
         "vans": len(VANS),
         "crew": len(CREW),
         "pickups": len(CREW) + 1,
@@ -468,11 +518,11 @@ async def main_async(args: argparse.Namespace) -> None:
                 deleted = await reset(conn)
             except MixedDemoData as e:
                 sys.exit(f"reset: {e}")
-            released = deleted.pop("test_vans_released")
+            restored = deleted.pop("test_vans_restored")
             done = ", ".join(f"{k} {v}" for k, v in deleted.items() if v)
             print(f"reset: deleted {done}" if done else "reset: no demo rows")
-            if released:
-                print(f"reset: {released} test van(s) back to available")
+            if restored:
+                print(f"reset: {restored} test van(s) back to their status before the seed")
         else:
             day = args.date or tomorrow()
             try:
@@ -487,7 +537,8 @@ async def main_async(args: argparse.Namespace) -> None:
                 f"{CREW_ACCOUNT_PICKUP[1]})"
             )
             if summary["test_vans_held"]:
-                print("seed: out of planning until reset: " + ", ".join(summary["test_vans_held"]))
+                held = ", ".join(f"{p} (was {s})" for p, s in summary["test_vans_held"].items())
+                print(f"seed: unavailable until reset: {held}")
             for warning in summary["warnings"]:
                 print(f"warning: {warning}")
     finally:
