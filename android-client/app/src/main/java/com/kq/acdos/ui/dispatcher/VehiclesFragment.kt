@@ -57,13 +57,18 @@ class VehiclesFragment : Fragment(R.layout.fragment_dispatch_list) {
     }
 
     private fun askAboutVehicle(vehicle: DispatcherVehicleDto) {
-        val brokenDown = vehicle.status == VehicleStatusDto.BROKEN_DOWN
-        val action =
-            if (brokenDown) R.string.dispatch_mark_available else R.string.dispatch_mark_broken_down
+        // A van out of planning, broken down or unavailable (#198), can only come back.
+        val outOfPlanning = vehicle.status == VehicleStatusDto.BROKEN_DOWN ||
+            vehicle.status == VehicleStatusDto.UNAVAILABLE
+        val action = if (outOfPlanning) {
+            R.string.dispatch_mark_available
+        } else {
+            R.string.dispatch_mark_broken_down
+        }
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(vehicle.plateNumber)
             .setItems(arrayOf(getString(action))) { _, _ ->
-                if (brokenDown) {
+                if (outOfPlanning) {
                     viewModel.markAvailable(vehicle)
                 } else {
                     viewModel.markBrokenDown(vehicle)
@@ -79,4 +84,5 @@ private fun vehicleStatusLabel(status: VehicleStatusDto): Int = when (status) {
     VehicleStatusDto.AVAILABLE -> R.string.vehicle_status_available
     VehicleStatusDto.IN_SERVICE -> R.string.vehicle_status_in_service
     VehicleStatusDto.BROKEN_DOWN -> R.string.vehicle_status_broken_down
+    VehicleStatusDto.UNAVAILABLE -> R.string.vehicle_status_unavailable
 }

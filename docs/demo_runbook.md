@@ -41,19 +41,20 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    reporting at JKIA 05:00 to 07:30.
    One of them is `crew@acdos.test`'s (Westlands, 06:15). If it stops with
    `missing test account(s): …`, run `python scripts/seed_test_accounts.py` and seed again.
-   **Read the warnings it prints.** The test vans `KDA 001T` and `KDA 002T` (fixtures of
-   `plan_test_route.py`) stay in the database, so it may list them; step 3 leaves them out.
+   It also takes the test vans `KDA 001T` and `KDA 002T` (fixtures of `plan_test_route.py`)
+   out of planning: they show as Unavailable and the van picker doesn't offer them, until
+   `reset` puts them back. **Read the warnings it prints**: any van it lists is still offered,
+   so untick it at steps 3 and 5.
 3. **Dispatcher plans** (dispatcher): tap **Next** to tomorrow. The **crew pickups** tile
    says 14, and tapping it lists them as Not planned. Back on the hub, tap **Run
-   optimisation**, then **Start**, **untick the test vans `KDA 001T` and `KDA 002T`** so only
-   the three `demo-` vans are selected, and tap **Start**. A plan that includes a test van
-   can't be removed by `reset` later. When the job shows Done, go back: Routes lists the demo
+   optimisation**, then **Start**: only the three `demo-` vans are selected. Tap **Start**.
+   When the job shows Done, go back: Routes lists the demo
    vans' routes. Tap one for its stops, times and crew names.
 4. **Breakdown** (dispatcher), before anyone is picked up: in Routes, open each route to find
    the van that lists "Test Crew". Tap the **vehicles** tile, tap that van and **Mark broken
    down**. Back on the hub, Alerts says it is broken down.
 5. **Re-plan** (dispatcher): tap that alert. The screen shows what will re-solve. Tap
-   **Re-plan**, untick the test vans again as in step 3, and tap **Start**. The broken van's
+   **Re-plan**, and tap **Start**. The broken van's
    pickups move to the other demo vans, and Before and After compare the plans. Nobody has been
    picked up yet, so every pickup on the broken van is re-planned. Back on the hub, in the
    **crew pickups** list, Test Crew's row now says "Awaiting acknowledgement".

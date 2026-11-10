@@ -274,6 +274,7 @@
     <string name="vehicle_status_available">Available</string>
     <string name="vehicle_status_in_service">In service</string>
     <string name="vehicle_status_broken_down">Broken down</string>
+    <string name="vehicle_status_unavailable">Unavailable</string>
     <string name="crew_message_title">Message dispatch</string>
     <string name="crew_message_hint">Pick a message. It goes to the dispatcher.</string>
     <string name="crew_message_recent">Recent</string>

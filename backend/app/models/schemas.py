@@ -44,6 +44,8 @@ class VehicleStatus(StrEnum):
     AVAILABLE = "available"
     IN_SERVICE = "in_service"
     BROKEN_DOWN = "broken_down"
+    # Out of planning, but not broken down: no breakdown alert (#198).
+    UNAVAILABLE = "unavailable"
 
 
 class OptimizationTriggerType(StrEnum):
