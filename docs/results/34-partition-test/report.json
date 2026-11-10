@@ -1,0 +1,22 @@
+{
+  "seed": 34,
+  "recorded": 237,
+  "second_taps": 10,
+  "upload_attempts": {
+    "NONE": 44,
+    "NO_CONNECTION": 10,
+    "SERVER_ERROR": 3,
+    "RESPONSE_LOST": 13
+  },
+  "deliveries": 57,
+  "app_restarts": 8,
+  "simultaneous_uploads": 4,
+  "stored": 227,
+  "synced_on_phone": 227,
+  "refused_on_phone": 10,
+  "pending_on_phone": 0,
+  "events_delivered_more_than_once": 66,
+  "extra_deliveries": 67,
+  "lost": 0,
+  "stops_confirmed_twice": 0
+}

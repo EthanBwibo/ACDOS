@@ -1,0 +1,3349 @@
+{
+ "seed": 34,
+ "driver": "driver-1",
+ "events": {
+  "k0001": {
+   "node": "node-001",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:00Z"
+  },
+  "k0002": {
+   "node": "node-001",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:01Z"
+  },
+  "k0003": {
+   "node": "node-002",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:02Z"
+  },
+  "k0004": {
+   "node": "node-002",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:06Z"
+  },
+  "k0005": {
+   "node": "node-003",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:07Z"
+  },
+  "k0006": {
+   "node": "node-003",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:00:10Z"
+  },
+  "k0007": {
+   "node": "node-003",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:11Z"
+  },
+  "k0008": {
+   "node": "node-004",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:12Z"
+  },
+  "k0009": {
+   "node": "node-004",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:13Z"
+  },
+  "k0010": {
+   "node": "node-004",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:00:14Z"
+  },
+  "k0011": {
+   "node": "node-005",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:15Z"
+  },
+  "k0012": {
+   "node": "node-005",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:22Z"
+  },
+  "k0013": {
+   "node": "node-006",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:23Z"
+  },
+  "k0014": {
+   "node": "node-006",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:24Z"
+  },
+  "k0015": {
+   "node": "node-006",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:28Z"
+  },
+  "k0016": {
+   "node": "node-006",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:29Z"
+  },
+  "k0017": {
+   "node": "node-007",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:31Z"
+  },
+  "k0018": {
+   "node": "node-007",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:32Z"
+  },
+  "k0019": {
+   "node": "node-007",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:00:33Z"
+  },
+  "k0020": {
+   "node": "node-007",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:37Z"
+  },
+  "k0021": {
+   "node": "node-008",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:38Z"
+  },
+  "k0022": {
+   "node": "node-008",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:41Z"
+  },
+  "k0023": {
+   "node": "node-008",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:43Z"
+  },
+  "k0024": {
+   "node": "node-009",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:00:44Z"
+  },
+  "k0025": {
+   "node": "node-009",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:45Z"
+  },
+  "k0026": {
+   "node": "node-010",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:46Z"
+  },
+  "k0027": {
+   "node": "node-010",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:47Z"
+  },
+  "k0028": {
+   "node": "node-011",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:48Z"
+  },
+  "k0029": {
+   "node": "node-011",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:49Z"
+  },
+  "k0030": {
+   "node": "node-011",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:00:57Z"
+  },
+  "k0031": {
+   "node": "node-012",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:00:58Z"
+  },
+  "k0032": {
+   "node": "node-012",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:00:59Z"
+  },
+  "k0033": {
+   "node": "node-012",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:00Z"
+  },
+  "k0034": {
+   "node": "node-013",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:01Z"
+  },
+  "k0035": {
+   "node": "node-013",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:02Z"
+  },
+  "k0036": {
+   "node": "node-013",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:09Z"
+  },
+  "k0037": {
+   "node": "node-014",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:10Z"
+  },
+  "k0038": {
+   "node": "node-014",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:11Z"
+  },
+  "k0039": {
+   "node": "node-014",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:12Z"
+  },
+  "k0040": {
+   "node": "node-015",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:13Z"
+  },
+  "k0041": {
+   "node": "node-017",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:14Z"
+  },
+  "k0042": {
+   "node": "node-017",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:15Z"
+  },
+  "k0043": {
+   "node": "node-017",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:01:23Z"
+  },
+  "k0044": {
+   "node": "node-018",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:24Z"
+  },
+  "k0045": {
+   "node": "node-018",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:25Z"
+  },
+  "k0046": {
+   "node": "node-018",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:29Z"
+  },
+  "k0047": {
+   "node": "node-019",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:01:30Z"
+  },
+  "k0048": {
+   "node": "node-019",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:31Z"
+  },
+  "k0049": {
+   "node": "node-020",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:32Z"
+  },
+  "k0050": {
+   "node": "node-020",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:33Z"
+  },
+  "k0051": {
+   "node": "node-021",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:01:34Z"
+  },
+  "k0052": {
+   "node": "node-022",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:35Z"
+  },
+  "k0053": {
+   "node": "node-023",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:43Z"
+  },
+  "k0054": {
+   "node": "node-024",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:44Z"
+  },
+  "k0055": {
+   "node": "node-024",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:01:45Z"
+  },
+  "k0056": {
+   "node": "node-024",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:46Z"
+  },
+  "k0057": {
+   "node": "node-025",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:47Z"
+  },
+  "k0058": {
+   "node": "node-025",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:48Z"
+  },
+  "k0059": {
+   "node": "node-025",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:49Z"
+  },
+  "k0060": {
+   "node": "node-026",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:50Z"
+  },
+  "k0061": {
+   "node": "node-026",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:01:51Z"
+  },
+  "k0062": {
+   "node": "node-027",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:01:52Z"
+  },
+  "k0063": {
+   "node": "node-027",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:02:02Z"
+  },
+  "k0064": {
+   "node": "node-027",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:03Z"
+  },
+  "k0065": {
+   "node": "node-028",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:04Z"
+  },
+  "k0066": {
+   "node": "node-028",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:08Z"
+  },
+  "k0067": {
+   "node": "node-029",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:09Z"
+  },
+  "k0068": {
+   "node": "node-029",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:10Z"
+  },
+  "k0069": {
+   "node": "node-029",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:02:11Z"
+  },
+  "k0070": {
+   "node": "node-029",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:12Z"
+  },
+  "k0071": {
+   "node": "node-030",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:13Z"
+  },
+  "k0072": {
+   "node": "node-030",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:14Z"
+  },
+  "k0073": {
+   "node": "node-030",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:15Z"
+  },
+  "k0074": {
+   "node": "node-031",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:16Z"
+  },
+  "k0075": {
+   "node": "node-031",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:17Z"
+  },
+  "k0076": {
+   "node": "node-031",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:18Z"
+  },
+  "k0077": {
+   "node": "node-032",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:19Z"
+  },
+  "k0078": {
+   "node": "node-033",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:20Z"
+  },
+  "k0079": {
+   "node": "node-033",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:21Z"
+  },
+  "k0080": {
+   "node": "node-033",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:02:22Z"
+  },
+  "k0081": {
+   "node": "node-033",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:02:38Z"
+  },
+  "k0082": {
+   "node": "node-033",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:39Z"
+  },
+  "k0083": {
+   "node": "node-034",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:40Z"
+  },
+  "k0084": {
+   "node": "node-034",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:41Z"
+  },
+  "k0085": {
+   "node": "node-034",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:42Z"
+  },
+  "k0086": {
+   "node": "node-035",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:43Z"
+  },
+  "k0087": {
+   "node": "node-035",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:50Z"
+  },
+  "k0088": {
+   "node": "node-035",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:52Z"
+  },
+  "k0089": {
+   "node": "node-036",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:02:53Z"
+  },
+  "k0090": {
+   "node": "node-036",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:54Z"
+  },
+  "k0091": {
+   "node": "node-036",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:55Z"
+  },
+  "k0092": {
+   "node": "node-037",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:02:56Z"
+  },
+  "k0093": {
+   "node": "node-038",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:02:57Z"
+  },
+  "k0094": {
+   "node": "node-038",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:03Z"
+  },
+  "k0095": {
+   "node": "node-038",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:04Z"
+  },
+  "k0096": {
+   "node": "node-038",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:05Z"
+  },
+  "k0097": {
+   "node": "node-039",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:06Z"
+  },
+  "k0098": {
+   "node": "node-039",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:07Z"
+  },
+  "k0099": {
+   "node": "node-040",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:03:08Z"
+  },
+  "k0100": {
+   "node": "node-040",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:09Z"
+  },
+  "k0101": {
+   "node": "node-041",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:16Z"
+  },
+  "k0102": {
+   "node": "node-042",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:03:17Z"
+  },
+  "k0103": {
+   "node": "node-043",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:18Z"
+  },
+  "k0104": {
+   "node": "node-044",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:19Z"
+  },
+  "k0105": {
+   "node": "node-045",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:20Z"
+  },
+  "k0106": {
+   "node": "node-045",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:21Z"
+  },
+  "k0107": {
+   "node": "node-045",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:22Z"
+  },
+  "k0108": {
+   "node": "node-045",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:30Z"
+  },
+  "k0109": {
+   "node": "node-046",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:31Z"
+  },
+  "k0110": {
+   "node": "node-046",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:32Z"
+  },
+  "k0111": {
+   "node": "node-047",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:33Z"
+  },
+  "k0112": {
+   "node": "node-047",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:37Z"
+  },
+  "k0113": {
+   "node": "node-048",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:38Z"
+  },
+  "k0114": {
+   "node": "node-049",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:03:41Z"
+  },
+  "k0115": {
+   "node": "node-049",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:42Z"
+  },
+  "k0116": {
+   "node": "node-050",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:43Z"
+  },
+  "k0117": {
+   "node": "node-050",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:44Z"
+  },
+  "k0118": {
+   "node": "node-050",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:45Z"
+  },
+  "k0119": {
+   "node": "node-051",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:46Z"
+  },
+  "k0120": {
+   "node": "node-051",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:47Z"
+  },
+  "k0121": {
+   "node": "node-051",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:48Z"
+  },
+  "k0122": {
+   "node": "node-052",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:49Z"
+  },
+  "k0123": {
+   "node": "node-053",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:50Z"
+  },
+  "k0124": {
+   "node": "node-053",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:51Z"
+  },
+  "k0125": {
+   "node": "node-053",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:52Z"
+  },
+  "k0126": {
+   "node": "node-054",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:03:53Z"
+  },
+  "k0127": {
+   "node": "node-054",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:54Z"
+  },
+  "k0128": {
+   "node": "node-055",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:55Z"
+  },
+  "k0129": {
+   "node": "node-055",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:56Z"
+  },
+  "k0130": {
+   "node": "node-055",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:57Z"
+  },
+  "k0131": {
+   "node": "node-055",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:03:58Z"
+  },
+  "k0132": {
+   "node": "node-056",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:03:59Z"
+  },
+  "k0133": {
+   "node": "node-056",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:00Z"
+  },
+  "k0134": {
+   "node": "node-056",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:01Z"
+  },
+  "k0135": {
+   "node": "node-057",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:02Z"
+  },
+  "k0136": {
+   "node": "node-057",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:04:23Z"
+  },
+  "k0137": {
+   "node": "node-057",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:24Z"
+  },
+  "k0138": {
+   "node": "node-058",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:25Z"
+  },
+  "k0139": {
+   "node": "node-058",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:26Z"
+  },
+  "k0140": {
+   "node": "node-060",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:27Z"
+  },
+  "k0141": {
+   "node": "node-060",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:28Z"
+  },
+  "k0142": {
+   "node": "node-061",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:35Z"
+  },
+  "k0143": {
+   "node": "node-061",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:36Z"
+  },
+  "k0144": {
+   "node": "node-061",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:37Z"
+  },
+  "k0145": {
+   "node": "node-062",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:04:38Z"
+  },
+  "k0146": {
+   "node": "node-062",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:04:39Z"
+  },
+  "k0147": {
+   "node": "node-062",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:45Z"
+  },
+  "k0148": {
+   "node": "node-063",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:46Z"
+  },
+  "k0149": {
+   "node": "node-064",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:47Z"
+  },
+  "k0150": {
+   "node": "node-064",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:48Z"
+  },
+  "k0151": {
+   "node": "node-064",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:04:49Z"
+  },
+  "k0152": {
+   "node": "node-065",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:50Z"
+  },
+  "k0153": {
+   "node": "node-065",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:04:51Z"
+  },
+  "k0154": {
+   "node": "node-065",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:04:59Z"
+  },
+  "k0155": {
+   "node": "node-065",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:00Z"
+  },
+  "k0156": {
+   "node": "node-066",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:01Z"
+  },
+  "k0157": {
+   "node": "node-066",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:02Z"
+  },
+  "k0158": {
+   "node": "node-067",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:03Z"
+  },
+  "k0159": {
+   "node": "node-067",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:04Z"
+  },
+  "k0160": {
+   "node": "node-067",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:05Z"
+  },
+  "k0161": {
+   "node": "node-068",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:06Z"
+  },
+  "k0162": {
+   "node": "node-068",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:15Z"
+  },
+  "k0163": {
+   "node": "node-068",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:16Z"
+  },
+  "k0164": {
+   "node": "node-069",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:17Z"
+  },
+  "k0165": {
+   "node": "node-069",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:18Z"
+  },
+  "k0166": {
+   "node": "node-069",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:05:23Z"
+  },
+  "k0167": {
+   "node": "node-069",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:24Z"
+  },
+  "k0168": {
+   "node": "node-070",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:25Z"
+  },
+  "k0169": {
+   "node": "node-070",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:26Z"
+  },
+  "k0170": {
+   "node": "node-070",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:27Z"
+  },
+  "k0171": {
+   "node": "node-071",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:28Z"
+  },
+  "k0172": {
+   "node": "node-071",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:29Z"
+  },
+  "k0173": {
+   "node": "node-072",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:30Z"
+  },
+  "k0174": {
+   "node": "node-074",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:31Z"
+  },
+  "k0175": {
+   "node": "node-074",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:32Z"
+  },
+  "k0176": {
+   "node": "node-075",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:41Z"
+  },
+  "k0177": {
+   "node": "node-075",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:43Z"
+  },
+  "k0178": {
+   "node": "node-075",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:44Z"
+  },
+  "k0179": {
+   "node": "node-077",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:05:47Z"
+  },
+  "k0180": {
+   "node": "node-077",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:48Z"
+  },
+  "k0181": {
+   "node": "node-078",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:49Z"
+  },
+  "k0182": {
+   "node": "node-078",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:05:50Z"
+  },
+  "k0183": {
+   "node": "node-078",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:55Z"
+  },
+  "k0184": {
+   "node": "node-079",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:56Z"
+  },
+  "k0185": {
+   "node": "node-079",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:05:57Z"
+  },
+  "k0186": {
+   "node": "node-079",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:05:58Z"
+  },
+  "k0187": {
+   "node": "node-079",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:05:59Z"
+  },
+  "k0188": {
+   "node": "node-080",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:00Z"
+  },
+  "k0189": {
+   "node": "node-081",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:01Z"
+  },
+  "k0190": {
+   "node": "node-081",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:06:02Z"
+  },
+  "k0191": {
+   "node": "node-081",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:11Z"
+  },
+  "k0192": {
+   "node": "node-082",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:12Z"
+  },
+  "k0193": {
+   "node": "node-083",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:15Z"
+  },
+  "k0194": {
+   "node": "node-083",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:16Z"
+  },
+  "k0195": {
+   "node": "node-083",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:17Z"
+  },
+  "k0196": {
+   "node": "node-084",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:06:18Z"
+  },
+  "k0197": {
+   "node": "node-084",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:19Z"
+  },
+  "k0198": {
+   "node": "node-085",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:20Z"
+  },
+  "k0199": {
+   "node": "node-085",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:21Z"
+  },
+  "k0200": {
+   "node": "node-085",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:06:28Z"
+  },
+  "k0201": {
+   "node": "node-085",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:29Z"
+  },
+  "k0202": {
+   "node": "node-086",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:30Z"
+  },
+  "k0203": {
+   "node": "node-086",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:06:31Z"
+  },
+  "k0204": {
+   "node": "node-086",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:32Z"
+  },
+  "k0205": {
+   "node": "node-087",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:33Z"
+  },
+  "k0206": {
+   "node": "node-087",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:40Z"
+  },
+  "k0207": {
+   "node": "node-087",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:06:41Z"
+  },
+  "k0208": {
+   "node": "node-088",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:42Z"
+  },
+  "k0209": {
+   "node": "node-088",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:46Z"
+  },
+  "k0210": {
+   "node": "node-088",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:06:47Z"
+  },
+  "k0211": {
+   "node": "node-088",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:48Z"
+  },
+  "k0212": {
+   "node": "node-089",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:49Z"
+  },
+  "k0213": {
+   "node": "node-090",
+   "event_type": "exception",
+   "exception_type": "no_show",
+   "occurred_at": "2026-11-10T03:06:50Z"
+  },
+  "k0214": {
+   "node": "node-090",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:51Z"
+  },
+  "k0215": {
+   "node": "node-091",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:06:52Z"
+  },
+  "k0216": {
+   "node": "node-092",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:53Z"
+  },
+  "k0217": {
+   "node": "node-092",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:06:54Z"
+  },
+  "k0218": {
+   "node": "node-092",
+   "event_type": "exception",
+   "exception_type": "vehicle_issue",
+   "occurred_at": "2026-11-10T03:07:04Z"
+  },
+  "k0219": {
+   "node": "node-092",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:05Z"
+  },
+  "k0220": {
+   "node": "node-093",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:06Z"
+  },
+  "k0221": {
+   "node": "node-093",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:07Z"
+  },
+  "k0222": {
+   "node": "node-094",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:08Z"
+  },
+  "k0223": {
+   "node": "node-094",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:09Z"
+  },
+  "k0224": {
+   "node": "node-094",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:16Z"
+  },
+  "k0225": {
+   "node": "node-095",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:17Z"
+  },
+  "k0226": {
+   "node": "node-095",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:18Z"
+  },
+  "k0227": {
+   "node": "node-096",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:19Z"
+  },
+  "k0228": {
+   "node": "node-096",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:24Z"
+  },
+  "k0229": {
+   "node": "node-096",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:25Z"
+  },
+  "k0230": {
+   "node": "node-097",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:28Z"
+  },
+  "k0231": {
+   "node": "node-098",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:29Z"
+  },
+  "k0232": {
+   "node": "node-098",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:30Z"
+  },
+  "k0233": {
+   "node": "node-099",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:31Z"
+  },
+  "k0234": {
+   "node": "node-099",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:32Z"
+  },
+  "k0235": {
+   "node": "node-100",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:33Z"
+  },
+  "k0236": {
+   "node": "node-100",
+   "event_type": "exception",
+   "exception_type": "traffic_delay",
+   "occurred_at": "2026-11-10T03:07:40Z"
+  },
+  "k0237": {
+   "node": "node-100",
+   "event_type": "pickup_confirmed",
+   "exception_type": null,
+   "occurred_at": "2026-11-10T03:07:41Z"
+  }
+ },
+ "deliveries": [
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0001",
+    "k0002",
+    "k0003"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0004",
+    "k0005"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0006",
+    "k0007"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0006",
+    "k0007",
+    "k0008",
+    "k0009",
+    "k0010",
+    "k0011"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0012",
+    "k0013",
+    "k0014"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0015",
+    "k0016"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0017",
+    "k0018",
+    "k0019"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0020"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0020",
+    "k0021"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0022"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0023",
+    "k0024",
+    "k0025",
+    "k0026",
+    "k0027"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0023",
+    "k0024",
+    "k0025",
+    "k0026",
+    "k0027",
+    "k0028",
+    "k0029"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0030",
+    "k0031",
+    "k0032",
+    "k0033",
+    "k0034",
+    "k0035"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0036",
+    "k0037",
+    "k0038",
+    "k0039",
+    "k0040",
+    "k0041",
+    "k0042"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0043",
+    "k0044",
+    "k0045"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0046",
+    "k0047",
+    "k0048",
+    "k0049",
+    "k0050",
+    "k0051",
+    "k0052"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0053",
+    "k0054",
+    "k0055",
+    "k0056",
+    "k0057"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0053",
+    "k0054",
+    "k0055",
+    "k0056",
+    "k0057",
+    "k0058",
+    "k0059",
+    "k0060",
+    "k0061",
+    "k0062"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0063",
+    "k0064",
+    "k0065"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0066"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0066",
+    "k0067",
+    "k0068",
+    "k0069"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0066",
+    "k0067",
+    "k0068",
+    "k0069",
+    "k0070",
+    "k0071",
+    "k0072",
+    "k0073",
+    "k0074",
+    "k0075",
+    "k0076",
+    "k0077",
+    "k0078",
+    "k0079",
+    "k0080"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0081",
+    "k0082",
+    "k0083",
+    "k0084",
+    "k0085",
+    "k0086"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0087"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0088",
+    "k0089",
+    "k0090",
+    "k0091",
+    "k0092",
+    "k0093"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0088",
+    "k0089",
+    "k0090",
+    "k0091",
+    "k0092",
+    "k0093"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0094"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0094",
+    "k0095",
+    "k0096",
+    "k0097",
+    "k0098",
+    "k0099",
+    "k0100"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0101",
+    "k0102",
+    "k0103",
+    "k0104",
+    "k0105",
+    "k0106"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0101",
+    "k0102",
+    "k0103",
+    "k0104",
+    "k0105",
+    "k0106",
+    "k0107"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0108",
+    "k0109",
+    "k0110",
+    "k0111"
+   ],
+   "answers": [
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0112",
+    "k0113"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0114",
+    "k0115",
+    "k0116",
+    "k0117",
+    "k0118",
+    "k0119",
+    "k0120",
+    "k0121",
+    "k0122",
+    "k0123",
+    "k0124",
+    "k0125",
+    "k0126",
+    "k0127",
+    "k0128",
+    "k0129"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0114",
+    "k0115",
+    "k0116",
+    "k0117",
+    "k0118",
+    "k0119",
+    "k0120",
+    "k0121",
+    "k0122",
+    "k0123",
+    "k0124",
+    "k0125",
+    "k0126",
+    "k0127",
+    "k0128",
+    "k0129",
+    "k0130",
+    "k0131",
+    "k0132",
+    "k0133",
+    "k0134",
+    "k0135"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0136",
+    "k0137",
+    "k0138",
+    "k0139",
+    "k0140",
+    "k0141"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0142",
+    "k0143",
+    "k0144",
+    "k0145",
+    "k0146"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0147",
+    "k0148",
+    "k0149",
+    "k0150",
+    "k0151",
+    "k0152",
+    "k0153"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0154",
+    "k0155",
+    "k0156",
+    "k0157",
+    "k0158",
+    "k0159",
+    "k0160",
+    "k0161"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0162",
+    "k0163",
+    "k0164",
+    "k0165"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0166",
+    "k0167",
+    "k0168",
+    "k0169",
+    "k0170",
+    "k0171",
+    "k0172",
+    "k0173",
+    "k0174"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0166",
+    "k0167",
+    "k0168",
+    "k0169",
+    "k0170",
+    "k0171",
+    "k0172",
+    "k0173",
+    "k0174",
+    "k0175"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0176"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0177",
+    "k0178"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0179",
+    "k0180",
+    "k0181",
+    "k0182"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0183",
+    "k0184",
+    "k0185",
+    "k0186",
+    "k0187",
+    "k0188"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0183",
+    "k0184",
+    "k0185",
+    "k0186",
+    "k0187",
+    "k0188",
+    "k0189",
+    "k0190"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0191",
+    "k0192"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "RESPONSE_LOST",
+   "keys": [
+    "k0193",
+    "k0194",
+    "k0195",
+    "k0196",
+    "k0197"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0193",
+    "k0194",
+    "k0195",
+    "k0196",
+    "k0197",
+    "k0198",
+    "k0199"
+   ],
+   "answers": [
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "REJECTED",
+     "already_confirmed"
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "DUPLICATE",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0200",
+    "k0201",
+    "k0202",
+    "k0203",
+    "k0204",
+    "k0205"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0206",
+    "k0207",
+    "k0208"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0209",
+    "k0210",
+    "k0211",
+    "k0212",
+    "k0213",
+    "k0214",
+    "k0215",
+    "k0216",
+    "k0217"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0218",
+    "k0219",
+    "k0220",
+    "k0221",
+    "k0222",
+    "k0223"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0224",
+    "k0225",
+    "k0226",
+    "k0227"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0228",
+    "k0229"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0230",
+    "k0231",
+    "k0232",
+    "k0233",
+    "k0234",
+    "k0235"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  },
+  {
+   "fault": "NONE",
+   "keys": [
+    "k0236",
+    "k0237"
+   ],
+   "answers": [
+    [
+     "ACCEPTED",
+     null
+    ],
+    [
+     "ACCEPTED",
+     null
+    ]
+   ]
+  }
+ ]
+}
