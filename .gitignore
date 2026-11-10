@@ -11,6 +11,9 @@ env/
 .ruff_cache/
 *.log
 
+# The demo seed's record of the test vans' statuses, for reset (#198)
+backend/.demo_test_vans.json
+
 # Trained model artefacts (large binaries — track via release/LFS if needed)
 *.pkl
 *.joblib

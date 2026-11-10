@@ -12,6 +12,7 @@ a pickup and a planned route), with fresh ids, deleted afterwards by id.
 """
 
 import asyncio
+import json
 import os
 from datetime import date, datetime, timedelta
 from urllib.parse import urlsplit
@@ -212,6 +213,15 @@ async def clean_world(conn, w: World) -> None:
         await conn.execute("delete from auth.users where id = any($1)", users)
 
 
+@pytest.fixture(autouse=True)
+def held_file(tmp_path, monkeypatch):
+    """The seed's record of the test vans, per test, never the real one.
+    Autouse, so it is set before world and still set at world's reset."""
+    path = tmp_path / "held.json"
+    monkeypatch.setattr(demo_seed, "HELD_FILE", path)
+    return path
+
+
 @pytest.fixture
 def world():
     w = World()
@@ -355,34 +365,70 @@ async def statuses_of_test_vans(conn) -> dict[str, str]:
     return {r["plate_number"]: r["status"] for r in rows}
 
 
-def test_seed_takes_the_available_test_van_out_of_planning_and_reset_puts_it_back(world):
+BEFORE = {"KDA 001T": "available", "KDA 002T": "broken_down"}
+
+
+def set_test_van(world, plate: str, status: str) -> None:
+    db(
+        lambda conn: conn.execute(
+            "update public.vehicles set status = $2 where id = $1", world.test_vans[plate], status
+        )
+    )
+
+
+def test_seed_holds_every_test_van_and_reset_restores_each(world, held_file):
     summary = db(lambda conn: demo_seed.seed(conn, DAY))
 
-    assert summary["test_vans_held"] == ["KDA 001T"]
-    # The broken-down spare is left as it was, and neither is warned about.
-    assert db(statuses_of_test_vans) == {"KDA 001T": "unavailable", "KDA 002T": "broken_down"}
+    # The broken-down one too, so the hub's Alerts can't list it during the demo.
+    assert summary["test_vans_held"] == BEFORE
+    assert db(statuses_of_test_vans) == dict.fromkeys(BEFORE, "unavailable")
+    assert json.loads(held_file.read_text(encoding="utf-8")) == BEFORE
     assert not any("KDA 00" in w for w in summary["warnings"])
 
     deleted = db(demo_seed.reset)
 
-    assert deleted["test_vans_released"] == 1
-    assert db(statuses_of_test_vans) == {"KDA 001T": "available", "KDA 002T": "broken_down"}
+    assert deleted["test_vans_restored"] == 2
+    assert db(statuses_of_test_vans) == BEFORE
+    assert not held_file.exists()
 
 
-def test_a_test_van_in_service_is_left_alone_and_named(world):
-    db(
-        lambda conn: conn.execute(
-            "update public.vehicles set status = 'in_service' where id = $1",
-            world.test_vans["KDA 001T"],
-        )
-    )
+def test_seeding_twice_keeps_the_statuses_from_before_the_first_seed(world, held_file):
+    db(lambda conn: demo_seed.seed(conn, DAY))
+    db(lambda conn: demo_seed.seed(conn, DAY))
+
+    assert json.loads(held_file.read_text(encoding="utf-8")) == BEFORE
+    db(demo_seed.reset)
+    assert db(statuses_of_test_vans) == BEFORE
+
+
+def test_a_test_van_in_service_is_held_and_restored_as_in_service(world):
+    set_test_van(world, "KDA 001T", "in_service")
 
     summary = db(lambda conn: demo_seed.seed(conn, DAY))
 
-    assert summary["test_vans_held"] == []
-    assert any("KDA 001T" in w for w in summary["warnings"])
+    assert summary["test_vans_held"]["KDA 001T"] == "in_service"
     db(demo_seed.reset)
-    assert db(statuses_of_test_vans)["KDA 001T"] == "in_service"
+    assert db(statuses_of_test_vans) == {"KDA 001T": "in_service", "KDA 002T": "broken_down"}
+
+
+def test_reset_leaves_a_test_van_the_dispatcher_already_brought_back(world):
+    db(lambda conn: demo_seed.seed(conn, DAY))
+    set_test_van(world, "KDA 002T", "available")  # Mark available, during the demo
+
+    db(demo_seed.reset)
+
+    assert db(statuses_of_test_vans) == {"KDA 001T": "available", "KDA 002T": "available"}
+
+
+def test_reset_with_no_record_makes_unavailable_test_vans_available(world, held_file):
+    # What an older seed (#209) left: the available van held, no record.
+    set_test_van(world, "KDA 001T", "unavailable")
+    assert not held_file.exists()
+
+    deleted = db(demo_seed.reset)
+
+    assert deleted["test_vans_restored"] == 1
+    assert db(statuses_of_test_vans) == BEFORE
 
 
 def test_reset_without_demo_rows_changes_nothing(world):

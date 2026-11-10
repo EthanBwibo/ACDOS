@@ -42,9 +42,10 @@ Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`.
    One of them is `crew@acdos.test`'s (Westlands, 06:15). If it stops with
    `missing test account(s): …`, run `python scripts/seed_test_accounts.py` and seed again.
    It also takes the test vans `KDA 001T` and `KDA 002T` (fixtures of `plan_test_route.py`)
-   out of planning: they show as Unavailable and the van picker doesn't offer them, until
-   `reset` puts them back. **Read the warnings it prints**: any van it lists is still offered,
-   so untick it at steps 3 and 5.
+   out of planning, whatever their status: they show as Unavailable, the van picker doesn't
+   offer them and Alerts doesn't list them, until `reset` puts each back as it was (recorded
+   in `backend/.demo_test_vans.json`, so seed and reset from the same laptop). **Read the
+   warnings it prints**: any van it lists is still offered, so untick it at steps 3 and 5.
 3. **Dispatcher plans** (dispatcher): tap **Next** to tomorrow. The **crew pickups** tile
    says 14, and tapping it lists them as Not planned. Back on the hub, tap **Run
    optimisation**, then **Start**: only the three `demo-` vans are selected. Tap **Start**.
