@@ -176,6 +176,7 @@ def load_results(path: Path) -> list[dict]:
     for r in rows:
         r["seed"], r["generations"] = int(r["seed"]), int(r["generations"])
         r["vehicles"], r["late_crew"] = int(r["vehicles"]), int(r["late_crew"])
+        r["unassigned"] = int(r["unassigned"])
         r["cost"], r["distance"] = float(r["cost"]), float(r["distance"])
     return rows
 
@@ -211,7 +212,8 @@ def _mean(rows: list[dict], instance: str, method: str, metric: str) -> float:
 
 
 def _star(p: float) -> str:
-    return f"{p:.4f}{' *' if p < 0.05 else ''}"
+    shown = "<0.0001" if p < 0.0001 else f"{p:.4f}"  # not 0.0000: p is never 0
+    return f"{shown}{' *' if p < 0.05 else ''}"
 
 
 def _record(diffs: list[float]) -> str:
@@ -223,15 +225,18 @@ def comparison_tables(rows: list[dict], instances: list[str], a: str, b: str) ->
     """Means, generations and per-instance tests of a against b, b being GA-ALNS."""
     lines = [
         f"| Instance | Cost {a} | Cost {b} | Vans {a} | Vans {b} | Distance {a} | Distance {b} "
-        f"| Late {a} | Late {b} | Generations {a} | Generations {b} |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        f"| Late {a} | Late {b} | Unassigned {a} | Unassigned {b} "
+        f"| Generations {a} | Generations {b} |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for name in instances:
         cells = [
             f"{_mean(rows, name, method, 'cost'):,.0f}" for method in (a, b)
         ] + [
             f"{_mean(rows, name, method, metric):.{digits}f}"
-            for metric, digits in (("vehicles", 1), ("distance", 1), ("late_crew", 1))
+            for metric, digits in (
+                ("vehicles", 1), ("distance", 1), ("late_crew", 1), ("unassigned", 1)
+            )
             for method in (a, b)
         ] + [f"{_mean(rows, name, method, 'generations'):.0f}" for method in (a, b)]  # fmt: skip
         lines.append(f"| {name} | {' | '.join(cells)} |")
@@ -305,6 +310,16 @@ def summary(rows: list[dict]) -> str:
     )
 
 
+NOTES_HEADING = "## Notes"
+
+
+def with_notes(tables: str, old_summary: str) -> str:
+    """The generated tables, followed by the hand-written notes from the old
+    summary.md (from NOTES_HEADING to the end), so a rebuild keeps them."""
+    start = old_summary.find(NOTES_HEADING)
+    return tables if start < 0 else f"{tables}\n\n{old_summary[start:].rstrip()}"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--seeds", type=int, default=10)
@@ -318,7 +333,9 @@ def main() -> None:
         run_all(plan(args.seeds, args.scale), args.out, args.resume)
     # Read back from the file, so a fresh run and a rebuild give the same text.
     text = summary(load_results(args.out / "results.csv"))
-    (args.out / "summary.md").write_text(text + "\n", encoding="utf-8")
+    path = args.out / "summary.md"
+    old = path.read_text(encoding="utf-8") if path.exists() else ""
+    path.write_text(with_notes(text, old) + "\n", encoding="utf-8")
     print(text)
 
 

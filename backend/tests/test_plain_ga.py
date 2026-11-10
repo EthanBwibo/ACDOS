@@ -152,6 +152,33 @@ def test_holm_is_capped_at_1():
     assert pg.holm([0.6, 0.7]) == pytest.approx([1.0, 1.0])
 
 
+def test_a_tiny_p_is_not_shown_as_zero():
+    assert pg._star(9.5e-7) == "<0.0001 *"
+    assert pg._star(0.0410) == "0.0410 *"
+    assert pg._star(0.55) == "0.5500"
+
+
+def test_a_rebuild_keeps_the_hand_written_notes():
+    old = "old tables\n\n## Notes\n\nGA-ALNS wins.\n"
+
+    assert pg.with_notes("new tables", old) == "new tables\n\n## Notes\n\nGA-ALNS wins."
+    assert pg.with_notes("new tables", "old tables only") == "new tables"
+
+
+def test_the_summary_shows_unassigned_pickups():
+    rows = [
+        {"instance": "A", "method": m, "seed": s, "cost": c, "vehicles": 1, "distance": 1.0,
+         "late_crew": 0, "unassigned": u, "generations": 1,
+         "every_pickup_once": "True", "checker_feasible": "True"}
+        for m, s, c, u in [("plain_ga", 1, 9.0, 3), ("ga_alns", 1, 1.0, 0)]
+    ]  # fmt: skip
+
+    means = next(line for line in pg.summary(rows).splitlines() if line.startswith("| A | 9"))
+
+    assert "Unassigned plain_ga" in pg.summary(rows)
+    assert "| 3.0 | 0.0 |" in means
+
+
 def test_paired_differences_are_per_seed_and_only_for_common_seeds():
     rows = [
         {"instance": "A", "method": "plain_ga", "seed": 1, "cost": 10.0},
