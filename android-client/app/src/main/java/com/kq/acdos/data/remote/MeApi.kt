@@ -83,7 +83,9 @@ data class DriverStopDto(
     val eta: Instant? = null,
     /** Rounded to 5 decimal places. Drivers only: crew get no coordinates. */
     val lat: Double,
-    val lon: Double
+    val lon: Double,
+    /** What the server has recorded, from any phone (#196). */
+    @Json(name = "pickup_status") val pickupStatus: PickupRequestStatusDto
 )
 
 @JsonClass(generateAdapter = true)

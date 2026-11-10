@@ -6,10 +6,12 @@ import com.kq.acdos.data.local.PickupEventType
 import com.kq.acdos.data.local.RouteEntity
 import com.kq.acdos.data.local.RouteStopEntity
 import com.kq.acdos.data.local.RouteWithStops
+import com.kq.acdos.data.local.ServerStopStatus
 import com.kq.acdos.data.local.inMemoryDatabase
 import com.kq.acdos.data.remote.DriverRouteDto
 import com.kq.acdos.data.remote.DriverRouteResponseDto
 import com.kq.acdos.data.remote.DriverStopDto
+import com.kq.acdos.data.remote.PickupRequestStatusDto
 import com.kq.acdos.data.remote.RouteStatusDto
 import com.squareup.moshi.JsonDataException
 import java.io.IOException
@@ -47,7 +49,12 @@ class DriverRouteRepositoryTest {
     @After
     fun tearDown() = db.close()
 
-    private fun stop(node: String, seq: Int, eta: Instant? = null) = DriverStopDto(
+    private fun stop(
+        node: String,
+        seq: Int,
+        eta: Instant? = null,
+        status: PickupRequestStatusDto = PickupRequestStatusDto.ASSIGNED
+    ) = DriverStopDto(
         routeNodeId = node,
         seqOrder = seq,
         crewName = "Crew $node",
@@ -55,7 +62,8 @@ class DriverRouteRepositoryTest {
         scheduledPickup = t0.plusSeconds(600L * seq),
         eta = eta,
         lat = -1.2675,
-        lon = 36.81202
+        lon = 36.81202,
+        pickupStatus = status
     )
 
     private fun route(id: String, status: RouteStatusDto = RouteStatusDto.ACTIVE) =
@@ -126,6 +134,34 @@ class DriverRouteRepositoryTest {
                 )
             ),
             saved.stops.toSet()
+        )
+    }
+
+    @Test
+    fun serverStatus_isSavedOnlyWhenItSettlesTheStop() = runTest {
+        val statuses = PickupRequestStatusDto.entries
+        answer(
+            DriverRouteDto(
+                "r1",
+                RouteStatusDto.ACTIVE,
+                "KDA 123A",
+                t0,
+                statuses.mapIndexed { k, status -> stop("n$k", k + 1, status = status) }
+            )
+        )
+
+        repository.refresh(force = true)
+
+        val saved = cached()!!.stops.sortedBy { it.seqOrder }
+        assertEquals(
+            mapOf(
+                PickupRequestStatusDto.PENDING to null,
+                PickupRequestStatusDto.ASSIGNED to null,
+                PickupRequestStatusDto.PICKED_UP to ServerStopStatus.PICKED_UP,
+                PickupRequestStatusDto.MISSED to ServerStopStatus.NO_SHOW,
+                PickupRequestStatusDto.CANCELLED to null
+            ),
+            statuses.zip(saved.map { it.serverStatus }).toMap()
         )
     }
 

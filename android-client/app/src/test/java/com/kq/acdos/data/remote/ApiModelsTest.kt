@@ -45,9 +45,10 @@ class ApiModelsTest {
             "planned_arrival":"2026-10-30T08:00:00Z",
             "stops":[{"route_node_id":"n1","seq_order":1,"crew_name":"Test Crew",
             "zone_label":"Westlands, Nairobi","scheduled_pickup":"2026-10-30T06:50:34.037197Z",
-            "eta":null,"lat":-1.2675,"lon":36.81202},
+            "eta":null,"lat":-1.2675,"lon":36.81202,"pickup_status":"picked_up"},
             {"route_node_id":"n2","seq_order":2,"crew_name":"Second Crew","zone_label":null,
-            "scheduled_pickup":"2026-10-30T07:05:00Z","lat":-1.29,"lon":36.8}]}}"""
+            "scheduled_pickup":"2026-10-30T07:05:00Z","lat":-1.29,"lon":36.8,
+            "pickup_status":"assigned"}]}}"""
         )
 
         val route = retrofit.create<MeApi>().driverRoute().body()!!.route!!
@@ -63,6 +64,8 @@ class ApiModelsTest {
         assertEquals(37_197_000, first.scheduledPickup.nano)
         assertNull(first.eta)
         assertEquals(36.81202, first.lon, 0.0)
+        assertEquals(PickupRequestStatusDto.PICKED_UP, first.pickupStatus)
+        assertEquals(PickupRequestStatusDto.ASSIGNED, route.stops[1].pickupStatus)
         // eta absent rather than null, and no zone label.
         assertNull(route.stops[1].eta)
         assertNull(route.stops[1].zoneLabel)

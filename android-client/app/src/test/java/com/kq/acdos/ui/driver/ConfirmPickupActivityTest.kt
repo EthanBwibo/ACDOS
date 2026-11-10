@@ -19,6 +19,7 @@ import com.kq.acdos.data.outbox.PickupEventOutbox
 import com.kq.acdos.data.remote.DriverRouteDto
 import com.kq.acdos.data.remote.DriverRouteResponseDto
 import com.kq.acdos.data.remote.DriverStopDto
+import com.kq.acdos.data.remote.PickupRequestStatusDto
 import com.kq.acdos.data.remote.RouteStatusDto
 import java.io.IOException
 import java.time.Instant
@@ -81,7 +82,8 @@ class ConfirmPickupActivityTest {
         zoneLabel = "Karen, Nairobi",
         scheduledPickup = Instant.EPOCH,
         lat = -1.3,
-        lon = 36.7
+        lon = 36.7,
+        pickupStatus = PickupRequestStatusDto.ASSIGNED
     )
 
     /** What the server says the route is now. */
