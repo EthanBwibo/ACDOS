@@ -22,8 +22,12 @@ Reported:
   generations under a frozen clock, the same seed, then whether the best
   plans are the same and how long each took.
 
+- On-time rate (#210): the share of all crew on time under RF travel, for
+  the RF plan and for the haversine plan (fixed and re-timed), per seed and
+  over the seeds, with paired Wilcoxon tests by seed.
+
 Run from backend/:
-    python -m benchmarks.travel_models --seeds 3 --out ../docs/results/104-travel-models
+    python -m benchmarks.travel_models --seeds 10 --out ../docs/results/210-travel-models-10-seeds
     python -m benchmarks.travel_models --shortlist --seeds 3
 """
 
@@ -43,6 +47,7 @@ from app.solver.individual import Individual, schedule
 from app.solver.instances import morning_wave_120
 from app.solver.mutation import AdaptiveMutation
 from app.solver.problem import Problem
+from benchmarks.plain_ga import holm, wilcoxon_p, with_notes
 
 EPOCH = datetime(2026, 10, 28, 3, 0)  # Wednesday; morning_wave's time 0 is 03:00
 TIME_LIMIT_SEC = 120.0
@@ -50,7 +55,7 @@ SHORTLIST_GENERATIONS = 3
 SNAP_FAR_KM = 3.0
 RUN_COLUMNS = [
     "travel", "seed", "time_limit_sec", "stop_reason", "generations", "cost", "unassigned",
-    "late_crew", "lateness_sec", "vehicles_used", "travel_sec", "waiting_sec",
+    "late_crew", "on_time", "lateness_sec", "vehicles_used", "travel_sec", "waiting_sec",
     "ride_excess_sec",
 ]  # fmt: skip
 
@@ -98,8 +103,13 @@ def cross_evaluation(haversine: Problem, rf: Problem, plan: Individual) -> dict:
     }
     fixed = {i: late for i, late in fixed_late.items() if i in on_time}
     retimed = {i: late for i, late in retimed_late.items() if i in on_time}
+    routed = sum(len(r.stops) for r in planned)
     return {
         "crew": len(rf.pickups),
+        # #210's on-time rate: every crew member delivered on time under RF
+        # travel, out of all of them (unassigned crew are not on time).
+        "on_time_fixed": routed - len(fixed_late),
+        "on_time_retimed": routed - len(retimed_late),
         "on_time_under_haversine": len(on_time),
         "late_fixed": len(fixed),
         "late_fixed_mean_min": statistics.mean(fixed.values()) / 60 if fixed else 0.0,
@@ -123,6 +133,8 @@ def run_row(travel: str, seed: int, problem: Problem, result) -> dict:
         "travel": travel, "seed": seed, "time_limit_sec": TIME_LIMIT_SEC,
         "stop_reason": result.stop_reason.value, "generations": result.generations,
         "cost": e.cost, "unassigned": e.unassigned, "late_crew": e.late_crew,
+        # On time under the travel model this plan was made with.
+        "on_time": len(problem.pickups) - e.late_crew - e.unassigned,
         "lateness_sec": e.lateness_sec, "vehicles_used": e.vehicles_used,
         "travel_sec": e.travel_sec, "waiting_sec": e.waiting_sec,
         "ride_excess_sec": e.ride_excess_sec,
@@ -151,12 +163,15 @@ def compare(seeds: int, out: Path) -> str:
         runs.append(run_row("rf", seed, rf, rf_result))
         print(f"seed {seed}: {runs[-2]['generations']} / {runs[-1]['generations']} generations "
               f"(haversine / rf); {crosses[-1]}", flush=True)  # fmt: skip
+        # After every seed, so an interrupted run keeps what it has.
+        _write(out / "results.csv", runs)
+        _write(out / "cross_evaluation.csv", crosses)
 
-    _write(out / "results.csv", runs)
-    _write(out / "cross_evaluation.csv", crosses)
     snaps = snap_distances(morning_wave_120(), rf_travel.zones)
     text = _summary(runs, crosses, snaps, matrix_note(rf_travel.matrix))
-    (out / "summary.md").write_text(text + "\n", encoding="utf-8")
+    path = out / "summary.md"
+    old = path.read_text(encoding="utf-8") if path.exists() else ""
+    path.write_text(with_notes(text, old) + "\n", encoding="utf-8")
     return text
 
 
@@ -220,9 +235,75 @@ def matrix_note(matrix: zone_matrix.ZoneMatrix) -> str:
     )
 
 
+PLANS = {
+    "rf": "RF plan",
+    "fixed": "Haversine plan, fixed departures",
+    "retimed": "Haversine plan, re-timed",
+}
+
+
+def on_time_by_seed(runs: list[dict], crosses: list[dict]) -> dict[int, dict[str, float]]:
+    """Per seed, the % of crew on time under RF travel for each plan in PLANS."""
+    rf = {r["seed"]: r for r in runs if r["travel"] == "rf"}
+    return {
+        c["seed"]: {
+            "rf": rf[c["seed"]]["on_time"] / c["crew"] * 100,
+            "fixed": c["on_time_fixed"] / c["crew"] * 100,
+            "retimed": c["on_time_retimed"] / c["crew"] * 100,
+        }
+        for c in crosses
+        if c["seed"] in rf
+    }
+
+
+def on_time_table(runs: list[dict], crosses: list[dict]) -> list[str]:
+    """#210's headline: on-time rates under RF travel, per seed and over the
+    seeds, and paired Wilcoxon tests of the RF plan against each haversine
+    variant (Holm across the two)."""
+    by_seed = on_time_by_seed(runs, crosses)
+    lines = [
+        "On time under RF travel, % of all crew (unassigned count as not on time):",
+        "",
+        "| Seed | " + " | ".join(PLANS.values()) + " |",
+        "|---|---|---|---|",
+    ]
+    for seed, rates in sorted(by_seed.items()):
+        lines.append(f"| {seed} | " + " | ".join(f"{rates[p]:.1f}" for p in PLANS) + " |")
+    cells = []
+    for p in PLANS:
+        values = [rates[p] for rates in by_seed.values()]
+        cells.append(f"{statistics.fmean(values):.1f} ({min(values):.1f} to {max(values):.1f})")
+    lines.append("| Mean (range) | " + " | ".join(cells) + " |")
+
+    tests = []
+    for p in ("fixed", "retimed"):
+        diffs = [rates["rf"] - rates[p] for rates in by_seed.values()]
+        tests.append((p, diffs, wilcoxon_p(diffs)))
+    adjusted = holm([p_value for *_, p_value in tests])
+    lines += [
+        "",
+        f"RF plan minus haversine plan, paired by seed ({len(by_seed)} seeds), Wilcoxon "
+        "signed-rank with Holm across the two (* below 0.05):",
+        "",
+        "| Against | Mean difference, points | RF plan better / tied / worse | p (Holm) |",
+        "|---|---|---|---|",
+    ]
+    for (p, diffs, _), p_holm in zip(tests, adjusted, strict=True):
+        record = f"{sum(d > 0 for d in diffs)}/{sum(d == 0 for d in diffs)}/" + str(
+            sum(d < 0 for d in diffs)
+        )
+        star = " *" if p_holm < 0.05 else ""
+        lines.append(
+            f"| {PLANS[p]} | {statistics.fmean(diffs):+.1f} | {record} | {p_holm:.4f}{star} |"
+        )
+    return lines
+
+
 def _summary(runs: list[dict], crosses: list[dict], snaps: list[float], note: str) -> str:
     lines = [
         note,
+        "",
+        *on_time_table(runs, crosses),
         "",
         "Cross-evaluation: the haversine plan driven under RF travel.",
         "",
