@@ -94,3 +94,103 @@ So the RF's case is not that it beats Layer 2 today. It is that it comes within 
 - The truth is Google's `duration_in_traffic` at the time of logging, not a GPS trip. Layer 2 and so the RF also come from Google, so this shows agreement with Google's picture of Nairobi traffic, not accuracy against real vans. It favours Layer 2 most.
 - The interval resamples logging runs. Runs on the same day share weather and incidents, so the intervals may be somewhat too narrow.
 - Coverage is uneven at the start: 20 to 21 October have 9 runs in all, from the GitHub Actions logger. The logger ended at 07:07 EAT on 8 November, so that day is partial.
+
+## Evening under-prediction (#202)
+
+2547 evening observations (16:00 to 21:00 EAT). A multiplier is a time divided by the zone's static baseline.
+
+**1. Layer 3's evening multipliers against the logger.** Above 0: the evening was slower than Layer 3 expects at those weekdays and minutes. The per-zone, per-hour table, with Layer 3's own trip means, is `evening_zone_hour.csv`.
+
+| Hour | n | Layer 3 trips, all weekdays | Observed multiplier | Layer 3 at logged times | Observed vs Layer 3 % (95% CI) | RF under >10% % |
+|---|---|---|---|---|---|---|
+| 16:00 | 560 | 1.143 | 1.181 | 1.119 | +5.6 (+3.9 to +7.3) | 15.9 |
+| 17:00 | 532 | 1.280 | 1.317 | 1.253 | +5.1 (-1.7 to +9.6) | 32.5 |
+| 18:00 | 503 | 1.308 | 1.401 | 1.306 | +7.3 (+3.7 to +10.4) | 37.8 |
+| 19:00 | 476 | 1.217 | 1.362 | 1.283 | +6.2 (+3.0 to +9.3) | 30.7 |
+| 20:00 | 476 | 1.089 | 1.141 | 1.136 | +0.4 (-2.8 to +3.5) | 11.1 |
+| all | 2547 | 1.197 | 1.279 | 1.218 | +5.1 (+3.3 to +6.6) | 25.6 |
+
+| Period | n | Observed multiplier | Layer 3 at logged times | Observed vs Layer 3 % (95% CI) | RF under >10% % |
+|---|---|---|---|---|---|
+| 20 to 26 Oct (interim) | 868 | 1.189 | 1.192 | -0.2 (-4.2 to +2.8) | 14.1 |
+| 27 Oct to 2 Nov | 979 | 1.304 | 1.217 | +7.2 (+5.1 to +8.9) | 29.7 |
+| 3 to 7 Nov | 700 | 1.356 | 1.251 | +8.4 (+6.1 to +10.8) | 34.0 |
+
+| Weekday | n | Observed multiplier | Layer 3 at logged times | Observed vs Layer 3 % (95% CI) | RF under >10% % |
+|---|---|---|---|---|---|
+| Monday | 280 | 1.368 | 1.313 | +4.2 (-0.5 to +8.9) | 28.9 |
+| Tuesday | 308 | 1.360 | 1.310 | +3.8 (-6.1 to +11.5) | 32.8 |
+| Wednesday | 308 | 1.398 | 1.282 | +9.1 (+5.6 to +12.0) | 34.7 |
+| Thursday | 448 | 1.358 | 1.293 | +5.0 (+2.2 to +7.7) | 28.3 |
+| Friday | 448 | 1.461 | 1.341 | +8.9 (+6.0 to +11.6) | 39.5 |
+| Saturday | 447 | 1.051 | 1.030 | +2.1 (+0.5 to +3.6) | 9.8 |
+| Sunday | 308 | 0.951 | 0.958 | -0.7 (-2.2 to +1.0) | 4.5 |
+
+The ten zones most often under-predicted in the evening:
+
+| Zone | n | Observed multiplier | Layer 3 at logged times | Observed vs Layer 3 % (95% CI) | RF under >10% % |
+|---|---|---|---|---|---|
+| Nairobi CBD, Nairobi | 91 | 1.496 | 1.282 | +16.7 (+13.6 to +19.6) | 64.8 |
+| Kitengela, Kajiado County | 91 | 1.387 | 1.243 | +11.6 (+8.8 to +14.1) | 54.9 |
+| Athi River, Machakos County | 91 | 1.344 | 1.222 | +9.9 (+7.4 to +12.3) | 45.1 |
+| Mlolongo, Machakos County | 91 | 1.449 | 1.320 | +9.7 (+6.5 to +12.5) | 44.0 |
+| Embakasi, Nairobi | 91 | 1.483 | 1.399 | +6.0 (+1.4 to +10.5) | 42.9 |
+| Kahawa, Nairobi | 91 | 1.146 | 1.063 | +7.7 (+6.1 to +9.4) | 39.6 |
+| Upper Hill, Nairobi | 91 | 1.329 | 1.261 | +5.4 (+3.1 to +7.4) | 35.2 |
+| South B, Nairobi | 91 | 1.411 | 1.292 | +9.3 (+6.5 to +11.9) | 35.2 |
+| Langata, Nairobi | 91 | 1.270 | 1.196 | +6.3 (+4.3 to +8.2) | 35.2 |
+| Kilimani, Nairobi | 91 | 1.314 | 1.242 | +5.8 (+3.7 to +7.7) | 31.9 |
+
+The logger is more than 10% above Layer 3 in 20 of the 140 zone-hour cells. The ten largest gaps:
+
+| Zone | Hour | Observed | Layer 3 trips | Layer 3 at logged times | Observed vs Layer 3 % | RF under >10% % |
+|---|---|---|---|---|---|---|
+| Nairobi CBD, Nairobi | 16:00 | 1.456 | 1.248 | 1.174 | +24.0 | 60.0 |
+| Nairobi CBD, Nairobi | 18:00 | 1.659 | 1.336 | 1.393 | +19.1 | 77.8 |
+| Kitengela, Kajiado County | 17:00 | 1.512 | 1.324 | 1.305 | +15.9 | 63.2 |
+| Nairobi CBD, Nairobi | 17:00 | 1.529 | 1.436 | 1.337 | +14.4 | 68.4 |
+| Kitengela, Kajiado County | 18:00 | 1.496 | 1.311 | 1.311 | +14.2 | 66.7 |
+| Athi River, Machakos County | 18:00 | 1.466 | 1.251 | 1.290 | +13.7 | 66.7 |
+| Nairobi CBD, Nairobi | 19:00 | 1.518 | 1.314 | 1.336 | +13.6 | 64.7 |
+| Mlolongo, Machakos County | 18:00 | 1.679 | 1.460 | 1.482 | +13.3 | 61.1 |
+| Mlolongo, Machakos County | 17:00 | 1.576 | 1.558 | 1.394 | +13.1 | 57.9 |
+| Embakasi, Nairobi | 16:00 | 1.146 | 1.053 | 1.014 | +13.0 | 35.0 |
+
+**2. Would the 15-minute buffer have absorbed them?** Short: how much longer the leg took than the RF said. Still late: short by more than the buffer.
+
+| Hour | n | Under >10% | Median short (min) | 90th pct (min) | Max (min) | Still late | % of under-predictions | % of all |
+|---|---|---|---|---|---|---|---|---|
+| 16:00 | 560 | 89 | 6.0 | 10.1 | 17.9 | 3 | 3.4 | 0.5 |
+| 17:00 | 532 | 173 | 7.6 | 14.8 | 31.9 | 17 | 9.8 | 3.2 |
+| 18:00 | 503 | 190 | 7.9 | 13.0 | 20.4 | 8 | 4.2 | 1.6 |
+| 19:00 | 476 | 146 | 6.4 | 11.4 | 22.4 | 4 | 2.7 | 0.8 |
+| 20:00 | 476 | 53 | 4.7 | 9.0 | 15.4 | 1 | 1.9 | 0.2 |
+| all evening | 2547 | 651 | 6.9 | 12.7 | 31.9 | 33 | 5.1 | 1.3 |
+
+The same for every band:
+
+| Band | n | Under >10% | Median short (min) | 90th pct (min) | Max (min) | Still late | % of under-predictions | % of all |
+|---|---|---|---|---|---|---|---|---|
+| all | 12403 | 1178 | 5.9 | 11.4 | 39.6 | 41 | 3.5 | 0.3 |
+| night | 4340 | 75 | 4.7 | 10.5 | 39.6 | 2 | 2.7 | 0.0 |
+| morning | 2492 | 238 | 5.0 | 9.5 | 21.1 | 3 | 1.3 | 0.1 |
+| midday | 3024 | 214 | 4.8 | 9.2 | 17.0 | 3 | 1.4 | 0.1 |
+| evening | 2547 | 651 | 6.9 | 12.7 | 31.9 | 33 | 5.1 | 1.3 |
+
+If the plan had already spent part of the buffer (evening observations, RF against the static baseline):
+
+| Buffer left (min) | RF: % of all still late | Baseline: % of all still late |
+|---|---|---|
+| 15 | 1.3 | 20.1 |
+| 10 | 5.4 | 34.3 |
+| 5 | 19.9 | 51.5 |
+
+**What this shows.**
+
+- **The RF inherits this from Layer 2.** Layer 2 itself is more than 10% too fast on 23.7% of evening observations, against the RF's 25.6%. The RF learned what it was given; this is not a learning failure.
+- **The evenings became slower than Layer 2 forecast after the first week** (20 to 26 Oct (interim): -0.2%; 27 Oct to 2 Nov: +7.2%; 3 to 7 Nov: +8.4%). That is why the share rose from 14.4% in #103 to 25.6%. (14.1% in the first row above: that period runs to the end of 26 October, and #103 stopped at 15:07 EAT.) Layer 2 is one set of forecasts, committed on 20 October. These data cannot say why the evenings slowed.
+- **It is a weekday peak problem.** It is concentrated from 17:00 to 19:59 on Monday to Friday, and is small at weekends.
+- **The buffer absorbs nearly all of it.** 33 of 651 evening under-predictions (5.1%) are short by more than 15 minutes, which is 1.3% of all evening observations.
+- **Those 33 are not one bad evening.** They fall in 19 of the logging runs, at most 4 in one. 13 are Kitengela and 7 are Athi River: on these long legs a fixed 15 minutes is a smaller share of the trip.
+
+**Limits.** This is the direct zone-to-JKIA leg only, and the logger's time stands for the real trip (Google's estimate, not GPS). A van with several stops also carries any error in its pickup-to-pickup legs, which this does not test. It assumes the plan kept its whole buffer, hence the smaller buffers above; a crew member reporting later than the earliest on board has more slack than this.
