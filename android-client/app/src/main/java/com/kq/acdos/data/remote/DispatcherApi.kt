@@ -67,7 +67,11 @@ enum class VehicleStatusDto {
     IN_SERVICE,
 
     @Json(name = "broken_down")
-    BROKEN_DOWN
+    BROKEN_DOWN,
+
+    /** Out of planning but not broken down, e.g. the test vans during the demo (#198). */
+    @Json(name = "unavailable")
+    UNAVAILABLE
 }
 
 @JsonClass(generateAdapter = true)

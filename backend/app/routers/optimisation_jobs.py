@@ -15,8 +15,8 @@ has several problems, the first in this order is reported:
 1. Idempotency-Key already used: same body, the job it started; a different
    body, 422 idempotency_key_reused.
 2. An id listed twice: 422 duplicate_ids. An id that doesn't exist: 422
-   unknown_ids. A pickup past assigned, or a van broken down: 422
-   not_plannable.
+   unknown_ids. A pickup past assigned, or a van broken down or
+   unavailable: 422 not_plannable.
 3. A pickup on a route that has departed: 409 departed_routes (a departed
    route is never re-planned, except a broken-down van's in a
    vehicle_breakdown re-plan). A van on the road: 409
@@ -59,6 +59,8 @@ router = APIRouter(prefix="/optimisation-jobs", tags=["optimisation jobs"])
 # A pickup in any later state (picked up, missed, cancelled) is not to be
 # planned again.
 PLANNABLE = {PickupRequestStatus.PENDING, PickupRequestStatus.ASSIGNED}
+# Vans the planner may not use: broken down, or taken out of planning (#198).
+UNPLANNABLE_VANS = {VehicleStatus.BROKEN_DOWN, VehicleStatus.UNAVAILABLE}
 
 
 def runner(request: Request) -> JobRunner:
@@ -167,12 +169,12 @@ async def create_job(
             vehicle_ids=unknown_vehicles,
         )
     done = [p.id for p in pickups.values() if p.status not in PLANNABLE]
-    broken = [v.id for v in vehicles.values() if v.status == VehicleStatus.BROKEN_DOWN]
+    broken = [v.id for v in vehicles.values() if v.status in UNPLANNABLE_VANS]
     if done or broken:
         raise _422(
             ErrorCode.NOT_PLANNABLE,
             "these pickups are past assigned (picked up, missed or cancelled), "
-            "or these vans are broken down",
+            "or these vans are broken down or unavailable",
             pickup_request_ids=done,
             vehicle_ids=broken,
         )

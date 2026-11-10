@@ -246,9 +246,10 @@ def test_a_van_on_the_road_is_a_conflict(client, store):
     assert store.jobs == {}
 
 
-def test_a_broken_down_van_is_refused(client, store):
+@pytest.mark.parametrize("van_status", ["broken_down", "unavailable"])
+def test_a_broken_down_or_unavailable_van_is_refused(client, store, van_status):
     van = next(iter(store.stored_vehicles.values()))
-    store.stored_vehicles[van.id] = StoredVehicle(van.id, van.capacity, "broken_down")
+    store.stored_vehicles[van.id] = StoredVehicle(van.id, van.capacity, van_status)
 
     response = post(client, body(store))
 

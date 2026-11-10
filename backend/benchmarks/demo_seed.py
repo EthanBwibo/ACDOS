@@ -7,19 +7,29 @@ ACDOS — the demo morning for the defence (docs/demo_runbook.md).
             13 crew without accounts across 7 of the 28 pickup zones, and
             one pending pickup each, reporting at JKIA between 05:00 and
             07:30 EAT; plus one pickup for crew@acdos.test (Westlands), so
-            the crew phone has something to show. Runs reset first, in the
-            same transaction, so seeding twice gives the same rows.
+            the crew phone has something to show. Takes the test vans
+            (TEST_VANS) out of planning: each one that is available becomes
+            unavailable, so the dispatcher's van picker cannot offer it (#198).
+            Runs reset first, in the same transaction, so seeding twice gives
+            the same rows.
     reset   deletes every demo row and what hangs off it: the optimisation
             jobs that planned demo pickups or vans, their job pickups,
             routes, route nodes, pickup events and trip records, and the
-            demo pickups' notices and the demo crew's messages.
+            demo pickups' notices and the demo crew's messages. Puts the test
+            vans back: each one still unavailable becomes available again.
 
 Demo rows are tagged: vans' plates and crew names start with "demo-". The
 pickups carry no name, so they are the demo crew's pickups plus crew@'s demo
 pickup, whose id is fixed. Every demo row has a fixed id (uuid5 of its name),
 and reset deletes by those ids and the tag only. Non-demo rows are never
-written: the test accounts, their profiles, crew@'s crew record and the
-vans and pickups of plan_test_route.py stay as they are. A job that planned
+written, with one exception: the test vans' status, as above. The test
+accounts, their profiles, crew@'s crew record and the pickups of
+plan_test_route.py stay as they are.
+
+Only available test vans are held, and only unavailable ones released, so
+reset restores each test van's earlier status: one broken down or in service
+is left alone (and named in the warnings). 'unavailable' is used by nothing
+else (migration 030), so a held van is always the seed's. A job that planned
 demo and non-demo rows together cannot be removed by id without touching
 non-demo rows, so reset then stops and deletes nothing.
 
@@ -68,6 +78,9 @@ VAN_DRIVERS = [
 ]
 VANS = [plate for plate, _ in VAN_DRIVERS]
 DRIVER_EMAILS = [email for _, email in VAN_DRIVERS]
+
+# plan_test_route.py's vans: out of planning during the demo (#198).
+TEST_VANS = ["KDA 001T", "KDA 002T"]
 
 # (name, zone label, metres east and north of the zone's point, report time
 # at JKIA in EAT). Homes sit a few hundred metres off the zone point, so two
@@ -246,6 +259,11 @@ async def _reset(conn: asyncpg.Connection) -> dict[str, int]:
             "delete from public.crew_members where id = any($1)", rows.crew
         ),
         "vehicles": await delete("delete from public.vehicles where id = any($1)", rows.vans),
+        "test_vans_released": await delete(
+            "update public.vehicles set status = 'available' "
+            "where plate_number = any($1) and status = 'unavailable'",
+            TEST_VANS,
+        ),
     }
 
 
@@ -349,9 +367,15 @@ async def seed(conn: asyncpg.Connection, day: date) -> dict:
             account_crew_id,
             report_at(day, CREW_ACCOUNT_PICKUP[1]),
         )
+        held = await conn.fetch(
+            "update public.vehicles set status = 'unavailable' "
+            "where plate_number = any($1) and status = 'available' returning plate_number",
+            TEST_VANS,
+        )
 
     return {
         "deleted": deleted,
+        "test_vans_held": sorted(r["plate_number"] for r in held),
         "vans": len(VANS),
         "crew": len(CREW),
         "pickups": len(CREW) + 1,
@@ -369,14 +393,15 @@ async def warnings(
     vans = await conn.fetch(
         """
         select plate_number from public.vehicles
-        where status <> 'broken_down' and not id = any($1) and plate_number not like 'demo-%'
+        where status not in ('broken_down', 'unavailable') and not id = any($1)
+          and plate_number not like 'demo-%'
         order by plate_number
         """,
         fixed.vans,
     )
     if vans:
         found.append(
-            "non-demo vans not broken down: "
+            "non-demo vans the picker still offers: "
             + ", ".join(v["plate_number"] for v in vans)
             + ". Untick them when you run the optimisation: reset cannot remove a job "
             "that mixed demo and non-demo vans."
@@ -443,8 +468,11 @@ async def main_async(args: argparse.Namespace) -> None:
                 deleted = await reset(conn)
             except MixedDemoData as e:
                 sys.exit(f"reset: {e}")
+            released = deleted.pop("test_vans_released")
             done = ", ".join(f"{k} {v}" for k, v in deleted.items() if v)
             print(f"reset: deleted {done}" if done else "reset: no demo rows")
+            if released:
+                print(f"reset: {released} test van(s) back to available")
         else:
             day = args.date or tomorrow()
             try:
@@ -458,6 +486,8 @@ async def main_async(args: argparse.Namespace) -> None:
                 f"reporting on {day} 05:00-07:30 EAT (incl. {CREW_EMAIL} at "
                 f"{CREW_ACCOUNT_PICKUP[1]})"
             )
+            if summary["test_vans_held"]:
+                print("seed: out of planning until reset: " + ", ".join(summary["test_vans_held"]))
             for warning in summary["warnings"]:
                 print(f"warning: {warning}")
     finally:

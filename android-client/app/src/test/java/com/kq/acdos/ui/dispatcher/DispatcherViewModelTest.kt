@@ -159,6 +159,18 @@ class DispatcherViewModelTest {
     }
 
     @Test
+    fun plannableVans_leaveOutUnavailableVans() {
+        // The demo's test vans (#198): the backend refuses them, so the picker never offers them.
+        val withTestVan = DayBoard(
+            api.pickups,
+            api.vans + van("v5", VehicleStatusDto.UNAVAILABLE),
+            api.routes
+        )
+
+        assertEquals(listOf("v1", "v2"), plannableVans(withTestVan))
+    }
+
+    @Test
     fun aFirstPlan_takesOnlyPendingPickups() {
         assertEquals(listOf("p4"), unplannedPickups(board()))
     }

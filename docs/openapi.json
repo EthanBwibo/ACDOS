@@ -1249,7 +1249,8 @@
         "enum": [
           "available",
           "in_service",
-          "broken_down"
+          "broken_down",
+          "unavailable"
         ],
         "title": "VehicleStatus",
         "type": "string"

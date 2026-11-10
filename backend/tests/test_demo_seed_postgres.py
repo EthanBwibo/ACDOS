@@ -130,6 +130,9 @@ class World:
         self.bystander_crew: UUID | None = None
         self.pickup: UUID | None = None
         self.job: UUID | None = None
+        # plan_test_route.py's vans, as it leaves them: KDA 001T available,
+        # KDA 002T broken down (the spare).
+        self.test_vans: dict[str, UUID] = {}
 
 
 async def seed_world(conn, w: World) -> None:
@@ -173,6 +176,13 @@ async def seed_world(conn, w: World) -> None:
             datetime.combine(DAY, datetime.min.time(), EAT) + timedelta(hours=6),
         )
         w.job = await plan(conn, [w.van], [w.pickup])
+        for plate, status in zip(demo_seed.TEST_VANS, ["available", "broken_down"], strict=True):
+            w.test_vans[plate] = await conn.fetchval(
+                "insert into public.vehicles (plate_number, capacity, status) "
+                "values ($1, 14, $2) returning id",
+                plate,
+                status,
+            )
 
 
 async def clean_world(conn, w: World) -> None:
@@ -194,6 +204,9 @@ async def clean_world(conn, w: World) -> None:
             "delete from public.crew_members where id = any($1)", [w.crew_member, w.bystander_crew]
         )
         await conn.execute("delete from public.vehicles where id = $1", w.van)
+        await conn.execute(
+            "delete from public.vehicles where id = any($1)", list(w.test_vans.values())
+        )
         users = [*w.drivers.values(), w.crew_user]
         await conn.execute("delete from public.profiles where id = any($1)", users)
         await conn.execute("delete from auth.users where id = any($1)", users)
@@ -332,6 +345,44 @@ def test_seed_and_a_played_demo_then_reset_leave_the_database_as_it_was(world):
     assert deleted["schedule_change_notices"] == 1 and deleted["crew_messages"] == 1
     assert deleted["pickup_requests"] == 14 and deleted["vehicles"] == 3
     assert db(snapshot) == before
+
+
+async def statuses_of_test_vans(conn) -> dict[str, str]:
+    rows = await conn.fetch(
+        "select plate_number, status from public.vehicles where plate_number = any($1)",
+        demo_seed.TEST_VANS,
+    )
+    return {r["plate_number"]: r["status"] for r in rows}
+
+
+def test_seed_takes_the_available_test_van_out_of_planning_and_reset_puts_it_back(world):
+    summary = db(lambda conn: demo_seed.seed(conn, DAY))
+
+    assert summary["test_vans_held"] == ["KDA 001T"]
+    # The broken-down spare is left as it was, and neither is warned about.
+    assert db(statuses_of_test_vans) == {"KDA 001T": "unavailable", "KDA 002T": "broken_down"}
+    assert not any("KDA 00" in w for w in summary["warnings"])
+
+    deleted = db(demo_seed.reset)
+
+    assert deleted["test_vans_released"] == 1
+    assert db(statuses_of_test_vans) == {"KDA 001T": "available", "KDA 002T": "broken_down"}
+
+
+def test_a_test_van_in_service_is_left_alone_and_named(world):
+    db(
+        lambda conn: conn.execute(
+            "update public.vehicles set status = 'in_service' where id = $1",
+            world.test_vans["KDA 001T"],
+        )
+    )
+
+    summary = db(lambda conn: demo_seed.seed(conn, DAY))
+
+    assert summary["test_vans_held"] == []
+    assert any("KDA 001T" in w for w in summary["warnings"])
+    db(demo_seed.reset)
+    assert db(statuses_of_test_vans)["KDA 001T"] == "in_service"
 
 
 def test_reset_without_demo_rows_changes_nothing(world):

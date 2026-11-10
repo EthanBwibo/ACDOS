@@ -30,9 +30,15 @@ data class DayBoard(
     val crewNames: Map<String, String> get() = pickups.associate { it.id to it.crewName }
 }
 
-/** The vans a job may use: not broken down, and not out on a route that has left. */
+/** Vans the backend refuses to plan (422 not_plannable), so the picker never offers them. */
+private val UNPLANNABLE_VANS = setOf(VehicleStatusDto.BROKEN_DOWN, VehicleStatusDto.UNAVAILABLE)
+
+/**
+ * The vans a job may use: not broken down or unavailable, and not out on a route that has
+ * left.
+ */
 fun plannableVans(board: DayBoard): List<String> = board.vehicles
-    .filter { it.status != VehicleStatusDto.BROKEN_DOWN && !it.onTheRoad }
+    .filter { it.status !in UNPLANNABLE_VANS && !it.onTheRoad }
     .map { it.id }
 
 /** A first plan: the day's pickups not on a route yet. */
