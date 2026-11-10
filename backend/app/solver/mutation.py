@@ -1,6 +1,9 @@
 """The GA's mutation step: one ALNS destroy and one repair (#74, #71).
 
-Two ways of choosing the operators:
+ClassicMutation is the exception: a swap or relocate instead, for the plain-GA
+baseline (#203).
+
+Two ways of choosing the ALNS operators:
 - UniformMutation: every destroy operator equally likely. The non-adaptive
   baseline for the results chapter.
 - AdaptiveMutation: Ropke and Pisinger's (2006) adaptive selection. Each
@@ -27,7 +30,7 @@ from dataclasses import astuple, dataclass, fields
 from pathlib import Path
 from typing import Protocol
 
-from app.solver.individual import Individual
+from app.solver.individual import Individual, split
 from app.solver.insertion import greedy_insertion
 from app.solver.problem import Problem
 from app.solver.removal import random_removal, removal_count, unavoidable_costs, worst_removal
@@ -109,6 +112,40 @@ class UniformMutation:
 
     def __call__(self, individual: Individual, rng: random.Random) -> Individual:
         return _destroy_and_repair(rng.choice(self.destroy), self.repair, individual, rng)
+
+    def record(self, outcome: Outcome) -> None:
+        pass  # nothing adapts
+
+
+def swap_positions(tour: list[int], i: int, j: int) -> list[int]:
+    """A copy of tour with the pickups at positions i and j exchanged."""
+    swapped = tour.copy()
+    swapped[i], swapped[j] = swapped[j], swapped[i]
+    return swapped
+
+
+def relocate_position(tour: list[int], i: int, j: int) -> list[int]:
+    """A copy of tour with the pickup at position i moved to position j."""
+    relocated = tour.copy()
+    relocated.insert(j, relocated.pop(i))
+    return relocated
+
+
+class ClassicMutation:
+    """One swap or one relocate on the giant tour, then split(): the textbook
+    mutation, for the plain-GA baseline (#203). No destroy-and-repair and no
+    insertion search, so nothing here repairs the cuts split() gets wrong."""
+
+    def __init__(self, problem: Problem) -> None:
+        self.problem = problem
+
+    def __call__(self, individual: Individual, rng: random.Random) -> Individual:
+        tour = individual.giant_tour()
+        if len(tour) < 2:
+            return split(self.problem, tour)
+        move = swap_positions if rng.random() < 0.5 else relocate_position
+        i, j = rng.sample(range(len(tour)), 2)
+        return split(self.problem, move(tour, i, j))
 
     def record(self, outcome: Outcome) -> None:
         pass  # nothing adapts
