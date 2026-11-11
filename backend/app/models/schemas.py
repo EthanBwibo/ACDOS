@@ -426,8 +426,8 @@ class DispatcherPickup(BaseModel):
     lon: float
     report_time: datetime  # the deadline at JKIA
     status: PickupRequestStatus
-    # A schedule-change notice (#53) the crew member has not acknowledged:
-    # the same rule as CrewPickup.needs_ack.
+    # A schedule-change notice (#53) the crew member has not acknowledged, on a
+    # pickup still pending or assigned: the same rule as CrewPickup.needs_ack.
     needs_ack: bool
     # When the crew member acknowledged the latest notice; null with no
     # notices, or while the latest is not acknowledged.
