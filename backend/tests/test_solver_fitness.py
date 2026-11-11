@@ -1,3 +1,4 @@
+import dataclasses
 import math
 import random
 
@@ -5,6 +6,7 @@ import pytest
 
 from app.solver.fitness import (
     BUFFER_WEIGHT,
+    CREW,
     LATE_CREW_WEIGHT,
     LATENESS_WEIGHT,
     MAX_RIDE_SEC,
@@ -78,6 +80,21 @@ def test_evaluation_breaks_the_cost_into_its_terms():
         + TIME_WEIGHT * (3000 + 1300)
     )
     assert assert_feasible(problem, individual) == {"p2": 200}
+
+
+def test_a_separate_waiting_weight_changes_only_the_waiting_term():
+    terms = {
+        "unassigned": 0, "lateness_sec": 0, "late_crew": 0, "buffer_used_sec": 0,
+        "ride_excess_sec": 0, "vehicles_used": 1, "travel_sec": 1800, "waiting_sec": 1300,
+    }  # fmt: skip
+    crew = Evaluation(**terms)
+    # The same weight given explicitly costs exactly what CREW does.
+    same = Evaluation(**terms, weights=dataclasses.replace(CREW, waiting=TIME_WEIGHT))
+    tripled = Evaluation(**terms, weights=dataclasses.replace(CREW, waiting=3 * TIME_WEIGHT))
+
+    assert CREW.waiting is None
+    assert same.cost == crew.cost
+    assert tripled.cost - crew.cost == 2 * TIME_WEIGHT * 1300
 
 
 def test_waiting_counts_only_time_beyond_the_buffer():

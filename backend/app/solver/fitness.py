@@ -82,10 +82,17 @@ class Evaluation:
             + w.buffer * self.buffer_used_sec
             + w.ride * self.ride_excess_sec
             + w.vehicle * self.vehicles_used
-            + w.time * (self.travel_sec + self.waiting_sec)
+            + self._time_cost(w)
             # Last, so for crew (0 * 0) the sum above is unchanged to the bit.
             + w.distance * self.distance
         )
+
+    def _time_cost(self, w: FitnessWeights) -> float:
+        """T + W. With no separate waiting weight (CREW, SOLOMON), the same
+        expression as before it existed, so costs are unchanged to the bit."""
+        if w.waiting is None:
+            return w.time * (self.travel_sec + self.waiting_sec)
+        return w.time * self.travel_sec + w.waiting * self.waiting_sec
 
 
 def route_evaluation(
