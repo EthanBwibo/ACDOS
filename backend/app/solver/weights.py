@@ -62,6 +62,10 @@ class FitnessWeights:
     # True: each vehicle leaves as late as it can (crew are not collected hours
     # early). False: it leaves at available_from, the standard VRPTW schedule.
     latest_departure: bool
+    # Per second of crew waiting at JKIA beyond the buffer (W), when it should
+    # differ from time. None, as in CREW: W costs the same as T. Only the
+    # waiting-weight trade-off benchmark sets it.
+    waiting: float | None = None
 
 
 CREW = FitnessWeights(
