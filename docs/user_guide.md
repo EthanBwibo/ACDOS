@@ -1,6 +1,6 @@
 # ACDOS user guide
 
-**Draft for #41.** ACDOS gets Kenya Airways crew from home to JKIA before their report time. There is one app, and it shows each person the screens for their role:
+ACDOS gets Kenya Airways crew from home to JKIA before their report time. There is one app, and it shows each person the screens for their role:
 
 | Role | What they do |
 |---|---|
