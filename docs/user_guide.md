@@ -64,7 +64,7 @@ The dispatcher screen is a **hub** for one day. Tap a tile or link to open the d
    - **Fixed (already departed):** routes that have left. These are never changed, except the broken van's.
    - **Re-solved:** pickups that will be planned again.
 4. Tap **Re-plan**, then **Start**. When it's done, **Before** and **After** compare the old and new plans: minutes, vans and late crew.
-5. **Crew whose pickup changed** see a "Pickup changed" card in their app. The crew pickups list says **Awaiting acknowledgement** until they acknowledge it, then **Acknowledged**.
+5. **Crew whose pickup changed** see a "Pickup changed" card in their app. The crew pickups list says **Awaiting acknowledgement** (for example "Planned · Awaiting acknowledgement") until they acknowledge it, then **Acknowledged**. If the crew member is picked up or missed first, the flag goes: their app no longer shows that pickup, so there is nothing left to acknowledge.
 6. **When the van is fixed,** open it and tap **Mark available**.
 
 ### A flight is delayed
@@ -133,6 +133,8 @@ Two tabs: **Pickup** and **Message**.
    - the **Vehicle**.
 
    "Time not set yet" or "Not assigned yet" means the dispatcher hasn't planned it yet.
+   **"No pickup coming up"** means you have nothing still to be collected. That includes
+   once the driver has picked you up: it does not mean your pickup was cancelled.
 2. **If your pickup changes,** a **Pickup changed** card shows at the top. It gives:
    - the old and new pickup times;
    - the reason: a flight delay, a standby activation, a vehicle breakdown or a route re-plan.
