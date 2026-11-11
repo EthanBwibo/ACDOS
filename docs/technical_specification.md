@@ -4,7 +4,7 @@
 
 ## 1. Purpose and scope
 
-ACDOS dispatches vans that collect Kenya Airways flight crew across Nairobi and deliver them to JKIA before their rostered report time. It also re-plans after a flight delay, a standby activation or a vehicle breakdown.
+ACDOS dispatches vans that collect Kenya Airways flight crew across Nairobi and deliver them to JKIA before their rostered report time. It also re-plans after a flight delay or a vehicle breakdown. Standby activation is in the schema and API but not supported yet: no screen sends it.
 
 **In scope:**
 - planning and re-planning pickups;
