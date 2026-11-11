@@ -1,6 +1,6 @@
 # Solver design decisions
 
-**Draft for #16.** This document covers why the GA-ALNS solver (`backend/app/solver/`) is built the way it is, what it leaves out and why, and what the evaluation shows about those choices. Each decision names the issue or PR where it was made and measured. Section 9 records the proposal-defence panel's feedback and how the design answers it.
+This document covers why the GA-ALNS solver (`backend/app/solver/`) is built the way it is, what it leaves out and why, and what the evaluation shows about those choices. Each decision names the issue or PR where it was made and measured. Section 9 records the proposal-defence panel's feedback and how the design answers it.
 
 ## 1. The problem
 
