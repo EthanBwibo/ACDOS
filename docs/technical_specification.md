@@ -1,6 +1,6 @@
 # ACDOS technical specification
 
-**Draft for #40.** This specification is compiled from the README, `docs/openapi.json` (the API contract) and `docs/schema.md` (Table 4.1). Where those files go into detail, this document points to them rather than copying them. If this document and those sources disagree, the sources win.
+This specification is compiled from the README, `docs/openapi.json` (the API contract) and `docs/schema.md` (Table 4.1). Where those files go into detail, this document points to them rather than copying them. If this document and those sources disagree, the sources win.
 
 ## 1. Purpose and scope
 
