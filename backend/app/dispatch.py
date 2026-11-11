@@ -65,13 +65,15 @@ def time_key(cursor: str | None) -> tuple[datetime, UUID] | None:
 
 # One pickup with what the dashboard lists. The zone is the nearest of
 # pickup_zones by PostGIS, as on the driver's route (reads._STOPS). needs_ack
-# is the crew's rule (reads.next_pickup): any notice not acknowledged.
+# is the crew's rule (reads.next_pickup): any notice not acknowledged, on a
+# pickup still to happen (pending or assigned). Once it is picked up, missed or
+# cancelled the crew app no longer shows it, so it can't be acknowledged (#37).
 # acknowledged_at is the latest notice's, in the crew's order (issued_at, id).
 _PICKUPS = """
     select p.id, c.name as crew_name, z.label as zone_label, p.report_time, p.status,
         extensions.st_y(p.pickup_location::extensions.geometry) as lat,
         extensions.st_x(p.pickup_location::extensions.geometry) as lon,
-        exists (
+        p.status in ('pending', 'assigned') and exists (
             select 1 from public.schedule_change_notices s
             where s.pickup_request_id = p.id and s.acknowledged_at is null
         ) as needs_ack,

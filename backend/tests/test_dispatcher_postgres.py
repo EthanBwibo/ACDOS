@@ -16,8 +16,9 @@ Seeded world (fresh ids each run, deleted afterwards by id):
   van VB at the depot;
 - on DAY: an active route rDay on VB (Kilimani's stop live, Westlands' stop
   superseded) and a superseded route; an active route the day after;
-- schedule-change notices (#53): none for Westlands, one not acknowledged
-  for Kilimani, two acknowledged for South B (the later one at ACKED).
+- schedule-change notices (#53): one not acknowledged for Westlands (already
+  picked up), one not acknowledged for Kilimani, two acknowledged for South B
+  (the later one at ACKED).
 """
 
 import asyncio
@@ -135,6 +136,7 @@ def world():
                     )
                 )
 
+            await notice("westlands", at(DAY, 4), None)
             await notice("kilimani", at(DAY, 4), None)
             await notice("south_b", at(DAY, 3), ACKED - timedelta(hours=1))
             await notice("south_b", at(DAY, 4), ACKED)
@@ -292,7 +294,8 @@ def test_each_pickup_says_whether_its_notice_is_acknowledged(client, world):
         at_ = item["acknowledged_at"]
         return item["needs_ack"], at_ and datetime.fromisoformat(at_)
 
-    assert ack("westlands") == (False, None)  # no notices
+    # Picked up: its notice can no longer be acknowledged, so it isn't awaited.
+    assert ack("westlands") == (False, None)
     assert ack("kilimani") == (True, None)  # pending
     assert ack("south_b") == (False, ACKED)  # acknowledged: the latest one's time
 
