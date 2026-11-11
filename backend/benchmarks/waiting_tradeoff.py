@@ -12,13 +12,15 @@ morning_wave_120 (120 crew, 20 vans) under RF travel, as #210 ran it, time 0 at
 03:00 EAT on Wednesday 28 October 2026. Seeds 1 to N, each weight on the same
 seeds, adaptive mutation, 120 s each.
 
-The fleet is 20 vans, so a higher weight can't buy more than that.
+The fleet is 20 vans, so a higher weight can't buy more than that; --fleets 20 30
+also runs the same crew with 30 vans, to see the trade-off without that cap.
 
 Early arrival: report time minus the van's arrival at JKIA, per crew member on
 time, in minutes. The 15-minute buffer is the target, so 15 is "just right".
 
-Run from backend/ on a quiet machine (about 31 min for 3 weights x 5 seeds):
-    python -m benchmarks.waiting_tradeoff --seeds 5 --out ../docs/results/waiting-weight-tradeoff
+Run from backend/ on a quiet machine (about 31 min per fleet, 3 weights x 5 seeds):
+    python -m benchmarks.waiting_tradeoff --seeds 5 --fleets 20 30 \
+        --out ../docs/results/waiting-weight-tradeoff
 """
 
 import argparse
@@ -31,7 +33,7 @@ from pathlib import Path
 from app.ml import travel_time
 from app.solver.ga import solve
 from app.solver.individual import route_times
-from app.solver.instances import morning_wave_120
+from app.solver.instances import morning_wave
 from app.solver.mutation import AdaptiveMutation
 from app.solver.problem import Problem
 from app.solver.weights import CREW, REPORT_BUFFER_SEC
@@ -41,14 +43,16 @@ from benchmarks.travel_models import EPOCH, RfTravel
 TIME_LIMIT_SEC = 120.0
 WAITING_WEIGHTS = (1.0, 3.0, 10.0)
 COLUMNS = [
-    "waiting_weight", "seed", "time_limit_sec", "stop_reason", "generations", "cost",
+    "fleet", "waiting_weight", "seed", "time_limit_sec", "stop_reason", "generations", "cost",
     "vehicles_used", "unassigned", "late_crew", "mean_early_min", "median_early_min",
     "max_early_min", "drive_h", "waiting_beyond_buffer_h",
 ]  # fmt: skip
 
 
-def problem_for(rf: RfTravel, waiting_weight: float) -> Problem:
-    like = morning_wave_120()
+def problem_for(rf: RfTravel, waiting_weight: float, fleet: int) -> Problem:
+    # morning_wave_120's crew (same seed); the vans are made after the crew, so
+    # the fleet size doesn't change them.
+    like = morning_wave(n_crew=120, n_vans=fleet, seed=2027)
     travel = travel_time.rf_travel_time(rf.grid, rf.matrix, rf.zones, EPOCH)
     # Weight 1 is CREW exactly (waiting None), so its costs are the production ones.
     weights = CREW if waiting_weight == CREW.time else replace(CREW, waiting=waiting_weight)
@@ -71,11 +75,11 @@ def early_minutes(problem: Problem, routes: list[list[int]]) -> list[float]:
     return early
 
 
-def run_row(weight: float, seed: int, problem: Problem, result) -> dict:
+def run_row(fleet: int, weight: float, seed: int, problem: Problem, result) -> dict:
     e = result.evaluation
     early = early_minutes(problem, result.best.routes)
     return {
-        "waiting_weight": weight, "seed": seed, "time_limit_sec": TIME_LIMIT_SEC,
+        "fleet": fleet, "waiting_weight": weight, "seed": seed, "time_limit_sec": TIME_LIMIT_SEC,
         "stop_reason": result.stop_reason.value, "generations": result.generations,
         "cost": e.cost, "vehicles_used": e.vehicles_used, "unassigned": e.unassigned,
         "late_crew": e.late_crew,
@@ -87,9 +91,17 @@ def run_row(weight: float, seed: int, problem: Problem, result) -> dict:
 
 
 def summary(rows: list[dict]) -> str:
+    return "\n\n".join(
+        f"### {fleet} vans\n\n" + fleet_summary([r for r in rows if r["fleet"] == fleet])
+        for fleet in sorted({r["fleet"] for r in rows})
+    )
+
+
+def fleet_summary(rows: list[dict]) -> str:
     seeds = sorted({r["seed"] for r in rows})
     lines = [
-        f"morning_wave_120 under RF travel, seeds {seeds[0]} to {seeds[-1]}, "
+        f"morning_wave_120's crew, {rows[0]['fleet']} vans, under RF travel, "
+        f"seeds {seeds[0]} to {seeds[-1]}, "
         f"{TIME_LIMIT_SEC:.0f} s each. Only the waiting weight W changes; "
         "weight 1 is the production objective (CREW). "
         f"Early: minutes before report time at JKIA, crew on time; the buffer is "
@@ -133,28 +145,34 @@ def _write(path: Path, rows: list[dict]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--seeds", type=int, default=5)
+    parser.add_argument("--fleets", type=int, nargs="+", default=[20])
     parser.add_argument("--out", type=Path, default=Path("../docs/results/waiting-weight-tradeoff"))
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
     rf = RfTravel()
     rows = []
-    for seed in range(1, args.seeds + 1):
-        for weight in WAITING_WEIGHTS:
-            problem = problem_for(rf, weight)
-            result = solve(
-                problem, random.Random(seed), time_limit_sec=TIME_LIMIT_SEC,
-                mutation=AdaptiveMutation(problem),
-            )  # fmt: skip
-            rows.append(run_row(weight, seed, problem, result))
-            r = rows[-1]
-            print(
-                f"seed {seed} W {weight:g}: {r['vehicles_used']} vans, early mean "
-                f"{r['mean_early_min']:.1f} max {r['max_early_min']:.1f} min, "
-                f"{r['late_crew']} late, {r['generations']} generations",
-                flush=True,
-            )
-            _write(args.out / "results.csv", rows)  # after every run, in case of a stop
+    runs = [
+        (fleet, seed, weight)
+        for fleet in args.fleets
+        for seed in range(1, args.seeds + 1)
+        for weight in WAITING_WEIGHTS
+    ]
+    for fleet, seed, weight in runs:
+        problem = problem_for(rf, weight, fleet)
+        result = solve(
+            problem, random.Random(seed), time_limit_sec=TIME_LIMIT_SEC,
+            mutation=AdaptiveMutation(problem),
+        )  # fmt: skip
+        rows.append(run_row(fleet, weight, seed, problem, result))
+        r = rows[-1]
+        print(
+            f"{fleet} vans, seed {seed}, W {weight:g}: {r['vehicles_used']} vans, early mean "
+            f"{r['mean_early_min']:.1f} max {r['max_early_min']:.1f} min, "
+            f"{r['late_crew']} late, {r['generations']} generations",
+            flush=True,
+        )
+        _write(args.out / "results.csv", rows)  # after every run, in case of a stop
 
     text = summary(rows)
     path = args.out / "summary.md"
