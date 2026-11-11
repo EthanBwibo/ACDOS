@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kq.acdos.AppContainer
 import com.kq.acdos.auth.AppRole
+import com.kq.acdos.auth.Destination
 import com.kq.acdos.auth.Profile
 import com.kq.acdos.ui.crew.CrewHomeActivity
 import com.kq.acdos.ui.dispatcher.DispatcherHomeActivity
@@ -39,25 +40,33 @@ fun Activity.openHome(profile: Profile) {
     )
 }
 
-fun Activity.openLogin(accountNotSetUp: Boolean = false) {
+fun Activity.openLogin(accountNotSetUp: Boolean = false, roleChanged: Boolean = false) {
     startActivity(
         Intent(this, LoginActivity::class.java)
             .putExtra(LoginActivity.EXTRA_ACCOUNT_NOT_SET_UP, accountNotSetUp)
+            .putExtra(LoginActivity.EXTRA_ROLE_CHANGED, roleChanged)
             .addFlags(NEW_CLEAR_TASK)
     )
 }
 
 /**
  * The one place a home screen leaves for sign-in: after Sign out (which only
- * ends the session), or when supabase-kt ends the session itself because the
- * server rejected the refresh token. Clears the user's local data first.
+ * ends the session), when supabase-kt ends the session itself because the
+ * server rejected the refresh token, or when the re-check of a cached role
+ * signs out (#116). Clears the user's local data first.
+ *
+ * Also starts that re-check, which does nothing unless Home opened from the cache.
  */
 fun AppCompatActivity.openLoginWhenSessionEnds(container: AppContainer) {
+    lifecycleScope.launch { container.sessionRouter.recheckCachedProfile() }
     lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
             container.authRepository.sessionEnded.first()
-            container.sessionRouter.onSessionEnded()
-            openLogin()
+            when (container.sessionRouter.onSessionEnded()) {
+                Destination.AccountNotSetUp -> openLogin(accountNotSetUp = true)
+                Destination.RoleChanged -> openLogin(roleChanged = true)
+                else -> openLogin()
+            }
         }
     }
 }

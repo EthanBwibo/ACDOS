@@ -178,6 +178,118 @@ class SessionRouterTest {
         assertEquals(0, userData.clearCalls)
     }
 
+    // Re-checking the cached role after Home opened from it (#116).
+
+    private suspend fun openedFromCache(auth: FakeAuth, cache: FakeCache): SessionRouter {
+        val router = router(auth, cache)
+        router.onColdStart()
+        return router
+    }
+
+    @Test
+    fun recheck_sameRole_keepsSessionAndRefreshesCachedName() = runTest {
+        val auth = FakeAuth(profileResult = ProfileResult.NetworkError(IOException("offline")))
+        val cache = FakeCache(Profile(USER, AppRole.DRIVER, "Old Name"))
+        val router = openedFromCache(auth, cache)
+
+        auth.profileResult = ProfileResult.Found(Profile(USER, AppRole.DRIVER, "New Name"))
+        router.recheckCachedProfile()
+
+        assertEquals(1, auth.fetchCalls)
+        assertEquals(0, auth.signOutCalls)
+        assertEquals("New Name", cache.stored?.fullName)
+        assertEquals(0, userData.clearCalls)
+    }
+
+    @Test
+    fun recheck_roleChanged_signsOutAndSaysWhy() = runTest {
+        val auth = FakeAuth(profileResult = found(AppRole.DISPATCHER))
+        val cache = FakeCache(Profile(USER, AppRole.DRIVER, "Test User"))
+        val router = openedFromCache(auth, cache)
+
+        router.recheckCachedProfile()
+
+        assertEquals(1, auth.signOutCalls)
+        assertNull(cache.stored)
+        assertEquals(1, userData.clearCalls)
+        assertEquals(Destination.RoleChanged, router.onSessionEnded())
+    }
+
+    @Test
+    fun recheck_rowGone_signsOutAndSaysNotSetUp() = runTest {
+        val auth = FakeAuth(profileResult = ProfileResult.Missing)
+        val cache = FakeCache(Profile(USER, AppRole.CREW, "Test User"))
+        val router = openedFromCache(auth, cache)
+
+        router.recheckCachedProfile()
+
+        assertEquals(1, auth.signOutCalls)
+        assertNull(cache.stored)
+        assertEquals(Destination.AccountNotSetUp, router.onSessionEnded())
+    }
+
+    @Test
+    fun recheck_networkError_keepsSessionAndTriesAgainNextTime() = runTest {
+        val auth = FakeAuth(profileResult = ProfileResult.NetworkError(IOException("offline")))
+        val cache = FakeCache(Profile(USER, AppRole.CREW, "Test User"))
+        val router = openedFromCache(auth, cache)
+
+        router.recheckCachedProfile()
+
+        assertEquals(0, auth.signOutCalls)
+        assertEquals(USER, auth.storedUserId)
+        assertEquals(AppRole.CREW, cache.stored?.role)
+        assertEquals(0, userData.clearCalls)
+
+        // The next home screen to start checks again.
+        auth.profileResult = found(AppRole.DRIVER)
+        router.recheckCachedProfile()
+
+        assertEquals(2, auth.fetchCalls)
+        assertEquals(1, auth.signOutCalls)
+    }
+
+    @Test
+    fun recheck_runsOnceSettled() = runTest {
+        val auth = FakeAuth(profileResult = found(AppRole.CREW))
+        val router = openedFromCache(auth, FakeCache(Profile(USER, AppRole.CREW, "Test User")))
+
+        router.recheckCachedProfile()
+        router.recheckCachedProfile()
+
+        assertEquals(1, auth.fetchCalls)
+    }
+
+    @Test
+    fun recheck_doesNothingWhenHomeDidNotOpenFromCache() = runTest {
+        val auth = FakeAuth(profileResult = found(AppRole.DRIVER))
+        val router = router(auth)
+        router.onColdStart()
+
+        router.recheckCachedProfile()
+
+        assertEquals(1, auth.fetchCalls)
+    }
+
+    @Test
+    fun sessionEnded_saysWhyOnlyOnce() = runTest {
+        val auth = FakeAuth(profileResult = found(AppRole.DISPATCHER))
+        val router = openedFromCache(auth, FakeCache(Profile(USER, AppRole.DRIVER, "Test User")))
+        router.recheckCachedProfile()
+
+        assertEquals(Destination.RoleChanged, router.onSessionEnded())
+        assertEquals(Destination.Login, router.onSessionEnded())
+    }
+
+    @Test
+    fun userSignOut_opensPlainLogin() = runTest {
+        val router = router(FakeAuth())
+
+        router.signOut()
+
+        assertEquals(Destination.Login, router.onSessionEnded())
+    }
+
     @Test
     fun appRole_readsOnlyKnownValues() {
         assertEquals(AppRole.DRIVER, AppRole.fromDb("driver"))

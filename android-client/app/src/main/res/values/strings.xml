@@ -26,6 +26,7 @@
     <string name="login_error_network">No connection to the server. Check your network and try again.</string>
     <string name="login_error_rejected">Sign-in was refused.</string>
     <string name="login_error_not_set_up">This account is not set up yet. Contact the dispatcher.</string>
+    <string name="login_error_role_changed">Your account\'s role has changed. Sign in again.</string>
 
     <string name="role_driver">Driver</string>
 

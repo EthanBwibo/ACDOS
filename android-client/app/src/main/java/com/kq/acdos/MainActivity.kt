@@ -94,6 +94,7 @@ class MainActivity : AppCompatActivity() {
                         is Destination.Home -> openHome(destination.profile)
                         Destination.Login -> openLogin()
                         Destination.AccountNotSetUp -> openLogin(accountNotSetUp = true)
+                        Destination.RoleChanged -> openLogin(roleChanged = true)
                         Destination.Retry, null -> Unit
                     }
                 }

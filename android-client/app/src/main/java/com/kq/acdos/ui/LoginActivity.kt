@@ -51,6 +51,11 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
         _state.value = LoginState.Error(R.string.login_error_not_set_up)
     }
 
+    /** Signed out because the account's role changed since it was cached (#116). */
+    fun showRoleChanged() {
+        _state.value = LoginState.Error(R.string.login_error_role_changed)
+    }
+
     fun signIn(email: String, password: String) {
         val inProgress = _state.value == LoginState.Busy || _state.value == LoginState.SignedIn
         if (inProgress) return
@@ -103,6 +108,9 @@ class LoginActivity : AppCompatActivity() {
 
         if (intent.getBooleanExtra(EXTRA_ACCOUNT_NOT_SET_UP, false) && savedInstanceState == null) {
             viewModel.showAccountNotSetUp()
+        }
+        if (intent.getBooleanExtra(EXTRA_ROLE_CHANGED, false) && savedInstanceState == null) {
+            viewModel.showRoleChanged()
         }
 
         val submit = {
@@ -163,5 +171,6 @@ class LoginActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_ACCOUNT_NOT_SET_UP = "account_not_set_up"
+        const val EXTRA_ROLE_CHANGED = "role_changed"
     }
 }
