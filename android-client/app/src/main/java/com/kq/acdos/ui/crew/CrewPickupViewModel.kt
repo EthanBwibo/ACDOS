@@ -55,7 +55,7 @@ fun crewRefreshMessage(result: RefreshResult, manual: Boolean): Int? = when (res
 data class PickupChrome(val spinner: Boolean, val showEmpty: Boolean, @StringRes val error: Int?)
 
 /**
- * "No pickup coming up" only once the server has said so. Until then the tab
+ * "No pickup to come" only once the server has said so. Until then the tab
  * spins, and a failed load says it failed. A cached pickup hides both: its
  * "Updated" time shows how old it is.
  */

@@ -6,7 +6,7 @@ import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** "No pickup coming up" must only ever mean the server said so. */
+/** "No pickup to come" must only ever mean the server said so. */
 class PickupChromeTest {
     private val pickup = CrewPickupState.Pickup(
         CrewPickupEntity("p1", Instant.EPOCH, Instant.EPOCH, "KDH 101A", Instant.EPOCH)
