@@ -113,16 +113,24 @@ Each is in the code's docstrings and was measured where it changes results.
 
 ## 9. Panel feedback and how the design responds
 
-**To fill in:** the repo has no record of the panel's comments; #45 lists them as "known panel concerns" without the list. For each comment, give what the panel said, what changed or why not, and where it's shown. The rows below are candidates from the design; keep, merge or drop them.
+From the proposal defence.
 
-| Panel comment (fill in) | Response | Evidence |
+**What the panel said** [CHECK WORDING]: a pure GA is suboptimal for the CDVRPTW, because its random mutation rarely produces feasible, improving routes under tight time windows.
+
+**What it recommended:** hybridise the GA with ALNS. Replace the mutation operator with Shaw (relatedness) removal and greedy re-insertion, following Ropke and Pisinger (2006), which is the state-of-the-art direction for VRPs with time windows.
+
+**What changed:** the recommendation was adopted as section 2 describes. The GA keeps its population, representation (routes, also read as a giant tour) and crossover (OX1 with `split()`, as in Prins, 2004). So the Chapter 3 case for a population-based metaheuristic still holds, and only the mutation step changes, to destroy-and-repair:
+- Shaw removal, plus random and worst removal as the other destroy operators;
+- greedy re-insertion as the repair operator;
+- adaptive roulette weights to choose between them.
+
+**How the evidence answers it:**
+
+| Question the feedback raises | Finding | Evidence |
 |---|---|---|
-| *e.g. "Why a hybrid and not a plain GA?"* | The plain-GA baseline was built to answer it, with paired tests at equal time. | #203 |
-| *e.g. "Is the adaptive layer worth it?"* | Tested against uniform selection; no measurable difference, which is reported rather than hidden. | #71 |
-| *e.g. "How does it compare with published results?"* | Solomon's instances with an independent route checker, at 60 s and 300 s. | #13, #211 |
-| *e.g. "Synthetic training data"* | The logger is held out for validation only; L3 is synthetic because Google can't give past departures. | #19, #21, CLAUDE.md |
-| *e.g. "What happens when a van breaks down?"* | Re-planning with departed routes fixed, shown in the demo. | #113, demo runbook |
-| | | |
+| Does destroy-and-repair beat the GA's random mutation? | Yes. At equal time, GA-ALNS is better on all 21 instances (median cost +22.5% for the plain GA, p < 0.0001), despite running about 46× fewer generations. The plain GA never found a feasible R101: all 10 runs left pickups unassigned. | #203, `docs/results/203-plain-ga`, Figure 5.4 |
+| Is the gain from the adaptive layer or from destroy-and-repair itself? | From destroy-and-repair. Adaptive operator choice against uniform choice: 1.9% lower cost, 7 of 10 seeds, p 0.55 after Holm, so not measurably different. | #71, `docs/results/71-operator-selection` |
+| Is the hybrid competitive with published results? | Within 1.8 to 3.2% of best-known distance on R101, R105 and RC101 at 300 s, every run feasible on Solomon's checker. Van counts stay above best-known on R105, RC101 and RC105. | #13, #211, Figure 5.6 |
 
 ## References
 
