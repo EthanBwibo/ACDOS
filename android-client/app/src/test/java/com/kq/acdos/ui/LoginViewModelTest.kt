@@ -96,4 +96,13 @@ class LoginViewModelTest {
 
         assertEquals(LoginState.Error(R.string.login_error_not_set_up), viewModel.state.value)
     }
+
+    @Test
+    fun `a changed role says why the user was signed out`() {
+        val viewModel = LoginViewModel(auth)
+
+        viewModel.showRoleChanged()
+
+        assertEquals(LoginState.Error(R.string.login_error_role_changed), viewModel.state.value)
+    }
 }
