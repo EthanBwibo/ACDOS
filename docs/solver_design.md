@@ -1,6 +1,6 @@
 # Solver design decisions
 
-**Draft for #16.** This document covers why the GA-ALNS solver (`backend/app/solver/`) is built the way it is, what it leaves out and why, and what the evaluation shows about those choices. Each decision names the issue or PR where it was made and measured. The panel-feedback section has slots for the student to fill in from the proposal defence.
+**Draft for #16.** This document covers why the GA-ALNS solver (`backend/app/solver/`) is built the way it is, what it leaves out and why, and what the evaluation shows about those choices. Each decision names the issue or PR where it was made and measured. Section 9 records the proposal-defence panel's feedback and how the design answers it.
 
 ## 1. The problem
 
@@ -93,7 +93,7 @@ Each is in the code's docstrings and was measured where it changes results.
 
 ## 7. Re-planning after a disruption (#113)
 
-- **Same POST as the first plan,** with a trigger: flight delay, standby activation or vehicle breakdown.
+- **Same POST as the first plan,** with a trigger: flight delay or vehicle breakdown. The API and schema also accept `standby_activation`, but no screen sends it yet, so standby activation is not supported end to end.
 - **Departed routes are never re-planned,** except a broken-down van's in a breakdown re-plan.
 - **A re-plan takes whole routes:** the routes of the requested pickups, and each requested van's undeparted route. So a van never has two active routes.
 - **Messages never trigger re-optimisation (#54).** Only the dispatcher starts one.
@@ -115,7 +115,7 @@ Each is in the code's docstrings and was measured where it changes results.
 
 From the proposal defence.
 
-**What the panel said** [CHECK WORDING]: a pure GA is suboptimal for the CDVRPTW, because its random mutation rarely produces feasible, improving routes under tight time windows.
+**What the panel said:** the panel's view was that a pure GA is suboptimal for the CDVRPTW, and that hybridising it with ALNS is the more defensible, state-of-the-art direction.
 
 **What it recommended:** hybridise the GA with ALNS. Replace the mutation operator with Shaw (relatedness) removal and greedy re-insertion, following Ropke and Pisinger (2006), which is the state-of-the-art direction for VRPs with time windows.
 
