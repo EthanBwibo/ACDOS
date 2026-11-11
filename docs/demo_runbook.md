@@ -98,7 +98,7 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
 - **No change card in step 7.** The re-plan didn't move Test Crew's pickup time or van
   (check that step 4 broke Test Crew's van), the notice was acknowledged on an earlier run,
   or step 6 confirmed Test Crew's pickup: a pickup that is picked up shows as "No pickup
-  coming up". Pull to refresh; if it still doesn't show, the rest of the demo still works,
+  to come". Pull to refresh; if it still doesn't show, the rest of the demo still works,
   and the Message tab does not depend on it. To show the card again, reset, seed and repeat
   steps 3 to 5.
 - **The driver phone shows no route.** It is signed in as a driver whose van has no stops

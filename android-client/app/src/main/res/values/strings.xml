@@ -110,7 +110,7 @@
     <string name="crew_report_time">Report at JKIA</string>
     <string name="crew_vehicle">Vehicle</string>
     <string name="crew_no_vehicle">Not assigned yet</string>
-    <string name="crew_no_pickup">No pickup coming up</string>
+    <string name="crew_no_pickup">No pickup to come. If you\'ve been picked up, you\'re on your way.</string>
     <string name="crew_refresh_offline">Couldn\'t refresh your pickup. Check your connection.</string>
     <string name="crew_refresh_failed">Couldn\'t refresh your pickup. Try again shortly.</string>
     <string name="crew_refresh_sign_in_again">Sign in again to refresh your pickup.</string>
