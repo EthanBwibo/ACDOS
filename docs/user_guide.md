@@ -48,7 +48,7 @@ The dispatcher screen is a **hub** for one day. Tap a tile or link to open the d
    - not already on the road.
 
    Untick any van you want to keep back, then tap **Start**.
-4. **Job status** goes from Queued to Running to Done, usually within a minute. "Plan ready" gives the number of routes, late crew and unassigned crew.
+4. **Job status** goes from Queued to Running to Done, usually in a few seconds. "Plan ready" gives the number of routes, late crew and unassigned crew.
 5. Go **Back**. **Routes** now lists each van's route. Tap one to see its stops, with:
    - the pickup times;
    - each crew member's report time;
@@ -93,12 +93,13 @@ Three tabs: **Route**, **Schedule** and **Sync**.
 
 ### Route
 
-1. **What it shows:** your van's route for now: the **Next pickup**, then the stops after it, ending at JKIA. Each stop has:
-   - the crew member's name and area;
-   - **Pickup by:** the time to pick them up;
-   - **Arrive JKIA by:** their report time.
-
-   The progress line says how many are picked up.
+1. **What it shows:** your van's route for now, on a map ending at JKIA, with a chip saying how many are picked up (for example "1 of 4 picked up").
+   - **Next pickup:** the area and the crew member's name, then:
+     - **Pickup by:** the time to pick them up;
+     - **From previous stop:** about how many minutes' drive;
+     - **Arrive JKIA by:** when the van is planned to reach JKIA. This is one time for the whole route, not each crew member's report time.
+   - **Then:** the stops after it, in order. Each row has the area, the crew member's name, the minutes from the previous stop and the pickup time.
+   - **No-shows:** crew recorded as not at the pickup point, so you can still record them if they turn up (tap the row, see step 3).
 2. **Navigate** opens your maps app at the next stop.
 3. At the stop, tap **Confirm pickup**. It shows the **Scheduled pickup** time and **Now**:
    - **Crew on board:** they're in the van.
@@ -133,11 +134,12 @@ Two tabs: **Pickup** and **Message**.
    - the **Vehicle**.
 
    "Time not set yet" or "Not assigned yet" means the dispatcher hasn't planned it yet.
-   **"No pickup coming up"** means you have nothing still to be collected. That includes
-   once the driver has picked you up: it does not mean your pickup was cancelled.
+   **"No pickup to come. If you've been picked up, you're on your way."** means you have
+   nothing still to be collected, including once the driver has picked you up. It does not
+   mean your pickup was cancelled.
 2. **If your pickup changes,** a **Pickup changed** card shows at the top. It gives:
    - the old and new pickup times;
-   - the reason: a flight delay, a standby activation, a vehicle breakdown or a route re-plan.
+   - the reason: a flight delay, a vehicle breakdown or a route re-plan.
 3. **Tap Acknowledge:** "Acknowledged. The dispatcher can see it." The card goes.
 4. **Pull down to refresh.** Without signal, the screen shows what it last loaded and says so.
 
