@@ -32,6 +32,13 @@ fun replyMessage(result: ApiResult<*>): Int = when (result) {
 }
 
 /**
+ * The message a reply goes to when the dispatcher hasn't picked one: the
+ * newest crew message with no reply yet. Null when every message is answered.
+ */
+fun newestUnanswered(messages: List<CrewMessageDto>): CrewMessageDto? =
+    messages.filter { it.replies.isEmpty() }.maxByOrNull { it.sentAt }
+
+/**
  * The dispatcher's inbox of crew messages (#57), newest first, and preset
  * replies to them. Loaded when the screen opens and on Refresh; a failed load
  * keeps the list as it was. [repository] is null without an API URL.
@@ -47,13 +54,22 @@ class InboxViewModel(
 
     private val selectedId = MutableStateFlow<String?>(null)
 
-    /** The message a reply goes to. */
+    /**
+     * The message a reply goes to. After a load it is the newest unanswered
+     * message, unless the dispatcher picked one that is still in the list; after
+     * a reply it moves to the next unanswered one.
+     */
     val selected: StateFlow<String?> = selectedId.asStateFlow()
 
     private val presets = MutableStateFlow<List<PresetMessageDto>>(emptyList())
 
     /** The dispatcher's fixed replies. */
     val replyPresets: StateFlow<List<PresetMessageDto>> = presets.asStateFlow()
+
+    private val presetsFailedState = MutableStateFlow(false)
+
+    /** True when the replies couldn't be loaded; [loadPresets] tries again. */
+    val presetsFailed: StateFlow<Boolean> = presetsFailedState.asStateFlow()
 
     private val replyingState = MutableStateFlow(false)
 
@@ -90,17 +106,33 @@ class InboxViewModel(
         loadingState.value = true
         viewModelScope.launch {
             val result = repository.inbox()
-            if (result is ApiResult.Success) inbox.value = result.body
+            if (result is ApiResult.Success) {
+                inbox.value = result.body
+                val picked = selectedId.value
+                if (picked == null || result.body.none { it.id == picked }) {
+                    selectedId.value = newestUnanswered(result.body)?.id
+                }
+            }
             failedState.value = result !is ApiResult.Success
             loadingState.value = false
         }
+        loadPresets()
+    }
+
+    fun loadPresets() {
+        val repository = repository ?: return
         viewModelScope.launch {
             val result = repository.replyPresets()
             if (result is ApiResult.Success) presets.value = result.body
+            presetsFailedState.value = result !is ApiResult.Success
         }
     }
 
-    /** Opening a message marks it read, and replies then go to it. */
+    /**
+     * Tapping a message marks it read, and replies then go to it. The default
+     * selection after a load doesn't mark anything read: the dispatcher hasn't
+     * chosen to look at it yet.
+     */
     fun select(messageId: String) {
         selectedId.value = messageId
         val unread = inbox.value.orEmpty().any { it.id == messageId && it.readAt == null }
@@ -129,7 +161,10 @@ class InboxViewModel(
             try {
                 val result = repository.reply(messageId, presetCode, key)
                 if (result !is ApiResult.NetworkError) pendingKeys.remove(pending)
-                if (result is ApiResult.Success) addReply(messageId, result.body)
+                if (result is ApiResult.Success) {
+                    addReply(messageId, result.body)
+                    selectedId.value = newestUnanswered(inbox.value.orEmpty())?.id
+                }
                 noticeChannel.send(replyMessage(result))
             } finally {
                 replyingState.value = false

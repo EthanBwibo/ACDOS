@@ -1,7 +1,6 @@
 package com.kq.acdos.ui.dispatcher
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -19,12 +18,14 @@ import com.kq.acdos.R
 import com.kq.acdos.ui.chat.ChatAdapter
 import com.kq.acdos.ui.chat.Sender
 import com.kq.acdos.ui.chat.chatTimeline
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
  * Crew messages as chat bubbles, newest at the bottom (Figma 2:241, #226).
- * Tapping a crew message marks it read and opens the preset replies, which go
- * only to that crew member. Only crew send
+ * The reply bar is always shown. It starts on the newest unanswered message;
+ * tapping a crew message marks it read and picks it instead. Replies go only
+ * to that crew member. Only crew send
  * messages, so there's no Drivers filter or Forward to driver.
  */
 class MessagesFragment : Fragment(R.layout.fragment_messages) {
@@ -49,14 +50,21 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
                 inbox.selected.collect { showMessages(view) }
             }
         }
+        val bar = view.findViewById<View>(R.id.reply_group)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                inbox.replyPresets.collect { showPresets(view) }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                inbox.replying.collect { showPresets(view) }
+                combine(
+                    inbox.messages,
+                    inbox.selected,
+                    inbox.replyPresets,
+                    inbox.presetsFailed,
+                    inbox.replying
+                ) { messages, selected, presets, failed, sending ->
+                    val replyTo = messages.orEmpty().firstOrNull { it.id == selected }?.crewName
+                    ReplyBarState(replyTo, presets, failed, sending)
+                }.collect { state ->
+                    bindReplyBar(bar, state, inbox::reply, inbox::loadPresets)
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -81,24 +89,6 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
         chat.selectedMessageId = inbox.selected.value
         chat.submitList(items) {
             if (changed && items.isNotEmpty()) conversation.scrollToPosition(items.size - 1)
-        }
-
-        val selected = all.firstOrNull { it.id == inbox.selected.value }
-        view.findViewById<View>(R.id.reply_group).isVisible = selected != null
-        view.findViewById<TextView>(R.id.reply_to).text =
-            selected?.let { getString(R.string.dispatch_reply_to, it.crewName) }
-    }
-
-    private fun showPresets(view: View) {
-        val chips = view.findViewById<ChipGroup>(R.id.reply_presets)
-        chips.removeAllViews()
-        val inflater = LayoutInflater.from(chips.context)
-        for (preset in inbox.replyPresets.value) {
-            val chip = inflater.inflate(R.layout.item_reply_chip, chips, false) as Chip
-            chip.text = preset.label
-            chip.isEnabled = !inbox.replying.value
-            chip.setOnClickListener { inbox.reply(preset.code) }
-            chips.addView(chip)
         }
     }
 }

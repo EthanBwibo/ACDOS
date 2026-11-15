@@ -53,13 +53,13 @@
         android:clipToPadding="false"
         android:paddingBottom="8dp" />
 
+    <!-- Always shown: who a reply goes to, or how to pick someone. -->
     <LinearLayout
         android:id="@+id/reply_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="8dp"
-        android:visibility="gone">
+        android:paddingBottom="8dp">
 
         <TextView
             style="@style/Widget.ACDOS.Overline"
@@ -77,6 +77,31 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:chipSpacingVertical="0dp" />
+
+        <LinearLayout
+            android:id="@+id/reply_presets_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/dispatch_reply_presets_failed"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorError" />
+
+            <Button
+                android:id="@+id/reply_presets_retry"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/action_retry" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

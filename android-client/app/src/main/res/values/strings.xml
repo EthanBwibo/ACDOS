@@ -229,7 +229,9 @@
     <string name="dispatch_filter_all">All</string>
     <string name="dispatch_filter_unread">Unread</string>
     <string name="dispatch_reply_presets">Reply with preset</string>
-    <string name="dispatch_reply_to">To %1$s</string>
+    <string name="dispatch_reply_to">Reply to %1$s</string>
+    <string name="dispatch_reply_pick">Tap a message to reply</string>
+    <string name="dispatch_reply_presets_failed">Couldn\'t load the replies.</string>
     <string name="dispatch_reply_sent">Reply sent.</string>
     <string name="dispatch_reply_offline">Not sent: no connection. Tap it again to retry.</string>
     <string name="dispatch_reply_failed">Couldn\'t send that reply. Try again shortly.</string>
