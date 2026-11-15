@@ -228,11 +228,8 @@
     <string name="dispatch_discard">Discard</string>
     <string name="dispatch_filter_all">All</string>
     <string name="dispatch_filter_unread">Unread</string>
-    <string name="dispatch_message_quote">“%1$s”</string>
-    <string name="dispatch_message_new">New</string>
     <string name="dispatch_reply_presets">Reply with preset</string>
     <string name="dispatch_reply_to">To %1$s</string>
-    <string name="dispatch_replied">Replied: %1$s</string>
     <string name="dispatch_reply_sent">Reply sent.</string>
     <string name="dispatch_reply_offline">Not sent: no connection. Tap it again to retry.</string>
     <string name="dispatch_reply_failed">Couldn\'t send that reply. Try again shortly.</string>
@@ -278,11 +275,6 @@
     <string name="vehicle_status_unavailable">Unavailable</string>
     <string name="crew_message_title">Message dispatch</string>
     <string name="crew_message_hint">Pick a message. It goes to the dispatcher.</string>
-    <string name="crew_message_recent">Recent</string>
-    <string name="crew_message_row">You · %1$s</string>
-    <string name="crew_message_reply_row">Dispatch · %1$s</string>
-    <string name="crew_message_sent_at">Sent %1$s</string>
-    <string name="crew_message_seen_at">Sent %1$s · seen</string>
     <string name="crew_message_no_presets">No messages to send yet. Pull down to try again.</string>
     <string name="crew_message_load_failed">Couldn\'t load your messages. Pull down to try again.</string>
     <string name="crew_message_recent_empty">Nothing sent yet.</string>
@@ -291,4 +283,9 @@
     <string name="crew_message_offline">Not sent: no connection. Tap it again to retry.</string>
     <string name="crew_message_failed">Couldn\'t send that message. Try again shortly.</string>
     <string name="dispatch_messages">Messages</string>
+    <!-- Chat bubbles (#226): the time under each bubble, and its day header. -->
+    <string name="chat_today">Today</string>
+    <string name="chat_sent">%1$s · Sent</string>
+    <string name="chat_seen">%1$s · Seen</string>
+    <string name="chat_new">%1$s · New</string>
 </resources>

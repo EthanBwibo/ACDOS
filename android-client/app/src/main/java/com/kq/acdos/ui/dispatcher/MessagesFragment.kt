@@ -3,7 +3,6 @@ package com.kq.acdos.ui.dispatcher
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -11,25 +10,32 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.R
-import com.kq.acdos.data.remote.CrewMessageDto
-import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.chat.ChatAdapter
+import com.kq.acdos.ui.chat.Sender
+import com.kq.acdos.ui.chat.chatTimeline
 import kotlinx.coroutines.launch
 
 /**
- * Crew messages, newest first (Figma 2:241). Tapping one marks it read and
- * opens the preset replies, which go only to that crew member. Only crew send
+ * Crew messages as chat bubbles, newest at the bottom (Figma 2:241, #226).
+ * Tapping a crew message marks it read and opens the preset replies, which go
+ * only to that crew member. Only crew send
  * messages, so there's no Drivers filter or Forward to driver.
  */
 class MessagesFragment : Fragment(R.layout.fragment_messages) {
     private val inbox: InboxViewModel by activityViewModels { InboxViewModel.Factory }
+    private val chat = ChatAdapter(onCrewMessageTap = { inbox.select(it.messageId) })
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         home.showTitle(getString(R.string.dispatch_messages))
+        val conversation = view.findViewById<RecyclerView>(R.id.conversation)
+        conversation.layoutManager = LinearLayoutManager(view.context).apply { stackFromEnd = true }
+        conversation.adapter = chat
         val filter = view.findViewById<ChipGroup>(R.id.filter)
         filter.setOnCheckedStateChangeListener { _, _ -> showMessages(view) }
 
@@ -61,50 +67,26 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     }
 
     private fun showMessages(view: View) {
-        val rows = view.findViewById<LinearLayout>(R.id.messages)
-        rows.removeAllViews()
         val all = inbox.messages.value ?: return
         val unreadOnly = view.findViewById<Chip>(R.id.filter_unread).isChecked
         val shown = if (unreadOnly) all.filter { it.readAt == null } else all
-        shown.forEach { addMessage(rows, it) }
-        if (shown.isEmpty()) {
-            rows.addRow(
-                getString(
-                    if (unreadOnly) R.string.dispatch_no_unread else R.string.dispatch_no_messages
-                )
-            )
+        view.findViewById<TextView>(R.id.empty).apply {
+            isVisible = shown.isEmpty()
+            setText(if (unreadOnly) R.string.dispatch_no_unread else R.string.dispatch_no_messages)
+        }
+        val conversation = view.findViewById<RecyclerView>(R.id.conversation)
+        val items = chatTimeline(shown, Sender.DISPATCHER)
+        // Jump to the newest line when lines come or go, not when a tap only selects one.
+        val changed = items.size != chat.itemCount
+        chat.selectedMessageId = inbox.selected.value
+        chat.submitList(items) {
+            if (changed && items.isNotEmpty()) conversation.scrollToPosition(items.size - 1)
         }
 
         val selected = all.firstOrNull { it.id == inbox.selected.value }
         view.findViewById<View>(R.id.reply_group).isVisible = selected != null
         view.findViewById<TextView>(R.id.reply_to).text =
             selected?.let { getString(R.string.dispatch_reply_to, it.crewName) }
-    }
-
-    private fun addMessage(rows: LinearLayout, message: CrewMessageDto) {
-        val quote = getString(R.string.dispatch_message_quote, message.label)
-        val replied = message.replies.joinToString(" · ") { it.label }
-        val row = rows.addRow(
-            title = message.crewName,
-            subtitle = if (replied.isEmpty()) {
-                quote
-            } else {
-                quote + "\n" + getString(R.string.dispatch_replied, replied)
-            },
-            value = Times.shortClock(message.sentAt)
-        ) { inbox.select(message.id) }
-        row.findViewById<Chip>(R.id.row_chip_neutral).apply {
-            isVisible = message.readAt == null
-            setText(R.string.dispatch_message_new)
-        }
-        if (message.id == inbox.selected.value) {
-            row.setBackgroundColor(
-                MaterialColors.getColor(
-                    row,
-                    com.google.android.material.R.attr.colorSurfaceContainer
-                )
-            )
-        }
     }
 
     private fun showPresets(view: View) {

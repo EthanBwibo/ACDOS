@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Outline on the crew message the dispatcher is replying to (#226). -->
+    <dimen name="chat_selected_stroke">2dp</dimen>
+</resources>

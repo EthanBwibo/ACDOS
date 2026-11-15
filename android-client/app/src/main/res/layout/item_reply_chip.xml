@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One preset reply on the dispatcher's Messages screen. There is no free text. -->
+<!-- One preset: a crew message on Message, or a dispatcher reply on Messages. No free text. -->
 <com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/Widget.Material3.Chip.Assist"
     android:layout_width="wrap_content"
