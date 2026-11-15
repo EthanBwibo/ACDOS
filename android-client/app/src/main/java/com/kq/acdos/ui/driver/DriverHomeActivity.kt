@@ -38,7 +38,7 @@ class DriverHomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_driver_home)
-        applySystemBarPadding(findViewById(R.id.main))
+        applySystemBarPadding(findViewById(R.id.main), findViewById(R.id.bottom_nav))
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.title = intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()

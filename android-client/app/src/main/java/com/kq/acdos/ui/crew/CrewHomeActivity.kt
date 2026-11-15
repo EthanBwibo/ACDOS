@@ -29,7 +29,7 @@ class CrewHomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_crew_home)
-        applySystemBarPadding(findViewById(R.id.main))
+        applySystemBarPadding(findViewById(R.id.main), findViewById(R.id.bottom_nav))
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setOnMenuItemClickListener { item ->
