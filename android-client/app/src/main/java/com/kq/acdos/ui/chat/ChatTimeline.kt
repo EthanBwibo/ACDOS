@@ -31,8 +31,9 @@ sealed interface ChatItem {
 
 /**
  * The conversation, oldest first so the newest line is at the bottom. Each
- * crew message is followed by the dispatcher's replies to it, so on the
- * dispatcher's screen a reply always sits right under the message it answers.
+ * crew message is followed by the dispatcher's replies to it, sorted here by
+ * sentAt rather than trusting the server's order. On the dispatcher's screen a
+ * reply always sits right under the message it answers.
  *
  * Which side a line goes on comes from [viewer] against the line's sender,
  * never from its text.
@@ -49,7 +50,7 @@ fun chatTimeline(messages: List<CrewMessageDto>, viewer: Sender): List<ChatItem>
             readAt = message.readAt,
             mine = viewer == Sender.CREW
         )
-        val replies = message.replies.map { reply ->
+        val replies = message.replies.sortedBy { it.sentAt }.map { reply ->
             ChatItem.Bubble(
                 key = "r:${reply.id}",
                 messageId = message.id,

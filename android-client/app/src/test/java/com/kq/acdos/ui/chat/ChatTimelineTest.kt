@@ -79,6 +79,19 @@ class ChatTimelineTest {
     }
 
     @Test
+    fun `replies are sorted by sentAt whatever order the server sends`() {
+        val later = MessageReplyDto("r2", "van", "Van rerouted", nairobi(7))
+        val earlier = MessageReplyDto("r1", "noted", "Noted", nairobi(6))
+        val messages = listOf(crewMessage("m1", nairobi(5), replies = listOf(later, earlier)))
+
+        val keys = chatTimeline(messages, Sender.CREW)
+            .filterIsInstance<ChatItem.Bubble>()
+            .map { it.key }
+
+        assertEquals(listOf("m:m1", "r:r1", "r:r2"), keys)
+    }
+
+    @Test
     fun `a reply answers its own message`() {
         val reply = MessageReplyDto("r1", "noted", "Noted", nairobi(6))
         val messages = listOf(crewMessage("m1", nairobi(5), replies = listOf(reply)))
