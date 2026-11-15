@@ -6,6 +6,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -71,12 +72,35 @@ fun AppCompatActivity.openLoginWhenSessionEnds(container: AppContainer) {
     }
 }
 
-/** Pads [root] by the system bars and keyboard, for edge-to-edge layouts. */
-fun applySystemBarPadding(root: View) {
+/**
+ * Pads an edge-to-edge screen so nothing sits under the status bar, the
+ * system navigation bar or the keyboard. Every screen calls this once.
+ *
+ * With a [bottomBar] (the BottomNavigationView), the bar takes the bottom
+ * inset itself, so its colour runs down behind the system navigation bar and
+ * its labels sit right above it. [root] then has no bottom padding, unless
+ * the keyboard is up, when root is padded by the keyboard and the bar by
+ * nothing.
+ *
+ * The insets are consumed here. BottomNavigationView pads itself by the
+ * bottom inset by default, so passing the insets on would add the system bar
+ * height a second time: that was the empty band under the nav labels (#225).
+ */
+fun applySystemBarPadding(root: View, bottomBar: View? = null) {
+    val barStartPadding = bottomBar?.paddingBottom ?: 0
     ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-        val type = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
-        val bars = insets.getInsets(type)
-        v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-        insets
+        val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val keyboard = insets.getInsets(WindowInsetsCompat.Type.ime())
+        val keyboardUp = keyboard.bottom > bars.bottom
+        val bottom = if (keyboardUp) keyboard.bottom else bars.bottom
+        if (bottomBar == null) {
+            v.setPadding(bars.left, bars.top, bars.right, bottom)
+        } else {
+            v.setPadding(bars.left, bars.top, bars.right, if (keyboardUp) bottom else 0)
+            bottomBar.updatePadding(
+                bottom = barStartPadding + if (keyboardUp) 0 else bars.bottom
+            )
+        }
+        WindowInsetsCompat.CONSUMED
     }
 }
