@@ -160,6 +160,17 @@ class ConfirmPickupActivityTest {
     }
 
     @Test
+    fun `Navigate opens Google Maps turn-by-turn to this stop`() {
+        val activity = open()
+
+        activity.findViewById<View>(R.id.navigate).performClick()
+
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals("google.navigation:q=-1.30000,36.70000", started.dataString)
+        assertEquals(GOOGLE_MAPS_PACKAGE, started.`package`)
+    }
+
+    @Test
     fun `a stop re-planned away while the screen is hidden closes it on resume`() {
         val activity = open()
         assertFalse(activity.isFinishing)
