@@ -160,6 +160,19 @@ fun routeProgress(stops: List<StopRow>): RouteProgress {
     return RouteProgress(open.firstOrNull(), open.drop(1), pickedUp, noShows)
 }
 
+/**
+ * The driver's stops for the map, in visiting order. Only a pickup is greyed
+ * out; a no-show stays plain, since the crew member may still turn up.
+ */
+fun driverMapStops(stops: List<StopRow>, next: StopRow?): List<MapStop> = stops.map {
+    val mark = when {
+        it == next -> StopMark.NEXT
+        it.progress?.done == true && !it.progress.noShow -> StopMark.PICKED_UP
+        else -> StopMark.AHEAD
+    }
+    MapStop(MapPoint(it.lat, it.lon), it.number, mark)
+}
+
 /** "Westlands" from "Westlands, Nairobi". */
 fun shortZone(label: String): String = label.substringBefore(',')
 

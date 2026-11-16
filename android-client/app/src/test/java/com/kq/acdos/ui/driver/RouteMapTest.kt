@@ -1,68 +1,133 @@
 package com.kq.acdos.ui.driver
 
+import android.view.ContextThemeWrapper
+import android.view.MotionEvent
+import androidx.test.core.app.ApplicationProvider
+import com.kq.acdos.R
+import com.kq.acdos.data.local.PickupEventType
+import com.kq.acdos.data.local.PickupExceptionType
+import java.time.Instant
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.osmdroid.config.Configuration
+import org.osmdroid.views.overlay.CopyrightOverlay
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+private val DONE = StopProgress(
+    type = PickupEventType.PICKUP_CONFIRMED,
+    exception = null,
+    sent = true,
+    conflict = null,
+    done = true
+)
+
+/** The route map (#227): what it draws, in what order, and how it's set up. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35])
 class RouteMapTest {
-    private val delta = 0.01f
+    private fun stop(number: Int, lat: Double, progress: StopProgress? = null) = StopRow(
+        routeNodeId = "node-$number",
+        number = number,
+        crewName = "Crew $number",
+        zoneLabel = "Karen, Nairobi",
+        pickupTime = Instant.EPOCH,
+        lat = lat,
+        lon = 36.8,
+        progress = progress
+    )
+
+    private val noShow = DONE.copy(
+        type = PickupEventType.EXCEPTION,
+        exception = PickupExceptionType.NO_SHOW,
+        noShow = true
+    )
 
     @Test
-    fun `north is up and east is right`() {
-        val south = MapPoint(lat = -1.4, lon = 36.7)
-        val north = MapPoint(lat = -1.2, lon = 36.9)
-
-        val (first, second) = projectRoute(listOf(south, north), 300f, 300f, 20f)
-
-        assertTrue(second.x > first.x)
-        assertTrue(second.y < first.y)
-    }
-
-    @Test
-    fun `every point stays inside the margin`() {
-        val points = listOf(
-            MapPoint(-1.25, 36.70),
-            MapPoint(-1.31, 36.82),
-            MapPoint(-1.27, 36.88),
-            JKIA_POINT
+    fun `the line joins the stops in visiting order and ends at JKIA`() {
+        val stops = listOf(
+            MapStop(MapPoint(-1.30, 36.70), 1, StopMark.PICKED_UP),
+            MapStop(MapPoint(-1.25, 36.80), 2, StopMark.NEXT)
         )
 
-        for (point in projectRoute(points, 340f, 190f, 28f)) {
-            assertTrue(point.x in 28f..312f)
-            assertTrue(point.y in 28f..162f)
-        }
+        assertEquals(
+            listOf(MapPoint(-1.30, 36.70), MapPoint(-1.25, 36.80), JKIA_POINT),
+            routeLine(stops)
+        )
     }
 
     @Test
-    fun `one scale for both axes keeps the route's shape`() {
-        val points = listOf(MapPoint(0.0, 0.0), MapPoint(1.0, 1.0))
+    fun `picked up stops are grey, the next is red, the rest are plain`() {
+        val stops = listOf(
+            stop(1, -1.30, DONE),
+            stop(2, -1.29, noShow),
+            stop(3, -1.28),
+            stop(4, -1.27)
+        )
 
-        val (first, second) = projectRoute(points, 400f, 200f, 0f)
+        val marks = driverMapStops(stops, next = stops[2])
 
-        assertEquals(second.x - first.x, first.y - second.y, delta)
+        assertEquals(
+            listOf(StopMark.PICKED_UP, StopMark.AHEAD, StopMark.NEXT, StopMark.AHEAD),
+            marks.map { it.mark }
+        )
+        assertEquals(listOf(1, 2, 3, 4), marks.map { it.number })
+        assertEquals(MapPoint(-1.28, 36.8), marks[2].point)
     }
 
     @Test
-    fun `a single point sits in the middle`() {
-        val only = projectRoute(listOf(JKIA_POINT), 300f, 200f, 20f).single()
+    fun `with every stop picked up, none is next`() {
+        val stops = listOf(stop(1, -1.30, DONE), stop(2, -1.29, DONE))
 
-        assertEquals(150f, only.x, delta)
-        assertEquals(100f, only.y, delta)
+        val marks = driverMapStops(stops, next = null).map { it.mark }
+
+        assertEquals(listOf(StopMark.PICKED_UP, StopMark.PICKED_UP), marks)
+    }
+
+    private fun mapView(): RouteMapView {
+        val context = ContextThemeWrapper(
+            ApplicationProvider.getApplicationContext(),
+            R.style.Theme_ACDOS
+        )
+        return RouteMapView(context)
     }
 
     @Test
-    fun `points in a straight line don't divide by zero`() {
-        val across = projectRoute(listOf(MapPoint(0.0, 0.0), MapPoint(0.0, 1.0)), 300f, 200f, 20f)
-        val upDown = projectRoute(listOf(MapPoint(0.0, 0.0), MapPoint(1.0, 0.0)), 300f, 200f, 20f)
+    fun `the map draws the line, a marker per stop, JKIA and the OSM credit`() {
+        val map = mapView()
 
-        assertEquals(20f, across[0].x, delta)
-        assertEquals(280f, across[1].x, delta)
-        assertEquals(180f, upDown[0].y, delta)
-        assertEquals(20f, upDown[1].y, delta)
+        map.show(
+            listOf(
+                MapStop(MapPoint(-1.30, 36.70), 1, StopMark.PICKED_UP),
+                MapStop(MapPoint(-1.25, 36.80), 2, StopMark.NEXT)
+            )
+        )
+
+        val overlays = map.overlays
+        assertEquals(1, overlays.filterIsInstance<Polyline>().size)
+        assertEquals(
+            listOf("1", "2", "JKIA"),
+            overlays.filterIsInstance<Marker>().map { it.title }
+        )
+        assertEquals(1, overlays.filterIsInstance<CopyrightOverlay>().size)
+        assertEquals(3, overlays.filterIsInstance<Polyline>().single().actualPoints.size)
     }
 
     @Test
-    fun `no points draw nothing`() {
-        assertTrue(projectRoute(emptyList(), 300f, 200f, 20f).isEmpty())
+    fun `the read-only map takes no touches, so the screen scrolls past it`() {
+        val map = mapView()
+        map.readOnly = true
+        val down = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 10f, 10f, 0)
+
+        assertFalse(map.dispatchTouchEvent(down))
+    }
+
+    @Test
+    fun `tile requests carry the app id, as OSM's tile policy asks`() {
+        assertEquals("com.kq.acdos", Configuration.getInstance().userAgentValue)
     }
 }

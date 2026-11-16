@@ -104,6 +104,22 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         }
     }
 
+    // osmdroid's map needs these to start and stop loading tiles.
+    override fun onResume() {
+        super.onResume()
+        view?.findViewById<RouteMapView>(R.id.map)?.onResume()
+    }
+
+    override fun onPause() {
+        view?.findViewById<RouteMapView>(R.id.map)?.onPause()
+        super.onPause()
+    }
+
+    override fun onDestroyView() {
+        view?.findViewById<RouteMapView>(R.id.map)?.onDetach()
+        super.onDestroyView()
+    }
+
     private val container get() = (requireActivity().application as AcdosApplication).container
 
     private val driverHome get() = requireActivity() as DriverHomeActivity
@@ -117,8 +133,7 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
 
         val map = view.findViewById<RouteMapView>(R.id.map)
         map.contentDescription = getString(R.string.route_map_description, route.stops.size)
-        val nextIndex = route.stops.indexOf(progress.next)
-        map.show(route.stops.map { MapPoint(it.lat, it.lon) }, nextIndex)
+        map.show(driverMapStops(route.stops, progress.next))
 
         view.findViewById<View>(R.id.next_card).isVisible = progress.next != null
         view.findViewById<View>(R.id.all_done).isVisible = progress.next == null

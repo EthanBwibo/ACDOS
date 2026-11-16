@@ -19,18 +19,21 @@ import com.kq.acdos.data.latePickups
 import com.kq.acdos.data.nextStopIndex
 import com.kq.acdos.data.orderedRoutes
 import com.kq.acdos.data.remote.DispatcherRouteDto
+import com.kq.acdos.data.remote.PickupRequestStatusDto
 import com.kq.acdos.data.routeStops
 import com.kq.acdos.data.slackMinutes
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.driver.MapPoint
+import com.kq.acdos.ui.driver.MapStop
 import com.kq.acdos.ui.driver.RouteMapView
+import com.kq.acdos.ui.driver.StopMark
 import com.kq.acdos.ui.driver.shortZone
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 /**
  * One route's stops, with each crew member's report time next to the pickup
- * so the slack is visible (Figma 2:132). The map is the driver's schematic one.
+ * so the slack is visible (Figma 2:132). The map is the driver's, read-only.
  * The API has no driver for a route, so there is no driver chip, and no way to
  * message a driver: all messages go through the dispatcher's crew inbox.
  */
@@ -67,8 +70,25 @@ class RouteDetailFragment : Fragment(R.layout.fragment_route_detail) {
         val stops = routeStops(board, route)
         val placed = stops.filter { it.lat != null && it.lon != null }
         val map = view.findViewById<RouteMapView>(R.id.map)
+        map.readOnly = true
         map.contentDescription = getString(R.string.route_map_description, placed.size)
-        map.show(placed.map { MapPoint(it.lat!!, it.lon!!) }, nextStopIndex(board, placed))
+        map.show(dispatcherMapStops(board, placed))
+    }
+
+    // osmdroid's map needs these to start and stop loading tiles.
+    override fun onResume() {
+        super.onResume()
+        view?.findViewById<RouteMapView>(R.id.map)?.onResume()
+    }
+
+    override fun onPause() {
+        view?.findViewById<RouteMapView>(R.id.map)?.onPause()
+        super.onPause()
+    }
+
+    override fun onDestroyView() {
+        view?.findViewById<RouteMapView>(R.id.map)?.onDetach()
+        super.onDestroyView()
     }
 
     private fun showChips(view: View, board: DayBoard, route: DispatcherRouteDto) {
@@ -125,5 +145,25 @@ class RouteDetailFragment : Fragment(R.layout.fragment_route_detail) {
 
         fun of(routeId: String) =
             RouteDetailFragment().apply { arguments = bundleOf(ARG_ROUTE to routeId) }
+    }
+}
+
+/**
+ * The route's stops for the map, in visiting order; [stops] all have a position.
+ * The next stop is the first one still waiting, and only a pickup is greyed out.
+ */
+fun dispatcherMapStops(board: DayBoard, stops: List<RouteStop>): List<MapStop> {
+    val next = nextStopIndex(board, stops)
+    val pickedUp = board.pickups
+        .filter { it.status == PickupRequestStatusDto.PICKED_UP }
+        .map { it.id }
+        .toSet()
+    return stops.mapIndexed { i, stop ->
+        val mark = when {
+            i == next -> StopMark.NEXT
+            stop.pickupId in pickedUp -> StopMark.PICKED_UP
+            else -> StopMark.AHEAD
+        }
+        MapStop(MapPoint(stop.lat!!, stop.lon!!), stop.seqOrder, mark)
     }
 }
