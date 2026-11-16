@@ -70,6 +70,8 @@ The `data-logger` branch holds only `travel_time_log.csv`, written by the
 - Coroutines for all async work; no callbacks, no blocking calls on the main thread.
 - Room for local state. Retrofit with Moshi for the API.
 - AGP 9 with built-in Kotlin; versions live in `gradle/libs.versions.toml`, never inline.
+- Before every push, run ktlint 1.8.0 as CI does (`ktlint "app/src/**/*.kt" "*.kts" "app/*.kts"`
+  from `android-client/`), not just Android lint.
 
 **Network payloads**
 - Design for 2G/3G: small JSON, no images in API payloads, only the fields the screen needs,
