@@ -77,6 +77,15 @@
                         android:text="@string/confirm_recorded_no_show"
                         android:visibility="gone" />
 
+                    <!-- Turn-by-turn to this stop in Google Maps (issue 228). -->
+                    <Button
+                        android:id="@+id/navigate"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/action_navigate" />
+
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

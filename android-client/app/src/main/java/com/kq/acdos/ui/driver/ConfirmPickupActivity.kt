@@ -149,6 +149,7 @@ class ConfirmPickupActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.on_board).setOnClickListener { viewModel.crewOnBoard() }
         findViewById<Button>(R.id.not_at_point).setOnClickListener { confirmNoShow() }
+        val navigate = findViewById<Button>(R.id.navigate)
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -162,6 +163,9 @@ class ConfirmPickupActivity : AppCompatActivity() {
                         zone.text = stop.zoneLabel?.let(::shortZone)
                             ?: getString(R.string.route_zone_unknown)
                         scheduled.text = Times.clock(stop.scheduledPickup)
+                        navigate.setOnClickListener {
+                            navigateTo(findViewById(R.id.main), stop.pickupLat, stop.pickupLon)
+                        }
                     }
                 }
             }

@@ -1,8 +1,5 @@
 package com.kq.acdos.ui.driver
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -10,7 +7,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -26,7 +22,6 @@ import com.kq.acdos.R
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.useThemeColors
 import java.time.Instant
-import java.util.Locale
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -219,7 +214,14 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         warning.isVisible = stop.progress != null
         warning.text = stop.progress?.let(::statusText)
 
-        view.findViewById<Button>(R.id.navigate).setOnClickListener { navigateTo(stop) }
+        view.findViewById<Button>(R.id.navigate).setOnClickListener {
+            navigateTo(
+                view,
+                stop.lat,
+                stop.lon,
+                anchor = requireActivity().findViewById(R.id.bottom_nav)
+            )
+        }
         view.findViewById<Button>(R.id.confirm).setOnClickListener { openConfirm(stop) }
     }
 
@@ -231,17 +233,5 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         val label = getString(progressLabel(progress))
         if (progress.sent) return label
         return getString(R.string.route_status_not_sent, label)
-    }
-
-    /** Opens the stop in the phone's maps app, with a pin labelled by the crew name. */
-    private fun navigateTo(stop: StopRow) {
-        // Locale.ROOT: a decimal point whatever the phone's language.
-        val point = String.format(Locale.ROOT, "%.5f,%.5f", stop.lat, stop.lon)
-        val uri = Uri.parse("geo:0,0?q=$point(${Uri.encode(stop.crewName)})")
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, uri))
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(requireContext(), R.string.route_no_maps_app, Toast.LENGTH_LONG).show()
-        }
     }
 }
