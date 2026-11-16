@@ -6,6 +6,9 @@ dispatcher (403 otherwise), as for the job API (#127). Everything runs
 under the caller's RLS (app/reads.py), the updates included; the queries
 are in app/dispatch.py.
 
+POST /roster-imports (#229) puts crew and their pickups in from the
+roster CSV (app/roster.py). It starts no re-plan either.
+
 The two PATCHes only record a change. Neither starts a re-plan: the
 dispatcher does that with POST /optimisation-jobs, choosing the trigger
 (flight_delay after a new report time, vehicle_breakdown after a van is set
@@ -17,9 +20,9 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, status
+from fastapi import APIRouter, File, Header, Query, Request, UploadFile, status
 
-from app import dispatch, reads
+from app import dispatch, reads, roster
 from app.auth import CallerDep
 from app.config import settings
 from app.errors import ApiError, ErrorCode, errors
@@ -30,6 +33,7 @@ from app.models.schemas import (
     DispatcherVehicle,
     DispatcherVehiclePage,
     PickupReportTimeUpdate,
+    RosterImportResult,
     VehicleStatusUpdate,
 )
 
@@ -172,3 +176,62 @@ async def list_routes(
     async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
         _dispatcher_only(profile)
         return await dispatch.route_page(conn, _day(day), after, limit)
+
+
+ROSTER_IMPORTS = "/roster-imports"
+
+
+@router.post(
+    ROSTER_IMPORTS,
+    response_model=RosterImportResult,
+    responses=errors(
+        _CALLER_ERRORS
+        | {
+            413: [ErrorCode.PAYLOAD_TOO_LARGE],
+            422: [ErrorCode.VALIDATION_FAILED, ErrorCode.IDEMPOTENCY_KEY_REUSED],
+        }
+    ),
+)
+async def import_roster(
+    request: Request,
+    caller: CallerDep,
+    file: Annotated[UploadFile, File(description="The roster CSV (docs/roster_import.md)")],
+    dry_run: bool = False,
+    idempotency_key: Annotated[
+        str | None, Header(alias="Idempotency-Key", min_length=1, max_length=200)
+    ] = None,
+) -> RosterImportResult:
+    """Import crew and their pickups from a roster CSV of up to 500 rows.
+    Rejected rows are skipped and listed with their line and reason; the rest
+    import together. With dry_run=true nothing is written: the result is what
+    the import would do. A real import needs an Idempotency-Key: a retry with
+    the same key and file gets the first result and imports nothing. Starts
+    no re-plan."""
+    if not dry_run and idempotency_key is None:
+        raise ApiError(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            ErrorCode.VALIDATION_FAILED,
+            "header.idempotency-key: a real import needs one (a dry run doesn't)",
+        )
+    content = await file.read()
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
+        _dispatcher_only(profile)
+        try:
+            return await roster.run(
+                conn,
+                content,
+                datetime.now(UTC),
+                dry_run=dry_run,
+                idempotency_key=idempotency_key,
+                dispatcher_id=caller.user_id,
+            )
+        except roster.BadFile as error:
+            raise ApiError(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, ErrorCode.VALIDATION_FAILED, str(error)
+            ) from error
+        except roster.KeyReused as error:
+            raise ApiError(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                ErrorCode.IDEMPOTENCY_KEY_REUSED,
+                "this Idempotency-Key already imported a different file",
+            ) from error

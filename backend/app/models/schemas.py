@@ -116,6 +116,7 @@ class CrewMember(BaseModel):
     name: str
     role: str  # free text in the schema (e.g. pilot, cabin_crew)
     home_location: GeoPoint
+    staff_no: str | None = None  # the airline's staff number; null before #229's import
     created_at: datetime
 
 
@@ -527,3 +528,33 @@ class CrewMessageRead(BaseModel):
     id: UUID
     # When the dispatcher first read it: the same on a retry.
     read_at: datetime
+
+
+# Roster CSV import (#229). The CSV format is in docs/roster_import.md.
+
+
+class RejectReason(StrEnum):
+    INVALID_ROW = "invalid_row"  # a field is missing or unreadable; detail says which
+    OUTSIDE_PICKUP_ZONES = "outside_pickup_zones"  # over 10 km from every pickup zone
+    REPORT_TIME_PAST = "report_time_past"
+    DUPLICATE_PICKUP = "duplicate_pickup"  # same staff_no and report_time, in the file or stored
+
+
+class RejectedRow(BaseModel):
+    line: int  # the line in the file; the header is line 1
+    staff_no: str | None  # null when the row has none
+    reason: RejectReason
+    detail: str  # for people, e.g. "pickup_lat: not a number"
+
+
+class RosterImportResult(BaseModel):
+    """What an import did, or with dry_run what it would do. Rejected rows
+    are skipped; the rest are imported together."""
+
+    dry_run: bool
+    rows: int  # data rows in the file, rejected ones included
+    crew_created: int  # staff numbers not seen before
+    crew_updated: int  # staff numbers already known: name and role refreshed
+    pickups_created: int  # one per accepted row, status pending
+    rows_rejected: int
+    rejected: list[RejectedRow]  # in line order

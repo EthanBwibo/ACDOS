@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from fastapi import FastAPI
 
-from app import errors
+from app import errors, roster
 from app.auth import JwksKeys, fetch_jwks, issuer
 from app.body_limit import BodyLimit
 from app.config import settings
@@ -62,4 +62,11 @@ app.include_router(me.router)
 app.include_router(pickup_events.router)
 app.include_router(dispatcher.router)
 app.include_router(messages.router)
-app.add_middleware(BodyLimit, limits={("POST", pickup_events.PATH): pickup_events.BODY_LIMIT})
+app.add_middleware(
+    BodyLimit,
+    limits={
+        ("POST", pickup_events.PATH): pickup_events.BODY_LIMIT,
+        # The CSV plus the multipart framing around it.
+        ("POST", dispatcher.ROSTER_IMPORTS): roster.MAX_BYTES + 4096,
+    },
+)

@@ -1,0 +1,6 @@
+staff_no,name,crew_role,pickup_lat,pickup_lon,report_time,request_type
+KQ10231,Amina Hassan,cabin_crew,-1.289279,36.786931,2026-11-25T05:30:00+03:00,rostered
+KQ10231,Amina Hassan,cabin_crew,-1.289279,36.786931,2026-11-26T05:30:00+03:00,rostered
+KQ10457,Brian Mwangi,pilot,-1.2675,36.812022,2026-11-25T06:00:00+03:00,rostered
+KQ10892,Chao Wanjiru,cabin_crew,-1.292248,36.881548,2026-11-25T06:15:00+03:00,
+KQ11044,Daniel Otieno,cabin_crew,-1.323994,36.667803,2026-11-25T07:00:00+03:00,standby

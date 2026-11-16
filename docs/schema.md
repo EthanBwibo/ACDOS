@@ -11,7 +11,7 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | Table | Columns | Keys and constraints |
 |---|---|---|
 | profiles | id UUID; role TEXT; full_name TEXT; created_at TIMESTAMPTZ | PK id, FK to auth.users; role in (dispatcher, driver, crew) |
-| crew_members | id UUID; profile_id UUID; name TEXT; role TEXT; home_location GEOGRAPHY(Point, 4326); created_at TIMESTAMPTZ | PK id; FK profile_id to profiles, nullable and unique |
+| crew_members | id UUID; profile_id UUID; name TEXT; role TEXT; home_location GEOGRAPHY(Point, 4326); staff_no TEXT; created_at TIMESTAMPTZ | PK id; FK profile_id to profiles, nullable and unique; staff_no nullable and unique (the airline's staff number, matched by the roster import, #229) |
 | vehicles | id UUID; assigned_driver_id UUID; plate_number TEXT; capacity INT; status TEXT; created_at TIMESTAMPTZ | PK id; FK assigned_driver_id to profiles; plate_number unique; capacity above 0; status in (available, in_service, broken_down, unavailable) |
 | optimization_jobs | id UUID; triggered_at TIMESTAMPTZ; trigger_type TEXT; status TEXT; idempotency_key TEXT; request_hash TEXT; error TEXT; finished_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; trigger_type in (scheduled, flight_delay, standby_activation, vehicle_breakdown); status in (queued, running, completed, failed), default queued; idempotency_key unique, null for jobs not made through the API; error and finished_at null until the job fails or completes |
 | optimization_job_pickups | id UUID; optimization_job_id UUID; pickup_request_id UUID; outcome TEXT; late_sec INT; created_at TIMESTAMPTZ | PK id; FK optimization_job_id, pickup_request_id; optimization_job_id and pickup_request_id unique together; outcome in (on_time, late, unassigned); late_sec at least 0, null exactly when unassigned |
@@ -52,6 +52,16 @@ checks the two match exactly. No links to other tables: a pickup's zone is the n
 |---|---|---|
 | pickup_zones | id UUID; label TEXT; location GEOGRAPHY(Point, 4326); created_at TIMESTAMPTZ | PK id; label unique |
 
+## Roster import (not in the Chapter 4 ERD)
+
+The dispatcher's roster CSV import (#229, `POST /roster-imports`). One row per committed
+import, so a retry with the same `Idempotency-Key` gets the first result back instead of
+importing twice. A dry run writes nothing. The CSV format is in `docs/roster_import.md`.
+
+| Table | Columns | Keys and constraints |
+|---|---|---|
+| roster_imports | id UUID; idempotency_key TEXT; file_hash TEXT; imported_by UUID; result JSONB; created_at TIMESTAMPTZ | PK id; idempotency_key unique; FK imported_by to profiles; dispatcher only (insert as themselves, read); no client edits or deletes one (032) |
+
 ## Relationships
 
 - crew_members 1 to many pickup_requests
@@ -66,6 +76,7 @@ checks the two match exactly. No links to other tables: a pickup's zone is the n
 - crew_messages 1 to many message_replies, each from one preset_messages row
 - crew_members 1 to many device_tokens
 - pickup_requests 1 to many schedule_change_notices
+- profiles (dispatcher) 1 to many roster_imports
 
 ## Row level security
 
