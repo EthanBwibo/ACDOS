@@ -2,8 +2,14 @@
 
 The roster is an external input: ACDOS does not build it. The dispatcher puts it in with a CSV
 file (#229), from **Pickups > Import roster** in the app, or `POST /roster-imports`. One row is
-one rostered pickup. A sample is in [`roster_sample.csv`](roster_sample.csv). Change its dates
-to future ones before importing it, because rows with a past report time are rejected.
+one rostered pickup. A sample is in [`roster_sample.csv`](roster_sample.csv): five good rows and
+four bad ones, one for each reason a row is rejected. Rows with a past report time are rejected,
+so regenerate it with report times from tomorrow (Nairobi) before importing it:
+
+```
+python scripts/make_sample_roster.py                    # from tomorrow
+python scripts/make_sample_roster.py --date 2026-12-01  # from a given day
+```
 
 ## Columns
 
@@ -72,19 +78,29 @@ different file is refused with 422 `idempotency_key_reused`.
 
 ## Response
 
-For example, importing the sample with Daniel Otieno's pickup point moved out to Nakuru:
+Importing the sample once, with none of its crew known yet:
 
 ```json
 {
   "dry_run": false,
-  "rows": 5,
-  "crew_created": 3,
+  "rows": 9,
+  "crew_created": 4,
   "crew_updated": 0,
-  "pickups_created": 4,
-  "rows_rejected": 1,
+  "pickups_created": 5,
+  "rows_rejected": 4,
   "rejected": [
-    {"line": 6, "staff_no": "KQ11044", "reason": "outside_pickup_zones",
-     "detail": "over 10 km from every pickup zone"}
+    {"line": 7, "staff_no": "KQ10457", "reason": "duplicate_pickup",
+     "detail": "the same pickup is on line 4"},
+    {"line": 8, "staff_no": "KQ11290", "reason": "outside_pickup_zones",
+     "detail": "over 10 km from every pickup zone"},
+    {"line": 9, "staff_no": "KQ11317", "reason": "report_time_past",
+     "detail": "report_time: already past"},
+    {"line": 10, "staff_no": "KQ11402", "reason": "invalid_row",
+     "detail": "report_time: needs a UTC offset, e.g. +03:00"}
   ]
 }
 ```
+
+Line 8 is rejected by the PostGIS zone check; the others while the file is read. Importing the
+same file again, under a new key, rejects the five good rows too, as `duplicate_pickup`: those
+crew already have pickups at those times.
