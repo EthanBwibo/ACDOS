@@ -69,7 +69,7 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
    pickup**, then **Crew on board**, on a stop that is **not Test Crew's**: once Test Crew
    is picked up, the crew app no longer shows that pickup, so step 7 has no change card to
    acknowledge. After **Refresh**, the dispatcher's crew pickups list shows it Picked up.
-7. **Crew acknowledges** (phone): **Sign out**, then sign in as `crew@acdos.test`. The
+7. **Crew acknowledges** (phone): **⋮ > Profile > Sign out**, then sign in as `crew@acdos.test`. The
    Pickup tab opens with a card on top, "Pickup changed": the old pickup time, the new one,
    and the reason (a vehicle breakdown). Below it are the pickup time, "Report at JKIA" 06:15
    and the new van. Tap **Acknowledge**: "Acknowledged. The
@@ -77,7 +77,7 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
 8. **Crew messages the dispatcher** (crew): open the **Message** tab. It lists the presets
    as buttons and has no text field. Tap **I am running late**: "Sent to the dispatcher.",
    and it appears under **Recent**.
-9. **Dispatcher replies** (dispatcher, then crew): **Sign out**, sign in as
+9. **Dispatcher replies** (dispatcher, then crew): **⋮ > Profile > Sign out**, sign in as
    `dispatcher@acdos.test` and tap **Next** to the seeded day. In the **crew pickups** list,
    Test Crew's row now says "Acknowledged" (step 7). Alerts counts one unread, and
    **Messages** shows Test Crew's "I am running late" with the time it was sent. Tap that

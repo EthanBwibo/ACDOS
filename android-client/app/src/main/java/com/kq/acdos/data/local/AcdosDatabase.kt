@@ -23,13 +23,19 @@ import androidx.room.TypeConverters
         CrewPickupEntity::class,
         ScheduleChangeNoticeEntity::class,
         PresetMessageEntity::class,
-        PendingPickupEventEntity::class
+        PendingPickupEventEntity::class,
+        MyProfileEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
     // Keep every step from here on: an update must never lose queued pickup events.
     // 3 to 4: route_stop.server_status (#196).
-    autoMigrations = [AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)]
+    // 4 to 5: my_profile and crew_pickup.status, for the Profile screen (#231).
+    autoMigrations = [
+        AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5)
+    ]
 )
 @TypeConverters(Converters::class)
 abstract class AcdosDatabase : RoomDatabase() {
@@ -40,6 +46,8 @@ abstract class AcdosDatabase : RoomDatabase() {
     abstract fun pendingPickupEventDao(): PendingPickupEventDao
 
     abstract fun userDataDao(): UserDataDao
+
+    abstract fun myProfileDao(): MyProfileDao
 
     companion object {
         const val NAME = "acdos.db"

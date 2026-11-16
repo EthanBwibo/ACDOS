@@ -19,7 +19,9 @@ data class CrewPickupEntity(
     @ColumnInfo(name = "estimated_pickup") val estimatedPickup: Instant?,
     @ColumnInfo(name = "report_time") val reportTime: Instant,
     @ColumnInfo(name = "plate_number") val plateNumber: String?,
-    @ColumnInfo(name = "fetched_at") val fetchedAt: Instant
+    @ColumnInfo(name = "fetched_at") val fetchedAt: Instant,
+    /** The server's status, e.g. assigned, for the Profile screen (#231); null if cached before v5. */
+    val status: String? = null
 )
 
 /** A schedule_change_notices row for this crew member. */

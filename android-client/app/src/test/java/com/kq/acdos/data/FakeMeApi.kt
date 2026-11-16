@@ -1,6 +1,8 @@
 package com.kq.acdos.data
 
+import com.kq.acdos.data.remote.CrewMeDto
 import com.kq.acdos.data.remote.CrewPickupResponseDto
+import com.kq.acdos.data.remote.DriverMeDto
 import com.kq.acdos.data.remote.DriverRouteResponseDto
 import com.kq.acdos.data.remote.MeApi
 import com.kq.acdos.data.remote.NoticeAcknowledgedDto
@@ -41,6 +43,14 @@ class FakeMeApi : MeApi {
         acknowledged += noticeId
         return nextAck(noticeId)
     }
+
+    var nextCrewMe: suspend () -> Response<CrewMeDto> = { error("no answer set") }
+
+    override suspend fun crewMe(): Response<CrewMeDto> = nextCrewMe()
+
+    var nextDriverMe: suspend () -> Response<DriverMeDto> = { error("no answer set") }
+
+    override suspend fun driverMe(): Response<DriverMeDto> = nextDriverMe()
 
     override suspend fun uploadPickupEvents(
         batch: PickupEventBatchDto

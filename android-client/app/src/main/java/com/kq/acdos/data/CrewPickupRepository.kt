@@ -53,7 +53,8 @@ class CrewPickupRepository(
                 estimatedPickup = pickup.eta ?: pickup.scheduledPickup,
                 reportTime = pickup.reportTime,
                 plateNumber = pickup.vehiclePlate,
-                fetchedAt = clock()
+                fetchedAt = clock(),
+                status = pickup.status.name.lowercase()
             )
         )
         return RefreshResult.UPDATED
