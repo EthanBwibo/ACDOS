@@ -1,87 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma frame 3:372. -->
+<!--
+    Figma frame 3:372, with the conversation as chat bubbles (issue 226): the preset
+    chips stay on top and the conversation fills the rest, newest at the bottom.
+-->
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/swipe_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="16dp">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/error"
+            style="@style/Widget.ACDOS.Banner.Error"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_marginBottom="12dp"
+            android:text="@string/crew_message_load_failed"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/error"
-                style="@style/Widget.ACDOS.Banner.Error"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:text="@string/crew_message_load_failed"
-                android:visibility="gone" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="@string/crew_message_hint"
+            android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:text="@string/crew_message_hint"
-                android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/presets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacingVertical="0dp" />
 
-            <LinearLayout
-                android:id="@+id/presets"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
+        <TextView
+            android:id="@+id/empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="24dp"
+            android:gravity="center"
+            android:text="@string/crew_message_no_presets"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/empty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="24dp"
-                android:gravity="center"
-                android:text="@string/crew_message_no_presets"
-                android:textAppearance="?attr/textAppearanceBodyLarge"
-                android:visibility="gone" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/divider_hairline" />
 
-            <TextView
-                android:id="@+id/recent_label"
-                style="@style/Widget.ACDOS.Overline"
-                android:layout_marginTop="0dp"
-                android:text="@string/crew_message_recent"
-                android:visibility="gone" />
+        <TextView
+            android:id="@+id/recent_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/crew_message_recent_empty"
+            android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/recent_empty"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/crew_message_recent_empty"
-                android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
-                android:visibility="gone" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/conversation"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp" />
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/recent_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:id="@+id/recent_rows"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:divider="@drawable/divider_hairline"
-                    android:orientation="vertical"
-                    android:paddingVertical="4dp"
-                    android:showDividers="middle" />
-
-            </com.google.android.material.card.MaterialCardView>
-
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

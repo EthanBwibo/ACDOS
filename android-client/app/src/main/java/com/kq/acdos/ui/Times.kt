@@ -33,6 +33,9 @@ object Times {
     /** "Sat 31 Oct" */
     fun day(instant: Instant): String = day.format(instant)
 
+    /** "Sat 31 Oct", for a date already in Nairobi time. */
+    fun day(date: LocalDate): String = day.format(date)
+
     /** "31" */
     fun dayOfMonth(instant: Instant): String = dayOfMonth.format(instant)
 

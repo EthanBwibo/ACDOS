@@ -1,6 +1,5 @@
 package com.kq.acdos.ui.crew
 
-import com.kq.acdos.R
 import com.kq.acdos.data.MessagesRepository
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.local.inMemoryDatabase
@@ -159,40 +158,6 @@ class CrewMessageViewModelTest {
     }
 
     @Test
-    fun `each message is followed by its replies, oldest first`() {
-        val older = message("m1", sentAt = Instant.ofEpochSecond(100))
-        val first = MessageReplyDto("r1", "noted", "Noted", Instant.ofEpochSecond(300))
-        val second = MessageReplyDto("r2", "van", "Van rerouted", Instant.ofEpochSecond(400))
-        val replied =
-            message("m2", sentAt = Instant.ofEpochSecond(200), replies = listOf(first, second))
-
-        val rows = recentRows(listOf(replied, older))
-
-        assertEquals(
-            listOf(
-                RecentRow.Sent(replied),
-                RecentRow.Reply("Noted", Instant.ofEpochSecond(300)),
-                RecentRow.Reply("Van rerouted", Instant.ofEpochSecond(400)),
-                RecentRow.Sent(older)
-            ),
-            rows
-        )
-    }
-
-    @Test
-    fun `replies never push a message off the list`() {
-        val messages = List(MessagesRepository.RECENT_SIZE) { i ->
-            val at = Instant.ofEpochSecond(i * 10L)
-            val replies = List(3) { MessageReplyDto("r$i-$it", "noted", "Noted", at) }
-            message("m$i", sentAt = at, replies = replies)
-        }
-
-        val sent = recentRows(messages).filterIsInstance<RecentRow.Sent>()
-
-        assertEquals(messages, sent.map { it.message })
-    }
-
-    @Test
     fun `a pull spins until both lists answer, and failing says so`() {
         api.mine = { throw IOException("no signal") }
 
@@ -216,11 +181,5 @@ class CrewMessageViewModelTest {
         assertEquals(false, viewModel.loadFailed.value)
         assertEquals(true, viewModel.recentLoaded.value)
         assertEquals(false, viewModel.firstLoadPending.value)
-    }
-
-    @Test
-    fun `seen follows the dispatcher reading the message`() {
-        assertEquals(R.string.crew_message_sent_at, sentLine(message("m1")))
-        assertEquals(R.string.crew_message_seen_at, sentLine(message("m1", Instant.EPOCH)))
     }
 }
