@@ -180,9 +180,11 @@ and `PUBLIC` may not.
 ## Supabase-provided, not ours
 
 - `public.rls_auto_enable()` backs the `ensure_rls` event trigger that Supabase created with the
-  project. It turns RLS on automatically for every new table in `public`. It is not in
-  `backend/migrations/`; leave it alone. The security advisor lists it as an executable
-  `SECURITY DEFINER` function; that warning is expected.
+  project. It turns RLS on automatically for every new table in `public`. It is not created
+  in `backend/migrations/`, and its body is Supabase's to change, not ours. Migration 033
+  revokes EXECUTE on it from `public`, `anon` and `authenticated`, which the security advisor
+  flagged (a `SECURITY DEFINER` function callable through the API). The event trigger still
+  fires it: event triggers don't check EXECUTE.
 
 ## Not in the table
 
