@@ -73,7 +73,9 @@ class OpenApiContractTest {
         "CrewMessageCreate" to CrewMessageCreateDto::class.java,
         "CrewMessage" to CrewMessageDto::class.java,
         "CrewMessageRead" to CrewMessageReadDto::class.java,
-        "CrewMessagePage" to CrewMessagePageDto::class.java
+        "CrewMessagePage" to CrewMessagePageDto::class.java,
+        "RosterImportResult" to RosterImportResultDto::class.java,
+        "RejectedRow" to RejectedRowDto::class.java
     )
 
     private val enums: Map<String, Class<out Enum<*>>> = mapOf(
@@ -85,7 +87,8 @@ class OpenApiContractTest {
         "VehicleStatus" to VehicleStatusDto::class.java,
         "PickupEventType" to PickupEventTypeDto::class.java,
         "PickupExceptionType" to PickupExceptionTypeDto::class.java,
-        "PickupEventOutcome" to PickupEventOutcomeDto::class.java
+        "PickupEventOutcome" to PickupEventOutcomeDto::class.java,
+        "RejectReason" to RejectReasonDto::class.java
     )
 
     @Test

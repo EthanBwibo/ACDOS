@@ -21,6 +21,7 @@ import com.kq.acdos.data.remote.OptimizationTriggerTypeDto
 import com.kq.acdos.data.remote.PickupReportTimeUpdateDto
 import com.kq.acdos.data.remote.PickupRequestStatusDto
 import com.kq.acdos.data.remote.PlannedNodeDto
+import com.kq.acdos.data.remote.RosterImportResultDto
 import com.kq.acdos.data.remote.VehicleStatusDto
 import com.kq.acdos.data.remote.VehicleStatusUpdateDto
 import com.kq.acdos.data.strandedPickups
@@ -34,6 +35,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import okhttp3.MultipartBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -114,6 +116,12 @@ class DispatcherViewModelTest {
             vans = vans.map { if (it.id == vehicleId) it.copy(status = update.status) else it }
             return Response.success(vans.first { it.id == vehicleId })
         }
+
+        override suspend fun importRoster(
+            file: MultipartBody.Part,
+            dryRun: Boolean,
+            idempotencyKey: String?
+        ): Response<RosterImportResultDto> = error("not used here")
     }
 
     /** Every job completes on its first poll with one route. */

@@ -12,12 +12,16 @@ import com.kq.acdos.data.remote.OptimisationJobsApi
 import com.kq.acdos.data.remote.OptimizationTriggerTypeDto
 import com.kq.acdos.data.remote.PickupReportTimeUpdateDto
 import com.kq.acdos.data.remote.PickupRequestStatusDto
+import com.kq.acdos.data.remote.RosterImportResultDto
 import com.kq.acdos.data.remote.VehicleStatusDto
 import com.kq.acdos.data.remote.VehicleStatusUpdateDto
 import com.kq.acdos.data.remote.apiCall
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 
 /** One Nairobi day as the dispatcher sees it: who reports, the vans, and the plan. */
@@ -99,6 +103,23 @@ class DispatchRepository(
 
     suspend fun job(jobId: String): ApiResult<OptimisationJobResultDto> =
         apiCall { jobs.getJob(jobId) }
+
+    /**
+     * A roster CSV (#229): a dry run when [idempotencyKey] is null, otherwise the import. The
+     * caller keeps one key per file, so a retry after a dropped connection imports nothing twice.
+     */
+    suspend fun importRoster(
+        csv: ByteArray,
+        fileName: String,
+        idempotencyKey: String?
+    ): ApiResult<RosterImportResultDto> = apiCall {
+        val file = MultipartBody.Part.createFormData(
+            "file",
+            fileName,
+            csv.toRequestBody("text/csv".toMediaType())
+        )
+        api.importRoster(file, dryRun = idempotencyKey == null, idempotencyKey = idempotencyKey)
+    }
 
     /** Follows next_cursor until the last page. */
     private suspend fun <P : Any, T> allPages(
