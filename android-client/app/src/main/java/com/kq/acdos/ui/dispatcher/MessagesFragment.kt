@@ -24,8 +24,9 @@ import kotlinx.coroutines.launch
 /**
  * Crew messages as chat bubbles, newest at the bottom (Figma 2:241, #226).
  * The reply bar is always shown. It starts on the newest unanswered message;
- * tapping a crew message marks it read and picks it instead. Replies go only
- * to that crew member. Only crew send
+ * tapping a crew message picks it instead. Whatever is selected while this
+ * screen is shown counts as read. Replies go only to that crew member. Only
+ * crew send
  * messages, so there's no Drivers filter or Forward to driver.
  */
 class MessagesFragment : Fragment(R.layout.fragment_messages) {
@@ -72,6 +73,17 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
                 inbox.notices.collect { Snackbar.make(view, it, Snackbar.LENGTH_LONG).show() }
             }
         }
+    }
+
+    // Selecting a message counts as reading it only while this screen is shown.
+    override fun onStart() {
+        super.onStart()
+        inbox.setShown(true)
+    }
+
+    override fun onStop() {
+        inbox.setShown(false)
+        super.onStop()
     }
 
     private fun showMessages(view: View) {

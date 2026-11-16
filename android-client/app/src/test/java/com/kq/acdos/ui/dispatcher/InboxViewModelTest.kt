@@ -76,7 +76,10 @@ class InboxViewModelTest {
             return Response.success(CrewMessagePageDto(inbox, null))
         }
 
+        var failRead = false
+
         override suspend fun markRead(messageId: String): Response<CrewMessageReadDto> {
+            if (failRead) throw IOException("no signal")
             read += messageId
             return Response.success(CrewMessageReadDto(messageId, SENT_AT))
         }
@@ -118,15 +121,11 @@ class InboxViewModelTest {
     }
 
     @Test
-    fun `opening an unread message marks it read`() {
-        viewModel.select("m1")
+    fun `selecting a message already read asks nothing`() {
+        api.inbox = listOf(message("m1", readAt = SENT_AT), message("m2", readAt = SENT_AT))
+        open()
+        viewModel.setShown(true)
 
-        assertEquals(listOf("m1"), api.read)
-        assertNotNull(inboxMessage("m1").readAt)
-    }
-
-    @Test
-    fun `opening a message already read asks nothing`() {
         viewModel.select("m2")
 
         assertEquals(emptyList<String>(), api.read)
@@ -224,10 +223,74 @@ class InboxViewModelTest {
     }
 
     @Test
-    fun `the default selection doesn't mark the message read`() {
+    fun `opening the screen marks the default selection read`() {
         openWithThree()
 
+        viewModel.setShown(true)
+
+        assertEquals(listOf("m2"), api.read)
+        assertNotNull(inboxMessage("m2").readAt)
+    }
+
+    @Test
+    fun `a refresh while the screen isn't shown marks nothing read`() {
+        openWithThree()
+
+        viewModel.load()
+
+        assertEquals("m2", viewModel.selected.value)
         assertEquals(emptyList<String>(), api.read)
+        assertNull(inboxMessage("m2").readAt)
+    }
+
+    @Test
+    fun `nothing is marked read after the screen is left`() {
+        openWithThree()
+        viewModel.setShown(true)
+        viewModel.setShown(false)
+
+        viewModel.select("m1")
+
+        assertEquals(listOf("m2"), api.read)
+    }
+
+    @Test
+    fun `tapping an unread message marks it read`() {
+        openWithThree()
+        viewModel.setShown(true)
+
+        viewModel.select("m1")
+
+        assertEquals(listOf("m2", "m1"), api.read)
+        assertNotNull(inboxMessage("m1").readAt)
+    }
+
+    @Test
+    fun `sending a reply marks the next message read`() {
+        openWithThree()
+        viewModel.setShown(true)
+
+        viewModel.reply("noted")
+
+        assertEquals("m1", viewModel.selected.value)
+        assertEquals(listOf("m2", "m1"), api.read)
+        assertNotNull(inboxMessage("m1").readAt)
+    }
+
+    @Test
+    fun `a failed read stays New and is tried again the next time it is selected`() {
+        openWithThree()
+        api.failRead = true
+        viewModel.setShown(true)
+
+        assertNull(inboxMessage("m2").readAt)
+
+        api.failRead = false
+        viewModel.select("m1")
+        viewModel.select("m2")
+
+        assertEquals(listOf("m1", "m2"), api.read)
+        assertNotNull(inboxMessage("m2").readAt)
     }
 
     @Test

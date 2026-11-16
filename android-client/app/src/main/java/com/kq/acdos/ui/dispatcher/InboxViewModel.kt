@@ -110,7 +110,7 @@ class InboxViewModel(
                 inbox.value = result.body
                 val picked = selectedId.value
                 if (picked == null || result.body.none { it.id == picked }) {
-                    selectedId.value = newestUnanswered(result.body)?.id
+                    choose(newestUnanswered(result.body)?.id)
                 }
             }
             failedState.value = result !is ApiResult.Success
@@ -129,23 +129,48 @@ class InboxViewModel(
     }
 
     /**
-     * Tapping a message marks it read, and replies then go to it. The default
-     * selection after a load doesn't mark anything read: the dispatcher hasn't
-     * chosen to look at it yet.
+     * True while the Messages screen is on show. The hub shares this inbox and
+     * refreshes it too, so a selection made then must not count as read.
      */
-    fun select(messageId: String) {
-        selectedId.value = messageId
-        val unread = inbox.value.orEmpty().any { it.id == messageId && it.readAt == null }
-        if (unread) markRead(messageId)
+    private var shown = false
+
+    /** Messages whose read call is on its way, so one isn't asked for twice. */
+    private val marking = mutableSetOf<String>()
+
+    /** The Messages screen calls this from onStart (true) and onStop (false). */
+    fun setShown(shown: Boolean) {
+        this.shown = shown
+        markSelectedRead()
     }
 
-    /** Quiet on failure: the message stays unread, and the next tap tries again. */
-    private fun markRead(messageId: String) {
+    /** Tapping a message picks it: replies go to it, and it counts as read. */
+    fun select(messageId: String) = choose(messageId)
+
+    private fun choose(messageId: String?) {
+        selectedId.value = messageId
+        markSelectedRead()
+    }
+
+    /**
+     * A message counts as read once it is selected while the screen is shown:
+     * the default pick on open, the next one after a reply, or a tap. Only an
+     * unread message is sent to the server. Quiet on failure: the message stays
+     * New, and the next time it is selected tries again.
+     */
+    private fun markSelectedRead() {
         val repository = repository ?: return
+        val messageId = selectedId.value ?: return
+        if (!shown || messageId in marking) return
+        if (inbox.value.orEmpty().none { it.id == messageId && it.readAt == null }) return
+        marking += messageId
         viewModelScope.launch {
-            val result = repository.markRead(messageId)
-            if (result is ApiResult.Success) {
-                change(messageId) { it.copy(readAt = it.readAt ?: result.body.readAt) }
+            try {
+                val result = repository.markRead(messageId)
+                if (result is ApiResult.Success) {
+                    change(messageId) { it.copy(readAt = it.readAt ?: result.body.readAt) }
+                }
+            } finally {
+                marking -= messageId
             }
         }
     }
@@ -163,7 +188,7 @@ class InboxViewModel(
                 if (result !is ApiResult.NetworkError) pendingKeys.remove(pending)
                 if (result is ApiResult.Success) {
                     addReply(messageId, result.body)
-                    selectedId.value = newestUnanswered(inbox.value.orEmpty())?.id
+                    choose(newestUnanswered(inbox.value.orEmpty())?.id)
                 }
                 noticeChannel.send(replyMessage(result))
             } finally {
