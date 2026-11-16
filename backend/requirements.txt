@@ -6,6 +6,8 @@ pydantic==2.13.5
 pydantic-settings==2.15.0
 # Postgres driver for the optimisation job API (#51).
 asyncpg==0.32.0
+# Multipart form uploads, which FastAPI needs for the roster CSV import (#229).
+python-multipart==0.0.34
 # Checking Supabase access tokens (ES256) for the driver and crew endpoints
 # (#52), and what PyJWT's crypto extra pulls in.
 PyJWT==2.15.1

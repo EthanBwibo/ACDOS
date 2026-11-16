@@ -1,6 +1,21 @@
 {
   "components": {
     "schemas": {
+      "Body_import_roster_roster_imports_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "The roster CSV (docs/roster_import.md)",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_roster_roster_imports_post",
+        "type": "object"
+      },
       "CrewMessage": {
         "properties": {
           "crew_member_id": {
@@ -1127,6 +1142,97 @@
           "items"
         ],
         "title": "PresetMessageList",
+        "type": "object"
+      },
+      "RejectReason": {
+        "enum": [
+          "invalid_row",
+          "outside_pickup_zones",
+          "report_time_past",
+          "duplicate_pickup"
+        ],
+        "title": "RejectReason",
+        "type": "string"
+      },
+      "RejectedRow": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "line": {
+            "title": "Line",
+            "type": "integer"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/RejectReason"
+          },
+          "staff_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff No"
+          }
+        },
+        "required": [
+          "line",
+          "staff_no",
+          "reason",
+          "detail"
+        ],
+        "title": "RejectedRow",
+        "type": "object"
+      },
+      "RosterImportResult": {
+        "description": "What an import did, or with dry_run what it would do. Rejected rows\nare skipped; the rest are imported together.",
+        "properties": {
+          "crew_created": {
+            "title": "Crew Created",
+            "type": "integer"
+          },
+          "crew_updated": {
+            "title": "Crew Updated",
+            "type": "integer"
+          },
+          "dry_run": {
+            "title": "Dry Run",
+            "type": "boolean"
+          },
+          "pickups_created": {
+            "title": "Pickups Created",
+            "type": "integer"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/RejectedRow"
+            },
+            "title": "Rejected",
+            "type": "array"
+          },
+          "rows": {
+            "title": "Rows",
+            "type": "integer"
+          },
+          "rows_rejected": {
+            "title": "Rows Rejected",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dry_run",
+          "rows",
+          "crew_created",
+          "crew_updated",
+          "pickups_created",
+          "rows_rejected",
+          "rejected"
+        ],
+        "title": "RosterImportResult",
         "type": "object"
       },
       "RouteStatus": {
@@ -2729,6 +2835,139 @@
         "summary": "List Presets",
         "tags": [
           "messages"
+        ]
+      }
+    },
+    "/roster-imports": {
+      "post": {
+        "description": "Import crew and their pickups from a roster CSV of up to 500 rows.\nRejected rows are skipped and listed with their line and reason; the rest\nimport together. With dry_run=true nothing is written: the result is what\nthe import would do. A real import needs an Idempotency-Key: a retry with\nthe same key and file gets the first result and imports nothing. Starts\nno re-plan.",
+        "operationId": "import_roster_roster_imports_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dry_run",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Dry Run",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_roster_roster_imports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Content Too Large: payload_too_large",
+            "x-error-codes": [
+              "payload_too_large"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused",
+            "x-error-codes": [
+              "validation_failed",
+              "idempotency_key_reused"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Import Roster",
+        "tags": [
+          "dispatcher"
         ]
       }
     },

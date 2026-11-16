@@ -25,7 +25,7 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app import contract, dispatch, messages, reads
+from app import contract, dispatch, messages, reads, roster
 from app.config import settings
 from app.errors import ErrorBody, ErrorCode
 from app.jobs.runner import JobRunner
@@ -56,6 +56,7 @@ TOKEN_ROUTES = {
     "/messages",
     "/messages/{message_id}/ack",
     "/messages/{message_id}/replies",
+    "/roster-imports",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
@@ -385,6 +386,36 @@ def _messages(
     return run
 
 
+ROSTER = "/roster-imports"
+ROSTER_CSV = b"staff_no,name,crew_role,pickup_lat,pickup_lon,report_time\n"
+
+
+def _roster(
+    setup: Callable[[World], None] | None = None,
+    token: bool = True,
+    key: str | None = "contract-import",
+    content: bytes = ROSTER_CSV,
+    raises: Exception | None = None,
+):
+    """POST a roster CSV (#229). raises replaces app.roster.run with one
+    that raises it, so a reused key needs no database."""
+
+    def run(w: World):
+        if setup:
+            setup(w)
+        if raises is not None:
+
+            async def fake(*args, **kwargs):
+                raise raises
+
+            w.monkeypatch.setattr(roster, "run", fake)
+        headers = (w.token() if token else {}) | ({"Idempotency-Key": key} if key else {})
+        files = {"file": ("roster.csv", content, "text/csv")}
+        return w.client.post(ROSTER, files=files, headers=headers)
+
+    return run
+
+
 # (method, path, status, code, how to make the route send it, ids expected)
 CASES = (
     [
@@ -619,6 +650,28 @@ CASES = (
             False,
         ),
         ("POST", ACK, 503, "unavailable", _ack(World.without_db), False),
+    ]
+    + [
+        ("POST", ROSTER, 401, "unauthorized", _roster(token=False), False),
+        ("POST", ROSTER, 403, "forbidden", _roster(lambda w: w.as_profile("driver")), False),
+        (
+            "POST",
+            ROSTER,
+            413,
+            "payload_too_large",
+            _roster(content=ROSTER_CSV + b"x" * (roster.MAX_BYTES + 5000)),
+            False,
+        ),
+        ("POST", ROSTER, 422, "validation_failed", _roster(_as_dispatcher, key=None), False),
+        (
+            "POST",
+            ROSTER,
+            422,
+            "idempotency_key_reused",
+            _roster(_as_dispatcher, raises=roster.KeyReused("contract-import")),
+            False,
+        ),
+        ("POST", ROSTER, 503, "unavailable", _roster(World.without_db), False),
     ]
     + [
         ("POST", EVENTS, 401, "unauthorized", _events(None, token=False), False),
