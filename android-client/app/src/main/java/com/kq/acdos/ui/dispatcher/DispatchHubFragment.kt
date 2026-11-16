@@ -14,23 +14,20 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.chip.Chip
 import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
-import com.kq.acdos.data.orderedRoutes
 import com.kq.acdos.data.planSummary
 import com.kq.acdos.data.planWindow
 import com.kq.acdos.data.remote.CrewMessageDto
-import com.kq.acdos.data.remote.DispatcherRouteDto
-import com.kq.acdos.data.routeStops
 import com.kq.acdos.ui.Times
-import com.kq.acdos.ui.driver.shortZone
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
- * One Nairobi day at a glance (Figma 2:26). Every card drills down: a tile to
- * its list, the plan to the job screen, an alert to the re-plan or messages,
- * a route to its detail.
+ * The Overview tab: one Nairobi day at a glance (Figma 2:26). The day picked
+ * here is the day every tab shows. Since the bottom nav (#230) the tiles are
+ * counts only and the routes are on their own tab; the alerts still lead on,
+ * Re-plan to the Plan tab and Messages to its tab.
  */
 class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
     private val viewModel: DispatcherViewModel by activityViewModels {
@@ -43,13 +40,6 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.previous_day).setOnClickListener { viewModel.showDay(-1) }
         view.findViewById<Button>(R.id.next_day).setOnClickListener { viewModel.showDay(1) }
-        view.findViewById<Button>(R.id.run_optimisation).setOnClickListener {
-            home.open(OptimisationRunFragment())
-        }
-        val pickups = view.findViewById<View>(R.id.tile_pickups)
-        val vehicles = view.findViewById<View>(R.id.tile_vehicles)
-        pickups.setOnClickListener { home.open(PickupsFragment()) }
-        vehicles.setOnClickListener { home.open(VehiclesFragment()) }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -60,7 +50,6 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
                     showTiles(view, state.board)
                     showPlan(view, state)
                     showAlerts(view, state, messages)
-                    showRoutes(view, state.board)
                 }
             }
         }
@@ -103,7 +92,6 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
             text = board?.takeIf { it.routes.isNotEmpty() }?.let { summaryText(it) }
             isVisible = text.isNotEmpty()
         }
-        view.findViewById<Button>(R.id.run_optimisation).isEnabled = board != null
     }
 
     private fun summaryText(board: DayBoard): String {
@@ -134,7 +122,7 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
                     replan.pickupIds.size
                 ),
                 value = getString(R.string.dispatch_replan_link)
-            ) { home.open(ReplanFragment()) }
+            ) { home.open(DispatcherTab.PLAN, ReplanFragment()) }
         }
         val unread = messages?.count { it.readAt == null }
         rows.addRow(
@@ -144,29 +132,6 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
             },
             value = unread?.let { getString(R.string.dispatch_open_link, it) }
                 ?: getString(R.string.dispatch_open_arrow)
-        ) { home.open(MessagesFragment()) }
-    }
-
-    private fun showRoutes(view: View, board: DayBoard?) {
-        view.findViewById<View>(R.id.routes_label).isVisible = board != null
-        view.findViewById<View>(R.id.routes_card).isVisible = board != null
-        val rows = view.findViewById<LinearLayout>(R.id.routes)
-        rows.removeAllViews()
-        val routes = board?.let(::orderedRoutes).orEmpty()
-        routes.forEachIndexed { index, route ->
-            rows.addRow(
-                title = routeName(index + 1, route.vehiclePlate),
-                subtitle = routeSubtitle(board!!, route),
-                value = Times.shortClock(route.plannedArrival)
-            ) { home.open(RouteDetailFragment.of(route.routeId)) }
-        }
-        // Hidden with no board: that isn't "no routes", and the banner says the day didn't load.
-        if (routes.isEmpty()) rows.addRow(getString(R.string.dispatch_no_routes))
-    }
-
-    private fun routeSubtitle(board: DayBoard, route: DispatcherRouteDto): String {
-        val stops = routeStops(board, route)
-        val zones = stops.mapNotNull { it.zoneLabel }.map(::shortZone).distinct()
-        return getString(R.string.dispatch_route_subtitle, stops.size, zones.joinToString(" › "))
+        ) { home.selectTab(DispatcherTab.MESSAGES) }
     }
 }

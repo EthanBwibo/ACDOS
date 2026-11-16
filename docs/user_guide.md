@@ -25,31 +25,30 @@ ACDOS gets Kenya Airways crew from home to JKIA before their report time. There 
 
 ## Dispatcher
 
-The dispatcher screen is a **hub** for one day. Tap a tile or link to open the detail, and **Back** to return. There is no tab bar.
+Five tabs: **Overview**, **Plan**, **Routes**, **Fleet & crew** and **Messages**. A screen opened from a tab (a route, Re-plan, Import roster) opens inside that tab, with a back arrow; the tabs stay at the bottom. Each tab stays where you left it. Tap the tab you're on to go back to its first screen. **Messages** shows the number of unread messages on its tab.
 
-### The hub
+### Overview
 
-- **The day:** **Previous** and **Next** move between days. The title shows the date.
+- **The day:** **Previous** and **Next** move between days. The title shows the date. Every tab shows this day.
 - **The tiles:**
   - **crew pickups:** how many crew need transport that day.
   - **vehicles:** how many vans there are.
   - **late risk:** crew the plan expects to be late.
 - **Plan:** the state of the day's plan: Not planned, Running or Planned. Once it's planned, it also shows the drive time, the vans used and whether all crew are on time.
-- **Alerts:** broken-down vans and unread crew messages.
-- **Routes:** each planned van, with its crew count.
+- **Alerts:** broken-down vans, flight delays waiting for a re-plan (tap to open Re-plan on the Plan tab), and unread crew messages (tap to open Messages).
 - **Refresh** reloads the day. A banner says if there's no connection; the screen may then be out of date, and changes can't be sent.
 
 ### Plan a day
 
-1. Go to the day with **Next**, and check that the **crew pickups** count is right. Tap the tile to see each pickup and its status.
-2. Tap **Run optimisation**. The screen shows the report window and the vans available.
+1. On **Overview**, go to the day with **Next**, and check that the **crew pickups** count is right. **Fleet & crew > Pickups** lists each pickup and its status.
+2. Open the **Plan** tab. It shows the report window and the vans available.
 3. Tap **Start**. Under **Vans to plan with**, only vans that can be planned are listed and ticked:
    - not broken down or unavailable;
    - not already on the road.
 
    Untick any van you want to keep back, then tap **Start**.
 4. **Job status** goes from Queued to Running to Done, usually in a few seconds. "Plan ready" gives the number of routes, late crew and unassigned crew.
-5. Go **Back**. **Routes** now lists each van's route. Tap one to see its stops, with:
+5. Open the **Routes** tab. It now lists each van's route. Tap one to see its stops, with:
    - the pickup times;
    - each crew member's report time;
    - the van's arrival at JKIA and the slack before the first report time.
@@ -58,8 +57,8 @@ The dispatcher screen is a **hub** for one day. Tap a tile or link to open the d
 
 ### A van breaks down
 
-1. Tap the **vehicles** tile, then the van, then **Mark broken down**.
-2. Back on the hub, **Alerts** shows the van as broken down. Tap the alert.
+1. Open **Fleet & crew > Vehicles**, tap the van, then **Mark broken down**.
+2. **Overview**'s Alerts and the top of the **Plan** tab show the van as broken down. Tap either: Re-plan opens on the Plan tab.
 3. The screen shows what will be re-planned:
    - **Fixed (already departed):** routes that have left. These are never changed, except the broken van's.
    - **Re-solved:** pickups that will be planned again.
@@ -69,16 +68,16 @@ The dispatcher screen is a **hub** for one day. Tap a tile or link to open the d
 
 ### A flight is delayed
 
-1. Open the crew pickups list and tap that crew member's pickup. Only a pickup that is Not planned or Planned can change.
+1. Open **Fleet & crew > Pickups** and tap that crew member's pickup. Only a pickup that is Not planned or Planned can change.
 2. Tap **Flight delay: change report time** and pick the new time, on the same day.
-3. The hub shows "Flight delay for …" with **Re-plan ›**. Tap it, then **Re-plan** and **Start**, as for a breakdown. The crew member gets a "Pickup changed" card.
+3. Overview and the Plan tab show "Flight delay for …" with **Re-plan ›**. Tap it, then **Re-plan** and **Start**, as for a breakdown. The crew member gets a "Pickup changed" card.
 
 **Messages never re-plan anything by themselves.** Re-planning is always your decision.
 
 ### Crew messages
 
-1. **Alerts** counts unread messages. Tap **Messages** to see them, with **All** or **Unread**.
-2. **Tap a message:** it's marked read, and the reply presets appear under it:
+1. The **Messages** tab shows the number of unread messages. Open it to see them, with **All** or **Unread**.
+2. **Tap a message:** it's marked read (only while the Messages tab is on screen), and the reply presets appear under it:
    - **Noted**
    - **Van rerouted**
    - **Call the dispatcher**

@@ -43,7 +43,7 @@ open class AppContainer(context: Context) {
     val isConfigured: Boolean =
         BuildConfig.SUPABASE_URL.isNotBlank() && BuildConfig.SUPABASE_PUBLISHABLE_KEY.isNotBlank()
 
-    val authRepository: AuthRepository by lazy {
+    open val authRepository: AuthRepository by lazy {
         val sessionManager =
             SharedPreferencesSessionManager(prefs(SharedPreferencesSessionManager.PREFS_NAME))
         val client = createSupabaseClient(
@@ -81,7 +81,7 @@ open class AppContainer(context: Context) {
     val messagesApi: MessagesApi by lazy { retrofit.create() }
 
     /** Null without an API URL; the dispatcher screen then shows nothing. */
-    val dispatchRepository: DispatchRepository? by lazy {
+    open val dispatchRepository: DispatchRepository? by lazy {
         if (isApiConfigured) DispatchRepository(dispatcherApi, optimisationJobsApi) else null
     }
 
@@ -129,7 +129,7 @@ open class AppContainer(context: Context) {
     }
 
     /** Null without an API URL; the Message tab then lists only cached presets. */
-    val messagesRepository: MessagesRepository? by lazy {
+    open val messagesRepository: MessagesRepository? by lazy {
         if (isApiConfigured) MessagesRepository(messagesApi, database.crewDao()) else null
     }
 

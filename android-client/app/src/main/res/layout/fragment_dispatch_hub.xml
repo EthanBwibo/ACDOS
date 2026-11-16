@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Figma frame 2:26. The day buttons and the tappable tiles keep what the old hub did. -->
+<!-- Figma frame 2:26, the Overview tab (issue 230): the routes moved to their own tab. -->
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -107,14 +107,6 @@
                     android:layout_marginTop="8dp"
                     android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
-                <Button
-                    android:id="@+id/run_optimisation"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/dispatch_run_optimisation" />
-
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
@@ -129,27 +121,6 @@
 
             <LinearLayout
                 android:id="@+id/alerts"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:divider="@drawable/divider_hairline"
-                android:orientation="vertical"
-                android:paddingVertical="4dp"
-                android:showDividers="middle" />
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:id="@+id/routes_label"
-            style="@style/Widget.ACDOS.Overline"
-            android:text="@string/dispatch_routes" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/routes_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <LinearLayout
-                android:id="@+id/routes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:divider="@drawable/divider_hairline"

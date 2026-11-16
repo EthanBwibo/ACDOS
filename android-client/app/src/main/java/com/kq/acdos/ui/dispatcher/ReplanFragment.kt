@@ -30,8 +30,13 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         DispatcherViewModel.Factory
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    // In onStart, not onViewCreated: a screen names itself again when its tab comes back.
+    override fun onStart() {
+        super.onStart()
         home.showTitle(getString(R.string.dispatch_replan))
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.discard).setOnClickListener {
             viewModel.discardReplan()
             home.close()

@@ -98,8 +98,13 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
 
     private val picker = rosterPicker({ roster }) {}
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    // In onStart, not onViewCreated: a screen names itself again when its tab comes back.
+    override fun onStart() {
+        super.onStart()
         home.showTitle(getString(R.string.roster_import))
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.import_now).setOnClickListener { roster.importNow() }
         view.findViewById<Button>(R.id.retry).setOnClickListener { roster.retry() }
         val other = view.findViewById<Button>(R.id.other_file)

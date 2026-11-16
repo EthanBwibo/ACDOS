@@ -2,16 +2,18 @@ package com.kq.acdos.ui.dispatcher
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
@@ -24,25 +26,47 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
- * The dispatcher's app (#27): the hub, and a screen each for what it drills
- * down to (Figma section 1). No bottom nav: back always returns to the hub.
- * All the screens share these ViewModels, so a job started on one keeps
- * running on the others. Online only: nothing here is cached.
+ * The dispatcher's app (#27): five bottom-nav tabs (#230), Overview, Plan,
+ * Routes, Fleet & crew and Messages. Each tab is a [TabHostFragment] with its
+ * own back stack, so a drill-down opens inside its tab with the nav bar
+ * showing. All the screens share these ViewModels, so a job started on one
+ * keeps running on the others. Online only: nothing here is cached.
+ *
+ * A tab that isn't selected is hidden and held at CREATED with
+ * setMaxLifecycle, so its screens stop. Their collectors pause, so a hidden
+ * screen can't change the title. Messages gets onStop, so a message selected
+ * while another tab is showing isn't marked read.
  */
 class DispatcherHomeActivity : AppCompatActivity() {
     private val container by lazy { (application as AcdosApplication).container }
     private val viewModel: DispatcherViewModel by viewModels { DispatcherViewModel.Factory }
     private val inbox: InboxViewModel by viewModels { InboxViewModel.Factory }
 
+    private lateinit var toolbar: MaterialToolbar
+    private lateinit var tabs: BottomNavigationView
+
+    /** The selected tab. */
+    var current = DispatcherTab.OVERVIEW
+        private set
+
+    /** Back closes a drill-down, then goes to Overview, then leaves the app. */
+    private val back = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            val host = host(current)
+            if (host?.drilledDown == true) host.back() else selectTab(DispatcherTab.OVERVIEW)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_dispatcher_home)
         val root = findViewById<View>(R.id.main)
-        applySystemBarPadding(root)
+        tabs = findViewById(R.id.bottom_nav)
+        applySystemBarPadding(root, tabs)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        toolbar.setNavigationOnClickListener { supportFragmentManager.popBackStack() }
+        toolbar = findViewById(R.id.toolbar)
+        toolbar.setNavigationOnClickListener { close() }
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_refresh -> {
@@ -64,12 +88,16 @@ class DispatcherHomeActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        supportFragmentManager.addOnBackStackChangedListener { showBackArrow(toolbar) }
-        showBackArrow(toolbar)
-        // After a rotation the FragmentManager restores the open screen by itself.
-        if (savedInstanceState == null) {
-            supportFragmentManager.commit { replace(R.id.screen, DispatchHubFragment()) }
+        onBackPressedDispatcher.addCallback(this, back)
+        // After a rotation the FragmentManager restores every tab and its screens by itself.
+        savedInstanceState?.getString(STATE_TAB)?.let { current = DispatcherTab.valueOf(it) }
+        tabs.setOnItemSelectedListener { item ->
+            showTab(DispatcherTab.of(item.itemId))
+            true
         }
+        tabs.setOnItemReselectedListener { host(current)?.backToStart() }
+        if (savedInstanceState == null) showTab(DispatcherTab.OVERVIEW)
+        updateBack()
 
         val loading = findViewById<LinearProgressIndicator>(R.id.loading)
         lifecycleScope.launch {
@@ -88,7 +116,26 @@ class DispatcherHomeActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.messages.collect { message ->
                     val text = getString(message.text, message.detail)
-                    Snackbar.make(root, text, Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(root, text, Snackbar.LENGTH_LONG).setAnchorView(tabs).show()
+                }
+            }
+        }
+        // A dot on Plan while a re-plan waits, wherever the breakdown or delay was recorded.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state ->
+                    tabs.getOrCreateBadge(R.id.tab_plan).isVisible = state.replan != null
+                }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                inbox.messages.collect { messages ->
+                    val unread = messages.orEmpty().count { it.readAt == null }
+                    tabs.getOrCreateBadge(R.id.tab_messages).apply {
+                        isVisible = unread > 0
+                        number = unread
+                    }
                 }
             }
         }
@@ -96,28 +143,78 @@ class DispatcherHomeActivity : AppCompatActivity() {
         openLoginWhenSessionEnds(container)
     }
 
-    private fun showBackArrow(toolbar: MaterialToolbar) {
-        val drilledDown = supportFragmentManager.backStackEntryCount > 0
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_TAB, current.name)
+    }
+
+    private fun host(tab: DispatcherTab) =
+        supportFragmentManager.findFragmentByTag(tab.tag) as TabHostFragment?
+
+    /**
+     * Shows [tab]'s host, adding it the first time, and stops the others:
+     * each is hidden and held at CREATED, so its screens get onStop.
+     */
+    private fun showTab(tab: DispatcherTab) {
+        current = tab
+        supportFragmentManager.commitNow {
+            setReorderingAllowed(true)
+            for (other in DispatcherTab.entries) {
+                val host = host(other)
+                if (other == tab || host == null) continue
+                hide(host)
+                setMaxLifecycle(host, Lifecycle.State.CREATED)
+            }
+            val host = host(tab)
+            if (host == null) {
+                add(R.id.screen, TabHostFragment.of(tab), tab.tag)
+            } else {
+                show(host)
+                setMaxLifecycle(host, Lifecycle.State.RESUMED)
+            }
+        }
+        updateBack()
+    }
+
+    /** Selects [tab] as if its nav item was tapped. */
+    fun selectTab(tab: DispatcherTab) {
+        if (tabs.selectedItemId == tab.itemId) showTab(tab) else tabs.selectedItemId = tab.itemId
+    }
+
+    /** The back arrow and the back callback follow the selected tab's back stack. */
+    fun updateBack() {
+        if (!::toolbar.isInitialized) return
+        val drilledDown = host(current)?.drilledDown == true
         if (drilledDown) {
             toolbar.setNavigationIcon(R.drawable.ic_arrow_back)
         } else {
             toolbar.navigationIcon = null
         }
+        back.isEnabled = drilledDown || current != DispatcherTab.OVERVIEW
     }
 
-    /** Each screen names itself, including when a rotation restores it. */
+    /** Each screen names itself when it starts, including when its tab comes back. */
     fun showTitle(title: String) {
-        findViewById<MaterialToolbar>(R.id.toolbar).title = title
+        toolbar.title = title
     }
 
+    /** Opens [screen] on top of the selected tab's screens. */
     fun open(screen: Fragment) {
-        supportFragmentManager.commit {
-            replace(R.id.screen, screen)
-            addToBackStack(null)
-        }
+        host(current)?.open(screen)
     }
 
+    /** Switches to [tab] and opens [screen] there: the Overview's Re-plan alert uses this. */
+    fun open(tab: DispatcherTab, screen: Fragment) {
+        selectTab(tab)
+        host(tab)?.open(screen)
+    }
+
+    /** Closes the selected tab's top screen. */
     fun close() {
-        supportFragmentManager.popBackStack()
+        host(current)?.back()
+    }
+
+    private companion object {
+        const val STATE_TAB = "dispatcher_tab"
     }
 }

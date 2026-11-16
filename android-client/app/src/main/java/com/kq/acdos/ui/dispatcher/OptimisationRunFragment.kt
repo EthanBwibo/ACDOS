@@ -3,6 +3,7 @@ package com.kq.acdos.ui.dispatcher
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -23,9 +24,11 @@ import kotlinx.coroutines.launch
 private const val STEP_AHEAD_ALPHA = 0.4f
 
 /**
- * What a first plan will cover, and the job while it runs (Figma 2:87). The
- * server saves the routes itself when the job finishes, so there is nothing
- * to publish, and it has no call to cancel a job.
+ * The Plan tab (#230): what a first plan will cover, and the job while it runs
+ * (Figma 2:87). A waiting re-plan (a flight delay or a breakdown) shows on top
+ * and opens Re-plan inside this tab. The server saves the routes itself when
+ * the job finishes, so there is nothing to publish, and it has no call to
+ * cancel a job.
  */
 class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
     private val viewModel: DispatcherViewModel by activityViewModels {
@@ -34,8 +37,13 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
 
     private val dayFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.UK)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    // In onStart, not onViewCreated: a screen names itself again when its tab comes back.
+    override fun onStart() {
+        super.onStart()
         home.showTitle(getString(R.string.dispatch_optimisation_title))
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.start).setOnClickListener {
             pickVans(viewModel, viewModel::runOptimisation)
         }
@@ -45,6 +53,7 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
                 viewModel.state.collect { state ->
                     state.board?.let { showSetup(view, state, it) }
                     showJob(view, state.job)
+                    showReplan(view, state.replan)
                     view.findViewById<Button>(R.id.start).isEnabled =
                         state.board != null && !state.job.isActive
                 }
@@ -71,6 +80,22 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
             seats.min() == seats.max() -> seats.first().toString()
             else -> getString(R.string.dispatch_seat_range, seats.min(), seats.max())
         }
+    }
+
+    private fun showReplan(view: View, replan: PendingReplan?) {
+        view.findViewById<View>(R.id.replan_card).isVisible = replan != null
+        val rows = view.findViewById<LinearLayout>(R.id.replan_rows)
+        rows.removeAllViews()
+        replan ?: return
+        rows.addRow(
+            title = getString(replan.label, replan.subject),
+            subtitle = resources.getQuantityString(
+                R.plurals.dispatch_to_replan,
+                replan.pickupIds.size,
+                replan.pickupIds.size
+            ),
+            value = getString(R.string.dispatch_replan_link)
+        ) { home.open(ReplanFragment()) }
     }
 
     private fun showJob(view: View, job: JobUi) {
