@@ -4,10 +4,15 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import java.time.Instant
 import java.time.LocalDate
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -55,6 +60,19 @@ interface DispatcherApi {
         @Path("vehicle_id") vehicleId: String,
         @Body update: VehicleStatusUpdateDto
     ): Response<DispatcherVehicleDto>
+
+    /**
+     * A roster CSV (#229, docs/roster_import.md). With [dryRun] true nothing is written and
+     * [idempotencyKey] may be null; a real import needs the key, and a retry with the same key
+     * and file gets the first result back. Starts no re-plan.
+     */
+    @Multipart
+    @POST("roster-imports")
+    suspend fun importRoster(
+        @Part file: MultipartBody.Part,
+        @Query("dry_run") dryRun: Boolean,
+        @Header("Idempotency-Key") idempotencyKey: String?
+    ): Response<RosterImportResultDto>
 }
 
 // DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
@@ -134,3 +152,38 @@ data class PickupReportTimeUpdateDto(@Json(name = "report_time") val reportTime:
 
 @JsonClass(generateAdapter = true)
 data class VehicleStatusUpdateDto(val status: VehicleStatusDto)
+
+enum class RejectReasonDto {
+    @Json(name = "invalid_row")
+    INVALID_ROW,
+
+    @Json(name = "outside_pickup_zones")
+    OUTSIDE_PICKUP_ZONES,
+
+    @Json(name = "report_time_past")
+    REPORT_TIME_PAST,
+
+    @Json(name = "duplicate_pickup")
+    DUPLICATE_PICKUP
+}
+
+/** A row the import skipped: its [line] in the file (the header is line 1) and why. */
+@JsonClass(generateAdapter = true)
+data class RejectedRowDto(
+    val line: Int,
+    @Json(name = "staff_no") val staffNo: String?,
+    val reason: RejectReasonDto,
+    val detail: String
+)
+
+/** What an import did, or with [dryRun] what it would do. */
+@JsonClass(generateAdapter = true)
+data class RosterImportResultDto(
+    @Json(name = "dry_run") val dryRun: Boolean,
+    val rows: Int,
+    @Json(name = "crew_created") val crewCreated: Int,
+    @Json(name = "crew_updated") val crewUpdated: Int,
+    @Json(name = "pickups_created") val pickupsCreated: Int,
+    @Json(name = "rows_rejected") val rowsRejected: Int,
+    val rejected: List<RejectedRowDto>
+)

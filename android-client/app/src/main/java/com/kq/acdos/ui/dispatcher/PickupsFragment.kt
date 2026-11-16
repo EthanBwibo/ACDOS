@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import androidx.annotation.StringRes
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -27,9 +28,19 @@ class PickupsFragment : Fragment(R.layout.fragment_dispatch_list) {
     private val viewModel: DispatcherViewModel by activityViewModels {
         DispatcherViewModel.Factory
     }
+    private val roster: RosterImportViewModel by activityViewModels {
+        RosterImportViewModel.Factory
+    }
+
+    /** The chosen file goes straight to its dry run, on the Import roster screen. */
+    private val picker = rosterPicker({ roster }) { home.open(RosterImportFragment()) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         home.showTitle(getString(R.string.dispatch_pickups))
+        view.findViewById<View>(R.id.import_roster).apply {
+            isVisible = true
+            setOnClickListener { picker.launch(ROSTER_TYPES) }
+        }
         val rows = view.findViewById<LinearLayout>(R.id.rows)
 
         viewLifecycleOwner.lifecycleScope.launch {

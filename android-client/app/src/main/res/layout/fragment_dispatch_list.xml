@@ -4,10 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp">
+
+        <!-- Pickups only (issue 229): opens the file picker for a roster CSV. -->
+        <Button
+            android:id="@+id/import_roster"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/roster_import"
+            android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -24,6 +35,6 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-    </FrameLayout>
+    </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

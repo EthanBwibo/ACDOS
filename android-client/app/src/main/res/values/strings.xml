@@ -291,4 +291,34 @@
     <string name="chat_sent">%1$s · Sent</string>
     <string name="chat_seen">%1$s · Seen</string>
     <string name="chat_new">%1$s · New</string>
+
+    <!-- Import roster (issue 229). -->
+    <string name="roster_import">Import roster</string>
+    <string name="roster_checking">Checking the file…</string>
+    <string name="roster_checked">Checked. Nothing is imported until you confirm.</string>
+    <string name="roster_nothing_to_import">No rows can be imported. Fix the file and choose it again.</string>
+    <string name="roster_importing">Importing…</string>
+    <string name="roster_imported">Imported. Run optimisation to plan the new pickups.</string>
+    <string name="roster_rows_in_file">Rows in file</string>
+    <string name="roster_crew_created">New crew</string>
+    <string name="roster_crew_updated">Known crew, details updated</string>
+    <string name="roster_pickups_to_import">Pickups to import</string>
+    <string name="roster_pickups_imported">Pickups imported</string>
+    <string name="roster_rows_rejected">Rows skipped</string>
+    <string name="roster_rejected_title">Rows skipped</string>
+    <string name="roster_rejected_subtitle">%1$s · %2$s</string>
+    <string name="roster_no_staff_no">No staff number</string>
+    <plurals name="roster_import_pickups">
+        <item quantity="one">Import %d pickup</item>
+        <item quantity="other">Import %d pickups</item>
+    </plurals>
+    <string name="roster_choose_other">Choose another file</string>
+    <string name="roster_done">Done</string>
+    <string name="roster_no_replan">Importing doesn\'t re-plan. Skipped rows are left out; the rest import together.</string>
+    <string name="roster_too_large">The file is over 256 KB. Split the roster into smaller files.</string>
+    <string name="roster_unreadable">Couldn\'t read that file.</string>
+    <string name="roster_reason_invalid_row">Can\'t read this row</string>
+    <string name="roster_reason_outside_zones">Outside the pickup zones</string>
+    <string name="roster_reason_report_time_past">Report time has passed</string>
+    <string name="roster_reason_duplicate">Pickup already listed</string>
 </resources>
