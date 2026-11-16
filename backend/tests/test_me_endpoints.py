@@ -10,7 +10,7 @@ from app.main import app
 from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
 
 KEY = SigningKey("test-key")
-PATHS = ["/drivers/me/route", "/drivers/me/routes", "/crew/me/pickup"]
+PATHS = ["/drivers/me", "/drivers/me/route", "/drivers/me/routes", "/crew/me", "/crew/me/pickup"]
 
 
 @pytest.fixture

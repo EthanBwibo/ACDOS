@@ -356,6 +356,29 @@ class CrewPickupResponse(BaseModel):
     pickup: CrewPickup | None  # null when nothing is coming up
 
 
+# The read-only profile screens (#231). The name is not here: the app
+# already has it from profiles.
+
+
+class CrewMe(BaseModel):
+    # crew_members.role, free text (e.g. cabin_crew); null for a crew account
+    # not yet linked to a crew_members row, like home_zone.
+    crew_role: str | None
+    # The pickup zone nearest the home location, by PostGIS. Never the
+    # coordinates: crew get none.
+    home_zone: str | None
+
+
+class DriverVehicle(BaseModel):
+    plate_number: str
+    capacity: int = Field(gt=0)  # seats
+    status: VehicleStatus
+
+
+class DriverMe(BaseModel):
+    vehicle: DriverVehicle | None  # null when no van is assigned to the driver
+
+
 # Pickup-event upload (#33): a batch from the app's outbox, and what became
 # of each event.
 

@@ -31,9 +31,11 @@ from fastapi import Request, status
 
 from app.errors import ApiError, ErrorCode
 from app.models.schemas import (
+    CrewMe,
     CrewPickup,
     DriverRoute,
     DriverStop,
+    DriverVehicle,
     RouteSummary,
     RouteSummaryPage,
     ScheduleChangeNotice,
@@ -214,6 +216,48 @@ async def route_page(
             for r in rows
         ],
         next_cursor=encode_cursor(rows[-1]["first_pickup"], rows[-1]["id"]) if more else None,
+    )
+
+
+async def crew_me(conn: asyncpg.Connection, crew_member_id: UUID) -> CrewMe:
+    """The crew member's role and home zone (#231): the nearest of
+    pickup_zones to home_location, by PostGIS, as for a driver's stops.
+    crew_member_id is the explicit second check."""
+    row = await conn.fetchrow(
+        """
+        select c.role, z.label as home_zone
+        from public.crew_members c
+        left join lateral (
+            select label from public.pickup_zones
+            order by extensions.st_distance(location, c.home_location)
+            limit 1
+        ) z on true
+        where c.id = $1
+        """,
+        crew_member_id,
+    )
+    if row is None:
+        return CrewMe(crew_role=None, home_zone=None)
+    return CrewMe(crew_role=row["role"], home_zone=row["home_zone"])
+
+
+async def driver_vehicle(conn: asyncpg.Connection, user_id: UUID) -> DriverVehicle | None:
+    """The van assigned to the driver (#231). Nothing stops two being
+    assigned to one driver, so the first by plate is the answer. user_id is
+    the explicit second check."""
+    row = await conn.fetchrow(
+        """
+        select plate_number, capacity, status from public.vehicles
+        where assigned_driver_id = $1
+        order by plate_number
+        limit 1
+        """,
+        user_id,
+    )
+    if row is None:
+        return None
+    return DriverVehicle(
+        plate_number=row["plate_number"], capacity=row["capacity"], status=row["status"]
     )
 
 

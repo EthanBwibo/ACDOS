@@ -40,6 +40,8 @@ SPEC = json.loads(contract.openapi_json())
 KEY = SigningKey("contract-key")
 NOW = datetime(2026, 11, 2, tzinfo=UTC)
 TOKEN_ROUTES = {
+    "/drivers/me",
+    "/crew/me",
     "/drivers/me/route",
     "/drivers/me/routes",
     "/crew/me/pickup",
@@ -479,6 +481,8 @@ CASES = (
     + [
         case
         for path, role in [
+            ("/drivers/me", "crew"),
+            ("/crew/me", "driver"),
             ("/drivers/me/route", "crew"),
             ("/drivers/me/routes", "crew"),
             ("/crew/me/pickup", "driver"),
