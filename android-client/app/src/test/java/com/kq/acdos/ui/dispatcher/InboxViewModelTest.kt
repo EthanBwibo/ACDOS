@@ -357,6 +357,20 @@ class InboxViewModelTest {
     }
 
     @Test
+    fun `the Unread filter keeps the selected message after it is marked read`() {
+        openWithThree()
+        viewModel.setShown(true)
+        val messages = viewModel.messages.value!!
+
+        val unread = inboxFilter(messages, unreadOnly = true, selected = viewModel.selected.value)
+
+        // m3 and m1 are unread; m2 was read when it was selected, and stays.
+        assertEquals(listOf("m3", "m2", "m1"), unread.map { it.id })
+        assertEquals(listOf("m3", "m1"), inboxFilter(messages, true, null).map { it.id })
+        assertEquals(3, inboxFilter(messages, false, null).size)
+    }
+
+    @Test
     fun `each outcome has its own words`() {
         assertEquals(R.string.dispatch_reply_sent, replyMessage(ApiResult.Success(Unit)))
         assertEquals(

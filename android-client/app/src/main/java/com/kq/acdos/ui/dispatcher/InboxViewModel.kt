@@ -39,6 +39,20 @@ fun newestUnanswered(messages: List<CrewMessageDto>): CrewMessageDto? =
     messages.filter { it.replies.isEmpty() }.maxByOrNull { it.sentAt }
 
 /**
+ * The messages the conversation shows. Unread keeps the selected message too:
+ * selecting it marks it read, and it mustn't vanish while it's being answered.
+ */
+fun inboxFilter(
+    messages: List<CrewMessageDto>,
+    unreadOnly: Boolean,
+    selected: String?
+): List<CrewMessageDto> = if (unreadOnly) {
+    messages.filter { it.readAt == null || it.id == selected }
+} else {
+    messages
+}
+
+/**
  * The dispatcher's inbox of crew messages (#57), newest first, and preset
  * replies to them. Loaded when the screen opens and on Refresh; a failed load
  * keeps the list as it was. [repository] is null without an API URL.

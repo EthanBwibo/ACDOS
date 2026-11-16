@@ -89,7 +89,7 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     private fun showMessages(view: View) {
         val all = inbox.messages.value ?: return
         val unreadOnly = view.findViewById<Chip>(R.id.filter_unread).isChecked
-        val shown = if (unreadOnly) all.filter { it.readAt == null } else all
+        val shown = inboxFilter(all, unreadOnly, inbox.selected.value)
         view.findViewById<TextView>(R.id.empty).apply {
             isVisible = shown.isEmpty()
             setText(if (unreadOnly) R.string.dispatch_no_unread else R.string.dispatch_no_messages)
