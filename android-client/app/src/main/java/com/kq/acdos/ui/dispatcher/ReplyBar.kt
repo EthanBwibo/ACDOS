@@ -25,12 +25,7 @@ data class ReplyBarState(
  * chips are disabled; if the replies failed to load it shows an error with
  * Retry in place of the chips.
  */
-fun bindReplyBar(
-    bar: View,
-    state: ReplyBarState,
-    onPreset: (String) -> Unit,
-    onRetry: () -> Unit
-) {
+fun bindReplyBar(bar: View, state: ReplyBarState, onPreset: (String) -> Unit, onRetry: () -> Unit) {
     bar.isVisible = true
     val context = bar.context
     bar.findViewById<TextView>(R.id.reply_to).text = state.replyTo
