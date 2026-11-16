@@ -34,7 +34,6 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     private val chat = ChatAdapter(onCrewMessageTap = { inbox.select(it.messageId) })
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        home.showTitle(getString(R.string.dispatch_messages))
         val conversation = view.findViewById<RecyclerView>(R.id.conversation)
         conversation.layoutManager = LinearLayoutManager(view.context).apply { stackFromEnd = true }
         conversation.adapter = chat
@@ -76,8 +75,11 @@ class MessagesFragment : Fragment(R.layout.fragment_messages) {
     }
 
     // Selecting a message counts as reading it only while this screen is shown.
+    // onStop also comes when another tab is picked: the activity holds hidden tabs at
+    // CREATED (#230). The title is set here too, so it comes back with the tab.
     override fun onStart() {
         super.onStart()
+        home.showTitle(getString(R.string.dispatch_messages))
         inbox.setShown(true)
     }
 

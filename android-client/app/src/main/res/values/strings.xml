@@ -105,6 +105,11 @@
     <string name="tab_sync">Sync</string>
     <string name="tab_pickup">Pickup</string>
     <string name="tab_message">Message</string>
+    <string name="tab_overview">Overview</string>
+    <string name="tab_plan">Plan</string>
+    <string name="tab_routes">Routes</string>
+    <string name="tab_fleet">Fleet &amp; crew</string>
+    <string name="tab_messages">Messages</string>
     <string name="crew_pickup_title">My pickup</string>
     <string name="crew_pickup_label">Pickup</string>
     <string name="crew_pickup_time_unknown">Time not set yet</string>
@@ -160,9 +165,10 @@
     <string name="action_refresh">Refresh</string>
     <string name="dispatch_previous_day">Previous</string>
     <string name="dispatch_next_day">Next</string>
-    <string name="dispatch_run_optimisation">Run optimisation</string>
     <string name="dispatch_replan">Re-plan</string>
     <string name="dispatch_routes">Routes</string>
+    <string name="dispatch_routes_title">Routes · %1$s</string>
+    <string name="dispatch_fleet_title">Fleet &amp; crew</string>
     <string name="dispatch_pickups">Pickups</string>
     <string name="dispatch_vehicles">Vehicles</string>
     <string name="dispatch_none">None</string>

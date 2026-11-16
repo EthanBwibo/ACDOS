@@ -46,6 +46,20 @@ Supabase: Postgres + PostGIS, Auth, RLS
   - **The API:** it verifies the caller's Supabase JWT against the project's public signing keys (JWKS, ES256), then checks the role per endpoint. Without a valid token it returns 401; with the wrong role, 403.
   - **The database:** row-level security on every table that holds crew or driver data. Policies use `SECURITY DEFINER` helpers in the non-exposed `private` schema. The rules per role are in `schema.md`, "Row level security".
 - **The cached role:** on a cold start the app opens the role's home screen from a cached profile so it works offline. It then re-checks `profiles` and signs out if the role changed or the account is gone (#116).
+- **Each role's home screen** has a bottom nav bar:
+  - **Driver:** Route, Schedule, Sync.
+  - **Crew:** Pickup, Message.
+  - **Dispatcher** (#230): five tabs, each holding related screens:
+
+    | Tab | Holds |
+    |---|---|
+    | Overview | the day's stats and plan state, alerts (breakdowns, flight delays, unread messages), and the day picker every tab follows |
+    | Plan | the optimisation run; Re-plan opens here |
+    | Routes | the day's routes, each opening its detail and map |
+    | Fleet & crew | Pickups (with Import roster) and Vehicles |
+    | Messages | crew messages and preset replies |
+
+    A drill-down (a route, Re-plan, Import roster) opens inside its tab with a back arrow, and the nav bar stays. Each tab keeps its own back stack. A tab that isn't selected is stopped, so a crew message counts as read only while Messages is on screen. The dispatcher app is online only.
 
 ## 4. API
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One dispatcher tab (issue 230): its screens, one on top of another. -->
+<androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tab_screen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />

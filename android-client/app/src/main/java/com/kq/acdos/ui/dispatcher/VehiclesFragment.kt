@@ -16,7 +16,7 @@ import com.kq.acdos.data.remote.VehicleStatusDto
 import kotlinx.coroutines.launch
 
 /**
- * The vans, from the hub's tile, and where a breakdown is recorded. No
+ * The vans, under Fleet & crew (#230), and where a breakdown is recorded. No
  * wireframe of its own, so it uses the same rows as the others.
  */
 class VehiclesFragment : Fragment(R.layout.fragment_dispatch_list) {
@@ -25,7 +25,6 @@ class VehiclesFragment : Fragment(R.layout.fragment_dispatch_list) {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        home.showTitle(getString(R.string.dispatch_vehicles))
         val rows = view.findViewById<LinearLayout>(R.id.rows)
 
         viewLifecycleOwner.lifecycleScope.launch {

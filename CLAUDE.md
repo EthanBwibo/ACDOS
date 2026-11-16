@@ -26,9 +26,10 @@ explain non-obvious decisions in the PR description and keep code readable over 
    features and the zone's position (#18). Trained on `data/trip_records.csv`; the logger is
    held-out validation data only, never used to train or calibrate.
 3. **Android client** (`android-client/`): three roles. Driver: three-tab bottom nav (Route,
-   Schedule, Sync). Crew: two tabs (Pickup, Message). Dispatcher: hub and drill-down, no nav
-   bar. Role comes from the account (Supabase Auth + RLS); never add a role selector at
-   sign-in.
+   Schedule, Sync). Crew: two tabs (Pickup, Message). Dispatcher: five-tab bottom nav
+   (Overview, Plan, Routes, Fleet & crew, Messages) since #230; drill-downs open inside their
+   tab, each tab keeps its own back stack. Role comes from the account (Supabase Auth + RLS);
+   never add a role selector at sign-in.
 4. **Crew communication**: all messages routed through the dispatcher, preset messages only,
    no free text, no direct crew-driver chat. Crew can view pickup time and ETA and acknowledge
    changes. Messages never trigger re-optimisation. Priority events: flight delay, standby

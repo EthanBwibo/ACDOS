@@ -9,7 +9,7 @@ be the dispatcher instead, but the laptop may run out of memory with it.
 
 | Device | Account | Shows |
 |---|---|---|
-| Phone, steps 3–5 and 9 (or the emulator, `Dispatcher_API34`) | `dispatcher@acdos.test` | The hub for a day, its messages, routes, pickups and vehicles; plans and re-plans |
+| Phone, steps 3–5 and 9 (or the emulator, `Dispatcher_API34`) | `dispatcher@acdos.test` | Five tabs (Overview, Plan, Routes, Fleet & crew, Messages) for a day; plans and re-plans |
 | Phone, step 6 | `driver-101a@`, `driver-102a@` or `driver-103a@acdos.test` (the driver of a van in the new plan) | its van's route, stop by stop |
 | Phone, steps 7–8 | `crew@acdos.test` | Pickup: its next pickup and any change to acknowledge. Message: the presets |
 
@@ -47,19 +47,20 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
    offer them and Alerts doesn't list them, until `reset` puts each back as it was (recorded
    in `backend/.demo_test_vans.json`, so seed and reset from the same laptop). **Read the
    warnings it prints**: any van it lists is still offered, so untick it at steps 3 and 5.
-3. **Dispatcher plans** (dispatcher): tap **Next** to tomorrow. The **crew pickups** tile
-   says 14, and tapping it lists them as Not planned. Back on the hub, tap **Run
-   optimisation**, then **Start**: only the three `demo-` vans are selected. Tap **Start**.
-   When the job shows Done, go back: Routes lists the demo
-   vans' routes. Tap one for its stops, times and crew names. The job takes a few seconds.
-4. **Breakdown** (dispatcher), before anyone is picked up: in Routes, open each route to find
-   the van that lists "Test Crew". Tap the **vehicles** tile, tap that van and **Mark broken
-   down**. Back on the hub, Alerts says it is broken down.
-5. **Re-plan** (dispatcher): tap that alert. The screen shows what will re-solve. Tap
+3. **Dispatcher plans** (dispatcher): on **Overview**, tap **Next** to tomorrow. The
+   **crew pickups** tile says 14, and **Fleet & crew > Pickups** lists them as Not planned.
+   Open the **Plan** tab and tap **Start**: only the three `demo-` vans are selected. Tap
+   **Start**. When the job shows Done, open the **Routes** tab: it lists the demo vans'
+   routes. Tap one for its stops, times and crew names. The job takes a few seconds.
+4. **Breakdown** (dispatcher), before anyone is picked up: in **Routes**, open each route to
+   find the van that lists "Test Crew". In **Fleet & crew > Vehicles**, tap that van and
+   **Mark broken down**. Overview's Alerts says it is broken down.
+5. **Re-plan** (dispatcher): tap that alert; Re-plan opens on the **Plan** tab. The screen
+   shows what will re-solve. Tap
    **Re-plan**, and tap **Start**. The broken van's
    pickups move to the other demo vans, and Before and After compare the plans. Nobody has been
-   picked up yet, so every pickup on the broken van is re-planned. Back on the hub, in the
-   **crew pickups** list, Test Crew's row now says "Planned · Awaiting acknowledgement".
+   picked up yet, so every pickup on the broken van is re-planned. In **Fleet & crew >
+   Pickups**, Test Crew's row now says "Planned · Awaiting acknowledgement".
    Note which demo van Test Crew is on now; step 6 signs in as that van's driver.
 6. **Driver confirms** (phone): sign in as the driver of one of the vans in the new plan
    (`demo-KDH 10xA` → `driver-10xa@acdos.test`). After the breakdown re-plan, pull down on
