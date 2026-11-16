@@ -2,6 +2,7 @@ package com.kq.acdos.ui.driver
 
 import android.view.ContextThemeWrapper
 import android.view.MotionEvent
+import android.view.View
 import androidx.test.core.app.ApplicationProvider
 import com.kq.acdos.R
 import com.kq.acdos.data.local.PickupEventType
@@ -9,9 +10,11 @@ import com.kq.acdos.data.local.PickupExceptionType
 import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.osmdroid.config.Configuration
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.CopyrightOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
@@ -115,6 +118,26 @@ class RouteMapTest {
         )
         assertEquals(1, overlays.filterIsInstance<CopyrightOverlay>().size)
         assertEquals(3, overlays.filterIsInstance<Polyline>().single().actualPoints.size)
+    }
+
+    @Test
+    fun `recentre frames the whole route again after the driver zooms in`() {
+        val map = mapView()
+        map.measure(
+            View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY)
+        )
+        map.layout(0, 0, 400, 300)
+        map.show(listOf(MapStop(MapPoint(-1.26, 36.80), 1, StopMark.NEXT)))
+        val framed = map.zoomLevelDouble
+        map.controller.setZoom(18.0)
+        map.controller.setCenter(GeoPoint(-1.10, 36.60))
+
+        map.recentre()
+
+        assertEquals(framed, map.zoomLevelDouble, 0.01)
+        assertTrue(map.boundingBox.contains(GeoPoint(JKIA_POINT.lat, JKIA_POINT.lon)))
+        assertTrue(map.boundingBox.contains(GeoPoint(-1.26, 36.80)))
     }
 
     @Test

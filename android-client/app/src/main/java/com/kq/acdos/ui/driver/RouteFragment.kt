@@ -56,6 +56,8 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         val empty = view.findViewById<TextView>(R.id.empty)
         val syncChip = view.findViewById<TextView>(R.id.sync_chip)
         val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        val map = view.findViewById<RouteMapView>(R.id.map)
+        view.findViewById<View>(R.id.recentre).setOnClickListener { map.recentre() }
         swipe.useThemeColors()
         swipe.setOnRefreshListener {
             container.uploadPickupEvents()

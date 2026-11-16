@@ -130,6 +130,11 @@ class RouteMapView @JvmOverloads constructor(context: Context, attrs: AttributeS
         invalidate()
     }
 
+    /** Frames the whole route again, after the driver has panned or zoomed away. */
+    fun recentre() {
+        framed?.let(::frame)
+    }
+
     private fun frame(line: List<MapPoint>) {
         framed = line
         val box = BoundingBox.fromGeoPointsSafe(line.map { GeoPoint(it.lat, it.lon) })
@@ -219,7 +224,7 @@ class RouteMapView @JvmOverloads constructor(context: Context, attrs: AttributeS
     private companion object {
         const val JKIA = "JKIA"
         const val MIN_ZOOM = 9.0
-        const val MAX_ZOOM = 17.0
+        const val MAX_ZOOM = 18.0
         const val FRAME_PADDING_DP = 36
     }
 }
