@@ -5,6 +5,8 @@ import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.RectF
@@ -23,7 +25,6 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.CopyrightOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
-import org.osmdroid.views.overlay.TilesOverlay
 
 /** A place on the route, in degrees. */
 data class MapPoint(val lat: Double, val lon: Double)
@@ -43,6 +44,23 @@ data class MapStop(val point: MapPoint, val number: Int, val mark: StopMark)
  * service, which is out of scope. The times on screen come from the Random Forest.
  */
 fun routeLine(stops: List<MapStop>): List<MapPoint> = stops.map { it.point } + JKIA_POINT
+
+/**
+ * Dark mode for the light OSM tiles: light becomes dark but each colour keeps
+ * its hue, so parks stay green and main roads stay orange. Each row is minus a
+ * 180 degree hue rotation (its weights add up to 1), plus 255: the hue turns
+ * back round while the lightness flips. Scaled by 0.8 so the tiles stay dim.
+ */
+private val DARK_TILES = ColorMatrixColorFilter(
+    ColorMatrix(
+        floatArrayOf(
+            0.574f, -1.430f, -0.144f, 0f, 255f,
+            -0.426f, -0.430f, -0.144f, 0f, 255f,
+            -0.426f, -1.430f, 0.856f, 0f, 255f,
+            0f, 0f, 0f, 1f, 0f
+        )
+    ).apply { postConcat(ColorMatrix().apply { setScale(0.8f, 0.8f, 0.8f, 1f) }) }
+)
 
 /**
  * The route on OpenStreetMap tiles (#227): numbered stops, a JKIA marker and the
@@ -79,7 +97,7 @@ class RouteMapView @JvmOverloads constructor(context: Context, attrs: AttributeS
             loadingBackgroundColor = color(com.google.android.material.R.attr.colorSurfaceContainer)
             loadingLineColor = color(com.google.android.material.R.attr.colorOutlineVariant)
             val night = resources.configuration.uiMode and UI_MODE_NIGHT_MASK == UI_MODE_NIGHT_YES
-            if (night) setColorFilter(TilesOverlay.INVERT_COLORS)
+            if (night) setColorFilter(DARK_TILES)
         }
         addOnFirstLayoutListener { _, _, _, _, _ ->
             pendingFrame?.let { zoomToBoundingBox(it, false, framePadding()) }
@@ -105,7 +123,9 @@ class RouteMapView @JvmOverloads constructor(context: Context, attrs: AttributeS
         }
         stops.forEach { overlays += marker(it.point, stopIcon(it), "${it.number}") }
         overlays += marker(JKIA_POINT, jkiaIcon(), JKIA)
-        overlays += CopyrightOverlay(context)
+        overlays += CopyrightOverlay(context).apply {
+            setTextColor(color(com.google.android.material.R.attr.colorOnSurface))
+        }
         if (line != framed) frame(line)
         invalidate()
     }
