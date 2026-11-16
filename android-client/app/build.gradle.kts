@@ -128,4 +128,6 @@ dependencies {
     implementation(libs.supabase.postgrest)
     implementation(platform(libs.ktor.bom))
     implementation(libs.ktor.client.okhttp)
+    // The route map (#227): OpenStreetMap tiles, cached on the phone, no API key.
+    implementation(libs.osmdroid.android)
 }
