@@ -1,10 +1,12 @@
-staff_no,name,crew_role,pickup_lat,pickup_lon,report_time,request_type
-KQ10231,Amina Hassan,cabin_crew,-1.289279,36.786931,2026-11-17T05:30:00+03:00,rostered
-KQ10231,Amina Hassan,cabin_crew,-1.289279,36.786931,2026-11-18T05:30:00+03:00,rostered
-KQ10457,Brian Mwangi,pilot,-1.2675,36.812022,2026-11-17T06:00:00+03:00,rostered
-KQ10892,Chao Wanjiru,cabin_crew,-1.292248,36.881548,2026-11-17T06:15:00+03:00,
-KQ11044,Daniel Otieno,cabin_crew,-1.323994,36.667803,2026-11-17T07:00:00+03:00,standby
-KQ10457,Brian Mwangi,pilot,-1.2675,36.812022,2026-11-17T06:00:00+03:00,rostered
-KQ11290,Esther Kamau,cabin_crew,-0.303099,36.080025,2026-11-17T07:30:00+03:00,rostered
-KQ11317,Faith Njeri,cabin_crew,-1.300312,36.776126,2026-01-15T08:00:00+03:00,rostered
-KQ11402,George Ouma,pilot,-1.231577,36.891548,2026-11-17T08:30:00,rostered
+staff_no,name,crew_role,pickup_location,report_time,request_type,set_home
+KQ10231,Amina Hassan,cabin_crew,"-1.292533, 36.787543",2026-11-19T05:30:00+03:00,rostered,
+KQ10231,Amina Hassan,cabin_crew,,2026-11-20T05:30:00+03:00,rostered,
+KQ10457,Brian Mwangi,pilot,"https://www.google.com/maps/place/1%C2%B015'38.1%22S+36%C2%B048'08.0%22E/@-1.2605758,36.7996421,17z/data=!3m1!4b1!4m4!3m3!8m2!3d-1.260581!4d36.802217",2026-11-19T06:00:00+03:00,rostered,
+KQ10457,Brian Mwangi,pilot,,2026-11-20T06:00:00+03:00,,
+KQ10231,Amina Hassan,cabin_crew,,2026-11-21T07:00:00+03:00,standby,
+KQ10457,Brian Mwangi,pilot,,2026-11-19T06:00:00+03:00,rostered,
+KQ11290,Esther Kamau,cabin_crew,"-0.303099, 36.080025",2026-11-19T07:30:00+03:00,rostered,
+KQ11317,Faith Njeri,cabin_crew,,2026-01-15T08:00:00+03:00,rostered,
+KQ11402,George Ouma,pilot,,2026-11-19T08:30:00,rostered,
+KQ10892,Chao Wanjiru,cabin_crew,,2026-11-19T06:15:00+03:00,,
+KQ10231,Amina Hassan,cabin_crew,"-1.221512, 36.892913",2026-11-20T20:00:00+03:00,rostered,yes

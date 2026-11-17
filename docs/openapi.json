@@ -740,6 +740,83 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HomeMove": {
+        "description": "A set_home=yes row that moves a crew member's home_location, from its\nreport time on: from the home in effect just before (stored, or an\nearlier move) to the row's point. Zones are the nearest to each point,\nby PostGIS.",
+        "properties": {
+          "distance_km": {
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "from_zone": {
+            "title": "From Zone",
+            "type": "string"
+          },
+          "line": {
+            "title": "Line",
+            "type": "integer"
+          },
+          "staff_no": {
+            "title": "Staff No",
+            "type": "string"
+          },
+          "takes_effect": {
+            "format": "date-time",
+            "title": "Takes Effect",
+            "type": "string"
+          },
+          "to_zone": {
+            "title": "To Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "staff_no",
+          "from_zone",
+          "to_zone",
+          "distance_km",
+          "takes_effect"
+        ],
+        "title": "HomeMove",
+        "type": "object"
+      },
+      "HomeUse": {
+        "description": "A row with no pickup_location: the home it is collected from, the one\nin effect at its report time.",
+        "properties": {
+          "line": {
+            "title": "Line",
+            "type": "integer"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "staff_no": {
+            "title": "Staff No",
+            "type": "string"
+          },
+          "zone_label": {
+            "title": "Zone Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "staff_no",
+          "zone_label",
+          "since"
+        ],
+        "title": "HomeUse",
+        "type": "object"
+      },
       "LatePickup": {
         "properties": {
           "late_sec": {
@@ -1223,7 +1300,9 @@
           "invalid_row",
           "outside_pickup_zones",
           "report_time_past",
-          "duplicate_pickup"
+          "duplicate_pickup",
+          "no_pickup_location",
+          "set_home_needs_location"
         ],
         "title": "RejectReason",
         "type": "string"
@@ -1276,6 +1355,32 @@
           "dry_run": {
             "title": "Dry Run",
             "type": "boolean"
+          },
+          "home_moves": {
+            "items": {
+              "$ref": "#/components/schemas/HomeMove"
+            },
+            "title": "Home Moves",
+            "type": "array"
+          },
+          "home_uses": {
+            "items": {
+              "$ref": "#/components/schemas/HomeUse"
+            },
+            "title": "Home Uses",
+            "type": "array"
+          },
+          "homes_updated": {
+            "default": 0,
+            "title": "Homes Updated",
+            "type": "integer"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/RowLocation"
+            },
+            "title": "Locations",
+            "type": "array"
           },
           "pickups_created": {
             "title": "Pickups Created",
@@ -1383,6 +1488,35 @@
           "next_cursor"
         ],
         "title": "RouteSummaryPage",
+        "type": "object"
+      },
+      "RowLocation": {
+        "description": "Where a row's pickup_location is, for the dispatcher to check before\nimporting (#245). Only rows that give a location have one.",
+        "properties": {
+          "distance_km": {
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "line": {
+            "title": "Line",
+            "type": "integer"
+          },
+          "staff_no": {
+            "title": "Staff No",
+            "type": "string"
+          },
+          "zone_label": {
+            "title": "Zone Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "staff_no",
+          "zone_label",
+          "distance_km"
+        ],
+        "title": "RowLocation",
         "type": "object"
       },
       "ScheduleChangeNotice": {

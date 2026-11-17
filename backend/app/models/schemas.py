@@ -561,13 +561,53 @@ class RejectReason(StrEnum):
     OUTSIDE_PICKUP_ZONES = "outside_pickup_zones"  # over 10 km from every pickup zone
     REPORT_TIME_PAST = "report_time_past"
     DUPLICATE_PICKUP = "duplicate_pickup"  # same staff_no and report_time, in the file or stored
+    # A new crew member with no pickup_location on any row: no home to use (#245).
+    NO_PICKUP_LOCATION = "no_pickup_location"
+    # set_home=yes on a row with no pickup_location: no point to move home to.
+    SET_HOME_NEEDS_LOCATION = "set_home_needs_location"
 
 
 class RejectedRow(BaseModel):
     line: int  # the line in the file; the header is line 1
     staff_no: str | None  # null when the row has none
     reason: RejectReason
-    detail: str  # for people, e.g. "pickup_lat: not a number"
+    detail: str  # for people, e.g. "report_time: needs a UTC offset, e.g. +03:00"
+
+
+class RowLocation(BaseModel):
+    """Where a row's pickup_location is, for the dispatcher to check before
+    importing (#245). Only rows that give a location have one."""
+
+    line: int
+    staff_no: str
+    zone_label: str  # the nearest of the pickup zones, by PostGIS
+    distance_km: float  # from that zone, to 0.1 km; over 10 is outside_pickup_zones
+
+
+class HomeMove(BaseModel):
+    """A set_home=yes row that moves a crew member's home_location, from its
+    report time on: from the home in effect just before (stored, or an
+    earlier move) to the row's point. Zones are the nearest to each point,
+    by PostGIS."""
+
+    line: int
+    staff_no: str
+    from_zone: str
+    to_zone: str
+    distance_km: float  # from the old home to the new one, to 0.1 km
+    takes_effect: datetime  # the row's report time: later pickups use the new home
+
+
+class HomeUse(BaseModel):
+    """A row with no pickup_location: the home it is collected from, the one
+    in effect at its report time."""
+
+    line: int
+    staff_no: str
+    zone_label: str  # the zone nearest that home
+    # The report time of the set_home row that made it the home; null for the
+    # stored home (or a new crew member's first point).
+    since: datetime | None
 
 
 class RosterImportResult(BaseModel):
@@ -581,3 +621,12 @@ class RosterImportResult(BaseModel):
     pickups_created: int  # one per accepted row, status pending
     rows_rejected: int
     rejected: list[RejectedRow]  # in line order
+    # Every row read with a pickup_location, rejected ones included, in line
+    # order. Empty in results stored before #245.
+    locations: list[RowLocation] = Field(default_factory=list)
+    # Crew whose home a set_home=yes row moved, each move, and the home each
+    # accepted row with no location uses. 0 and empty in results stored
+    # before set_home.
+    homes_updated: int = 0
+    home_moves: list[HomeMove] = Field(default_factory=list)  # in line order
+    home_uses: list[HomeUse] = Field(default_factory=list)  # accepted rows only

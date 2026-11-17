@@ -389,7 +389,7 @@ def _messages(
 
 
 ROSTER = "/roster-imports"
-ROSTER_CSV = b"staff_no,name,crew_role,pickup_lat,pickup_lon,report_time\n"
+ROSTER_CSV = b"staff_no,name,crew_role,pickup_location,report_time\n"
 
 
 def _roster(
