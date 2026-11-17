@@ -40,12 +40,13 @@ pytestmark = [
 KEY = SigningKey("roster-key")
 RUN = uuid4().hex[:6]
 STAFF = f"T{RUN}"
-HEADER = "staff_no,name,crew_role,pickup_location,report_time,request_type"
+HEADER = "staff_no,name,crew_role,pickup_location,report_time,request_type,set_home"
 # As pasted from Google Maps (#245). Kilimani and Westlands are the zones'
 # own points, so 0 km from them.
 KILIMANI = "-1.2893, 36.7869"
 WESTLANDS = "-1.2675, 36.8120"
 NAKURU = "-0.3031, 36.0800"  # about 130 km from the nearest zone
+KASARANI = "-1.221512, 36.892913"  # 14.0 km from Kilimani, 0.7 from its zone
 HOME = ""  # no location: picked up from home
 
 
@@ -60,8 +61,10 @@ def db(query):
     return asyncio.run(run())
 
 
-def row(staff: str, name: str, where: str, report: str, request_type: str = "") -> str:
-    return f'{STAFF}{staff},{name},cabin_crew,"{where}",{report},{request_type}'
+def row(
+    staff: str, name: str, where: str, report: str, request_type: str = "", set_home: str = ""
+) -> str:
+    return f'{STAFF}{staff},{name},cabin_crew,"{where}",{report},{request_type},{set_home}'
 
 
 def roster(*rows: str) -> bytes:
@@ -213,6 +216,8 @@ def test_a_valid_roster_creates_the_crew_and_one_pending_pickup_per_row(client):
         "pickups_created": 3,
         "rows_rejected": 0,
         "rejected": [],
+        "homes_updated": 0,
+        "home_moves": [],
     }
     assert [(x["line"], x["zone_label"], x["distance_km"]) for x in body["locations"]] == [
         (2, "Kilimani, Nairobi", 0.0),
@@ -441,11 +446,15 @@ def test_the_sample_roster_imports_as_docs_roster_import_md_says(client):
 
     assert response.status_code == 200, response.text
     body = response.json()
-    assert {k: body[k] for k in ["rows", "crew_created", "crew_updated", "pickups_created"]} == {
-        "rows": 10,
+    assert {
+        k: body[k]
+        for k in ["rows", "crew_created", "crew_updated", "pickups_created", "homes_updated"]
+    } == {
+        "rows": 11,
         "crew_created": 2,
         "crew_updated": 0,
-        "pickups_created": 5,
+        "pickups_created": 6,
+        "homes_updated": 1,
     }
     assert [(r["line"], r["reason"]) for r in body["rejected"]] == [
         (7, "duplicate_pickup"),
@@ -458,4 +467,70 @@ def test_the_sample_roster_imports_as_docs_roster_import_md_says(client):
         (2, "Kilimani, Nairobi", 0.4),
         (4, "Westlands, Nairobi", 1.3),
         (8, "Runda, Nairobi", 129.9),
+        (12, "Kasarani, Nairobi", 0.7),
     ]
+    # Line 12 moves Amina's home from her line 2 point to Kasarani.
+    assert body["home_moves"] == [
+        {
+            "line": 12,
+            "staff_no": f"{STAFF}10231",
+            "from_zone": "Kilimani, Nairobi",
+            "to_zone": "Kasarani, Nairobi",
+            "distance_km": 14.1,
+        }
+    ]
+
+
+def test_set_home_moves_a_known_crew_members_home(client):
+    """set_home=yes: the row's point becomes the crew member's home as well
+    as this pickup's location. Rows with no location then use the new home;
+    a rejected row moves nothing, and a dry run writes nothing."""
+    first = upload(client, roster(row("1", "Amina", KILIMANI, "2031-05-01T05:30:00+03:00")))
+    assert first.status_code == 200, first.text
+
+    content = roster(
+        row("1", "Amina", NAKURU, "2031-05-02T05:30:00+03:00", set_home="yes"),  # 2: outside
+        row("1", "Amina", KASARANI, "2031-05-03T05:30:00+03:00", set_home="yes"),  # 3: moves
+        row("1", "Amina", HOME, "2031-05-04T05:30:00+03:00"),  # 4: from the new home
+        row("2", "Brian", HOME, "2031-05-03T06:00:00+03:00", set_home="yes"),  # 5: no point
+    )
+
+    dry = upload(client, content, key=None, dry_run=True)
+
+    assert dry.status_code == 200, dry.text
+    body = dry.json()
+    move = {
+        "line": 3,
+        "staff_no": f"{STAFF}1",
+        "from_zone": "Kilimani, Nairobi",
+        "to_zone": "Kasarani, Nairobi",
+        "distance_km": 14.0,
+    }
+    assert (body["homes_updated"], body["home_moves"]) == (1, [move])
+    assert [(r["line"], r["reason"]) for r in body["rejected"]] == [
+        (2, "outside_pickup_zones"),
+        (5, "set_home_needs_location"),
+    ]
+    assert crew()[f"{STAFF}1"][2:] == (-1.2893, 36.7869), "a dry run moves nothing"
+
+    real = upload(client, content, key="second")
+
+    assert real.status_code == 200, real.text
+    assert real.json() == body | {"dry_run": False}
+    assert crew()[f"{STAFF}1"][2:] == (-1.2215, 36.8929)
+    assert [(p[2], p[3]) for p in stored_pickups()] == [
+        (-1.2893, 36.7869),  # the first import's pickup keeps its point
+        (-1.2215, 36.8929),  # line 3
+        (-1.2215, 36.8929),  # line 4, from the new home
+    ]
+
+
+def test_without_set_home_a_point_still_leaves_home_alone(client):
+    assert upload(client, roster(row("1", "A", KILIMANI, "2031-05-01T05:30:00+03:00"))).is_success
+
+    response = upload(
+        client, roster(row("1", "A", KASARANI, "2031-05-02T05:30:00+03:00")), key="second"
+    )
+
+    assert (response.json()["homes_updated"], response.json()["home_moves"]) == (0, [])
+    assert crew()[f"{STAFF}1"][2:] == (-1.2893, 36.7869)

@@ -24,7 +24,7 @@ def test_the_bad_rows_are_rejected_and_the_good_ones_pass():
     now = datetime(2026, 11, 16, 20, 0, tzinfo=sample.EAT)
     rows, rejected, count = parse(sample.build(now.date() + timedelta(days=1)).encode(), now)
 
-    assert count == 10
+    assert count == 11
     assert [(r.line, r.reason) for r in rejected] == [
         (7, RejectReason.DUPLICATE_PICKUP),
         (9, RejectReason.REPORT_TIME_PAST),
@@ -32,7 +32,7 @@ def test_the_bad_rows_are_rejected_and_the_good_ones_pass():
     ]
     # Line 8 (Nakuru) and line 11 (no location) pass here: the zone and home
     # checks need the database, in run().
-    assert [r.line for r in rows] == [2, 3, 4, 5, 6, 8, 11]
+    assert [r.line for r in rows] == [2, 3, 4, 5, 6, 8, 11, 12]
 
 
 def test_most_rows_have_no_location_and_two_are_pasted_from_google_maps():
@@ -45,8 +45,14 @@ def test_most_rows_have_no_location_and_two_are_pasted_from_google_maps():
         2: (-1.292533, 36.787543),
         4: (-1.260581, 36.802217),
         8: (-0.303099, 36.080025),
+        12: (-1.221512, 36.892913),
     }
-    assert sum(not r.located for r in rows) > len(points)
+    # Only line 12 moves a home: Amina's, to Kasarani.
+    assert [(r.line, r.staff_no) for r in rows if r.set_home] == [(12, "KQ10231")]
+    # Most of the file's rows have no location (7 of 11).
+    text = sample.build(now.date() + timedelta(days=1))
+    blank = [r for r in csv.DictReader(io.StringIO(text)) if not r["pickup_location"]]
+    assert len(blank) * 2 > text.count("\n") - 1
 
 
 def test_a_later_first_day_still_has_one_past_row():

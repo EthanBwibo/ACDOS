@@ -170,7 +170,7 @@ and `PUBLIC` may not.
 - `change_pickup_address` (034, #232) is a `crew` preset asking for a new home address. Like
   any message it changes nothing, neither `crew_members.home_location` nor any pickup. Each
   pickup's `pickup_location` comes from its roster row, so the dispatcher puts the new address
-  in the next roster import.
+  in the next roster import, with `set_home` = `yes` to make it the new home (#245).
 
 ## Conventions
 

@@ -233,3 +233,48 @@ def test_exactly_500_rows_is_allowed():
     rows, _, count = parse(csv(*[GOOD.replace("KQ1001", f"KQ{i}") for i in range(MAX_ROWS)]), NOW)
 
     assert count == len(rows) == MAX_ROWS
+
+
+SET_HOME = HEADER + ",set_home"
+
+
+def test_set_home_is_optional_and_reads_yes_or_blank():
+    rows, rejected, _ = parse(
+        csv(
+            GOOD + ",yes",
+            GOOD.replace("2026-11-20", "2026-11-21") + ",YES",
+            GOOD.replace("2026-11-20", "2026-11-22") + ",",
+            header=SET_HOME,
+        ),
+        NOW,
+    )
+
+    assert rejected == []
+    assert [r.set_home for r in rows] == [True, True, False]
+    # Without the column, no row moves a home.
+    assert parse(csv(GOOD), NOW)[0][0].set_home is False
+
+
+def test_set_home_anything_but_yes_or_blank_is_unreadable():
+    rows, rejected, _ = parse(csv(GOOD + ",no", header=SET_HOME), NOW)
+
+    assert rows == []
+    assert [(r.reason, r.detail) for r in rejected] == [
+        (RejectReason.INVALID_ROW, "set_home: must be yes or blank")
+    ]
+
+
+def test_set_home_without_a_location_is_rejected():
+    row = "KQ1,A,pilot,,2026-11-20T05:30:00+03:00,,yes"
+
+    rows, rejected, _ = parse(csv(GOOD + ",", row, header=SET_HOME), NOW)
+
+    assert [r.line for r in rows] == [2]
+    assert [(r.line, r.staff_no, r.reason, r.detail) for r in rejected] == [
+        (
+            3,
+            "KQ1",
+            RejectReason.SET_HOME_NEEDS_LOCATION,
+            "set_home: yes needs a pickup_location on the same row",
+        )
+    ]

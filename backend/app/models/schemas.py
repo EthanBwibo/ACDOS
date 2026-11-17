@@ -563,6 +563,8 @@ class RejectReason(StrEnum):
     DUPLICATE_PICKUP = "duplicate_pickup"  # same staff_no and report_time, in the file or stored
     # A new crew member with no pickup_location on any row: no home to use (#245).
     NO_PICKUP_LOCATION = "no_pickup_location"
+    # set_home=yes on a row with no pickup_location: no point to move home to.
+    SET_HOME_NEEDS_LOCATION = "set_home_needs_location"
 
 
 class RejectedRow(BaseModel):
@@ -582,6 +584,18 @@ class RowLocation(BaseModel):
     distance_km: float  # from that zone, to 0.1 km; over 10 is outside_pickup_zones
 
 
+class HomeMove(BaseModel):
+    """A set_home=yes row that moves a crew member's home_location: from the
+    home they had (stored, or from an earlier row of the file) to the row's
+    point. Zones are the nearest to each point, by PostGIS."""
+
+    line: int
+    staff_no: str
+    from_zone: str
+    to_zone: str
+    distance_km: float  # from the old home to the new one, to 0.1 km
+
+
 class RosterImportResult(BaseModel):
     """What an import did, or with dry_run what it would do. Rejected rows
     are skipped; the rest are imported together."""
@@ -596,3 +610,7 @@ class RosterImportResult(BaseModel):
     # Every row read with a pickup_location, rejected ones included, in line
     # order. Empty in results stored before #245.
     locations: list[RowLocation] = Field(default_factory=list)
+    # Crew whose home a set_home=yes row moved, and each move in line order.
+    # 0 and empty in results stored before set_home.
+    homes_updated: int = 0
+    home_moves: list[HomeMove] = Field(default_factory=list)

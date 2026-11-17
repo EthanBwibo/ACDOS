@@ -2,9 +2,10 @@
 
 The roster is an external input: ACDOS does not build it. The dispatcher puts it in with a CSV
 file (#229), from **Pickups > Import roster** in the app, or `POST /roster-imports`. One row is
-one rostered pickup. A sample is in [`roster_sample.csv`](roster_sample.csv): five good rows and
-five bad ones, one for each reason a row is rejected. Most of its rows have no location; two
-new crew members give one, pasted from Google Maps as coordinates and as a link. Rows with a
+one rostered pickup. A sample is in [`roster_sample.csv`](roster_sample.csv): six good rows and
+five bad ones. Most of its rows have no location; two new crew members give one, pasted from
+Google Maps as coordinates and as a link. The last row moves one of them home with
+`set_home`. Rows with a
 past report time are rejected, so regenerate it with report times from tomorrow (Nairobi)
 before importing it:
 
@@ -26,6 +27,7 @@ can be in any order.
 | `pickup_location` | no | Where to collect them, pasted from Google Maps (see below): `lat, lon` in decimal degrees, e.g. `-1.292533, 36.787543`, or a Google Maps link with the point in it. Blank means their home location. A new crew member needs one on at least one row. |
 | `report_time` | yes | When they must report at JKIA: ISO 8601 with a UTC offset, e.g. `2026-11-25T05:30:00+03:00`. A time without an offset is rejected, because it could be Nairobi time or UTC. |
 | `request_type` | no | `rostered` or `standby`. Empty or missing means `rostered`. |
+| `set_home` | no | `yes` or blank. `yes` makes this row's `pickup_location` the crew member's home as well (see below). Blank or missing: the point is for this pickup only. |
 
 The column and every value in it may be left out or blank. A value with a comma in it, as both
 forms of `pickup_location` have, must be in double quotes in the CSV. Excel and Google Sheets
@@ -43,11 +45,16 @@ without a byte order mark. It has at most 500 rows and 256 KB. Blank lines are i
   - A new staff number creates a crew member, with their first accepted pickup point in the
     file as their home location. Without one, their rows are rejected as `no_pickup_location`.
   - A known staff number gets its name and role updated from the file. Its home location stays as
-    it was, because a pickup point can be a one-off, such as a hotel.
+    it was, because a pickup point can be a one-off, such as a hotel, unless a row says
+    `set_home` = `yes`.
+  - **`set_home` = `yes`** moves the crew member's home to that row's point, as well as using it
+    for that pickup. Rows are read in line order, so a later `set_home` row moves the home again.
+    It works for a crew member created earlier in the same file too. Each move is listed in
+    `home_moves` and counted in `homes_updated`. A `set_home` row that is rejected moves nothing.
   - If one staff number appears on several rows, its first row gives the name and role.
 - **Pickups:** one `pickup_requests` row per accepted CSV row, with status `pending`. A row with
   a `pickup_location` is collected there; a row without one is collected from the crew member's
-  home location.
+  home location as it is after the import, so after any `set_home` move in the same file.
 - **No re-plan.** Importing never starts optimisation. The dispatcher plans with the new pickups
   as usual.
 
@@ -63,6 +70,7 @@ other rows still import.
 | `invalid_row` | A required field is missing or can't be read: a time without an offset, an unknown request type, more fields than columns (often a `lat, lon` without quotes), or a `pickup_location` that isn't a `lat, lon` pair or a Google Maps link with coordinates in it. The detail names the field and the problem. |
 | `outside_pickup_zones` | The pickup point is more than 10 km from every one of the 28 pickup zones. This is checked in PostGIS with `ST_DWithin` on geography. |
 | `no_pickup_location` | A new crew member, and none of their accepted rows gives a `pickup_location`, so there is no home to collect them from. The detail says "new crew member needs a pickup location". |
+| `set_home_needs_location` | `set_home` is `yes` but the row has no `pickup_location`: there is no point to move the home to. |
 | `report_time_past` | The report time has already passed. |
 | `duplicate_pickup` | The same staff number and report time appear earlier in the file, or that crew member already has a pickup at that report time (cancelled pickups don't count). The same instant written with a different offset is still a duplicate. |
 
@@ -105,6 +113,11 @@ The import reads the point from the link, most precise first:
 
 Each of these rejects the row as `invalid_row`, with the reason in the detail.
 
+**Moving someone's home:** paste the new point as above and put `yes` in that row's `set_home`
+cell. The dry run then shows the move, e.g. "home moves: Kilimani → Kasarani (14.1 km)", so a
+wrong point is caught before it becomes their home. Without `yes` the point is for that one
+pickup, as for a hotel.
+
 **Check before importing.** The dry run lists every row's nearest zone and the distance to it
 (see Response). A point a few kilometres from its zone is normal. One that is far out, or in
 the wrong zone, is usually a typo, or latitude and longitude swapped. More than 10 km from
@@ -139,10 +152,10 @@ Importing the sample once, with none of its crew known yet:
 ```json
 {
   "dry_run": false,
-  "rows": 10,
+  "rows": 11,
   "crew_created": 2,
   "crew_updated": 0,
-  "pickups_created": 5,
+  "pickups_created": 6,
   "rows_rejected": 5,
   "rejected": [
     {"line": 7, "staff_no": "KQ10457", "reason": "duplicate_pickup",
@@ -159,7 +172,13 @@ Importing the sample once, with none of its crew known yet:
   "locations": [
     {"line": 2, "staff_no": "KQ10231", "zone_label": "Kilimani, Nairobi", "distance_km": 0.4},
     {"line": 4, "staff_no": "KQ10457", "zone_label": "Westlands, Nairobi", "distance_km": 1.3},
-    {"line": 8, "staff_no": "KQ11290", "zone_label": "Runda, Nairobi", "distance_km": 129.9}
+    {"line": 8, "staff_no": "KQ11290", "zone_label": "Runda, Nairobi", "distance_km": 129.9},
+    {"line": 12, "staff_no": "KQ10231", "zone_label": "Kasarani, Nairobi", "distance_km": 0.7}
+  ],
+  "homes_updated": 1,
+  "home_moves": [
+    {"line": 12, "staff_no": "KQ10231", "from_zone": "Kilimani, Nairobi",
+     "to_zone": "Kasarani, Nairobi", "distance_km": 14.1}
   ]
 }
 ```
@@ -168,9 +187,13 @@ Importing the sample once, with none of its crew known yet:
   nearest pickup zone and the distance to it. Both are worked out in PostGIS, to 0.1 km. Rows
   with no location, and rows rejected before their location could be read, aren't listed.
 - **Two crew are created.** Amina's point (line 2) and Brian's link (line 4) become their
-  homes. Their rows with no location (lines 3, 5 and 6) are collected from there.
+  homes. Line 12 then moves Amina's home to Kasarani (`set_home` = `yes`). Each move gives the zones
+  nearest the old and new home and the distance between them, from PostGIS.
+- **Rows with no location** are collected from home after the import: Brian's line 5 from his
+  Westlands point, and Amina's lines 3 and 6 from Kasarani.
 - **Lines 8 and 11 are rejected by the database checks** (zone, then home); the others while
   the file is read.
 
-Importing the same file again, under a new key, rejects the five good rows too, as
-`duplicate_pickup`: those crew already have pickups at those times.
+Importing the same file again, under a new key, rejects the six good rows too, as
+`duplicate_pickup`: those crew already have pickups at those times. Line 12 is one of them, so
+it moves no home.

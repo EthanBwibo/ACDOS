@@ -13,7 +13,11 @@ Two steps:
    crew member having a location on some row. Then it upserts the crew by
    staff_no and inserts one pending pickup per accepted row, all in the
    caller's one transaction. A row with no location is picked up from the
-   crew member's home_location.
+   crew member's home_location, as it is after the import.
+
+A row's point is for that pickup only, unless the row says set_home=yes: then
+it also becomes the crew member's home_location. Homes move in line order,
+and the result lists each move with its zones and distance.
 
 A rejected row is skipped and reported with its line and reason; the other
 rows still import. A whole-file problem (not CSV, a missing column, over 500
@@ -40,6 +44,7 @@ from uuid import UUID
 import asyncpg
 
 from app.models.schemas import (
+    HomeMove,
     PickupRequestType,
     RejectedRow,
     RejectReason,
@@ -48,7 +53,7 @@ from app.models.schemas import (
 )
 
 COLUMNS = ("staff_no", "name", "crew_role", "report_time")
-OPTIONAL_COLUMNS = ("pickup_location", "request_type")
+OPTIONAL_COLUMNS = ("pickup_location", "request_type", "set_home")
 # The columns pickup_location replaced (#245). A file that still has them is
 # refused as a whole: read as "no location" its rows would silently fall back
 # to home locations.
@@ -83,6 +88,7 @@ class RosterRow:
     lon: float | None
     report_time: datetime
     request_type: PickupRequestType
+    set_home: bool = False  # the point also becomes their home_location
 
     @property
     def located(self) -> bool:
@@ -204,6 +210,13 @@ def _request_type(row: dict) -> PickupRequestType:
         raise ValueError("request_type: must be rostered or standby") from None
 
 
+def _set_home(row: dict) -> bool:
+    raw = (row.get("set_home") or "").strip().lower()
+    if raw not in ("", "yes"):
+        raise ValueError("set_home: must be yes or blank")
+    return raw == "yes"
+
+
 def _read_row(line: int, row: dict) -> RosterRow:
     if None in row:
         raise ValueError("more fields than columns")
@@ -220,6 +233,7 @@ def _read_row(line: int, row: dict) -> RosterRow:
         lon=point[1] if point else None,
         report_time=_report_time(row),
         request_type=_request_type(row),
+        set_home=_set_home(row),
     )
 
 
@@ -263,6 +277,16 @@ def parse(content: bytes, now: datetime) -> tuple[list[RosterRow], list[Rejected
             rejected.append(
                 RejectedRow(
                     line=line, staff_no=staff_no, reason=RejectReason.INVALID_ROW, detail=str(error)
+                )
+            )
+            continue
+        if row.set_home and not row.located:
+            rejected.append(
+                RejectedRow(
+                    line=line,
+                    staff_no=row.staff_no,
+                    reason=RejectReason.SET_HOME_NEEDS_LOCATION,
+                    detail="set_home: yes needs a pickup_location on the same row",
                 )
             )
             continue
@@ -401,17 +425,98 @@ async def _check_in_db(
     return accepted, rejected, locations
 
 
-async def _write(conn: asyncpg.Connection, rows: list[RosterRow]) -> tuple[int, int, int]:
-    """Upsert the crew by staff_no, then one pending pickup per row. Returns
-    (crew created, crew updated, pickups created)."""
+Point = tuple[float, float]  # (lat, lon)
+
+# For each move ($1, $2 from lat, lon; $3, $4 to lat, lon): the zone nearest
+# each end, and the distance between them in km to 0.1.
+_MOVES = """
+    select m.i, fz.label as from_zone, tz.label as to_zone,
+        round((extensions.st_distance(m.a, m.b) / 1000)::numeric, 1)::float8 as distance_km
+    from (
+        select u.i,
+            extensions.st_setsrid(extensions.st_makepoint(u.alon, u.alat), 4326)
+                ::extensions.geography as a,
+            extensions.st_setsrid(extensions.st_makepoint(u.blon, u.blat), 4326)
+                ::extensions.geography as b
+        from unnest($1::float8[], $2::float8[], $3::float8[], $4::float8[])
+            with ordinality as u(alat, alon, blat, blon, i)
+    ) m
+    cross join lateral (
+        select label from public.pickup_zones
+        order by extensions.st_distance(location, m.a) limit 1
+    ) fz
+    cross join lateral (
+        select label from public.pickup_zones
+        order by extensions.st_distance(location, m.b) limit 1
+    ) tz
+    order by m.i
+"""
+
+
+async def _plan_homes(
+    conn: asyncpg.Connection, rows: list[RosterRow]
+) -> tuple[dict[str, Point], set[str], list[HomeMove]]:
+    """Each crew member's home after this file, read in line order: their
+    stored home, or a new crew member's first point; then every set_home=yes
+    row moves it there. Returns the homes, who moved, and each move."""
+    stored = {
+        r["staff_no"]: (r["lat"], r["lon"])
+        for r in await conn.fetch(
+            """
+            select staff_no,
+                extensions.st_y(home_location::extensions.geometry) as lat,
+                extensions.st_x(home_location::extensions.geometry) as lon
+            from public.crew_members where staff_no = any($1::text[])
+            """,
+            list({r.staff_no for r in rows}),
+        )
+    }
+    home = dict(stored)
+    steps: list[tuple[RosterRow, Point]] = []  # (row, the home it moves from)
+    for row in rows:
+        if not row.located:
+            continue
+        point = (row.lat, row.lon)
+        if row.staff_no not in home:
+            home[row.staff_no] = point  # a new crew member's first point
+        elif row.set_home:
+            steps.append((row, home[row.staff_no]))
+            home[row.staff_no] = point
+    zones = (
+        await conn.fetch(
+            _MOVES,
+            [a[0] for _, a in steps],
+            [a[1] for _, a in steps],
+            [r.lat for r, _ in steps],
+            [r.lon for r, _ in steps],
+        )
+        if steps
+        else []
+    )
+    moves = [
+        HomeMove(
+            line=row.line,
+            staff_no=row.staff_no,
+            from_zone=z["from_zone"],
+            to_zone=z["to_zone"],
+            distance_km=z["distance_km"],
+        )
+        for (row, _), z in zip(steps, zones, strict=True)
+    ]
+    return home, {r.staff_no for r, _ in steps}, moves
+
+
+async def _write(
+    conn: asyncpg.Connection, rows: list[RosterRow], home: dict[str, Point], moved: set[str]
+) -> tuple[int, int, int]:
+    """Upsert the crew by staff_no, move the homes in [moved], then one
+    pending pickup per row. Returns (crew created, crew updated, pickups
+    created)."""
     # One crew record per staff number: name and role from its first row in
-    # the file, home from its first row with a location.
+    # the file; home from _plan_homes.
     crew: dict[str, RosterRow] = {}
-    home: dict[str, RosterRow] = {}
     for row in rows:
         crew.setdefault(row.staff_no, row)
-        if row.located:
-            home.setdefault(row.staff_no, row)
     known = {
         r["staff_no"]: r["id"]
         for r in await conn.fetch(
@@ -419,8 +524,8 @@ async def _write(conn: asyncpg.Connection, rows: list[RosterRow]) -> tuple[int, 
             list(crew),
         )
     }
-    # Known crew: refresh name and role. Their home_location stays: a roster
-    # pickup point can be a one-off (a hotel), not where they live.
+    # Known crew: refresh name and role. Their home_location stays unless a
+    # set_home=yes row moves it: a roster point can be a one-off (a hotel).
     await conn.execute(
         """
         update public.crew_members c
@@ -432,8 +537,21 @@ async def _write(conn: asyncpg.Connection, rows: list[RosterRow]) -> tuple[int, 
         [crew[s].name for s in crew if s in known],
         [crew[s].crew_role for s in crew if s in known],
     )
-    # New crew: their first pickup point is their home location, which the
-    # schema requires. _check_in_db rejected the rows of new crew without one.
+    movers = [s for s in crew if s in known and s in moved]
+    await conn.execute(
+        """
+        update public.crew_members c
+        set home_location = extensions.st_setsrid(extensions.st_makepoint(u.lon, u.lat), 4326)
+            ::extensions.geography
+        from unnest($1::text[], $2::float8[], $3::float8[]) as u(staff_no, lat, lon)
+        where c.staff_no = u.staff_no
+        """,
+        movers,
+        [home[s][0] for s in movers],
+        [home[s][1] for s in movers],
+    )
+    # New crew: home from _plan_homes, which the schema requires.
+    # _check_in_db rejected the rows of new crew without a point.
     new = [s for s in crew if s not in known]
     for r in await conn.fetch(
         """
@@ -447,12 +565,12 @@ async def _write(conn: asyncpg.Connection, rows: list[RosterRow]) -> tuple[int, 
         new,
         [crew[s].name for s in new],
         [crew[s].crew_role for s in new],
-        [home[s].lat for s in new],
-        [home[s].lon for s in new],
+        [home[s][0] for s in new],
+        [home[s][1] for s in new],
     ):
         known[r["staff_no"]] = r["id"]
-    # A row with no location is picked up from home: st_makepoint of nulls is
-    # null, so coalesce falls back to home_location.
+    # A row with no location is picked up from home, as it is now, after any
+    # move: st_makepoint of nulls is null, so coalesce falls back to it.
     await conn.execute(
         """
         insert into public.pickup_requests
@@ -519,7 +637,10 @@ async def run(
             accepted, also_rejected, locations = (
                 await _check_in_db(conn, rows) if rows else ([], [], [])
             )
-            created, updated, pickups = await _write(conn, accepted) if accepted else (0, 0, 0)
+            home, moved, moves = await _plan_homes(conn, accepted) if accepted else ({}, set(), [])
+            created, updated, pickups = (
+                await _write(conn, accepted, home, moved) if accepted else (0, 0, 0)
+            )
             all_rejected = sorted(rejected + also_rejected, key=lambda r: r.line)
             result = RosterImportResult(
                 dry_run=dry_run,
@@ -530,6 +651,8 @@ async def run(
                 rows_rejected=len(all_rejected),
                 rejected=all_rejected,
                 locations=locations,
+                homes_updated=len(moved),
+                home_moves=moves,
             )
             if dry_run:
                 raise _Undo(result)

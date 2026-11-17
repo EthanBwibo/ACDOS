@@ -740,6 +740,40 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HomeMove": {
+        "description": "A set_home=yes row that moves a crew member's home_location: from the\nhome they had (stored, or from an earlier row of the file) to the row's\npoint. Zones are the nearest to each point, by PostGIS.",
+        "properties": {
+          "distance_km": {
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "from_zone": {
+            "title": "From Zone",
+            "type": "string"
+          },
+          "line": {
+            "title": "Line",
+            "type": "integer"
+          },
+          "staff_no": {
+            "title": "Staff No",
+            "type": "string"
+          },
+          "to_zone": {
+            "title": "To Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "staff_no",
+          "from_zone",
+          "to_zone",
+          "distance_km"
+        ],
+        "title": "HomeMove",
+        "type": "object"
+      },
       "LatePickup": {
         "properties": {
           "late_sec": {
@@ -1224,7 +1258,8 @@
           "outside_pickup_zones",
           "report_time_past",
           "duplicate_pickup",
-          "no_pickup_location"
+          "no_pickup_location",
+          "set_home_needs_location"
         ],
         "title": "RejectReason",
         "type": "string"
@@ -1277,6 +1312,18 @@
           "dry_run": {
             "title": "Dry Run",
             "type": "boolean"
+          },
+          "home_moves": {
+            "items": {
+              "$ref": "#/components/schemas/HomeMove"
+            },
+            "title": "Home Moves",
+            "type": "array"
+          },
+          "homes_updated": {
+            "default": 0,
+            "title": "Homes Updated",
+            "type": "integer"
           },
           "locations": {
             "items": {

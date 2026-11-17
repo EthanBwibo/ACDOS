@@ -11,10 +11,12 @@ test import:
 
 Most rows have no pickup_location: those crew are picked up from home. Two
 new crew members give one, as the dispatcher would paste it from Google
-Maps: Amina as coordinates (line 2), Brian as a link (line 4). Their other
-rows then use that point as their home.
+Maps: Amina as coordinates (line 2), Brian as a link (line 4). That point
+becomes their home. The last row, line 12, moves Amina's home to Kasarani
+with set_home=yes, so a dry run shows "home moves: Kilimani -> Kasarani".
+Her rows with no location are then collected from Kasarani.
 
-The file has five good rows and five bad ones, one per reason a row is
+The file has six good rows and five bad ones, one per reason a row is
 rejected, so a dry run shows every reason:
 
     line 7   duplicate_pickup       line 4 again
@@ -23,8 +25,12 @@ rejected, so a dry run shows every reason:
     line 10  invalid_row            a report time with no UTC offset
     line 11  no_pickup_location     a new crew member with no location anywhere
 
-Importing it once creates 2 crew and 5 pickups and rejects 5 rows. A second
-import of the same file rejects the good rows too, as duplicate_pickup.
+Importing it once creates 2 crew and 6 pickups, moves 1 home and rejects 5
+rows. A second import of the same file rejects the good rows too, as
+duplicate_pickup, and so moves no home.
+
+set_home_needs_location (set_home=yes on a row with no location) isn't in
+the sample: it would need a sixth bad row, and the tests cover it.
 """
 
 import argparse
@@ -39,7 +45,15 @@ EAT = timezone(timedelta(hours=3), "EAT")
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "roster_sample.csv"
 
-HEADER = ("staff_no", "name", "crew_role", "pickup_location", "report_time", "request_type")
+HEADER = (
+    "staff_no",
+    "name",
+    "crew_role",
+    "pickup_location",
+    "report_time",
+    "request_type",
+    "set_home",
+)
 
 # Copied from Google Maps (docs/roster_import.md, "Getting a pickup point from
 # Google Maps"): a point near Yaya Centre, Kilimani, as coordinates, and one
@@ -51,8 +65,11 @@ BRIAN_LINK = (
     "@-1.2605758,36.7996421,17z/data=!3m1!4b1!4m4!3m3!8m2!3d-1.260581!4d36.802217"
 )
 NAKURU = "-0.303099, 36.080025"
+# Near Kasarani stadium: Amina's new home, 14.1 km from her old one.
+KASARANI = "-1.221512, 36.892913"
 
-# (staff_no, name, crew_role, pickup_location, day, report time, request_type).
+# (staff_no, name, crew_role, pickup_location, day, report time, request_type,
+# and set_home when it is "yes").
 # day counts from the first day (0 is that day, 1 the next), or is a fixed
 # date. A report time of None is written without an offset (the invalid row).
 PAST = date(2026, 1, 15)
@@ -77,6 +94,12 @@ BAD = [
 ]
 
 
+# Amina's home moves to Kasarani: last, so the bad rows keep lines 7 to 11.
+MOVE = [
+    ("KQ10231", "Amina Hassan", "cabin_crew", KASARANI, 3, "05:30", "rostered", "yes"),
+]
+
+
 def report_time(first_day: date, day: int | date, at: str | None) -> str:
     on = day if isinstance(day, date) else first_day + timedelta(days=day)
     if at is None:
@@ -91,9 +114,17 @@ def build(first_day: date) -> str:
     out = io.StringIO()
     writer = csv.writer(out, lineterminator="\n")
     writer.writerow(HEADER)
-    for staff_no, name, role, location, day, at, request_type in GOOD + BAD:
+    for staff_no, name, role, location, day, at, request_type, *set_home in GOOD + BAD + MOVE:
         writer.writerow(
-            (staff_no, name, role, location, report_time(first_day, day, at), request_type)
+            (
+                staff_no,
+                name,
+                role,
+                location,
+                report_time(first_day, day, at),
+                request_type,
+                *(set_home or [""]),
+            )
         )
     return out.getvalue()
 

@@ -168,7 +168,11 @@ enum class RejectReasonDto {
 
     /** A new crew member with no pickup_location on any row (#245). */
     @Json(name = "no_pickup_location")
-    NO_PICKUP_LOCATION
+    NO_PICKUP_LOCATION,
+
+    /** set_home=yes on a row with no pickup_location. */
+    @Json(name = "set_home_needs_location")
+    SET_HOME_NEEDS_LOCATION
 }
 
 /** A row the import skipped: its [line] in the file (the header is line 1) and why. */
@@ -190,6 +194,16 @@ data class RowLocationDto(
     @Json(name = "distance_km") val distanceKm: Double
 )
 
+/** A set_home=yes row moving a crew member's home: the zones nearest each end, and how far. */
+@JsonClass(generateAdapter = true)
+data class HomeMoveDto(
+    val line: Int,
+    @Json(name = "staff_no") val staffNo: String,
+    @Json(name = "from_zone") val fromZone: String,
+    @Json(name = "to_zone") val toZone: String,
+    @Json(name = "distance_km") val distanceKm: Double
+)
+
 /** What an import did, or with [dryRun] what it would do. */
 @JsonClass(generateAdapter = true)
 data class RosterImportResultDto(
@@ -201,5 +215,8 @@ data class RosterImportResultDto(
     @Json(name = "rows_rejected") val rowsRejected: Int,
     val rejected: List<RejectedRowDto>,
     /** Every row read with a pickup_location, in line order; none in results stored before #245. */
-    val locations: List<RowLocationDto> = emptyList()
+    val locations: List<RowLocationDto> = emptyList(),
+    /** Crew whose home a set_home row moved; 0 in results stored before set_home. */
+    @Json(name = "homes_updated") val homesUpdated: Int = 0,
+    @Json(name = "home_moves") val homeMoves: List<HomeMoveDto> = emptyList()
 )
