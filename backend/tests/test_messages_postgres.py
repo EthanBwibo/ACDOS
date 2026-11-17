@@ -35,7 +35,14 @@ pytestmark = [
 
 KEY = SigningKey("messages-key")
 RUN = uuid4().hex[:8]
-PRESETS = ["at_pickup_point", "cannot_find_van", "flight_changed", "please_call_me", "running_late"]
+PRESETS = [
+    "at_pickup_point",
+    "cannot_find_van",
+    "change_pickup_address",
+    "flight_changed",
+    "please_call_me",
+    "running_late",
+]
 REPLIES = ["call_dispatcher", "noted", "van_rerouted"]
 
 
@@ -193,6 +200,32 @@ def test_sending_any_preset_creates_no_optimisation_job(client, world):
         assert send(client, world, "C", code).status_code == 200
     assert job_count() == jobs
     assert len(stored(world)) == len(PRESETS)
+
+
+def test_drivers_get_no_presets(client, world):
+    response = client.get("/preset-messages", headers=as_user(world, "A"))
+    assert (response.status_code, response.json()["code"]) == (403, "forbidden")
+
+
+def home_location(world, name) -> str:
+    return db(
+        lambda conn: conn.fetchval(
+            "select st_astext(home_location) from public.crew_members where id = $1",
+            world.crew[name],
+        )
+    )
+
+
+def test_an_address_change_request_reaches_the_dispatcher_and_changes_nothing(client, world):
+    """#232: the roster is the source of truth for home locations, so the
+    request is only a message: no re-plan, and the home pin stays put."""
+    jobs, home = job_count(), home_location(world, "C")
+    response = send(client, world, "C", "change_pickup_address")
+    assert response.status_code == 200, response.text
+    assert response.json()["label"] == "I need to change my pickup address"
+    unread = walk(client, world, "D", "&unread=true")
+    assert response.json()["id"] in [i["id"] for i in unread]
+    assert (job_count(), home_location(world, "C")) == (jobs, home)
 
 
 def ids_of(items, world) -> list[str]:

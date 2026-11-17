@@ -167,6 +167,10 @@ and `PUBLIC` may not.
   read. Crew can send `crew` presets only. Drivers see no replies.
 - Messages never trigger re-optimisation: nothing reads them but the dispatcher's screen and
   the crew member's own message list.
+- `change_pickup_address` (034, #232) is a `crew` preset asking for a new home address. Like
+  any message it changes nothing, neither `crew_members.home_location` nor any pickup. Each
+  pickup's `pickup_location` comes from its roster row, so the dispatcher puts the new address
+  in the next roster import.
 
 ## Conventions
 

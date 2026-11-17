@@ -156,13 +156,15 @@ Two tabs: **Pickup** and **Message**.
    - **I cannot find the van**
    - **My flight has changed**
    - **Please call me**
+   - **I need to change my pickup address**
 
    It goes to the dispatcher only: "Sent to the dispatcher." You can't type free text.
 2. **Recent** lists what you sent. "Seen" means the dispatcher has read it, and their reply shows under it as "Dispatch · …". Pull down to check for a reply.
 3. **No signal?** "Not sent: no connection. Tap it again to retry."
+4. **Moving house?** Send **I need to change my pickup address**. The app never changes your address itself: the dispatcher gives your pickups the new address in the next roster import. Pickups already planned keep the old one.
 
 ### Profile
 
 Open the menu at the top right, then **Profile**. It shows your name, your crew role, your home zone (the pickup area nearest your home), and your next pickup's time and status. It works without signal, showing what it last loaded.
 
-Nothing here can be changed. Your home address comes from the roster, and journey times are worked out per pickup zone, so a pin you set yourself could give a wrong time. To change your address, ask the dispatcher.
+Nothing here can be changed. Your home address comes from the roster, and journey times are worked out per pickup zone, so a pin you set yourself could give a wrong time. To change your address, send **I need to change my pickup address** from the Message tab.
