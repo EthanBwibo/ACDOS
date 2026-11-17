@@ -20,8 +20,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kq.acdos.R
 import com.kq.acdos.data.remote.HomeMoveDto
+import com.kq.acdos.data.remote.HomeUseDto
 import com.kq.acdos.data.remote.RejectReasonDto
 import com.kq.acdos.data.remote.RosterImportResultDto
+import com.kq.acdos.ui.Times
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -253,34 +255,55 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
 /** A zone's name without the city: "Kilimani, Nairobi" is "Kilimani". */
 internal fun shortZone(label: String): String = label.substringBefore(", ")
 
-/** "Home moves: Kilimani → Kasarani (14.1 km)", for a set_home row (#245). */
+/**
+ * "Home moves: Kilimani → Kasarani (14.1 km, from Fri 20 Nov)", for a set_home row (#245). The
+ * move takes effect at that row's report time, in Nairobi.
+ */
 internal fun homeMoveText(move: HomeMoveDto, text: (Int) -> String): String = String.format(
     Locale.getDefault(),
     text(R.string.roster_home_move),
     shortZone(move.fromZone),
     shortZone(move.toZone),
-    move.distanceKm
+    move.distanceKm,
+    Times.day(move.takesEffect)
 )
 
-/** One pickup point in the preview (#245): its line, nearest zone, and who and how far. */
+/**
+ * The home a row with no location uses: "home (Kilimani)", or "home (Kasarani, from Fri 20
+ * Nov)" when a set_home move made it the home.
+ */
+internal fun homeUseText(use: HomeUseDto, text: (Int) -> String): String {
+    val zone = shortZone(use.zoneLabel)
+    return when (val since = use.since) {
+        null -> String.format(text(R.string.roster_home_use), zone)
+        else -> String.format(text(R.string.roster_home_use_since), zone, Times.day(since))
+    }
+}
+
+/** One row in Pickup points (#245): its line, where it is collected, and whose it is. */
 internal data class LocationRow(val line: String, val zone: String, val detail: String)
 
 /**
- * The given pickup points, in line order. Whether one is outside comes from the rows the
- * server rejected, not from the rounded distance: 10.04 km shows as 10.0 but is outside.
+ * Where each row is collected, in line order: a row's own point with its nearest zone and
+ * distance, or the home a row with no location uses. Whether a point is outside comes from
+ * the rows the server rejected, not from the rounded distance: 10.04 km shows as 10.0 but is
+ * outside.
  */
 internal fun locationRows(result: RosterImportResultDto, text: (Int) -> String): List<LocationRow> {
     val outside = result.rejected
         .filter { it.reason == RejectReasonDto.OUTSIDE_PICKUP_ZONES }
         .map { it.line }
         .toSet()
-    return result.locations.map { location ->
+    val homes = result.homeUses.map { use ->
+        use.line to LocationRow(use.line.toString(), homeUseText(use, text), use.staffNo)
+    }
+    val points = result.locations.map { location ->
         val format = if (location.line in outside) {
             R.string.roster_location_outside
         } else {
             R.string.roster_location_near
         }
-        LocationRow(
+        val row = LocationRow(
             line = location.line.toString(),
             zone = location.zoneLabel,
             detail = String.format(
@@ -290,7 +313,9 @@ internal fun locationRows(result: RosterImportResultDto, text: (Int) -> String):
                 location.distanceKm
             )
         )
+        location.line to row
     }
+    return (points + homes).sortedBy { it.first }.map { it.second }
 }
 
 @StringRes

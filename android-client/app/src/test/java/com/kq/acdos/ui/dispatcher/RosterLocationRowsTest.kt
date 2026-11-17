@@ -3,10 +3,12 @@ package com.kq.acdos.ui.dispatcher
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.kq.acdos.data.remote.HomeMoveDto
+import com.kq.acdos.data.remote.HomeUseDto
 import com.kq.acdos.data.remote.RejectReasonDto
 import com.kq.acdos.data.remote.RejectedRowDto
 import com.kq.acdos.data.remote.RosterImportResultDto
 import com.kq.acdos.data.remote.RowLocationDto
+import java.time.Instant
 import java.util.Locale
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -15,6 +17,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
+/** 20:00 EAT on Friday 20 November 2026: the sample's move. */
+private val MOVED: Instant = Instant.parse("2026-11-20T17:00:00Z")
 
 /** The dry run's pickup points in Import roster (#245), as docs/roster_import.md's sample gives them. */
 @RunWith(RobolectricTestRunner::class)
@@ -88,11 +93,43 @@ class RosterLocationRowsTest {
 
     @Test
     fun aHomeMove_namesBothZonesAndTheDistance() {
-        val move = HomeMoveDto(12, "KQ10231", "Kilimani, Nairobi", "Kasarani, Nairobi", 14.1)
+        val move = HomeMoveDto(
+            12,
+            "KQ10231",
+            "Kilimani, Nairobi",
+            "Kasarani, Nairobi",
+            14.1,
+            MOVED
+        )
 
         assertEquals(
-            "Home moves: Kilimani → Kasarani (14.1 km)",
+            "Home moves: Kilimani → Kasarani (14.1 km, from Fri 20 Nov)",
             homeMoveText(move, context::getString)
+        )
+    }
+
+    @Test
+    fun rowsWithNoLocation_sayWhichHomeTheyUse_inLineOrderWithThePoints() {
+        val sample = result(emptyList()).copy(
+            homeUses = listOf(
+                HomeUseDto(3, "KQ10231", "Kilimani, Nairobi", null),
+                HomeUseDto(5, "KQ10457", "Westlands, Nairobi", null),
+                HomeUseDto(6, "KQ10231", "Kasarani, Nairobi", MOVED)
+            )
+        )
+
+        val rows = locationRows(sample, context::getString).map { it.line to it.zone }
+
+        assertEquals(
+            listOf(
+                "2" to "Kilimani, Nairobi",
+                "3" to "home (Kilimani)",
+                "4" to "Westlands, Nairobi",
+                "5" to "home (Westlands)",
+                "6" to "home (Kasarani, from Fri 20 Nov)",
+                "8" to "Runda, Nairobi"
+            ),
+            rows
         )
     }
 

@@ -327,11 +327,13 @@
     <string name="roster_rows_rejected">Rows skipped</string>
     <string name="roster_homes_updated">Homes moved (set_home)</string>
     <string name="roster_home_moves_title">Home moves</string>
-    <string name="roster_home_move">Home moves: %1$s → %2$s (%3$.1f km)</string>
+    <string name="roster_home_move">Home moves: %1$s → %2$s (%3$.1f km, from %4$s)</string>
+    <string name="roster_home_use">home (%1$s)</string>
+    <string name="roster_home_use_since">home (%1$s, from %2$s)</string>
     <string name="roster_locations_title">Pickup points</string>
     <string name="roster_location_near">%1$s · %2$.1f km from the zone</string>
     <string name="roster_location_outside">%1$s · %2$.1f km: outside the pickup zones</string>
-    <string name="roster_locations_hint">The nearest pickup zone for each point in the file. Far from its zone, or in the wrong one? Check the point: latitude and longitude may be swapped. Rows with no point are collected from home.</string>
+    <string name="roster_locations_hint">The nearest pickup zone for each point in the file. Far from its zone, or in the wrong one? Check the point: latitude and longitude may be swapped. A row with no point says which home it uses: the one in effect at its report time.</string>
     <string name="roster_rejected_title">Rows skipped</string>
     <string name="roster_rejected_subtitle">%1$s · %2$s</string>
     <string name="roster_no_staff_no">No staff number</string>
