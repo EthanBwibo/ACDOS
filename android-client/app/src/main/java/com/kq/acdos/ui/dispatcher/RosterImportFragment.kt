@@ -226,4 +226,5 @@ internal fun rejectReasonLabel(reason: RejectReasonDto): Int = when (reason) {
     RejectReasonDto.OUTSIDE_PICKUP_ZONES -> R.string.roster_reason_outside_zones
     RejectReasonDto.REPORT_TIME_PAST -> R.string.roster_reason_report_time_past
     RejectReasonDto.DUPLICATE_PICKUP -> R.string.roster_reason_duplicate
+    RejectReasonDto.NO_PICKUP_LOCATION -> R.string.roster_reason_no_location
 }

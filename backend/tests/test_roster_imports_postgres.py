@@ -13,7 +13,10 @@ any other test's.
 """
 
 import asyncio
+import importlib.util
 import os
+from datetime import date
+from pathlib import Path
 from urllib.parse import urlsplit
 from uuid import uuid4
 
@@ -37,10 +40,13 @@ pytestmark = [
 KEY = SigningKey("roster-key")
 RUN = uuid4().hex[:6]
 STAFF = f"T{RUN}"
-HEADER = "staff_no,name,crew_role,pickup_lat,pickup_lon,report_time,request_type"
-KILIMANI = "-1.2893,36.7869"
-WESTLANDS = "-1.2675,36.8120"
-NAKURU = "-0.3031,36.0800"  # about 150 km from the nearest zone
+HEADER = "staff_no,name,crew_role,pickup_location,report_time,request_type"
+# As pasted from Google Maps (#245). Kilimani and Westlands are the zones'
+# own points, so 0 km from them.
+KILIMANI = "-1.2893, 36.7869"
+WESTLANDS = "-1.2675, 36.8120"
+NAKURU = "-0.3031, 36.0800"  # about 130 km from the nearest zone
+HOME = ""  # no location: picked up from home
 
 
 def db(query):
@@ -55,7 +61,7 @@ def db(query):
 
 
 def row(staff: str, name: str, where: str, report: str, request_type: str = "") -> str:
-    return f"{STAFF}{staff},{name},cabin_crew,{where},{report},{request_type}"
+    return f'{STAFF}{staff},{name},cabin_crew,"{where}",{report},{request_type}'
 
 
 def roster(*rows: str) -> bytes:
@@ -198,7 +204,8 @@ def test_a_valid_roster_creates_the_crew_and_one_pending_pickup_per_row(client):
     response = upload(client, content)
 
     assert response.status_code == 200, response.text
-    assert response.json() == {
+    body = response.json()
+    assert {k: v for k, v in body.items() if k != "locations"} == {
         "dry_run": False,
         "rows": 3,
         "crew_created": 2,
@@ -207,6 +214,11 @@ def test_a_valid_roster_creates_the_crew_and_one_pending_pickup_per_row(client):
         "rows_rejected": 0,
         "rejected": [],
     }
+    assert [(x["line"], x["zone_label"], x["distance_km"]) for x in body["locations"]] == [
+        (2, "Kilimani, Nairobi", 0.0),
+        (3, "Westlands, Nairobi", 0.0),
+        (4, "Westlands, Nairobi", 0.0),
+    ]
     pickups = stored_pickups()
     assert [(p[0], p[2], p[3], p[5], p[6]) for p in pickups] == [
         (f"{STAFF}1", -1.2893, 36.7869, "rostered", "pending"),
@@ -283,6 +295,12 @@ def test_a_dry_run_reports_the_same_result_and_writes_nothing(client):
     )
     assert stored == 0
 
+    # Every located row has its nearest zone and distance, rejected ones too.
+    nakuru = dry.json()["locations"][1]
+    assert (nakuru["line"], nakuru["staff_no"]) == (3, f"{STAFF}2")
+    assert nakuru["distance_km"] > 100
+    assert nakuru["zone_label"]
+
     real = upload(client, content)
 
     assert real.status_code == 200, real.text
@@ -323,8 +341,8 @@ def test_a_real_import_needs_an_idempotency_key(client):
 
 
 def test_a_file_missing_a_column_imports_nothing(client):
-    content = b"staff_no,name,pickup_lat,pickup_lon,report_time\n" + (
-        f"{STAFF}1,A,{KILIMANI},2031-05-01T05:30:00+03:00".encode()
+    content = b"staff_no,name,pickup_location,report_time\n" + (
+        f'{STAFF}1,A,"{KILIMANI}",2031-05-01T05:30:00+03:00'.encode()
     )
 
     response = upload(client, content)
@@ -344,3 +362,100 @@ def test_a_driver_may_not_import(client, users):
 
     assert response.status_code == 403
     assert crew() == {}
+
+
+def test_a_row_without_a_location_is_picked_up_from_home(client):
+    """#245. Known crew use their stored home; a new crew member's home is
+    their first accepted point in the file; without one, nothing to use."""
+    first = upload(client, roster(row("1", "Amina", KILIMANI, "2031-05-01T05:30:00+03:00")))
+    assert first.status_code == 200, first.text
+
+    content = roster(
+        row("1", "Amina", HOME, "2031-05-02T05:30:00+03:00"),  # 2: known, from home
+        row("2", "Brian", HOME, "2031-05-01T06:00:00+03:00"),  # 3: new, home from line 4
+        row("2", "Brian", WESTLANDS, "2031-05-02T06:00:00+03:00"),  # 4: new, gives the point
+        row("3", "Chao", HOME, "2031-05-01T06:15:00+03:00"),  # 5: new, no point anywhere
+        row("4", "Dana", NAKURU, "2031-05-01T07:00:00+03:00"),  # 6: outside the zones
+        row("4", "Dana", HOME, "2031-05-02T07:00:00+03:00"),  # 7: so no home either
+    )
+
+    response = upload(client, content, key="second")
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert [(r["line"], r["reason"], r["detail"]) for r in body["rejected"]] == [
+        (5, "no_pickup_location", "new crew member needs a pickup location"),
+        (6, "outside_pickup_zones", "over 10 km from every pickup zone"),
+        (7, "no_pickup_location", "new crew member needs a pickup location"),
+    ]
+    assert (body["crew_created"], body["crew_updated"], body["pickups_created"]) == (1, 1, 3)
+    assert [x["line"] for x in body["locations"]] == [4, 6]
+    assert set(crew()) == {f"{STAFF}1", f"{STAFF}2"}
+    assert crew()[f"{STAFF}2"][2:] == (-1.2675, 36.812)
+    assert [(p[0], p[2], p[3]) for p in stored_pickups()] == [
+        (f"{STAFF}1", -1.2893, 36.7869),
+        (f"{STAFF}1", -1.2893, 36.7869),  # line 2, from home
+        (f"{STAFF}2", -1.2675, 36.812),  # line 3, from the home line 4 gave
+        (f"{STAFF}2", -1.2675, 36.812),
+    ]
+
+
+def test_a_known_crew_members_new_point_is_used_for_that_pickup_only(client):
+    """A roster point can be a one-off (a hotel): home stays where it was."""
+    assert upload(client, roster(row("1", "A", KILIMANI, "2031-05-01T05:30:00+03:00"))).is_success
+
+    response = upload(
+        client,
+        roster(
+            row("1", "A", WESTLANDS, "2031-05-02T05:30:00+03:00"),
+            row("1", "A", HOME, "2031-05-03T05:30:00+03:00"),
+        ),
+        key="second",
+    )
+
+    assert response.status_code == 200, response.text
+    assert crew()[f"{STAFF}1"][2:] == (-1.2893, 36.7869)
+    assert [(p[2], p[3]) for p in stored_pickups()] == [
+        (-1.2893, 36.7869),
+        (-1.2675, 36.812),
+        (-1.2893, 36.7869),
+    ]
+
+
+def _sample():
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "make_sample_roster", root / "scripts" / "make_sample_roster.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_sample_roster_imports_as_docs_roster_import_md_says(client):
+    """docs/roster_import.md's example response, from the sample in 2031,
+    with this run's staff numbers (KQ10231 becomes T<run>10231)."""
+    content = _sample().build(date(2031, 6, 1)).replace("KQ", STAFF).encode()
+
+    response = upload(client, content, key=None, dry_run=True)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert {k: body[k] for k in ["rows", "crew_created", "crew_updated", "pickups_created"]} == {
+        "rows": 10,
+        "crew_created": 2,
+        "crew_updated": 0,
+        "pickups_created": 5,
+    }
+    assert [(r["line"], r["reason"]) for r in body["rejected"]] == [
+        (7, "duplicate_pickup"),
+        (8, "outside_pickup_zones"),
+        (9, "report_time_past"),
+        (10, "invalid_row"),
+        (11, "no_pickup_location"),
+    ]
+    assert [(x["line"], x["zone_label"], x["distance_km"]) for x in body["locations"]] == [
+        (2, "Kilimani, Nairobi", 0.4),
+        (4, "Westlands, Nairobi", 1.3),
+        (8, "Runda, Nairobi", 129.9),
+    ]

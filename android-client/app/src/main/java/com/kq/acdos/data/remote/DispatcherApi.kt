@@ -164,7 +164,11 @@ enum class RejectReasonDto {
     REPORT_TIME_PAST,
 
     @Json(name = "duplicate_pickup")
-    DUPLICATE_PICKUP
+    DUPLICATE_PICKUP,
+
+    /** A new crew member with no pickup_location on any row (#245). */
+    @Json(name = "no_pickup_location")
+    NO_PICKUP_LOCATION
 }
 
 /** A row the import skipped: its [line] in the file (the header is line 1) and why. */
@@ -176,6 +180,16 @@ data class RejectedRowDto(
     val detail: String
 )
 
+/** A row's pickup point (#245): its nearest pickup zone and how far it is from it. */
+@JsonClass(generateAdapter = true)
+data class RowLocationDto(
+    val line: Int,
+    @Json(name = "staff_no") val staffNo: String,
+    @Json(name = "zone_label") val zoneLabel: String,
+    /** To 0.1 km; over 10 is rejected as outside the pickup zones. */
+    @Json(name = "distance_km") val distanceKm: Double
+)
+
 /** What an import did, or with [dryRun] what it would do. */
 @JsonClass(generateAdapter = true)
 data class RosterImportResultDto(
@@ -185,5 +199,7 @@ data class RosterImportResultDto(
     @Json(name = "crew_updated") val crewUpdated: Int,
     @Json(name = "pickups_created") val pickupsCreated: Int,
     @Json(name = "rows_rejected") val rowsRejected: Int,
-    val rejected: List<RejectedRowDto>
+    val rejected: List<RejectedRowDto>,
+    /** Every row read with a pickup_location, in line order; none in results stored before #245. */
+    val locations: List<RowLocationDto> = emptyList()
 )

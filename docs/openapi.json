@@ -1223,7 +1223,8 @@
           "invalid_row",
           "outside_pickup_zones",
           "report_time_past",
-          "duplicate_pickup"
+          "duplicate_pickup",
+          "no_pickup_location"
         ],
         "title": "RejectReason",
         "type": "string"
@@ -1276,6 +1277,13 @@
           "dry_run": {
             "title": "Dry Run",
             "type": "boolean"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/RowLocation"
+            },
+            "title": "Locations",
+            "type": "array"
           },
           "pickups_created": {
             "title": "Pickups Created",
@@ -1383,6 +1391,35 @@
           "next_cursor"
         ],
         "title": "RouteSummaryPage",
+        "type": "object"
+      },
+      "RowLocation": {
+        "description": "Where a row's pickup_location is, for the dispatcher to check before\nimporting (#245). Only rows that give a location have one.",
+        "properties": {
+          "distance_km": {
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "line": {
+            "title": "Line",
+            "type": "integer"
+          },
+          "staff_no": {
+            "title": "Staff No",
+            "type": "string"
+          },
+          "zone_label": {
+            "title": "Zone Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "staff_no",
+          "zone_label",
+          "distance_km"
+        ],
+        "title": "RowLocation",
         "type": "object"
       },
       "ScheduleChangeNotice": {

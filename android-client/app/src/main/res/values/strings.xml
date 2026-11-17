@@ -341,4 +341,5 @@
     <string name="roster_reason_outside_zones">Outside the pickup zones</string>
     <string name="roster_reason_report_time_past">Report time has passed</string>
     <string name="roster_reason_duplicate">Pickup already listed</string>
+    <string name="roster_reason_no_location">New crew member needs a pickup location</string>
 </resources>

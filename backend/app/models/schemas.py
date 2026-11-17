@@ -561,13 +561,25 @@ class RejectReason(StrEnum):
     OUTSIDE_PICKUP_ZONES = "outside_pickup_zones"  # over 10 km from every pickup zone
     REPORT_TIME_PAST = "report_time_past"
     DUPLICATE_PICKUP = "duplicate_pickup"  # same staff_no and report_time, in the file or stored
+    # A new crew member with no pickup_location on any row: no home to use (#245).
+    NO_PICKUP_LOCATION = "no_pickup_location"
 
 
 class RejectedRow(BaseModel):
     line: int  # the line in the file; the header is line 1
     staff_no: str | None  # null when the row has none
     reason: RejectReason
-    detail: str  # for people, e.g. "pickup_lat: not a number"
+    detail: str  # for people, e.g. "report_time: needs a UTC offset, e.g. +03:00"
+
+
+class RowLocation(BaseModel):
+    """Where a row's pickup_location is, for the dispatcher to check before
+    importing (#245). Only rows that give a location have one."""
+
+    line: int
+    staff_no: str
+    zone_label: str  # the nearest of the pickup zones, by PostGIS
+    distance_km: float  # from that zone, to 0.1 km; over 10 is outside_pickup_zones
 
 
 class RosterImportResult(BaseModel):
@@ -581,3 +593,6 @@ class RosterImportResult(BaseModel):
     pickups_created: int  # one per accepted row, status pending
     rows_rejected: int
     rejected: list[RejectedRow]  # in line order
+    # Every row read with a pickup_location, rejected ones included, in line
+    # order. Empty in results stored before #245.
+    locations: list[RowLocation] = Field(default_factory=list)
