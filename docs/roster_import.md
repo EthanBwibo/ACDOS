@@ -47,14 +47,21 @@ without a byte order mark. It has at most 500 rows and 256 KB. Blank lines are i
   - A known staff number gets its name and role updated from the file. Its home location stays as
     it was, because a pickup point can be a one-off, such as a hotel, unless a row says
     `set_home` = `yes`.
-  - **`set_home` = `yes`** moves the crew member's home to that row's point, as well as using it
-    for that pickup. Rows are read in line order, so a later `set_home` row moves the home again.
-    It works for a crew member created earlier in the same file too. Each move is listed in
-    `home_moves` and counted in `homes_updated`. A `set_home` row that is rejected moves nothing.
+  - **`set_home` = `yes`** moves the crew member's home to that row's point **from that row's
+    report time on**, as well as using it for that pickup. Where the row is in the file doesn't
+    matter: only its report time does. Several moves for one person chain in report-time order.
+    The stored home ends up as the move with the latest report time. Each move is listed in
+    `home_moves` (with `takes_effect`, its report time) and counted in `homes_updated`. A
+    `set_home` row that is rejected moves nothing.
+  - **A new crew member's first home** is their first point in the file without `set_home`, in
+    line order, or, if every point they have says `set_home`, the earliest of those. Their other
+    `set_home` rows are moves from it.
   - If one staff number appears on several rows, its first row gives the name and role.
 - **Pickups:** one `pickup_requests` row per accepted CSV row, with status `pending`. A row with
-  a `pickup_location` is collected there; a row without one is collected from the crew member's
-  home location as it is after the import, so after any `set_home` move in the same file.
+  a `pickup_location` is collected there. A row without one is collected from the home in effect
+  at its report time: the point of the latest `set_home` row for the same crew member whose
+  report time is at or before this row's, or, if there is none, their stored home (a new crew
+  member's first home). `home_uses` says which home each such row uses.
 - **No re-plan.** Importing never starts optimisation. The dispatcher plans with the new pickups
   as usual.
 
@@ -114,9 +121,15 @@ The import reads the point from the link, most precise first:
 Each of these rejects the row as `invalid_row`, with the reason in the detail.
 
 **Moving someone's home:** paste the new point as above and put `yes` in that row's `set_home`
-cell. The dry run then shows the move, e.g. "home moves: Kilimani → Kasarani (14.1 km)", so a
-wrong point is caught before it becomes their home. Without `yes` the point is for that one
-pickup, as for a hotel.
+cell. Put it on their first pickup from the new address: the move takes effect at that row's
+report time, so their earlier pickups in the roster still go to the old home, and later ones to
+the new. The dry run shows:
+- the move, e.g. "Home moves: Kilimani → Kasarani (14.1 km, from Fri 20 Nov)";
+- for each row with no location, which home it uses, e.g. "home (Kilimani)" or "home (Kasarani,
+  from Fri 20 Nov)".
+
+A wrong point or a wrong date is caught there, before it changes anything. Without `yes`, the
+point is for that one pickup, as for a hotel.
 
 **Check before importing.** The dry run lists every row's nearest zone and the distance to it
 (see Response). A point a few kilometres from its zone is normal. One that is far out, or in
@@ -178,7 +191,14 @@ Importing the sample once, with none of its crew known yet:
   "homes_updated": 1,
   "home_moves": [
     {"line": 12, "staff_no": "KQ10231", "from_zone": "Kilimani, Nairobi",
-     "to_zone": "Kasarani, Nairobi", "distance_km": 14.1}
+     "to_zone": "Kasarani, Nairobi", "distance_km": 14.1,
+     "takes_effect": "2026-11-20T20:00:00+03:00"}
+  ],
+  "home_uses": [
+    {"line": 3, "staff_no": "KQ10231", "zone_label": "Kilimani, Nairobi", "since": null},
+    {"line": 5, "staff_no": "KQ10457", "zone_label": "Westlands, Nairobi", "since": null},
+    {"line": 6, "staff_no": "KQ10231", "zone_label": "Kasarani, Nairobi",
+     "since": "2026-11-20T20:00:00+03:00"}
   ]
 }
 ```
@@ -187,10 +207,16 @@ Importing the sample once, with none of its crew known yet:
   nearest pickup zone and the distance to it. Both are worked out in PostGIS, to 0.1 km. Rows
   with no location, and rows rejected before their location could be read, aren't listed.
 - **Two crew are created.** Amina's point (line 2) and Brian's link (line 4) become their
-  homes. Line 12 then moves Amina's home to Kasarani (`set_home` = `yes`). Each move gives the zones
-  nearest the old and new home and the distance between them, from PostGIS.
-- **Rows with no location** are collected from home after the import: Brian's line 5 from his
-  Westlands point, and Amina's lines 3 and 6 from Kasarani.
+  homes.
+- **Line 12 moves Amina's home** to Kasarani (`set_home` = `yes`) from its report time, 20:00
+  on 20 November. It's the last line, but it takes effect at that time. Each move gives the zones nearest the old and new home and
+  the distance between them, from PostGIS.
+- **Rows with no location** use the home in effect at their report time (`home_uses`):
+  - line 3 (Amina, 20 Nov 05:30, before the move): her Kilimani point;
+  - line 5 (Brian): his Westlands point;
+  - line 6 (Amina, 21 Nov, after the move): Kasarani.
+
+  Amina's stored home ends up at Kasarani.
 - **Lines 8 and 11 are rejected by the database checks** (zone, then home); the others while
   the file is read.
 

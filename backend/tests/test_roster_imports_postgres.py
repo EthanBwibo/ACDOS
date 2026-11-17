@@ -15,7 +15,7 @@ any other test's.
 import asyncio
 import importlib.util
 import os
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -218,6 +218,7 @@ def test_a_valid_roster_creates_the_crew_and_one_pending_pickup_per_row(client):
         "rejected": [],
         "homes_updated": 0,
         "home_moves": [],
+        "home_uses": [],
     }
     assert [(x["line"], x["zone_label"], x["distance_km"]) for x in body["locations"]] == [
         (2, "Kilimani, Nairobi", 0.0),
@@ -469,15 +470,26 @@ def test_the_sample_roster_imports_as_docs_roster_import_md_says(client):
         (8, "Runda, Nairobi", 129.9),
         (12, "Kasarani, Nairobi", 0.7),
     ]
-    # Line 12 moves Amina's home from her line 2 point to Kasarani.
-    assert body["home_moves"] == [
-        {
-            "line": 12,
-            "staff_no": f"{STAFF}10231",
-            "from_zone": "Kilimani, Nairobi",
-            "to_zone": "Kasarani, Nairobi",
-            "distance_km": 14.1,
-        }
+    # Line 12 moves Amina's home from her line 2 point to Kasarani, from the
+    # evening of 2 June: between her line 3 and line 6 pickups.
+    [move] = body["home_moves"]
+    assert {k: v for k, v in move.items() if k != "takes_effect"} == {
+        "line": 12,
+        "staff_no": f"{STAFF}10231",
+        "from_zone": "Kilimani, Nairobi",
+        "to_zone": "Kasarani, Nairobi",
+        "distance_km": 14.1,
+    }
+    moved_at = datetime.fromisoformat("2031-06-02T20:00:00+03:00")
+    assert datetime.fromisoformat(move["takes_effect"]) == moved_at
+    uses = [
+        (u["line"], u["zone_label"], u["since"] and datetime.fromisoformat(u["since"]))
+        for u in body["home_uses"]
+    ]
+    assert uses == [
+        (3, "Kilimani, Nairobi", None),  # 2 June, morning: before the move
+        (5, "Westlands, Nairobi", None),  # Brian: his line 4 point
+        (6, "Kasarani, Nairobi", moved_at),  # 3 June: after it
     ]
 
 
@@ -499,14 +511,15 @@ def test_set_home_moves_a_known_crew_members_home(client):
 
     assert dry.status_code == 200, dry.text
     body = dry.json()
-    move = {
-        "line": 3,
-        "staff_no": f"{STAFF}1",
-        "from_zone": "Kilimani, Nairobi",
-        "to_zone": "Kasarani, Nairobi",
-        "distance_km": 14.0,
-    }
-    assert (body["homes_updated"], body["home_moves"]) == (1, [move])
+    [move] = body["home_moves"]
+    assert body["homes_updated"] == 1
+    assert (move["line"], move["from_zone"], move["to_zone"], move["distance_km"]) == (
+        3,
+        "Kilimani, Nairobi",
+        "Kasarani, Nairobi",
+        14.0,
+    )
+    assert [(u["line"], u["zone_label"]) for u in body["home_uses"]] == [(4, "Kasarani, Nairobi")]
     assert [(r["line"], r["reason"]) for r in body["rejected"]] == [
         (2, "outside_pickup_zones"),
         (5, "set_home_needs_location"),
@@ -534,3 +547,47 @@ def test_without_set_home_a_point_still_leaves_home_alone(client):
 
     assert (response.json()["homes_updated"], response.json()["home_moves"]) == (0, [])
     assert crew()[f"{STAFF}1"][2:] == (-1.2893, 36.7869)
+
+
+MID_ROSTER = [
+    ("blank, 5 May", HOME, "2031-05-05T05:30:00+03:00", ""),
+    ("move, 3 May", KASARANI, "2031-05-03T05:30:00+03:00", "yes"),
+    ("blank, 1 May", HOME, "2031-05-01T05:30:00+03:00", ""),
+    ("blank, 4 May", HOME, "2031-05-04T05:30:00+03:00", ""),
+]
+
+
+@pytest.mark.parametrize("order", ["as written", "reversed"])
+def test_a_mid_roster_move_sends_earlier_pickups_to_the_old_home_and_later_ones_to_the_new(
+    client, order
+):
+    """A move takes effect at its own report time, whatever its line: 1 May
+    is still collected from Kilimani, 4 and 5 May from Kasarani. The stored
+    home ends up at Kasarani."""
+    assert upload(client, roster(row("1", "A", KILIMANI, "2031-04-30T05:30:00+03:00"))).is_success
+    rows = MID_ROSTER if order == "as written" else list(reversed(MID_ROSTER))
+
+    response = upload(
+        client,
+        roster(*[row("1", "A", where, at, "", home) for _, where, at, home in rows]),
+        key=f"second-{order[0]}",
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert (body["pickups_created"], body["rows_rejected"], body["homes_updated"]) == (4, 0, 1)
+    by_line = {u["line"]: u["zone_label"] for u in body["home_uses"]}
+    labels = {rows[line - 2][0]: zone for line, zone in by_line.items()}
+    assert labels == {
+        "blank, 1 May": "Kilimani, Nairobi",
+        "blank, 4 May": "Kasarani, Nairobi",
+        "blank, 5 May": "Kasarani, Nairobi",
+    }
+    assert [(p[4].date().isoformat(), p[2], p[3]) for p in stored_pickups()] == [
+        ("2031-04-30", -1.2893, 36.7869),
+        ("2031-05-01", -1.2893, 36.7869),  # before the move: the old home
+        ("2031-05-03", -1.2215, 36.8929),  # the move itself
+        ("2031-05-04", -1.2215, 36.8929),  # after it: the new home
+        ("2031-05-05", -1.2215, 36.8929),
+    ]
+    assert crew()[f"{STAFF}1"][2:] == (-1.2215, 36.8929)

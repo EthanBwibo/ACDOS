@@ -13,8 +13,9 @@ Most rows have no pickup_location: those crew are picked up from home. Two
 new crew members give one, as the dispatcher would paste it from Google
 Maps: Amina as coordinates (line 2), Brian as a link (line 4). That point
 becomes their home. The last row, line 12, moves Amina's home to Kasarani
-with set_home=yes, so a dry run shows "home moves: Kilimani -> Kasarani".
-Her rows with no location are then collected from Kasarani.
+with set_home=yes from its report time, the evening of day 1. A dry run
+shows the move, and which home each row with no location uses: line 3 (day
+1, morning) "home (Kilimani)", line 6 (day 2) "home (Kasarani, from <day 1>)".
 
 The file has six good rows and five bad ones, one per reason a row is
 rejected, so a dry run shows every reason:
@@ -94,9 +95,12 @@ BAD = [
 ]
 
 
-# Amina's home moves to Kasarani: last, so the bad rows keep lines 7 to 11.
+# Amina's home moves to Kasarani from the evening of day 1: after her day 1
+# pickup (line 3, so still from Kilimani), before her day 2 one (line 6, so
+# from Kasarani). Last in the file, so the bad rows keep lines 7 to 11: a
+# move takes effect at its report time, not its line.
 MOVE = [
-    ("KQ10231", "Amina Hassan", "cabin_crew", KASARANI, 3, "05:30", "rostered", "yes"),
+    ("KQ10231", "Amina Hassan", "cabin_crew", KASARANI, 1, "20:00", "rostered", "yes"),
 ]
 
 

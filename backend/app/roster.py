@@ -12,12 +12,14 @@ Two steps:
    the crew member having no pickup at that report time already; and a new
    crew member having a location on some row. Then it upserts the crew by
    staff_no and inserts one pending pickup per accepted row, all in the
-   caller's one transaction. A row with no location is picked up from the
-   crew member's home_location, as it is after the import.
+   caller's one transaction.
 
 A row's point is for that pickup only, unless the row says set_home=yes: then
-it also becomes the crew member's home_location. Homes move in line order,
-and the result lists each move with its zones and distance.
+the crew member's home moves there from that row's report time on, whatever
+its line in the file. A row with no location is collected from the home in
+effect at its report time (_plan_homes), and the stored home_location ends up
+as the latest move. The result lists each move and which home each row with
+no location uses.
 
 A rejected row is skipped and reported with its line and reason; the other
 rows still import. A whole-file problem (not CSV, a missing column, over 500
@@ -37,7 +39,7 @@ import hashlib
 import io
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import UUID
 
@@ -45,6 +47,7 @@ import asyncpg
 
 from app.models.schemas import (
     HomeMove,
+    HomeUse,
     PickupRequestType,
     RejectedRow,
     RejectReason,
@@ -453,12 +456,25 @@ _MOVES = """
 """
 
 
-async def _plan_homes(
-    conn: asyncpg.Connection, rows: list[RosterRow]
-) -> tuple[dict[str, Point], set[str], list[HomeMove]]:
-    """Each crew member's home after this file, read in line order: their
-    stored home, or a new crew member's first point; then every set_home=yes
-    row moves it there. Returns the homes, who moved, and each move."""
+@dataclass(frozen=True)
+class HomePlan:
+    """Where each accepted row is collected, and what happens to homes."""
+
+    points: list[Point]  # each row's pickup point, in row order
+    homes: dict[str, Point]  # each crew member's home_location after the import
+    moved: set[str]  # crew whose home a set_home row moved
+    moves: list[HomeMove]  # in line order
+    uses: list[HomeUse]  # one per row with no location, in line order
+
+
+async def _plan_homes(conn: asyncpg.Connection, rows: list[RosterRow]) -> HomePlan:
+    """Homes over time. A crew member's base home is their stored home; a new
+    crew member's is their first point in the file without set_home (in line
+    order), or failing that their earliest set_home point. Every other
+    set_home=yes row is a move that takes effect at its own report time,
+    whatever its line. A row with no location is collected from the home in
+    effect at its report time: the latest move at or before it, else the base.
+    The stored home ends up as the latest move."""
     stored = {
         r["staff_no"]: (r["lat"], r["lon"])
         for r in await conn.fetch(
@@ -471,18 +487,51 @@ async def _plan_homes(
             list({r.staff_no for r in rows}),
         )
     }
-    home = dict(stored)
-    steps: list[tuple[RosterRow, Point]] = []  # (row, the home it moves from)
+    base = dict(stored)
+    base_line: dict[str, int] = {}  # new crew: the row whose point is their first home
     for row in rows:
-        if not row.located:
-            continue
-        point = (row.lat, row.lon)
-        if row.staff_no not in home:
-            home[row.staff_no] = point  # a new crew member's first point
-        elif row.set_home:
-            steps.append((row, home[row.staff_no]))
-            home[row.staff_no] = point
-    zones = (
+        if row.located and not row.set_home and row.staff_no not in base:
+            base[row.staff_no], base_line[row.staff_no] = (row.lat, row.lon), row.line
+    for row in sorted(rows, key=lambda r: r.report_time):
+        if row.located and row.set_home and row.staff_no not in base:
+            base[row.staff_no], base_line[row.staff_no] = (row.lat, row.lon), row.line
+
+    # Each crew member's moves, by report time. Same staff and report time
+    # twice is a duplicate pickup, so no two moves tie.
+    timeline: dict[str, list[RosterRow]] = {}
+    for row in sorted(rows, key=lambda r: r.report_time):
+        if row.set_home and base_line.get(row.staff_no) != row.line:
+            timeline.setdefault(row.staff_no, []).append(row)
+
+    def home_at(staff_no: str, when: datetime) -> tuple[Point, RosterRow | None]:
+        """The home in effect at when, and the move that set it (None: the base)."""
+        current: tuple[Point, RosterRow | None] = (base[staff_no], None)
+        for move in timeline.get(staff_no, []):
+            if move.report_time > when:
+                break
+            current = ((move.lat, move.lon), move)
+        return current
+
+    steps: list[tuple[RosterRow, Point]] = []  # (move, the home it moves from)
+    for staff_moves in timeline.values():
+        previous = base[staff_moves[0].staff_no]
+        for move in staff_moves:
+            steps.append((move, previous))
+            previous = (move.lat, move.lon)
+    steps.sort(key=lambda step: step[0].line)
+    homes = {staff: home_at(staff, datetime.max.replace(tzinfo=UTC))[0] for staff in base}
+
+    points: list[Point] = []
+    using: list[tuple[RosterRow, Point, RosterRow | None]] = []  # (row, home, its move)
+    for row in rows:
+        if row.located:
+            points.append((row.lat, row.lon))
+        else:
+            point, move = home_at(row.staff_no, row.report_time)
+            points.append(point)
+            using.append((row, point, move))
+
+    move_zones = (
         await conn.fetch(
             _MOVES,
             [a[0] for _, a in steps],
@@ -493,27 +542,54 @@ async def _plan_homes(
         if steps
         else []
     )
-    moves = [
-        HomeMove(
-            line=row.line,
-            staff_no=row.staff_no,
-            from_zone=z["from_zone"],
-            to_zone=z["to_zone"],
-            distance_km=z["distance_km"],
+    use_zones = {
+        r["i"]: r["label"]
+        for r in (
+            await conn.fetch(
+                _NEAREST_ZONE,
+                [p[0] for _, p, _ in using],
+                [p[1] for _, p, _ in using],
+                ZONE_RADIUS_M,
+            )
+            if using
+            else []
         )
-        for (row, _), z in zip(steps, zones, strict=True)
-    ]
-    return home, {r.staff_no for r, _ in steps}, moves
+    }
+    return HomePlan(
+        points=points,
+        homes=homes,
+        moved=set(timeline),
+        moves=[
+            HomeMove(
+                line=row.line,
+                staff_no=row.staff_no,
+                from_zone=z["from_zone"],
+                to_zone=z["to_zone"],
+                distance_km=z["distance_km"],
+                takes_effect=row.report_time,
+            )
+            for (row, _), z in zip(steps, move_zones, strict=True)
+        ],
+        uses=[
+            HomeUse(
+                line=row.line,
+                staff_no=row.staff_no,
+                zone_label=use_zones.get(i, ""),
+                since=move.report_time if move else None,
+            )
+            for i, (row, _, move) in enumerate(using, start=1)
+        ],
+    )
 
 
 async def _write(
-    conn: asyncpg.Connection, rows: list[RosterRow], home: dict[str, Point], moved: set[str]
+    conn: asyncpg.Connection, rows: list[RosterRow], plan: HomePlan
 ) -> tuple[int, int, int]:
-    """Upsert the crew by staff_no, move the homes in [moved], then one
-    pending pickup per row. Returns (crew created, crew updated, pickups
-    created)."""
+    """Upsert the crew by staff_no, set the homes that moved, then one pending
+    pickup per row at its planned point. Returns (crew created, crew
+    updated, pickups created)."""
     # One crew record per staff number: name and role from its first row in
-    # the file; home from _plan_homes.
+    # the file; home from the plan.
     crew: dict[str, RosterRow] = {}
     for row in rows:
         crew.setdefault(row.staff_no, row)
@@ -537,7 +613,7 @@ async def _write(
         [crew[s].name for s in crew if s in known],
         [crew[s].crew_role for s in crew if s in known],
     )
-    movers = [s for s in crew if s in known and s in moved]
+    movers = [s for s in crew if s in known and s in plan.moved]
     await conn.execute(
         """
         update public.crew_members c
@@ -547,11 +623,11 @@ async def _write(
         where c.staff_no = u.staff_no
         """,
         movers,
-        [home[s][0] for s in movers],
-        [home[s][1] for s in movers],
+        [plan.homes[s][0] for s in movers],
+        [plan.homes[s][1] for s in movers],
     )
-    # New crew: home from _plan_homes, which the schema requires.
-    # _check_in_db rejected the rows of new crew without a point.
+    # New crew, with the home the schema requires. _check_in_db rejected the
+    # rows of new crew without a point.
     new = [s for s in crew if s not in known]
     for r in await conn.fetch(
         """
@@ -565,30 +641,26 @@ async def _write(
         new,
         [crew[s].name for s in new],
         [crew[s].crew_role for s in new],
-        [home[s][0] for s in new],
-        [home[s][1] for s in new],
+        [plan.homes[s][0] for s in new],
+        [plan.homes[s][1] for s in new],
     ):
         known[r["staff_no"]] = r["id"]
-    # A row with no location is picked up from home, as it is now, after any
-    # move: st_makepoint of nulls is null, so coalesce falls back to it.
+    # Every row has its point by now: its own, or the home in effect at its
+    # report time.
     await conn.execute(
         """
         insert into public.pickup_requests
             (crew_member_id, pickup_location, report_time, request_type, status)
         select u.crew_member_id,
-            coalesce(
-                extensions.st_setsrid(extensions.st_makepoint(u.lon, u.lat), 4326)
-                    ::extensions.geography,
-                c.home_location
-            ),
+            extensions.st_setsrid(extensions.st_makepoint(u.lon, u.lat), 4326)
+                ::extensions.geography,
             u.report_time, u.request_type, 'pending'
         from unnest($1::uuid[], $2::float8[], $3::float8[], $4::timestamptz[], $5::text[])
             as u(crew_member_id, lat, lon, report_time, request_type)
-        join public.crew_members c on c.id = u.crew_member_id
         """,
         [known[r.staff_no] for r in rows],
-        [r.lat for r in rows],
-        [r.lon for r in rows],
+        [p[0] for p in plan.points],
+        [p[1] for p in plan.points],
         [r.report_time for r in rows],
         [r.request_type.value for r in rows],
     )
@@ -637,10 +709,8 @@ async def run(
             accepted, also_rejected, locations = (
                 await _check_in_db(conn, rows) if rows else ([], [], [])
             )
-            home, moved, moves = await _plan_homes(conn, accepted) if accepted else ({}, set(), [])
-            created, updated, pickups = (
-                await _write(conn, accepted, home, moved) if accepted else (0, 0, 0)
-            )
+            plan = await _plan_homes(conn, accepted) if accepted else None
+            created, updated, pickups = await _write(conn, accepted, plan) if plan else (0, 0, 0)
             all_rejected = sorted(rejected + also_rejected, key=lambda r: r.line)
             result = RosterImportResult(
                 dry_run=dry_run,
@@ -651,8 +721,9 @@ async def run(
                 rows_rejected=len(all_rejected),
                 rejected=all_rejected,
                 locations=locations,
-                homes_updated=len(moved),
-                home_moves=moves,
+                homes_updated=len(plan.moved) if plan else 0,
+                home_moves=plan.moves if plan else [],
+                home_uses=plan.uses if plan else [],
             )
             if dry_run:
                 raise _Undo(result)

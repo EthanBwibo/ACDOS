@@ -194,14 +194,30 @@ data class RowLocationDto(
     @Json(name = "distance_km") val distanceKm: Double
 )
 
-/** A set_home=yes row moving a crew member's home: the zones nearest each end, and how far. */
+/**
+ * A set_home=yes row moving a crew member's home from [takesEffect], its report time: the
+ * zones nearest each end, and how far.
+ */
 @JsonClass(generateAdapter = true)
 data class HomeMoveDto(
     val line: Int,
     @Json(name = "staff_no") val staffNo: String,
     @Json(name = "from_zone") val fromZone: String,
     @Json(name = "to_zone") val toZone: String,
-    @Json(name = "distance_km") val distanceKm: Double
+    @Json(name = "distance_km") val distanceKm: Double,
+    @Json(name = "takes_effect") val takesEffect: Instant
+)
+
+/**
+ * A row with no pickup_location: the home it is collected from, the one in effect at its
+ * report time. [since] is when a set_home move made it the home; null for the stored home.
+ */
+@JsonClass(generateAdapter = true)
+data class HomeUseDto(
+    val line: Int,
+    @Json(name = "staff_no") val staffNo: String,
+    @Json(name = "zone_label") val zoneLabel: String,
+    val since: Instant?
 )
 
 /** What an import did, or with [dryRun] what it would do. */
@@ -218,5 +234,6 @@ data class RosterImportResultDto(
     val locations: List<RowLocationDto> = emptyList(),
     /** Crew whose home a set_home row moved; 0 in results stored before set_home. */
     @Json(name = "homes_updated") val homesUpdated: Int = 0,
-    @Json(name = "home_moves") val homeMoves: List<HomeMoveDto> = emptyList()
+    @Json(name = "home_moves") val homeMoves: List<HomeMoveDto> = emptyList(),
+    @Json(name = "home_uses") val homeUses: List<HomeUseDto> = emptyList()
 )

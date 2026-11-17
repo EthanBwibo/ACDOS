@@ -585,15 +585,29 @@ class RowLocation(BaseModel):
 
 
 class HomeMove(BaseModel):
-    """A set_home=yes row that moves a crew member's home_location: from the
-    home they had (stored, or from an earlier row of the file) to the row's
-    point. Zones are the nearest to each point, by PostGIS."""
+    """A set_home=yes row that moves a crew member's home_location, from its
+    report time on: from the home in effect just before (stored, or an
+    earlier move) to the row's point. Zones are the nearest to each point,
+    by PostGIS."""
 
     line: int
     staff_no: str
     from_zone: str
     to_zone: str
     distance_km: float  # from the old home to the new one, to 0.1 km
+    takes_effect: datetime  # the row's report time: later pickups use the new home
+
+
+class HomeUse(BaseModel):
+    """A row with no pickup_location: the home it is collected from, the one
+    in effect at its report time."""
+
+    line: int
+    staff_no: str
+    zone_label: str  # the zone nearest that home
+    # The report time of the set_home row that made it the home; null for the
+    # stored home (or a new crew member's first point).
+    since: datetime | None
 
 
 class RosterImportResult(BaseModel):
@@ -610,7 +624,9 @@ class RosterImportResult(BaseModel):
     # Every row read with a pickup_location, rejected ones included, in line
     # order. Empty in results stored before #245.
     locations: list[RowLocation] = Field(default_factory=list)
-    # Crew whose home a set_home=yes row moved, and each move in line order.
-    # 0 and empty in results stored before set_home.
+    # Crew whose home a set_home=yes row moved, each move, and the home each
+    # accepted row with no location uses. 0 and empty in results stored
+    # before set_home.
     homes_updated: int = 0
-    home_moves: list[HomeMove] = Field(default_factory=list)
+    home_moves: list[HomeMove] = Field(default_factory=list)  # in line order
+    home_uses: list[HomeUse] = Field(default_factory=list)  # accepted rows only

@@ -80,7 +80,8 @@ class OpenApiContractTest {
         "RosterImportResult" to RosterImportResultDto::class.java,
         "RejectedRow" to RejectedRowDto::class.java,
         "RowLocation" to RowLocationDto::class.java,
-        "HomeMove" to HomeMoveDto::class.java
+        "HomeMove" to HomeMoveDto::class.java,
+        "HomeUse" to HomeUseDto::class.java
     )
 
     private val enums: Map<String, Class<out Enum<*>>> = mapOf(
