@@ -19,6 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kq.acdos.R
+import com.kq.acdos.data.remote.HomeMoveDto
 import com.kq.acdos.data.remote.RejectReasonDto
 import com.kq.acdos.data.remote.RosterImportResultDto
 import java.io.ByteArrayOutputStream
@@ -156,6 +157,7 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
 
         view.findViewById<View>(R.id.summary_card).isVisible = result != null
         result?.let { showSummary(view, it) }
+        showHomeMoves(view, result)
         showLocations(view, result)
         showRejected(view, result)
 
@@ -187,6 +189,7 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
         detail(view, R.id.rows_in_file, R.string.roster_rows_in_file, result.rows)
         detail(view, R.id.crew_created, R.string.roster_crew_created, result.crewCreated)
         detail(view, R.id.crew_updated, R.string.roster_crew_updated, result.crewUpdated)
+        detail(view, R.id.homes_updated, R.string.roster_homes_updated, result.homesUpdated)
         val pickups = if (result.dryRun) {
             R.string.roster_pickups_to_import
         } else {
@@ -200,6 +203,21 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
         val row = view.findViewById<View>(id)
         row.findViewById<TextView>(R.id.detail_label).setText(label)
         row.findViewById<TextView>(R.id.detail_value).text = value.toString()
+    }
+
+    private fun showHomeMoves(view: View, result: RosterImportResultDto?) {
+        val moves = result?.homeMoves.orEmpty()
+        view.findViewById<View>(R.id.home_moves_label).isVisible = moves.isNotEmpty()
+        view.findViewById<View>(R.id.home_moves_card).isVisible = moves.isNotEmpty()
+        val rows = view.findViewById<LinearLayout>(R.id.home_move_rows)
+        rows.removeAllViews()
+        for (move in moves) {
+            rows.addRow(
+                title = homeMoveText(move, ::getString),
+                subtitle = move.staffNo,
+                lead = move.line.toString()
+            )
+        }
     }
 
     private fun showLocations(view: View, result: RosterImportResultDto?) {
@@ -231,6 +249,18 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
         }
     }
 }
+
+/** A zone's name without the city: "Kilimani, Nairobi" is "Kilimani". */
+internal fun shortZone(label: String): String = label.substringBefore(", ")
+
+/** "Home moves: Kilimani → Kasarani (14.1 km)", for a set_home row (#245). */
+internal fun homeMoveText(move: HomeMoveDto, text: (Int) -> String): String = String.format(
+    Locale.getDefault(),
+    text(R.string.roster_home_move),
+    shortZone(move.fromZone),
+    shortZone(move.toZone),
+    move.distanceKm
+)
 
 /** One pickup point in the preview (#245): its line, nearest zone, and who and how far. */
 internal data class LocationRow(val line: String, val zone: String, val detail: String)

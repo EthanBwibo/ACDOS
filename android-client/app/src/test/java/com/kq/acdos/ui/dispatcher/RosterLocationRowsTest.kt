@@ -2,6 +2,7 @@ package com.kq.acdos.ui.dispatcher
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.kq.acdos.data.remote.HomeMoveDto
 import com.kq.acdos.data.remote.RejectReasonDto
 import com.kq.acdos.data.remote.RejectedRowDto
 import com.kq.acdos.data.remote.RosterImportResultDto
@@ -83,6 +84,21 @@ class RosterLocationRowsTest {
         val row = locationRows(atTheLimit, context::getString).single()
 
         assertEquals("KQ1 · 10.0 km: outside the pickup zones", row.detail)
+    }
+
+    @Test
+    fun aHomeMove_namesBothZonesAndTheDistance() {
+        val move = HomeMoveDto(12, "KQ10231", "Kilimani, Nairobi", "Kasarani, Nairobi", 14.1)
+
+        assertEquals(
+            "Home moves: Kilimani → Kasarani (14.1 km)",
+            homeMoveText(move, context::getString)
+        )
+    }
+
+    @Test
+    fun aZoneWithoutACity_isShownWhole() {
+        assertEquals("Kitengela", shortZone("Kitengela"))
     }
 
     @Test

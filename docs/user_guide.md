@@ -66,6 +66,8 @@ Five tabs: **Overview**, **Plan**, **Routes**, **Fleet & crew** and **Messages**
    - **Rows skipped,** each with the reason.
 3. Tap **Import N pickups** to import. Rows with no pickup location are collected from the crew member's home. A new crew member needs a location on at least one row.
 
+**Moving a crew member's home:** put the new point in their row and `yes` in its `set_home` column. The check shows it under **Home moves**, e.g. "Home moves: Kilimani → Kasarani (14.1 km)", before anything changes. Without `yes`, a point is for that one pickup only, e.g. a hotel. A crew member's "I need to change my pickup address" message is the usual reason for one.
+
 **Pickup locations come from Google Maps:** right-click the spot on a computer, click the coordinates to copy them, and paste them into the cell. A full Google Maps link works too; a short `maps.app.goo.gl` link doesn't. The steps are in `docs/roster_import.md`, "Getting a pickup point from Google Maps".
 
 ### A van breaks down

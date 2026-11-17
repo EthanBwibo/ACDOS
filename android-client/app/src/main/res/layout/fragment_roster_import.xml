@@ -64,6 +64,13 @@
                     android:layout_marginTop="8dp" />
 
                 <include
+                    android:id="@+id/homes_updated"
+                    layout="@layout/view_detail_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" />
+
+                <include
                     android:id="@+id/pickups"
                     layout="@layout/view_detail_row"
                     android:layout_width="match_parent"
@@ -78,6 +85,29 @@
                     android:layout_marginTop="8dp" />
 
             </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/home_moves_label"
+            style="@style/Widget.ACDOS.Overline"
+            android:text="@string/roster_home_moves_title"
+            android:visibility="gone" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/home_moves_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/home_move_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/divider_hairline"
+                android:orientation="vertical"
+                android:paddingVertical="4dp"
+                android:showDividers="middle" />
 
         </com.google.android.material.card.MaterialCardView>
 
