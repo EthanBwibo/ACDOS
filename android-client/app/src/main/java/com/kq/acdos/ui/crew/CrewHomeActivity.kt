@@ -6,21 +6,21 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
+import com.kq.acdos.auth.AppRole
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.openProfile
 import com.kq.acdos.ui.showStatusBanners
-import com.kq.acdos.ui.showThemeDialog
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 
 /**
- * The Crew role's home (#56): Pickup and Message tabs, and Sign out in the
- * overflow menu. Reached only through the role in profiles (#30).
+ * The Crew role's home (#56): Pickup and Message tabs, and Profile (#231) in
+ * the overflow menu, which has the theme and Sign out. Reached only through
+ * the role in profiles (#30).
  */
 class CrewHomeActivity : AppCompatActivity() {
     private val container by lazy { (application as AcdosApplication).container }
@@ -33,20 +33,8 @@ class CrewHomeActivity : AppCompatActivity() {
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_theme -> {
-                    showThemeDialog(container.themeStore)
-                    true
-                }
-
-                R.id.action_sign_out -> {
-                    // Only ends the session; openLoginWhenSessionEnds does the navigating.
-                    lifecycleScope.launch { container.sessionRouter.signOut() }
-                    true
-                }
-
-                else -> false
-            }
+            if (item.itemId == R.id.action_profile) openProfile(AppRole.CREW)
+            item.itemId == R.id.action_profile
         }
 
         findViewById<BottomNavigationView>(R.id.bottom_nav).setOnItemSelectedListener { item ->

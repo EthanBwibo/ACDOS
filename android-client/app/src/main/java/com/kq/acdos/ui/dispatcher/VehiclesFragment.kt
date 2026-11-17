@@ -79,7 +79,7 @@ class VehiclesFragment : Fragment(R.layout.fragment_dispatch_list) {
 }
 
 @StringRes
-private fun vehicleStatusLabel(status: VehicleStatusDto): Int = when (status) {
+internal fun vehicleStatusLabel(status: VehicleStatusDto): Int = when (status) {
     VehicleStatusDto.AVAILABLE -> R.string.vehicle_status_available
     VehicleStatusDto.IN_SERVICE -> R.string.vehicle_status_in_service
     VehicleStatusDto.BROKEN_DOWN -> R.string.vehicle_status_broken_down

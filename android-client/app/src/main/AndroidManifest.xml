@@ -41,6 +41,9 @@
         <activity
             android:name=".ui.dispatcher.DispatcherHomeActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.ProfileActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

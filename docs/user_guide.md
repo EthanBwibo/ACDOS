@@ -19,7 +19,9 @@ ACDOS gets Kenya Airways crew from home to JKIA before their report time. There 
    - **"Your account's role has changed. Sign in again."** Your role was changed while you were signed in. Sign in again to get the right screens.
    - **Forgot password?** Accounts are managed by the dispatcher; ask them to reset it.
 4. **Once you've signed in, the app opens without signal,** using what it last loaded.
-5. **Sign out** and **Theme** (System, Light or Dark) are in the menu at the top right.
+5. **Sign out** and **Theme** (System, Light or Dark):
+   - **Drivers and crew:** open the menu at the top right, then **Profile**. Both are at the bottom of that screen.
+   - **Dispatcher:** both are in the menu at the top right.
 
 ---
 
@@ -121,6 +123,10 @@ Three tabs: **Route**, **Schedule** and **Sync**.
 
 ---
 
+### Profile
+
+Open the menu at the top right, then **Profile**. It shows your name, your van's plate, its seats and its status, as the dispatcher has them. It works without signal, showing what it last loaded. Nothing here can be changed. If your van is wrong, ask the dispatcher.
+
 ## Crew
 
 Two tabs: **Pickup** and **Message**.
@@ -154,3 +160,9 @@ Two tabs: **Pickup** and **Message**.
    It goes to the dispatcher only: "Sent to the dispatcher." You can't type free text.
 2. **Recent** lists what you sent. "Seen" means the dispatcher has read it, and their reply shows under it as "Dispatch · …". Pull down to check for a reply.
 3. **No signal?** "Not sent: no connection. Tap it again to retry."
+
+### Profile
+
+Open the menu at the top right, then **Profile**. It shows your name, your crew role, your home zone (the pickup area nearest your home), and your next pickup's time and status. It works without signal, showing what it last loaded.
+
+Nothing here can be changed. Your home address comes from the roster, and journey times are worked out per pickup zone, so a pin you set yourself could give a wrong time. To change your address, ask the dispatcher.

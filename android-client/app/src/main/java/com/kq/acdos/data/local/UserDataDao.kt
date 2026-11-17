@@ -17,7 +17,8 @@ fun interface UserDataStore {
 interface UserDataDao : UserDataStore {
     /**
      * Deletes the cached route and stops (crew names and pickup points), the
-     * crew pickup, notices and presets, and outbox events already uploaded.
+     * crew pickup, notices and presets, the Profile screen's details, and
+     * outbox events already uploaded.
      * Events not yet uploaded stay, including conflicts: they are kept until
      * their own driver signs in again (see PendingPickupEventDao.pending).
      */
@@ -27,6 +28,7 @@ interface UserDataDao : UserDataStore {
         deleteCrewPickups()
         deleteNotices()
         deletePresets()
+        deleteMyProfile()
         deleteSyncedEvents()
     }
 
@@ -42,6 +44,9 @@ interface UserDataDao : UserDataStore {
 
     @Query("DELETE FROM preset_message")
     suspend fun deletePresets()
+
+    @Query("DELETE FROM my_profile")
+    suspend fun deleteMyProfile()
 
     @Query("DELETE FROM pickup_event_outbox WHERE synced_at IS NOT NULL")
     suspend fun deleteSyncedEvents()

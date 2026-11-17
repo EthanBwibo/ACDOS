@@ -12,6 +12,7 @@ import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.DriverScheduleRepository
 import com.kq.acdos.data.MessagesRepository
+import com.kq.acdos.data.ProfileRepository
 import com.kq.acdos.data.ThemeStore
 import com.kq.acdos.data.local.AcdosDatabase
 import com.kq.acdos.data.outbox.ApiPickupEventUploader
@@ -126,6 +127,11 @@ open class AppContainer(context: Context) {
     /** Null without an API URL; the Pickup tab then shows only the cache. */
     val crewPickupRepository: CrewPickupRepository? by lazy {
         if (isApiConfigured) CrewPickupRepository(meApi, database.crewDao()) else null
+    }
+
+    /** Null without an API URL; the Profile screen then shows only the cache. */
+    val profileRepository: ProfileRepository? by lazy {
+        if (isApiConfigured) ProfileRepository(meApi, database.myProfileDao()) else null
     }
 
     /** Null without an API URL; the Message tab then lists only cached presets. */

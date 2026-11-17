@@ -49,6 +49,7 @@ Supabase: Postgres + PostGIS, Auth, RLS
 - **Each role's home screen** has a bottom nav bar:
   - **Driver:** Route, Schedule, Sync.
   - **Crew:** Pickup, Message.
+  - **Profile (driver and crew, #231):** opened from the overflow menu, not a tab. It is read-only and cached in Room, so it opens offline. Crew see their name, crew role, home zone and next pickup; drivers see their name and their van's plate, seats and status. Sign out and the theme are there too. Nothing can be edited: the roster is the source of truth for the home location, and the RF knows only the 28 zones, so a self-set pin would be snapped to a zone and could get a wrong journey time.
   - **Dispatcher** (#230): five tabs, each holding related screens:
 
     | Tab | Holds |

@@ -79,7 +79,14 @@ class CrewPickupRepositoryTest {
         assertEquals(RefreshResult.UPDATED, repository.refresh())
 
         assertEquals(
-            CrewPickupEntity("p1", t0.plusSeconds(1680), t0.plusSeconds(5400), "KDA 002T", t0),
+            CrewPickupEntity(
+                "p1",
+                t0.plusSeconds(1680),
+                t0.plusSeconds(5400),
+                "KDA 002T",
+                t0,
+                status = "assigned"
+            ),
             cached()
         )
 

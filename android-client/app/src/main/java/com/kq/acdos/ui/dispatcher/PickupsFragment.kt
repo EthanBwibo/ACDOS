@@ -92,7 +92,7 @@ class PickupsFragment : Fragment(R.layout.fragment_dispatch_list) {
 }
 
 @StringRes
-private fun pickupStatusLabel(status: PickupRequestStatusDto): Int = when (status) {
+internal fun pickupStatusLabel(status: PickupRequestStatusDto): Int = when (status) {
     PickupRequestStatusDto.PENDING -> R.string.pickup_status_pending
     PickupRequestStatusDto.ASSIGNED -> R.string.pickup_status_assigned
     PickupRequestStatusDto.PICKED_UP -> R.string.pickup_status_picked_up

@@ -11,20 +11,20 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
+import com.kq.acdos.auth.AppRole
 import com.kq.acdos.data.outbox.uploadOnReconnect
 import com.kq.acdos.ui.EXTRA_FULL_NAME
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
-import com.kq.acdos.ui.showThemeDialog
+import com.kq.acdos.ui.openProfile
 import kotlinx.coroutines.launch
 
 /**
- * The Driver role's home: Route, Schedule and Sync tabs, and Sign out in the
- * overflow menu. Reached only through the role in profiles (#30). Refreshes
+ * The Driver role's home: Route, Schedule and Sync tabs, and Profile (#231)
+ * in the overflow menu, which has the theme and Sign out. Reached only through the role in profiles (#30). Refreshes
  * the route each time it comes to the front (#123).
  */
 class DriverHomeActivity : AppCompatActivity() {
@@ -43,19 +43,8 @@ class DriverHomeActivity : AppCompatActivity() {
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.title = intent.getStringExtra(EXTRA_FULL_NAME).orEmpty()
         toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.action_theme -> {
-                    showThemeDialog(container.themeStore)
-                    true
-                }
-
-                R.id.action_sign_out -> {
-                    confirmSignOut()
-                    true
-                }
-
-                else -> false
-            }
+            if (item.itemId == R.id.action_profile) openProfile(AppRole.DRIVER)
+            item.itemId == R.id.action_profile
         }
 
         val tabs = findViewById<BottomNavigationView>(R.id.bottom_nav)
@@ -108,33 +97,5 @@ class DriverHomeActivity : AppCompatActivity() {
 
     private fun show(tab: Fragment) {
         supportFragmentManager.commit { replace(R.id.tab_container, tab) }
-    }
-
-    /**
-     * Sign-out keeps this driver's unsynced pickup events (#118), but the
-     * driver is told first how many are waiting.
-     */
-    private fun confirmSignOut() {
-        lifecycleScope.launch {
-            val driverId = container.authRepository.storedSessionUserId()
-            val unsynced =
-                driverId?.let { container.database.pendingPickupEventDao().countPending(it) } ?: 0
-            if (unsynced == 0) {
-                signOut()
-            } else {
-                MaterialAlertDialogBuilder(this@DriverHomeActivity)
-                    .setMessage(
-                        resources.getQuantityString(R.plurals.sign_out_unsynced, unsynced, unsynced)
-                    )
-                    .setPositiveButton(R.string.action_sign_out) { _, _ -> signOut() }
-                    .setNegativeButton(R.string.action_cancel, null)
-                    .show()
-            }
-        }
-    }
-
-    /** Only ends the session; openLoginWhenSessionEnds does the navigating. */
-    private fun signOut() {
-        lifecycleScope.launch { container.sessionRouter.signOut() }
     }
 }

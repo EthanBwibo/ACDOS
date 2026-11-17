@@ -15,6 +15,10 @@ import retrofit2.http.Query
  * from the token: the wrong role gets 403, a missing or bad token 401.
  */
 interface MeApi {
+    /** The driver's van, for the Profile screen (#231). */
+    @GET("drivers/me")
+    suspend fun driverMe(): Response<DriverMeDto>
+
     @GET("drivers/me/route")
     suspend fun driverRoute(): Response<DriverRouteResponseDto>
 
@@ -27,6 +31,10 @@ interface MeApi {
 
     @GET("crew/me/pickup")
     suspend fun crewPickup(): Response<CrewPickupResponseDto>
+
+    /** The crew member's role and home zone, for the Profile screen (#231). */
+    @GET("crew/me")
+    suspend fun crewMe(): Response<CrewMeDto>
 
     /** Safe to retry: a notice already acknowledged keeps its first time (#53). */
     @POST("crew/me/notices/{notice_id}/acknowledge")
@@ -153,6 +161,27 @@ data class NoticeAcknowledgedDto(
 /** [pickup] is null when nothing is coming up. */
 @JsonClass(generateAdapter = true)
 data class CrewPickupResponseDto(val pickup: CrewPickupDto?)
+
+/** Both null for a crew account not yet linked to a crew record. */
+@JsonClass(generateAdapter = true)
+data class CrewMeDto(
+    /** As the roster has it, e.g. cabin_crew. */
+    @Json(name = "crew_role") val crewRole: String?,
+    /** The pickup zone nearest the home location. Crew get no coordinates. */
+    @Json(name = "home_zone") val homeZone: String?
+)
+
+@JsonClass(generateAdapter = true)
+data class DriverVehicleDto(
+    @Json(name = "plate_number") val plateNumber: String,
+    /** Seats. */
+    val capacity: Int,
+    val status: VehicleStatusDto
+)
+
+/** [vehicle] is null when no van is assigned to the driver. */
+@JsonClass(generateAdapter = true)
+data class DriverMeDto(val vehicle: DriverVehicleDto?)
 
 enum class PickupEventTypeDto {
     @Json(name = "pickup_confirmed")

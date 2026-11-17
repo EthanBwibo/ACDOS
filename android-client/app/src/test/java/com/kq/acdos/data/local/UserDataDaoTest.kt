@@ -48,6 +48,9 @@ class UserDataDaoTest {
             listOf(ScheduleChangeNoticeEntity("x1", "p1", "flight_delay", t0, t0, t0, null))
         )
         crew.replacePresets(listOf(PresetMessageEntity("m1", "running_late", "Running late")))
+        db.myProfileDao().save(
+            MyProfileEntity(crewRole = "pilot", homeZone = "Karen", fetchedAt = t0)
+        )
         val outbox = db.pendingPickupEventDao()
         outbox.insert(event("pending"))
         outbox.insert(event("conflicted"))
@@ -62,6 +65,7 @@ class UserDataDaoTest {
         assertNull(crew.observePickup().first())
         assertTrue(crew.observeNotices().first().isEmpty())
         assertTrue(crew.observePresets().first().isEmpty())
+        assertNull(db.myProfileDao().observe().first())
         assertEquals(listOf("pending"), outbox.pending(DRIVER).map { it.idempotencyKey })
         assertEquals(
             listOf("conflicted"),
