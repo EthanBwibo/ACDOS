@@ -78,10 +78,12 @@ The full contract is `docs/openapi.json`, regenerated with `python -m app.contra
 | | `GET /messages?unread=` | Crew messages |
 | | `POST /messages/{id}/ack` | Mark read |
 | | `POST /messages/{id}/replies` | Reply with a dispatcher preset |
-| Driver | `GET /drivers/me/route` | The current route, stop by stop |
+| Driver | `GET /drivers/me` | The assigned van: plate, seats, status (Profile, #231) |
+| | `GET /drivers/me/route` | The current route, stop by stop |
 | | `GET /drivers/me/routes` | Today's and upcoming routes |
 | | `POST /drivers/me/pickup-events` | Upload a batch of pickup events |
-| Crew | `GET /crew/me/pickup` | Next pickup, van, and pending change notices |
+| Crew | `GET /crew/me` | Crew role and home zone (Profile, #231) |
+| | `GET /crew/me/pickup` | Next pickup, van, and pending change notices |
 | | `POST /crew/me/notices/{id}/acknowledge` | Acknowledge a change |
 | | `POST /messages` | Send a crew preset |
 | Crew, dispatcher | `GET /preset-messages` | The presets the caller may send |

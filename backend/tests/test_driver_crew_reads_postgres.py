@@ -375,6 +375,30 @@ def test_crew_get_their_next_pickup_without_coordinates(client, world):
     assert not keys_anywhere(body) & {"lat", "lon", "location", "pickup_location"}
 
 
+def test_crew_get_their_role_and_home_zone_without_coordinates(client, world):
+    """#231. C lives where C is picked up, so C's home zone is the zone the
+    driver's stop shows for C."""
+    body = client.get("/crew/me", headers=as_user(world, "C")).json()
+    stops = client.get("/drivers/me/route", headers=as_user(world, "A")).json()["route"]["stops"]
+    [stop] = [s for s in stops if s["crew_name"] == "Crew C"]
+
+    assert body == {"crew_role": "cabin_crew", "home_zone": stop["zone_label"]}
+    assert body["home_zone"]
+
+
+def test_drivers_get_their_van(client, world):
+    body = client.get("/drivers/me", headers=as_user(world, "A")).json()
+    assert body == {
+        "vehicle": {"plate_number": world["plates"]["A"], "capacity": 14, "status": "available"}
+    }
+    other = client.get("/drivers/me", headers=as_user(world, "B")).json()
+    assert other["vehicle"]["plate_number"] == world["plates"]["B"]
+
+
+def test_a_driver_without_a_van_gets_null(client, world):
+    assert client.get("/drivers/me", headers=as_user(world, "H")).json() == {"vehicle": None}
+
+
 def test_crew_cannot_read_each_others_pickups(client, world):
     c = client.get("/crew/me/pickup", headers=as_user(world, "C")).json()["pickup"]
     e = client.get("/crew/me/pickup", headers=as_user(world, "E")).json()["pickup"]
@@ -387,8 +411,13 @@ def test_crew_cannot_read_each_others_pickups(client, world):
 @pytest.mark.parametrize(
     ("user", "path"),
     [
+        ("C", "/drivers/me"),
         ("C", "/drivers/me/route"),
         ("C", "/drivers/me/routes"),
+        ("A", "/crew/me"),
+        ("D", "/drivers/me"),
+        ("D", "/crew/me"),
+        ("N", "/crew/me"),
         ("A", "/crew/me/pickup"),
         ("D", "/drivers/me/route"),
         ("D", "/crew/me/pickup"),
@@ -433,6 +462,36 @@ def test_crew_need_the_vehicle_policy_to_see_their_plate(world):
         "drop policy vehicles_crew_select on public.vehicles", world["users"]["C"], plate
     )
     assert dropped.vehicle_plate is None
+
+
+def test_drivers_need_the_vehicle_policy_to_see_their_van(world):
+    driver_a = world["users"]["A"]
+
+    def van(conn):
+        return reads.driver_vehicle(conn, driver_a)
+
+    assert with_policy_changed("select 1", driver_a, van) is not None
+    dropped = with_policy_changed(
+        "drop policy vehicles_driver_select on public.vehicles", driver_a, van
+    )
+    assert dropped is None
+
+
+def test_crew_need_the_own_row_and_zone_policies_to_see_their_home_zone(world):
+    crew_c, user_c = world["rows"]["crew"][0], world["users"]["C"]
+
+    def me(conn):
+        return reads.crew_me(conn, crew_c)
+
+    assert with_policy_changed("select 1", user_c, me).home_zone
+    own_row = with_policy_changed(
+        "drop policy crew_members_crew_select_own on public.crew_members", user_c, me
+    )
+    assert (own_row.crew_role, own_row.home_zone) == (None, None)
+    zones = with_policy_changed(
+        "drop policy pickup_zones_authenticated_select on public.pickup_zones", user_c, me
+    )
+    assert (zones.crew_role, zones.home_zone) == ("cabin_crew", None)
 
 
 def test_crew_need_the_route_policy_to_see_their_plate(world):

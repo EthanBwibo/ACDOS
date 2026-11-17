@@ -15,7 +15,9 @@ from app import reads
 from app.auth import CallerDep
 from app.errors import ApiError, ErrorCode, errors
 from app.models.schemas import (
+    CrewMe,
     CrewPickupResponse,
+    DriverMe,
     DriverRouteResponse,
     NoticeAcknowledged,
     RouteSummaryPage,
@@ -40,6 +42,14 @@ def _require(profile: reads.Profile | None, role: str) -> None:
         raise ApiError(
             status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, f"only a {role} may read this"
         )
+
+
+@router.get("/drivers/me", response_model=DriverMe, responses=errors(_CALLER_ERRORS))
+async def me_as_driver(request: Request, caller: CallerDep) -> DriverMe:
+    """The driver's profile screen (#231): their van, its seats and status."""
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
+        _require(profile, "driver")
+        return DriverMe(vehicle=await reads.driver_vehicle(conn, caller.user_id))
 
 
 @router.get(
@@ -71,6 +81,16 @@ async def my_routes(
     async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
         _require(profile, "driver")
         return await reads.route_page(conn, caller.user_id, after, limit)
+
+
+@router.get("/crew/me", response_model=CrewMe, responses=errors(_CALLER_ERRORS))
+async def me_as_crew(request: Request, caller: CallerDep) -> CrewMe:
+    """The crew member's profile screen (#231): their crew role and home zone."""
+    async with reads.as_caller(reads.pool(request), caller.user_id) as (conn, profile):
+        _require(profile, "crew")
+        if profile.crew_member_id is None:
+            return CrewMe(crew_role=None, home_zone=None)
+        return await reads.crew_me(conn, profile.crew_member_id)
 
 
 @router.get("/crew/me/pickup", response_model=CrewPickupResponse, responses=errors(_CALLER_ERRORS))

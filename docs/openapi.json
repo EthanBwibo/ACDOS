@@ -16,6 +16,38 @@
         "title": "Body_import_roster_roster_imports_post",
         "type": "object"
       },
+      "CrewMe": {
+        "properties": {
+          "crew_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crew Role"
+          },
+          "home_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home Zone"
+          }
+        },
+        "required": [
+          "crew_role",
+          "home_zone"
+        ],
+        "title": "CrewMe",
+        "type": "object"
+      },
       "CrewMessage": {
         "properties": {
           "crew_member_id": {
@@ -474,6 +506,25 @@
         "title": "DispatcherVehiclePage",
         "type": "object"
       },
+      "DriverMe": {
+        "properties": {
+          "vehicle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DriverVehicle"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "vehicle"
+        ],
+        "title": "DriverMe",
+        "type": "object"
+      },
       "DriverRoute": {
         "properties": {
           "planned_arrival": {
@@ -596,6 +647,29 @@
           "pickup_status"
         ],
         "title": "DriverStop",
+        "type": "object"
+      },
+      "DriverVehicle": {
+        "properties": {
+          "capacity": {
+            "exclusiveMinimum": 0.0,
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "plate_number": {
+            "title": "Plate Number",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VehicleStatus"
+          }
+        },
+        "required": [
+          "plate_number",
+          "capacity",
+          "status"
+        ],
+        "title": "DriverVehicle",
         "type": "object"
       },
       "ErrorBody": {
@@ -1393,6 +1467,72 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/crew/me": {
+      "get": {
+        "description": "The crew member's profile screen (#231): their crew role and home zone.",
+        "operationId": "me_as_crew_crew_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewMe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Me As Crew",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/crew/me/notices/{notice_id}/acknowledge": {
       "post": {
         "description": "The crew member has seen a change to their pickup (#53). Safe to\nretry: a notice already acknowledged keeps its first time.",
@@ -1557,6 +1697,72 @@
           }
         ],
         "summary": "My Pickup",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/drivers/me": {
+      "get": {
+        "description": "The driver's profile screen (#231): their van, its seats and status.",
+        "operationId": "me_as_driver_drivers_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverMe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Me As Driver",
         "tags": [
           "me"
         ]
