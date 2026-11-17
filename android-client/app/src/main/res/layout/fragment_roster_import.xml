@@ -82,6 +82,38 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/locations_label"
+            style="@style/Widget.ACDOS.Overline"
+            android:text="@string/roster_locations_title"
+            android:visibility="gone" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/locations_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/location_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/divider_hairline"
+                android:orientation="vertical"
+                android:paddingVertical="4dp"
+                android:showDividers="middle" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/locations_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/roster_locations_hint"
+            android:textAppearance="@style/TextAppearance.ACDOS.Secondary.Small"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/rejected_label"
             style="@style/Widget.ACDOS.Overline"
             android:text="@string/roster_rejected_title"

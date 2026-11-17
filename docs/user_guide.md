@@ -57,6 +57,17 @@ Five tabs: **Overview**, **Plan**, **Routes**, **Fleet & crew** and **Messages**
 
 **Times come from the travel-time model,** which knows Nairobi's traffic by hour and day.
 
+### Import a roster
+
+1. Open **Fleet & crew > Pickups** and tap **Import roster**, then pick the CSV file. The format is in `docs/roster_import.md`.
+2. The app checks the file first and imports nothing yet. It shows:
+   - how many rows, new crew and pickups the file would add;
+   - **Pickup points:** for each row that gives a pickup location, the nearest pickup zone and how far the point is from it. A point far from its zone, or in the wrong zone, is usually a typo, or latitude and longitude swapped. Fix the file and choose it again;
+   - **Rows skipped,** each with the reason.
+3. Tap **Import N pickups** to import. Rows with no pickup location are collected from the crew member's home. A new crew member needs a location on at least one row.
+
+**Pickup locations come from Google Maps:** right-click the spot on a computer, click the coordinates to copy them, and paste them into the cell. A full Google Maps link works too; a short `maps.app.goo.gl` link doesn't. The steps are in `docs/roster_import.md`, "Getting a pickup point from Google Maps".
+
 ### A van breaks down
 
 1. Open **Fleet & crew > Vehicles**, tap the van, then **Mark broken down**.

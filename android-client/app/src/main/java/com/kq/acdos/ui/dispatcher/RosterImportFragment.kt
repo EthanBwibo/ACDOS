@@ -24,6 +24,7 @@ import com.kq.acdos.data.remote.RosterImportResultDto
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -84,8 +85,8 @@ private fun InputStream.readAtMost(limit: Int): ByteArray {
 }
 
 /**
- * Import roster (#229): the dry run's counts and the rows it would skip, then "Import N
- * pickups". Nothing is written until that tap. The import starts no re-plan; the dispatcher
+ * Import roster (#229): the dry run's counts, each given pickup point's nearest zone and
+ * distance (#245), and the rows it would skip, then "Import N pickups". Nothing is written until that tap. The import starts no re-plan; the dispatcher
  * runs optimisation as usual.
  */
 class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
@@ -155,6 +156,7 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
 
         view.findViewById<View>(R.id.summary_card).isVisible = result != null
         result?.let { showSummary(view, it) }
+        showLocations(view, result)
         showRejected(view, result)
 
         view.findViewById<Button>(R.id.import_now).apply {
@@ -200,6 +202,16 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
         row.findViewById<TextView>(R.id.detail_value).text = value.toString()
     }
 
+    private fun showLocations(view: View, result: RosterImportResultDto?) {
+        val shown = result?.let { locationRows(it, ::getString) }.orEmpty()
+        for (id in listOf(R.id.locations_label, R.id.locations_card, R.id.locations_hint)) {
+            view.findViewById<View>(id).isVisible = shown.isNotEmpty()
+        }
+        val rows = view.findViewById<LinearLayout>(R.id.location_rows)
+        rows.removeAllViews()
+        for (row in shown) rows.addRow(title = row.zone, subtitle = row.detail, lead = row.line)
+    }
+
     private fun showRejected(view: View, result: RosterImportResultDto?) {
         val rejected = result?.rejected.orEmpty()
         view.findViewById<View>(R.id.rejected_label).isVisible = rejected.isNotEmpty()
@@ -217,6 +229,37 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
                 lead = row.line.toString()
             )
         }
+    }
+}
+
+/** One pickup point in the preview (#245): its line, nearest zone, and who and how far. */
+internal data class LocationRow(val line: String, val zone: String, val detail: String)
+
+/**
+ * The given pickup points, in line order. Whether one is outside comes from the rows the
+ * server rejected, not from the rounded distance: 10.04 km shows as 10.0 but is outside.
+ */
+internal fun locationRows(result: RosterImportResultDto, text: (Int) -> String): List<LocationRow> {
+    val outside = result.rejected
+        .filter { it.reason == RejectReasonDto.OUTSIDE_PICKUP_ZONES }
+        .map { it.line }
+        .toSet()
+    return result.locations.map { location ->
+        val format = if (location.line in outside) {
+            R.string.roster_location_outside
+        } else {
+            R.string.roster_location_near
+        }
+        LocationRow(
+            line = location.line.toString(),
+            zone = location.zoneLabel,
+            detail = String.format(
+                Locale.getDefault(),
+                text(format),
+                location.staffNo,
+                location.distanceKm
+            )
+        )
     }
 }
 
