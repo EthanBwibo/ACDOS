@@ -199,6 +199,9 @@ def test_each_band_is_planned_with_its_own_vans(world):
     # The bystander's pickup on the same day is in no band.
     assert all(world["pickup"] not in p for _, p, _ in jobs)
     assert len({v for _, _, vans in jobs for v in vans}) == 20
+    # --whole-day: the one job the app's Plan tab would send.
+    [(name, pickups, vans)] = defence.whole_day(jobs)
+    assert (name, len(set(pickups)), len(set(vans))) == ("whole-day", 120, 20)
 
 
 def test_seed_stops_without_the_accounts():

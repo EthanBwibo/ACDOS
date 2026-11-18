@@ -18,6 +18,8 @@ vans of 14 seats, each with its driver account.
             dispatcher@acdos.test: one job per band with that band's vans
             (VAN_GROUPS), timing each from POST to completed. Works on a
             seeded day and on an imported one.
+            --whole-day  one job instead, with every pickup and van: what
+                         the app's Plan tab sends with every van ticked
     reset   deletes the defence rows and what hangs off them (routes, jobs,
             events, notices, the defence crew's messages), the same way
             backend/benchmarks/demo_seed.py does: vans and crew tagged
@@ -55,7 +57,7 @@ Environment (seed, plan, reset):
 Usage (from the repo root, with the backend venv):
     python scripts/make_defence_day.py roster [--date 2026-11-20] [--out file.csv]
     python scripts/make_defence_day.py seed [--date ...] [--crew-only] [--plan]
-    python scripts/make_defence_day.py plan [--date ...] [--api https://...]
+    python scripts/make_defence_day.py plan [--date ...] [--api https://...] [--whole-day]
     python scripts/make_defence_day.py reset
 """
 
@@ -502,6 +504,12 @@ async def band_jobs(conn, day: date, seed: int) -> list[tuple[str, list[UUID], l
     return jobs
 
 
+def whole_day(jobs: list[tuple[str, list[UUID], list[UUID]]]):
+    """The bands' jobs as the one job the app's Plan tab sends: every pickup
+    of the day, with every van ticked."""
+    return [("whole-day", [p for _, ps, _ in jobs for p in ps], [v for _, _, vs in jobs for v in vs])]
+
+
 def plan_bands(jobs, api: str) -> list[dict]:
     """One optimisation job per band on the API, one after another, each timed
     from POST to completed or failed."""
@@ -610,6 +618,8 @@ async def main_async(args: argparse.Namespace) -> None:
             if not args.plan:
                 return
         jobs = await band_jobs(conn, day, args.seed)
+        if args.whole_day:
+            jobs = whole_day(jobs)
     finally:
         await conn.close()
     plan_bands(jobs, args.api)
@@ -626,6 +636,9 @@ def main() -> None:
     parser.add_argument("--crew-only", action="store_true", help="seed: no pickups")
     parser.add_argument("--plan", action="store_true", help="seed: then plan each band")
     parser.add_argument("--api", default=API_URL, help="plan: the API (default Azure)")
+    parser.add_argument(
+        "--whole-day", action="store_true", help="plan: one job for the day, as the app sends"
+    )
     args = parser.parse_args()
     if args.command == "roster":
         day = args.date or tomorrow()
