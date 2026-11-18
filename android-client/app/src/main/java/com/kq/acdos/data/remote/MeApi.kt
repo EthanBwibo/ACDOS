@@ -93,7 +93,12 @@ data class DriverStopDto(
     val lat: Double,
     val lon: Double,
     /** What the server has recorded, from any phone (#196). */
-    @Json(name = "pickup_status") val pickupStatus: PickupRequestStatusDto
+    @Json(name = "pickup_status") val pickupStatus: PickupRequestStatusDto,
+    /**
+     * +2547XXXXXXXX, only from 30 minutes before [scheduledPickup] until the pickup is
+     * settled (#255); the server leaves it out otherwise. Never stored on the phone.
+     */
+    @Json(name = "crew_phone") val crewPhone: String? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -139,7 +144,14 @@ data class CrewPickupDto(
     /** True while a re-plan's change to this pickup is not acknowledged (#53). */
     @Json(name = "needs_ack") val needsAck: Boolean,
     /** The latest unacknowledged change; null when there is none. */
-    val notice: ScheduleChangeNoticeDto?
+    val notice: ScheduleChangeNoticeDto?,
+    /** Set once a route plans the pickup, like [vehiclePlate] (#255). */
+    @Json(name = "driver_first_name") val driverFirstName: String? = null,
+    /**
+     * +2547XXXXXXXX, only from 30 minutes before [scheduledPickup] until the pickup is
+     * settled (#255); the server leaves it out otherwise. Never stored on the phone.
+     */
+    @Json(name = "driver_phone") val driverPhone: String? = null
 )
 
 /** A re-plan changed the pickup (#53). [newPickupTime] is null when it was left unassigned. */
