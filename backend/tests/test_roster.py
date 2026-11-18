@@ -376,3 +376,29 @@ def test_set_home_without_a_location_is_rejected():
             "set_home: yes needs a pickup_location on the same row",
         )
     ]
+
+
+@pytest.mark.parametrize(
+    "written",
+    ["0712345678", "0712 345 678", "+254712345678", "254712345678", "+254 712-345-678",
+     "(0712) 345678"],
+)  # fmt: skip
+def test_a_phone_is_read_however_a_kenyan_mobile_is_written(written):
+    """#255: stored as +2547XXXXXXXX."""
+    rows, rejected, _ = parse(csv(f'{GOOD},"{written}"', header=HEADER + ",Phone"), NOW)
+    assert rejected == [] and rows[0].phone == "+254712345678"
+
+
+@pytest.mark.parametrize("written", ["0812345678", "071234567", "+255712345678", "12345", "phone"])
+def test_a_phone_that_isnt_a_kenyan_mobile_rejects_the_row(written):
+    rows, rejected, _ = parse(csv(f'{GOOD},"{written}"', header=HEADER + ",phone"), NOW)
+    assert rows == []
+    assert [(r.reason, r.detail) for r in rejected] == [
+        (RejectReason.INVALID_ROW, "phone: not a Kenyan mobile number, e.g. 0712 345 678")
+    ]
+
+
+def test_the_phone_is_optional_in_the_row_and_as_a_column():
+    rows, rejected, _ = parse(csv(GOOD + ",", header=HEADER + ",phone"), NOW)
+    assert rejected == [] and rows[0].phone is None
+    assert parse(csv(GOOD), NOW)[0][0].phone is None

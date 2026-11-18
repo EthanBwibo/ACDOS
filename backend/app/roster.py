@@ -56,7 +56,7 @@ from app.models.schemas import (
 )
 
 COLUMNS = ("staff_no", "name", "crew_role", "report_time")
-OPTIONAL_COLUMNS = ("pickup_location", "request_type", "set_home")
+OPTIONAL_COLUMNS = ("pickup_location", "request_type", "set_home", "phone")
 # Other headers a spreadsheet may already use for each column (#254). They
 # are matched as _key() matches them: ignoring case, spaces, underscores and
 # hyphens.
@@ -68,6 +68,7 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "report_time": ("report", "report at", "duty time"),
     "request_type": ("type",),
     "set_home": ("new home", "move home"),
+    "phone": (),
 }
 # The columns pickup_location replaced (#245). A file that still has them is
 # refused as a whole: read as "no location" its rows would silently fall back
@@ -104,6 +105,7 @@ class RosterRow:
     report_time: datetime
     request_type: PickupRequestType
     set_home: bool = False  # the point also becomes their home_location
+    phone: str | None = None  # +2547XXXXXXXX (#255); None when the row gives none
 
     @property
     def located(self) -> bool:
@@ -232,6 +234,21 @@ def _set_home(row: dict) -> bool:
     return raw == "yes"
 
 
+# A Kenyan mobile as people write it (#255): 0712 345 678, +254712345678 or
+# 254712345678, with spaces, hyphens or brackets. Stored as +2547XXXXXXXX.
+_PHONE = re.compile(r"(?:\+?254|0)(7\d{8})")
+
+
+def _phone(row: dict) -> str | None:
+    raw = (row.get("phone") or "").strip()
+    if not raw:
+        return None
+    match = _PHONE.fullmatch(re.sub(r"[\s()-]", "", raw))
+    if match is None:
+        raise ValueError("phone: not a Kenyan mobile number, e.g. 0712 345 678")
+    return f"+254{match.group(1)}"
+
+
 def _read_row(line: int, row: dict) -> RosterRow:
     if None in row:
         raise ValueError("more fields than columns")
@@ -249,6 +266,7 @@ def _read_row(line: int, row: dict) -> RosterRow:
         report_time=_report_time(row),
         request_type=_request_type(row),
         set_home=_set_home(row),
+        phone=_phone(row),
     )
 
 
@@ -680,6 +698,22 @@ async def _write(
         [plan.homes[s][1] for s in new],
     ):
         known[r["staff_no"]] = r["id"]
+    # Phones (#255): from each crew member's first row that gives one; blank
+    # leaves the stored number. Set without reading the old one: signed-in
+    # users can't read crew_members.phone (migration 036).
+    phones: dict[str, str] = {}
+    for row in rows:
+        if row.phone:
+            phones.setdefault(row.staff_no, row.phone)
+    await conn.execute(
+        """
+        update public.crew_members c set phone = u.phone
+        from unnest($1::text[], $2::text[]) as u(staff_no, phone)
+        where c.staff_no = u.staff_no
+        """,
+        list(phones),
+        list(phones.values()),
+    )
     # Every row has its point by now: its own, or the home in effect at its
     # report time.
     await conn.execute(

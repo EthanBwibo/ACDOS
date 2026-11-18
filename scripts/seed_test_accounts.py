@@ -25,6 +25,10 @@ scripts/make_defence_day.py (#252):
                             crew phone to show
     driver-v01@ ... -v20@   one driver per defence van (DEFENCE_VANS)
 
+Every account gets an obviously fake number for the Call buttons (#255),
++254700000100 up (phone_of): drivers' on profiles, crew numbers on
+crew_members too. Needs migration 036.
+
 It prints every account as a table (email, role, crew or van, user id) and
 writes the same table, without ids or passwords, to docs/demo_accounts.md.
 
@@ -185,6 +189,12 @@ CREW_HOME = "SRID=4326;POINT(36.812022 -1.2675)"
 CREW_ROLE = "cabin_crew"
 
 
+def phone_of(account: dict) -> str:
+    """The account's demo number (#255): obviously fake, +254700000100 up,
+    in ACCOUNTS order, so each run gives each account the same one."""
+    return f"+254700000{100 + ACCOUNTS.index(account):03d}"
+
+
 def zone_points() -> dict[str, tuple[float, float]]:
     """(lat, lon) of each pickup zone, from data/pickup_zones.csv."""
     with ZONES_CSV.open(encoding="utf-8", newline="") as f:
@@ -342,6 +352,9 @@ def main() -> None:
                     "id": user_id,
                     "role": account["role"],
                     "full_name": account["full_name"],
+                    # Drivers' numbers are read from here, crew numbers from
+                    # crew_members (migration 036).
+                    "phone": phone_of(account),
                 },
             )
             if "named_crew" in account:
@@ -360,6 +373,7 @@ def main() -> None:
                         "name": c.name,
                         "role": c.role,
                         "home_location": f"SRID=4326;POINT({lon} {lat})",
+                        "phone": phone_of(account),
                     },
                 )
             elif account["role"] == "crew":
@@ -372,6 +386,7 @@ def main() -> None:
                         "name": account["full_name"],
                         "role": CREW_ROLE,
                         "home_location": CREW_HOME,
+                        "phone": phone_of(account),
                     },
                 )
             if args.tokens:

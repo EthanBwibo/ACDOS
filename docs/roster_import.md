@@ -44,6 +44,7 @@ refused, rather than one of them being read without a word.
 | `pickup_location` | no | Where to collect them, pasted from Google Maps (see below): `lat, lon` in decimal degrees, e.g. `-1.292533, 36.787543`, or a Google Maps link with the point in it. Blank means their home location. A new crew member needs one on at least one row. |
 | `report_time` | yes | When they must report at JKIA: ISO 8601 with a UTC offset, e.g. `2026-11-25T05:30:00+03:00`. A time without an offset is rejected, because it could be Nairobi time or UTC. |
 | `request_type` | no | `rostered` or `standby`. Empty or missing means `rostered`. |
+| `phone` | no | The crew member's mobile, for the driver's Call button (#255): a Kenyan mobile written as `0712 345 678`, `+254712345678` or `254712345678` (spaces, hyphens and brackets are ignored). Stored as `+254712345678`. Anything else rejects the row as `invalid_row`. Blank keeps the number already on record; the first row that gives one is used. The driver sees it only from 30 minutes before the pickup until it is done. |
 | `set_home` | no | `yes` or blank. `yes` makes this row's `pickup_location` the crew member's home as well (see below). Blank or missing: the point is for this pickup only. |
 
 The column and every value in it may be left out or blank. A value with a comma in it, as both

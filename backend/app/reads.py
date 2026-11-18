@@ -110,7 +110,8 @@ _STOPS = """
         c.name as crew_name,
         z.label as zone_label,
         extensions.st_y(p.pickup_location::extensions.geometry) as lat,
-        extensions.st_x(p.pickup_location::extensions.geometry) as lon
+        extensions.st_x(p.pickup_location::extensions.geometry) as lon,
+        private.crew_phone(n.id) as crew_phone
     from public.route_nodes n
     join public.pickup_requests p on p.id = n.pickup_request_id
     join public.crew_members c on c.id = p.crew_member_id
@@ -159,6 +160,7 @@ async def current_route(conn: asyncpg.Connection, driver_id: UUID) -> DriverRout
                 lat=round(s["lat"], COORDINATE_DECIMALS),
                 lon=round(s["lon"], COORDINATE_DECIMALS),
                 pickup_status=s["pickup_status"],
+                crew_phone=s["crew_phone"],
             )
             for s in stops
         ],
@@ -273,7 +275,7 @@ async def next_pickup(
         select p.id, p.status, p.report_time,
             n.estimated_arrival, v.plate_number,
             s.id as notice_id, s.reason, s.previous_pickup_time, s.new_pickup_time,
-            s.issued_at
+            s.issued_at, d.first_name as driver_first_name, d.phone as driver_phone
         from public.pickup_requests p
         left join public.route_nodes n
             on n.pickup_request_id = p.id and n.superseded_at is null
@@ -286,6 +288,9 @@ async def next_pickup(
             order by issued_at desc, id desc
             limit 1
         ) s on true
+        -- The driver's name and number (#255): the function decides whether
+        -- the number is in its window (migration 036).
+        left join lateral private.driver_contact(p.id) d on true
         where p.crew_member_id = $1
           and p.status in ('pending', 'assigned')
           and p.report_time >= $2
@@ -303,6 +308,8 @@ async def next_pickup(
         report_time=row["report_time"],
         scheduled_pickup=row["estimated_arrival"],
         vehicle_plate=row["plate_number"],
+        driver_first_name=row["driver_first_name"],
+        driver_phone=row["driver_phone"],
         needs_ack=row["notice_id"] is not None,
         notice=(
             ScheduleChangeNotice(

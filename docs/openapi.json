@@ -175,6 +175,28 @@
       },
       "CrewPickup": {
         "properties": {
+          "driver_first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver First Name"
+          },
+          "driver_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver Phone"
+          },
           "eta": {
             "anyOf": [
               {
@@ -586,6 +608,17 @@
           "crew_name": {
             "title": "Crew Name",
             "type": "string"
+          },
+          "crew_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crew Phone"
           },
           "eta": {
             "anyOf": [
