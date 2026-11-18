@@ -49,7 +49,6 @@ class ErrorCode(StrEnum):
     OUTSIDE_PICKUP_ZONES = "outside_pickup_zones"
     REPORT_TIME_PAST = "report_time_past"
     DUPLICATE_PICKUP = "duplicate_pickup"
-    NO_PICKUP_LOCATION = "no_pickup_location"
 
 
 class ErrorBody(BaseModel):

@@ -160,6 +160,9 @@ class PickupRequest(BaseModel):
     report_time: datetime  # hard deadline at JKIA
     request_type: PickupRequestType
     status: PickupRequestStatus
+    # Add pickup's retry key and body hash (#253); null for other pickups.
+    idempotency_key: str | None = None
+    request_hash: str | None = None
     created_at: datetime
 
 
@@ -506,7 +509,8 @@ class VehicleStatusUpdate(BaseModel):
 # Add pickup and Set home without a CSV (#253). Both reject what the roster
 # import rejects, for the same reasons: the 422 ErrorBody's code is the
 # import's RejectReason value (outside_pickup_zones, report_time_past,
-# duplicate_pickup, no_pickup_location).
+# duplicate_pickup). No no_pickup_location: every stored crew member has a
+# home (crew_members.home_location is not null).
 
 
 class LatLon(BaseModel):
@@ -535,8 +539,8 @@ class CrewListItem(BaseModel):
     staff_no: str | None  # null for crew added before staff numbers (#246)
     name: str
     crew_role: str
-    home: LatLon | None  # rounded as on the driver's route; null with no home
-    home_zone_label: str | None  # the home's nearest pickup zone
+    home: LatLon  # rounded as on the driver's route
+    home_zone_label: str | None  # the home's nearest pickup zone; null only without zones
 
 
 class CrewListPage(BaseModel):

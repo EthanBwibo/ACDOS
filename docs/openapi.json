@@ -53,14 +53,7 @@
             "type": "string"
           },
           "home": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/LatLon"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/components/schemas/LatLon"
           },
           "home_zone_label": {
             "anyOf": [
@@ -842,8 +835,7 @@
           "already_confirmed",
           "outside_pickup_zones",
           "report_time_past",
-          "duplicate_pickup",
-          "no_pickup_location"
+          "duplicate_pickup"
         ],
         "title": "ErrorCode",
         "type": "string"
@@ -3534,14 +3526,13 @@
                 }
               }
             },
-            "description": "Unprocessable Content: validation_failed, idempotency_key_reused, outside_pickup_zones, report_time_past, duplicate_pickup, no_pickup_location",
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused, outside_pickup_zones, report_time_past, duplicate_pickup",
             "x-error-codes": [
               "validation_failed",
               "idempotency_key_reused",
               "outside_pickup_zones",
               "report_time_past",
-              "duplicate_pickup",
-              "no_pickup_location"
+              "duplicate_pickup"
             ]
           },
           "503": {

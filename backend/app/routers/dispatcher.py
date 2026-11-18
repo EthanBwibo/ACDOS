@@ -259,7 +259,6 @@ _REJECTIONS = [
     ErrorCode.OUTSIDE_PICKUP_ZONES,
     ErrorCode.REPORT_TIME_PAST,
     ErrorCode.DUPLICATE_PICKUP,
-    ErrorCode.NO_PICKUP_LOCATION,
 ]
 IdempotencyKey = Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=200)]
 
