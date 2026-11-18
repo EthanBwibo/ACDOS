@@ -195,13 +195,19 @@ ROSTER_IMPORTS = "/roster-imports"
 async def import_roster(
     request: Request,
     caller: CallerDep,
-    file: Annotated[UploadFile, File(description="The roster CSV (docs/roster_import.md)")],
+    file: Annotated[
+        UploadFile,
+        File(description="The roster CSV (docs/roster_import.md, docs/acdos_roster_template.csv)"),
+    ],
     dry_run: bool = False,
     idempotency_key: Annotated[
         str | None, Header(alias="Idempotency-Key", min_length=1, max_length=200)
     ] = None,
 ) -> RosterImportResult:
     """Import crew and their pickups from a roster CSV of up to 500 rows.
+    Headers ignore case, spaces, underscores and hyphens, and accept common
+    aliases (role, location, report, ...); a missing column is named in the
+    error with the headers found.
     Rejected rows are skipped and listed with their line and reason; the rest
     import together. With dry_run=true nothing is written: the result is what
     the import would do. A real import needs an Idempotency-Key: a retry with

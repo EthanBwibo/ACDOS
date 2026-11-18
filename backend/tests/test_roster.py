@@ -3,12 +3,14 @@ zone and stored-duplicate checks, the fallback to a home location, and the
 writes, are in test_roster_imports_postgres.py."""
 
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 
 from app.models.schemas import PickupRequestType, RejectReason
 from app.roster import MAX_ROWS, BadFile, parse, pickup_point
 
+ROOT = Path(__file__).resolve().parents[2]
 NOW = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
 HEADER = "staff_no,name,crew_role,pickup_location,report_time,request_type"
 GOOD = 'KQ1001,Amina Hassan,cabin_crew,"-1.2893, 36.7869",2026-11-20T05:30:00+03:00,rostered'
@@ -214,7 +216,7 @@ def test_header_names_ignore_case_and_spaces():
         (b"\xff\xfe\x00s", "the file is not UTF-8 text"),
         (
             csv(GOOD, header="staff_no,name,pickup_location,report_time"),
-            "missing columns: crew_role",
+            "No crew_role column. Found: staff_no, name, pickup_location, report_time",
         ),
         (
             csv(header="staff_no,name,crew_role,pickup_lat,pickup_lon,report_time"),
@@ -233,6 +235,102 @@ def test_exactly_500_rows_is_allowed():
     rows, _, count = parse(csv(*[GOOD.replace("KQ1001", f"KQ{i}") for i in range(MAX_ROWS)]), NOW)
 
     assert count == len(rows) == MAX_ROWS
+
+
+def _read_as(header: str):
+    """GOOD and a standby row with set_home, under the given header, as
+    (staff_no, name, crew_role, located, report_time, request_type, set_home)."""
+    rows, rejected, _ = parse(
+        csv(GOOD + ",", 'KQ2,Brian,pilot,"-1.2, 36.8",2026-11-20T06:00:00+03:00,standby,yes',
+            header=header),
+        NOW,
+    )  # fmt: skip
+    assert rejected == []
+    return [
+        (r.staff_no, r.name, r.crew_role, r.located, r.report_time, r.request_type, r.set_home)
+        for r in rows
+    ]
+
+
+EXACT = HEADER + ",set_home"
+
+
+@pytest.mark.parametrize(
+    ("column", "alias"),
+    # The table in #254, written out so a dropped alias fails here.
+    [
+        ("staff_no", "staff number"), ("staff_no", "staff no"), ("staff_no", "staff id"),
+        ("staff_no", "employee no"),
+        ("crew_role", "role"), ("crew_role", "rank"),
+        ("pickup_location", "location"), ("pickup_location", "pickup point"),
+        ("pickup_location", "pickup"), ("pickup_location", "coordinates"),
+        ("report_time", "report"), ("report_time", "report at"), ("report_time", "duty time"),
+        ("request_type", "type"),
+        ("set_home", "new home"), ("set_home", "move home"),
+    ],
+)  # fmt: skip
+def test_each_alias_reads_as_its_column(column, alias):
+    """#254: a header a spreadsheet already has works without renaming."""
+    header = EXACT.replace(column, alias)
+    assert header != EXACT
+    assert _read_as(header) == _read_as(EXACT)
+
+
+def test_case_spaces_underscores_and_hyphens_are_ignored_in_headers():
+    header = " Staff No ,NAME,Crew-Role,pickup location, REPORT_TIME ,Request Type,SET-HOME"
+    assert _read_as(header) == _read_as(EXACT)
+    assert _read_as("staff number,Name,Rank,Coordinates,Duty Time,Type,Move Home") == _read_as(
+        EXACT
+    )
+
+
+def test_an_unknown_column_is_ignored():
+    rows, rejected, _ = parse(csv(GOOD + ",KQ101", header=HEADER + ",Flight"), NOW)
+    assert rejected == [] and rows[0].staff_no == "KQ1001"
+
+
+@pytest.mark.parametrize(
+    ("header", "message"),
+    [
+        ("Name,Role,Location,Report", "No staff_no column. Found: Name, Role, Location, Report"),
+        ("Staff No,Location", "No name, crew_role or report_time column. Found: Staff No, "
+                              "Location"),
+        ("", "the file is empty"),
+    ],
+)  # fmt: skip
+def test_a_missing_column_is_named_with_the_headers_found(header, message):
+    with pytest.raises(BadFile, match=f"^{message}$"):
+        parse(csv(header=header), NOW)
+
+
+@pytest.mark.parametrize(
+    ("header", "message"),
+    [
+        (HEADER + ",Role", "crew_role and Role are both the crew_role column: keep one"),
+        ("Staff No,staff_no,name,crew_role,report_time", "Staff No and staff_no are both"),
+    ],
+)
+def test_two_headers_for_one_column_are_refused(header, message):
+    """Otherwise the file's last such column would be read without a word."""
+    with pytest.raises(BadFile, match=message):
+        parse(csv(header=header), NOW)
+
+
+@pytest.mark.parametrize("header", ["Pickup Lat,Pickup Lon", "pickup-lat"])
+def test_the_old_lat_lon_columns_are_refused_however_written(header):
+    with pytest.raises(BadFile, match="pickup_lat and pickup_lon were replaced"):
+        parse(csv(header=f"staff_no,name,crew_role,report_time,{header}"), NOW)
+
+
+def test_the_template_has_the_exact_headers_and_two_rows_that_read():
+    """docs/acdos_roster_template.csv, the file Download template saves."""
+    content = (ROOT / "docs" / "acdos_roster_template.csv").read_bytes()
+    assert content.decode().splitlines()[0] == (
+        "staff_no,name,crew_role,pickup_location,report_time,request_type,set_home"
+    )
+    rows, rejected, count = parse(content, NOW)
+    assert (count, rejected) == (2, [])
+    assert [r.located for r in rows] == [False, True]
 
 
 SET_HOME = HEADER + ",set_home"

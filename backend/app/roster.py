@@ -57,6 +57,18 @@ from app.models.schemas import (
 
 COLUMNS = ("staff_no", "name", "crew_role", "report_time")
 OPTIONAL_COLUMNS = ("pickup_location", "request_type", "set_home")
+# Other headers a spreadsheet may already use for each column (#254). They
+# are matched as _key() matches them: ignoring case, spaces, underscores and
+# hyphens.
+ALIASES: dict[str, tuple[str, ...]] = {
+    "staff_no": ("staff number", "staff id", "employee no"),
+    "name": (),
+    "crew_role": ("role", "rank"),
+    "pickup_location": ("location", "pickup point", "pickup", "coordinates"),
+    "report_time": ("report", "report at", "duty time"),
+    "request_type": ("type",),
+    "set_home": ("new home", "move home"),
+}
 # The columns pickup_location replaced (#245). A file that still has them is
 # refused as a whole: read as "no location" its rows would silently fall back
 # to home locations.
@@ -240,6 +252,37 @@ def _read_row(line: int, row: dict) -> RosterRow:
     )
 
 
+def _key(header: str) -> str:
+    """A header as it is matched: no case, spaces, underscores or hyphens,
+    so "Staff No", "staff_no" and "STAFF-NO" are the same column."""
+    return re.sub(r"[\s_-]+", "", header).lower()
+
+
+_COLUMN_OF = {_key(name): column for column, names in ALIASES.items() for name in (column, *names)}
+
+
+def _columns(headers: list[str]) -> list[str]:
+    """The header line as the column names the rest of the import uses. A
+    header that is no column is kept, normalised, and its values ignored."""
+    columns = [_COLUMN_OF.get(_key(h), _key(h)) for h in headers]
+    if any(_key(c) in columns for c in REPLACED_COLUMNS):
+        raise BadFile(
+            "pickup_lat and pickup_lon were replaced by one pickup_location column "
+            "(lat, lon or a Google Maps link): see docs/roster_import.md"
+        )
+    for column in ALIASES:
+        given = [h.strip() for h, c in zip(headers, columns, strict=True) if c == column]
+        if len(given) > 1:
+            # csv.DictReader would keep the last one's values without a word.
+            raise BadFile(f"{' and '.join(given)} are both the {column} column: keep one")
+    missing = [c for c in COLUMNS if c not in columns]
+    if missing:
+        found = ", ".join(h.strip() for h in headers if h.strip()) or "nothing"
+        names = " or ".join([", ".join(missing[:-1]), missing[-1]] if missing[1:] else missing)
+        raise BadFile(f"No {names} column. Found: {found}")
+    return columns
+
+
 def parse(content: bytes, now: datetime) -> tuple[list[RosterRow], list[RejectedRow], int]:
     """The rows that pass the checks needing no database, the rejected ones,
     and the number of data rows in the file."""
@@ -251,15 +294,7 @@ def parse(content: bytes, now: datetime) -> tuple[list[RosterRow], list[Rejected
     reader = csv.DictReader(io.StringIO(text, newline=""))
     if reader.fieldnames is None:
         raise BadFile("the file is empty")
-    reader.fieldnames = [name.strip().lower() for name in reader.fieldnames]
-    if any(c in reader.fieldnames for c in REPLACED_COLUMNS):
-        raise BadFile(
-            "pickup_lat and pickup_lon were replaced by one pickup_location column "
-            "(lat, lon or a Google Maps link): see docs/roster_import.md"
-        )
-    missing = [c for c in COLUMNS if c not in reader.fieldnames]
-    if missing:
-        raise BadFile(f"missing columns: {', '.join(missing)}")
+    reader.fieldnames = _columns(reader.fieldnames)
 
     rows: list[RosterRow] = []
     rejected: list[RejectedRow] = []
