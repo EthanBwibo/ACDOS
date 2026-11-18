@@ -29,9 +29,20 @@ data class RosterImportState(
     val imported: RosterImportResultDto? = null,
     /** A call is out. */
     val busy: Boolean = false,
-    /** Why the last step failed; "Try again" repeats it. */
-    val failure: DispatcherMessage? = null
+    /** Why the last step failed. */
+    val failure: DispatcherMessage? = null,
+    /**
+     * The request failed, not the file: no connection, a timeout or a 5xx. Only then can
+     * Retry help; a problem with the file itself needs another file.
+     */
+    val retryable: Boolean = false
 ) {
+    /** Retry: after a failed request, never after a refused file. */
+    val showRetry: Boolean get() = failure != null && retryable && !busy
+
+    /** "Choose another file" leads when the file itself was the problem. */
+    val fileRefused: Boolean get() = failure != null && !retryable && !busy
+
     /** "Import N pickups": after a dry run that found something to import. */
     val canImport: Boolean
         get() = check != null && imported == null && check.pickupsCreated > 0 && !busy
@@ -68,10 +79,10 @@ class RosterImportViewModel(
         check()
     }
 
-    /** "Try again" after a failure: the step that failed, with the same key. */
+    /** Retry after a failed request: the step that failed, with the same key. */
     fun retry() {
         val state = uiState.value
-        if (state.fileName == null || state.busy || csv.size > ROSTER_MAX_BYTES) return
+        if (state.fileName == null || !state.showRetry) return
         if (state.check == null) check() else importNow()
     }
 
@@ -90,7 +101,7 @@ class RosterImportViewModel(
         val name = uiState.value.fileName ?: return
         // Each file has its own key, so it also tells which file a reply is for.
         val file = key
-        uiState.update { it.copy(busy = true, failure = null) }
+        uiState.update { it.copy(busy = true, failure = null, retryable = false) }
         viewModelScope.launch {
             val result = repository.importRoster(csv, name, idempotencyKey)
             uiState.update { state ->
@@ -99,13 +110,25 @@ class RosterImportViewModel(
                 when (result) {
                     is ApiResult.Success -> state.done(result.body).copy(busy = false)
 
-                    is ApiResult.Error -> state.copy(busy = false, failure = failureMessage(result))
-
-                    is ApiResult.NetworkError ->
-                        state.copy(busy = false, failure = failureMessage(result))
+                    is ApiResult.Error, is ApiResult.NetworkError -> state.copy(
+                        busy = false,
+                        failure = failureMessage(result),
+                        retryable = isRequestFailure(result)
+                    )
                 }
             }
         }
+    }
+
+    /**
+     * True when the request failed rather than the file: no answer, a 408 timeout or a 5xx.
+     * A 4xx (wrong columns, too many rows, not allowed) or an unreadable answer would fail
+     * the same way again, so it isn't one.
+     */
+    private fun isRequestFailure(result: ApiResult<Nothing>) = when (result) {
+        is ApiResult.NetworkError -> true
+        is ApiResult.Error -> result.status.let { it == 408 || (it != null && it >= 500) }
+        is ApiResult.Success -> false
     }
 
     /** Back to nothing chosen, e.g. when the screen is closed after an import. */

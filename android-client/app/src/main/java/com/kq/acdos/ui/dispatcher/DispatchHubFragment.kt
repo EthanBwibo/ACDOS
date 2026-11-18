@@ -25,9 +25,12 @@ import kotlinx.coroutines.launch
 
 /**
  * The Overview tab: one Nairobi day at a glance (Figma 2:26). The day picked
- * here is the day every tab shows. Since the bottom nav (#230) the tiles are
- * counts only and the routes are on their own tab; the alerts still lead on,
- * Re-plan to the Plan tab and Messages to its tab.
+ * here is the day every tab shows, so a tile opens its screen on that day
+ * (#248): Crew pickups and Vehicles open those lists on Fleet & crew, Late
+ * opens Pickups too (the list has no late filter), and the plan card opens
+ * the Plan tab. The alerts lead on too, Re-plan to the Plan
+ * tab and Messages to its tab. All of them switch tabs the way the bottom nav
+ * does, so each tab keeps its back stack.
  */
 class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
     private val viewModel: DispatcherViewModel by activityViewModels {
@@ -40,6 +43,18 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.previous_day).setOnClickListener { viewModel.showDay(-1) }
         view.findViewById<Button>(R.id.next_day).setOnClickListener { viewModel.showDay(1) }
+        view.findViewById<View>(R.id.tile_pickups).setOnClickListener {
+            home.showFleet(FleetList.PICKUPS)
+        }
+        view.findViewById<View>(R.id.tile_vehicles).setOnClickListener {
+            home.showFleet(FleetList.VEHICLES)
+        }
+        view.findViewById<View>(R.id.tile_late).setOnClickListener {
+            home.showFleet(FleetList.PICKUPS)
+        }
+        view.findViewById<View>(R.id.plan_card).setOnClickListener {
+            home.selectTab(DispatcherTab.PLAN)
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

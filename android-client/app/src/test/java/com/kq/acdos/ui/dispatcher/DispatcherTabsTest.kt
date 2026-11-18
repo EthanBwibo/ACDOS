@@ -1,6 +1,7 @@
 package com.kq.acdos.ui.dispatcher
 
 import android.os.Looper
+import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.appbar.MaterialToolbar
@@ -178,6 +179,66 @@ class DispatcherTabsTest {
         activity.onBackPressedDispatcher.onBackPressed()
         idle()
         assertEquals(DispatcherTab.OVERVIEW, activity.current)
+    }
+
+    private fun DispatcherHomeActivity.tapOnOverview(id: Int) {
+        screen(DispatcherTab.OVERVIEW)!!.requireView().findViewById<View>(id).performClick()
+        idle()
+    }
+
+    private fun DispatcherHomeActivity.fleetList(): Fragment? =
+        screen(DispatcherTab.FLEET)?.childFragmentManager?.findFragmentById(R.id.fleet_screen)
+
+    @Test
+    fun theCrewPickupsTileOpensPickupsOnFleetAndCrew() {
+        val activity = start()
+        // Vehicles was last on show there, so the tile has to switch the list.
+        activity.tap(DispatcherTab.FLEET)
+        (activity.screen(DispatcherTab.FLEET) as FleetCrewFragment).select(FleetList.VEHICLES)
+        idle()
+        assertTrue(activity.fleetList() is VehiclesFragment)
+        activity.tap(DispatcherTab.OVERVIEW)
+
+        activity.tapOnOverview(R.id.tile_pickups)
+
+        assertEquals(DispatcherTab.FLEET, activity.current)
+        val nav = activity.findViewById<BottomNavigationView>(R.id.bottom_nav)
+        assertEquals(R.id.tab_fleet, nav.selectedItemId)
+        assertTrue(activity.fleetList() is PickupsFragment)
+    }
+
+    @Test
+    fun theVehiclesTileOpensVehiclesOnFleetAndCrew() {
+        val activity = start()
+
+        activity.tapOnOverview(R.id.tile_vehicles)
+
+        assertEquals(DispatcherTab.FLEET, activity.current)
+        assertTrue(activity.fleetList() is VehiclesFragment)
+    }
+
+    @Test
+    fun theLateTileOpensPickupsOnFleetAndCrew() {
+        val activity = start()
+        activity.tap(DispatcherTab.FLEET)
+        (activity.screen(DispatcherTab.FLEET) as FleetCrewFragment).select(FleetList.VEHICLES)
+        idle()
+        activity.tap(DispatcherTab.OVERVIEW)
+
+        activity.tapOnOverview(R.id.tile_late)
+
+        assertEquals(DispatcherTab.FLEET, activity.current)
+        assertTrue(activity.fleetList() is PickupsFragment)
+    }
+
+    @Test
+    fun thePlanCardOpensThePlanTab() {
+        val activity = start()
+
+        activity.tapOnOverview(R.id.plan_card)
+
+        assertEquals(DispatcherTab.PLAN, activity.current)
+        assertTrue(activity.screen(DispatcherTab.PLAN) is OptimisationRunFragment)
     }
 
     @Test

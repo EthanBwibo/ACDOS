@@ -176,6 +176,22 @@ class DispatcherHomeActivity : AppCompatActivity() {
         updateBack()
     }
 
+    /** The list Fleet & crew shows next, asked for by an Overview tile; taken once. */
+    private var fleetList: FleetList? = null
+
+    /**
+     * Switches to Fleet & crew, as the bottom nav does, and shows [list] there. The tiles are
+     * on Overview, so Fleet & crew always starts again here and takes [list] in its onStart.
+     * A drill-down open on that tab (Import roster) stays open, with [list] underneath it.
+     */
+    fun showFleet(list: FleetList) {
+        fleetList = list
+        selectTab(DispatcherTab.FLEET)
+    }
+
+    /** The list a tile asked for, if any; asking clears it. */
+    fun takeFleetList(): FleetList? = fleetList.also { fleetList = null }
+
     /** Selects [tab] as if its nav item was tapped. */
     fun selectTab(tab: DispatcherTab) {
         if (tabs.selectedItemId == tab.itemId) showTab(tab) else tabs.selectedItemId = tab.itemId
