@@ -9,6 +9,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.AppContainer
 import com.kq.acdos.R
+import com.kq.acdos.auth.AppRole
 import com.kq.acdos.auth.AuthRepository
 import com.kq.acdos.auth.ProfileResult
 import com.kq.acdos.auth.SignInResult
@@ -22,6 +23,7 @@ import com.kq.acdos.data.remote.MessageReplyCreateDto
 import com.kq.acdos.data.remote.MessagesApi
 import com.kq.acdos.data.remote.PresetMessageDto
 import com.kq.acdos.data.remote.PresetMessageListDto
+import com.kq.acdos.ui.ProfileActivity
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -239,6 +241,18 @@ class DispatcherTabsTest {
 
         assertEquals(DispatcherTab.PLAN, activity.current)
         assertTrue(activity.screen(DispatcherTab.PLAN) is OptimisationRunFragment)
+    }
+
+    @Test
+    fun theMenuOpensTheDispatchersProfile() {
+        val activity = start()
+
+        activity.findViewById<MaterialToolbar>(R.id.toolbar).menu
+            .performIdentifierAction(R.id.action_profile, 0)
+
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(ProfileActivity::class.java.name, started.component?.className)
+        assertEquals(AppRole.DISPATCHER.name, started.getStringExtra(ProfileActivity.EXTRA_ROLE))
     }
 
     @Test

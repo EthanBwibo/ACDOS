@@ -18,10 +18,11 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
+import com.kq.acdos.auth.AppRole
 import com.kq.acdos.ui.applySystemBarPadding
 import com.kq.acdos.ui.openLoginWhenSessionEnds
+import com.kq.acdos.ui.openProfile
 import com.kq.acdos.ui.showStatusBanners
-import com.kq.acdos.ui.showThemeDialog
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -75,13 +76,8 @@ class DispatcherHomeActivity : AppCompatActivity() {
                     true
                 }
 
-                R.id.action_theme -> {
-                    showThemeDialog(container.themeStore)
-                    true
-                }
-
-                R.id.action_sign_out -> {
-                    lifecycleScope.launch { container.sessionRouter.signOut() }
+                R.id.action_profile -> {
+                    openProfile(AppRole.DISPATCHER)
                     true
                 }
 

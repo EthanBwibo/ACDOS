@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.Flow
 /**
  * What the Profile screen (#231) shows beyond the name, so it opens with no
  * signal. One row, for whoever is signed in: crew fill the crew fields from
- * GET /crew/me, drivers the vehicle fields from GET /drivers/me. A row with
+ * GET /crew/me, drivers the vehicle fields from GET /drivers/me, and the
+ * dispatcher (#249) the email from the signed-in session. A row with
  * no vehicle means the server said no van is assigned; no row means it has
  * never been loaded.
  */
@@ -28,6 +29,8 @@ data class MyProfileEntity(
     @ColumnInfo(name = "vehicle_seats") val vehicleSeats: Int? = null,
     /** The server's value, e.g. broken_down. */
     @ColumnInfo(name = "vehicle_status") val vehicleStatus: String? = null,
+    /** The dispatcher's sign-in email (#249). */
+    @ColumnInfo(name = "email") val email: String? = null,
     @ColumnInfo(name = "fetched_at") val fetchedAt: Instant
 ) {
     companion object {

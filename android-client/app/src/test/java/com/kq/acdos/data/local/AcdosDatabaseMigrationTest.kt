@@ -184,4 +184,34 @@ class AcdosDatabaseMigrationTest {
             assertNull(profile)
             assertEquals(listOf("queued"), waiting.map { it.idempotencyKey })
         }
+
+    /** What version 5 left: a driver's cached profile, and a queued pickup event. */
+    private fun version5Database() {
+        val file = context.getDatabasePath(AcdosDatabase.NAME)
+        file.parentFile?.mkdirs()
+        SQLiteDatabase.openOrCreateDatabase(file, null).use { db ->
+            db.createTables(5)
+            db.queue("queued", "node-1", PickupEventType.PICKUP_CONFIRMED.name, null)
+            db.execSQL(
+                "INSERT INTO my_profile (id, vehicle_plate, vehicle_seats, fetched_at) VALUES " +
+                    "(${MyProfileEntity.ONLY_ROW}, 'KDH 101A', 14, $CONFIRMED_AT)"
+            )
+            db.version = 5
+        }
+    }
+
+    @Test
+    fun `version 5 keeps the profile and queued events, with no email until a refresh`() =
+        runBlocking {
+            version5Database()
+
+            val updated = AcdosDatabase.build(context)
+            val profile = updated.myProfileDao().observe().first()!!
+            val waiting = updated.pendingPickupEventDao().pending(DRIVER)
+            updated.close()
+
+            assertEquals("KDH 101A", profile.vehiclePlate)
+            assertNull(profile.email)
+            assertEquals(listOf("queued"), waiting.map { it.idempotencyKey })
+        }
 }

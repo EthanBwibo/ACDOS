@@ -8,6 +8,8 @@
     <string name="profile_title">Profile</string>
     <string name="profile_role_crew">Crew</string>
     <string name="profile_role_driver">Driver</string>
+    <string name="profile_role_dispatcher">Dispatcher</string>
+    <string name="profile_email">Email</string>
     <string name="profile_crew_role">Crew role</string>
     <string name="profile_home_zone">Home zone</string>
     <string name="profile_next_pickup">Next pickup</string>
