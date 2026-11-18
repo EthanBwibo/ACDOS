@@ -33,16 +33,20 @@ import retrofit2.Response
 
 private val SENT_AT: Instant = Instant.parse("2026-11-07T03:00:00Z")
 
+/** The crew member most tests talk to; [message] is from them unless told otherwise. */
+private const val AMINA = "amina"
+
 private fun message(
     id: String,
     readAt: Instant? = null,
     sentAt: Instant = SENT_AT,
-    replies: List<MessageReplyDto> = emptyList()
-) = CrewMessageDto(id, "crew-$id", "Crew $id", "late", "Late", sentAt, readAt, replies)
+    replies: List<MessageReplyDto> = emptyList(),
+    crew: String = AMINA
+) = CrewMessageDto(id, crew, "Crew $crew", "late", "Late", sentAt, readAt, replies)
 
 private fun minutes(n: Long): Instant = SENT_AT.plusSeconds(n * 60)
 
-/** Marking messages read and the preset replies. */
+/** Marking messages read and the preset replies, inside one crew member's thread (#250). */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class InboxViewModelTest {
@@ -98,8 +102,10 @@ class InboxViewModelTest {
 
     private fun inboxMessage(id: String) = viewModel.messages.value!!.first { it.id == id }
 
-    private fun open() {
+    /** The Messages tab with [thread] open, or the inbox list when it's null. */
+    private fun open(thread: String? = AMINA) {
         viewModel = InboxViewModel(MessagesRepository(api, db.crewDao()), { "key-${++keys}" })
+        thread?.let(viewModel::openThread)
     }
 
     @Before
@@ -357,17 +363,60 @@ class InboxViewModelTest {
     }
 
     @Test
-    fun `the Unread filter keeps the selected message after it is marked read`() {
+    fun `on the inbox list nothing is selected or read`() {
         openWithThree()
+        open(thread = null)
+
         viewModel.setShown(true)
-        val messages = viewModel.messages.value!!
 
-        val unread = inboxFilter(messages, unreadOnly = true, selected = viewModel.selected.value)
+        assertNull(viewModel.selected.value)
+        assertEquals(emptyList<String>(), api.read)
+    }
 
-        // m3 and m1 are unread; m2 was read when it was selected, and stays.
-        assertEquals(listOf("m3", "m2", "m1"), unread.map { it.id })
-        assertEquals(listOf("m3", "m1"), inboxFilter(messages, true, null).map { it.id })
-        assertEquals(3, inboxFilter(messages, false, null).size)
+    /** Amina's m2 and m1, and Brian's b1, all unread and unanswered. */
+    private fun openWithTwoThreads() {
+        api.inbox = listOf(
+            message("b1", sentAt = minutes(3), crew = "brian"),
+            message("m2", sentAt = minutes(1)),
+            message("m1", sentAt = minutes(0))
+        )
+        open()
+    }
+
+    @Test
+    fun `opening a thread marks only that thread's selection read`() {
+        openWithTwoThreads()
+
+        viewModel.setShown(true)
+
+        assertEquals("m2", viewModel.selected.value)
+        assertEquals(listOf("m2"), api.read)
+        assertNull("Brian's is newer but not in Amina's thread", inboxMessage("b1").readAt)
+
+        viewModel.openThread("brian")
+
+        assertEquals(listOf("m2", "b1"), api.read)
+    }
+
+    @Test
+    fun `a message from another thread can't be selected`() {
+        openWithTwoThreads()
+
+        viewModel.select("b1")
+
+        assertEquals("m2", viewModel.selected.value)
+    }
+
+    @Test
+    fun `after a reply the next selection stays in the thread`() {
+        openWithTwoThreads()
+        viewModel.select("m1")
+        viewModel.reply("noted")
+
+        viewModel.reply("noted")
+
+        assertEquals(listOf("m1" to "noted", "m2" to "noted"), api.replied)
+        assertNull("Brian's is left for his own thread", viewModel.selected.value)
     }
 
     @Test

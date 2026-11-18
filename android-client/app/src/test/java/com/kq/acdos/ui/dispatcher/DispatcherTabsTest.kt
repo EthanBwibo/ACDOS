@@ -2,6 +2,7 @@ package com.kq.acdos.ui.dispatcher
 
 import android.os.Looper
 import android.view.View
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.test.core.app.ApplicationProvider
 import com.google.android.material.appbar.MaterialToolbar
@@ -43,7 +44,7 @@ private val SENT_AT: Instant = Instant.parse("2026-11-16T03:00:00Z")
 
 private fun message(id: String, minutes: Long = 0): CrewMessageDto {
     val sentAt = SENT_AT.plusSeconds(minutes * 60)
-    return CrewMessageDto(id, "crew-$id", "Crew $id", "late", "Late", sentAt, null, emptyList())
+    return CrewMessageDto(id, "crew-1", "Amina Otieno", "late", "Late", sentAt, null, emptyList())
 }
 
 /** The crew messages the inbox gets, and which ones the app marked read. */
@@ -137,12 +138,23 @@ class DispatcherTabsTest {
         .get()
         .also { idle() }
 
+    /** Taps the crew member's row on the inbox list. */
+    private fun DispatcherHomeActivity.openThread() {
+        val list = screen(DispatcherTab.MESSAGES)!!.requireView()
+        list.findViewById<LinearLayout>(R.id.threads).getChildAt(0).performClick()
+        idle()
+    }
+
     @Test
-    fun messagesAreMarkedReadOnlyWhileTheMessagesTabIsShowing() {
+    fun messagesAreMarkedReadOnlyWhileTheirThreadIsShowing() {
         val activity = start()
         assertEquals("not on Overview", emptyList<String>(), api.read)
 
         activity.tap(DispatcherTab.MESSAGES)
+        assertEquals("not on the inbox list", emptyList<String>(), api.read)
+
+        activity.openThread()
+        assertTrue(activity.screen(DispatcherTab.MESSAGES) is CrewThreadFragment)
         assertEquals(listOf("m1"), api.read)
 
         // On another tab a new message is selected (m1 has gone), but not read.

@@ -59,8 +59,25 @@ class MessagesRepository(private val api: MessagesApi, private val dao: CrewDao)
     ): ApiResult<MessageReplyDto> =
         apiCall { api.reply(messageId, idempotencyKey, MessageReplyCreateDto(presetCode)) }
 
-    /** The dispatcher's inbox: the latest page, newest first. */
-    suspend fun inbox(): ApiResult<List<CrewMessageDto>> = latest(INBOX_SIZE)
+    /**
+     * The dispatcher's inbox, newest first: up to [INBOX_PAGES] pages, following
+     * next_cursor. The per-crew threads (#250) are built from this list in the
+     * app, so it has to reach back far enough to hold everyone who messaged.
+     */
+    suspend fun inbox(): ApiResult<List<CrewMessageDto>> {
+        val all = mutableListOf<CrewMessageDto>()
+        var cursor: String? = null
+        repeat(INBOX_PAGES) {
+            val page = when (val result = apiCall { api.messages(cursor, INBOX_SIZE) }) {
+                is ApiResult.Success -> result.body
+                is ApiResult.Error -> return result
+                is ApiResult.NetworkError -> return result
+            }
+            all += page.items
+            cursor = page.nextCursor ?: return ApiResult.Success(all)
+        }
+        return ApiResult.Success(all)
+    }
 
     /** The crew member's own latest messages, newest first. The server filters by caller. */
     suspend fun recent(): ApiResult<List<CrewMessageDto>> = latest(RECENT_SIZE)
@@ -76,7 +93,13 @@ class MessagesRepository(private val api: MessagesApi, private val dao: CrewDao)
         /** How many messages the crew member's RECENT list shows. */
         const val RECENT_SIZE = 5
 
-        /** The server's largest page; enough for a morning's messages. */
+        /** The server's largest page. */
         private const val INBOX_SIZE = 50
+
+        /**
+         * 200 messages: a defence day of about 120 crew. A crew member whose last
+         * line is older than that drops off the inbox until they message again.
+         */
+        private const val INBOX_PAGES = 4
     }
 }

@@ -39,23 +39,13 @@ fun newestUnanswered(messages: List<CrewMessageDto>): CrewMessageDto? =
     messages.filter { it.replies.isEmpty() }.maxByOrNull { it.sentAt }
 
 /**
- * The messages the conversation shows. Unread keeps the selected message too:
- * selecting it marks it read, and it mustn't vanish while it's being answered.
- */
-fun inboxFilter(
-    messages: List<CrewMessageDto>,
-    unreadOnly: Boolean,
-    selected: String?
-): List<CrewMessageDto> = if (unreadOnly) {
-    messages.filter { it.readAt == null || it.id == selected }
-} else {
-    messages
-}
-
-/**
  * The dispatcher's inbox of crew messages (#57), newest first, and preset
  * replies to them. Loaded when the screen opens and on Refresh; a failed load
  * keeps the list as it was. [repository] is null without an API URL.
+ *
+ * Since #250 the Messages tab lists one thread per crew member, and replies
+ * happen inside one thread at a time: the selection, and so the read rule,
+ * is scoped to the [thread] that is open.
  */
 class InboxViewModel(
     private val repository: MessagesRepository?,
@@ -66,12 +56,17 @@ class InboxViewModel(
     /** Null until the first load answers. */
     val messages: StateFlow<List<CrewMessageDto>?> = inbox.asStateFlow()
 
+    private val threadId = MutableStateFlow<String?>(null)
+
+    /** The crew member whose thread is open, or null on the inbox list. */
+    val thread: StateFlow<String?> = threadId.asStateFlow()
+
     private val selectedId = MutableStateFlow<String?>(null)
 
     /**
-     * The message a reply goes to. After a load it is the newest unanswered
-     * message, unless the dispatcher picked one that is still in the list; after
-     * a reply it moves to the next unanswered one.
+     * The message a reply goes to, always in the open [thread]. After a load it
+     * is that thread's newest unanswered message, unless the dispatcher picked
+     * one that is still there; after a reply it moves to the next unanswered one.
      */
     val selected: StateFlow<String?> = selectedId.asStateFlow()
 
@@ -123,8 +118,8 @@ class InboxViewModel(
             if (result is ApiResult.Success) {
                 inbox.value = result.body
                 val picked = selectedId.value
-                if (picked == null || result.body.none { it.id == picked }) {
-                    choose(newestUnanswered(result.body)?.id)
+                if (picked == null || threadMessages().none { it.id == picked }) {
+                    choose(newestUnanswered(threadMessages())?.id)
                 }
             }
             failedState.value = result !is ApiResult.Success
@@ -142,23 +137,37 @@ class InboxViewModel(
         }
     }
 
+    /** The open thread's messages; none on the inbox list. */
+    private fun threadMessages() = threadMessages(inbox.value.orEmpty(), threadId.value)
+
     /**
-     * True while the Messages screen is on show. The hub shares this inbox and
-     * refreshes it too, so a selection made then must not count as read.
+     * Opens [crewMemberId]'s thread: replies go to their newest unanswered
+     * message until the dispatcher taps another of theirs.
+     */
+    fun openThread(crewMemberId: String) {
+        threadId.value = crewMemberId
+        choose(newestUnanswered(threadMessages())?.id)
+    }
+
+    /**
+     * True while a thread is on show. The hub and the inbox list share this
+     * inbox and refresh it too, so a selection made then must not count as read.
      */
     private var shown = false
 
     /** Messages whose read call is on its way, so one isn't asked for twice. */
     private val marking = mutableSetOf<String>()
 
-    /** The Messages screen calls this from onStart (true) and onStop (false). */
+    /** The thread screen calls this from onStart (true) and onStop (false). */
     fun setShown(shown: Boolean) {
         this.shown = shown
         markSelectedRead()
     }
 
-    /** Tapping a message picks it: replies go to it, and it counts as read. */
-    fun select(messageId: String) = choose(messageId)
+    /** Tapping a message in the thread picks it: replies go to it, and it counts as read. */
+    fun select(messageId: String) {
+        if (threadMessages().any { it.id == messageId }) choose(messageId)
+    }
 
     private fun choose(messageId: String?) {
         selectedId.value = messageId
@@ -166,7 +175,7 @@ class InboxViewModel(
     }
 
     /**
-     * A message counts as read once it is selected while the screen is shown:
+     * A message counts as read once it is selected while its thread is shown:
      * the default pick on open, the next one after a reply, or a tap. Only an
      * unread message is sent to the server. Quiet on failure: the message stays
      * New, and the next time it is selected tries again.
@@ -202,7 +211,7 @@ class InboxViewModel(
                 if (result !is ApiResult.NetworkError) pendingKeys.remove(pending)
                 if (result is ApiResult.Success) {
                     addReply(messageId, result.body)
-                    choose(newestUnanswered(inbox.value.orEmpty())?.id)
+                    choose(newestUnanswered(threadMessages())?.id)
                 }
                 noticeChannel.send(replyMessage(result))
             } finally {
