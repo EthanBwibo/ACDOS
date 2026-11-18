@@ -19,11 +19,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.kq.acdos.R
+import com.kq.acdos.data.remote.HomeMoveDto
+import com.kq.acdos.data.remote.HomeUseDto
 import com.kq.acdos.data.remote.RejectReasonDto
 import com.kq.acdos.data.remote.RosterImportResultDto
+import com.kq.acdos.ui.Times
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -84,8 +88,8 @@ private fun InputStream.readAtMost(limit: Int): ByteArray {
 }
 
 /**
- * Import roster (#229): the dry run's counts and the rows it would skip, then "Import N
- * pickups". Nothing is written until that tap. The import starts no re-plan; the dispatcher
+ * Import roster (#229): the dry run's counts, each given pickup point's nearest zone and
+ * distance (#245), and the rows it would skip, then "Import N pickups". Nothing is written until that tap. The import starts no re-plan; the dispatcher
  * runs optimisation as usual.
  */
 class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
@@ -155,6 +159,8 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
 
         view.findViewById<View>(R.id.summary_card).isVisible = result != null
         result?.let { showSummary(view, it) }
+        showHomeMoves(view, result)
+        showLocations(view, result)
         showRejected(view, result)
 
         view.findViewById<Button>(R.id.import_now).apply {
@@ -185,6 +191,7 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
         detail(view, R.id.rows_in_file, R.string.roster_rows_in_file, result.rows)
         detail(view, R.id.crew_created, R.string.roster_crew_created, result.crewCreated)
         detail(view, R.id.crew_updated, R.string.roster_crew_updated, result.crewUpdated)
+        detail(view, R.id.homes_updated, R.string.roster_homes_updated, result.homesUpdated)
         val pickups = if (result.dryRun) {
             R.string.roster_pickups_to_import
         } else {
@@ -198,6 +205,31 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
         val row = view.findViewById<View>(id)
         row.findViewById<TextView>(R.id.detail_label).setText(label)
         row.findViewById<TextView>(R.id.detail_value).text = value.toString()
+    }
+
+    private fun showHomeMoves(view: View, result: RosterImportResultDto?) {
+        val moves = result?.homeMoves.orEmpty()
+        view.findViewById<View>(R.id.home_moves_label).isVisible = moves.isNotEmpty()
+        view.findViewById<View>(R.id.home_moves_card).isVisible = moves.isNotEmpty()
+        val rows = view.findViewById<LinearLayout>(R.id.home_move_rows)
+        rows.removeAllViews()
+        for (move in moves) {
+            rows.addRow(
+                title = homeMoveText(move, ::getString),
+                subtitle = move.staffNo,
+                lead = move.line.toString()
+            )
+        }
+    }
+
+    private fun showLocations(view: View, result: RosterImportResultDto?) {
+        val shown = result?.let { locationRows(it, ::getString) }.orEmpty()
+        for (id in listOf(R.id.locations_label, R.id.locations_card, R.id.locations_hint)) {
+            view.findViewById<View>(id).isVisible = shown.isNotEmpty()
+        }
+        val rows = view.findViewById<LinearLayout>(R.id.location_rows)
+        rows.removeAllViews()
+        for (row in shown) rows.addRow(title = row.zone, subtitle = row.detail, lead = row.line)
     }
 
     private fun showRejected(view: View, result: RosterImportResultDto?) {
@@ -218,6 +250,72 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
             )
         }
     }
+}
+
+/** A zone's name without the city: "Kilimani, Nairobi" is "Kilimani". */
+internal fun shortZone(label: String): String = label.substringBefore(", ")
+
+/**
+ * "Home moves: Kilimani → Kasarani (14.1 km, from Fri 20 Nov)", for a set_home row (#245). The
+ * move takes effect at that row's report time, in Nairobi.
+ */
+internal fun homeMoveText(move: HomeMoveDto, text: (Int) -> String): String = String.format(
+    Locale.getDefault(),
+    text(R.string.roster_home_move),
+    shortZone(move.fromZone),
+    shortZone(move.toZone),
+    move.distanceKm,
+    Times.day(move.takesEffect)
+)
+
+/**
+ * The home a row with no location uses: "home (Kilimani)", or "home (Kasarani, from Fri 20
+ * Nov)" when a set_home move made it the home.
+ */
+internal fun homeUseText(use: HomeUseDto, text: (Int) -> String): String {
+    val zone = shortZone(use.zoneLabel)
+    return when (val since = use.since) {
+        null -> String.format(text(R.string.roster_home_use), zone)
+        else -> String.format(text(R.string.roster_home_use_since), zone, Times.day(since))
+    }
+}
+
+/** One row in Pickup points (#245): its line, where it is collected, and whose it is. */
+internal data class LocationRow(val line: String, val zone: String, val detail: String)
+
+/**
+ * Where each row is collected, in line order: a row's own point with its nearest zone and
+ * distance, or the home a row with no location uses. Whether a point is outside comes from
+ * the rows the server rejected, not from the rounded distance: 10.04 km shows as 10.0 but is
+ * outside.
+ */
+internal fun locationRows(result: RosterImportResultDto, text: (Int) -> String): List<LocationRow> {
+    val outside = result.rejected
+        .filter { it.reason == RejectReasonDto.OUTSIDE_PICKUP_ZONES }
+        .map { it.line }
+        .toSet()
+    val homes = result.homeUses.map { use ->
+        use.line to LocationRow(use.line.toString(), homeUseText(use, text), use.staffNo)
+    }
+    val points = result.locations.map { location ->
+        val format = if (location.line in outside) {
+            R.string.roster_location_outside
+        } else {
+            R.string.roster_location_near
+        }
+        val row = LocationRow(
+            line = location.line.toString(),
+            zone = location.zoneLabel,
+            detail = String.format(
+                Locale.getDefault(),
+                text(format),
+                location.staffNo,
+                location.distanceKm
+            )
+        )
+        location.line to row
+    }
+    return (points + homes).sortedBy { it.first }.map { it.second }
 }
 
 @StringRes
