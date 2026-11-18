@@ -217,7 +217,12 @@ async def demo_jobs(conn: asyncpg.Connection, rows: DemoRows) -> list[UUID]:
 
 
 async def _reset(conn: asyncpg.Connection) -> dict[str, int]:
-    rows = await demo_rows(conn)
+    return await delete_rows(conn, await demo_rows(conn))
+
+
+async def delete_rows(conn: asyncpg.Connection, rows: DemoRows) -> dict[str, int]:
+    """Deletes these vans, crew and pickups and what hangs off them, by id.
+    Also used by scripts/make_defence_day.py (#252) for its own rows."""
     jobs = await demo_jobs(conn, rows)
     routes = [
         r["id"]
