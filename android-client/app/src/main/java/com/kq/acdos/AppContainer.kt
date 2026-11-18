@@ -12,6 +12,7 @@ import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.DriverRouteRepository
 import com.kq.acdos.data.DriverScheduleRepository
 import com.kq.acdos.data.MessagesRepository
+import com.kq.acdos.data.PickupEntryRepository
 import com.kq.acdos.data.ProfileRepository
 import com.kq.acdos.data.ThemeStore
 import com.kq.acdos.data.local.AcdosDatabase
@@ -80,6 +81,11 @@ open class AppContainer(context: Context) {
     val dispatcherApi: DispatcherApi by lazy { retrofit.create() }
 
     val messagesApi: MessagesApi by lazy { retrofit.create() }
+
+    /** Null without an API URL: the Crew list, Add pickup and Set home need the server (#253). */
+    open val pickupEntryRepository: PickupEntryRepository? by lazy {
+        if (isApiConfigured) PickupEntryRepository(dispatcherApi) else null
+    }
 
     /** Null without an API URL; the dispatcher screen then shows nothing. */
     open val dispatchRepository: DispatchRepository? by lazy {

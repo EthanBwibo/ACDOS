@@ -10,6 +10,15 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Pickups only (issue 253): the form for one pickup, without a CSV. -->
+        <Button
+            android:id="@+id/add_pickup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/add_pickup"
+            android:visibility="gone" />
+
         <!-- Pickups only (issue 229): opens the file picker for a roster CSV. -->
         <Button
             android:id="@+id/import_roster"
