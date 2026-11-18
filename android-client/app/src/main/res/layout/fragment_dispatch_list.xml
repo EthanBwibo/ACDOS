@@ -20,6 +20,17 @@
             android:text="@string/roster_import"
             android:visibility="gone" />
 
+        <!-- Pickups only (issue 254): saves the roster template through the file picker. -->
+        <Button
+            android:id="@+id/download_template"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-8dp"
+            android:layout_marginBottom="4dp"
+            android:text="@string/roster_download_template"
+            android:visibility="gone" />
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
