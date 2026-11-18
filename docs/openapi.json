@@ -5,7 +5,7 @@
         "properties": {
           "file": {
             "contentMediaType": "application/octet-stream",
-            "description": "The roster CSV (docs/roster_import.md)",
+            "description": "The roster CSV (docs/roster_import.md, docs/acdos_roster_template.csv)",
             "title": "File",
             "type": "string"
           }
@@ -3180,7 +3180,7 @@
     },
     "/roster-imports": {
       "post": {
-        "description": "Import crew and their pickups from a roster CSV of up to 500 rows.\nRejected rows are skipped and listed with their line and reason; the rest\nimport together. With dry_run=true nothing is written: the result is what\nthe import would do. A real import needs an Idempotency-Key: a retry with\nthe same key and file gets the first result and imports nothing. Starts\nno re-plan.",
+        "description": "Import crew and their pickups from a roster CSV of up to 500 rows.\nHeaders ignore case, spaces, underscores and hyphens, and accept common\naliases (role, location, report, ...); a missing column is named in the\nerror with the headers found.\nRejected rows are skipped and listed with their line and reason; the rest\nimport together. With dry_run=true nothing is written: the result is what\nthe import would do. A real import needs an Idempotency-Key: a retry with\nthe same key and file gets the first result and imports nothing. Starts\nno re-plan.",
         "operationId": "import_roster_roster_imports_post",
         "parameters": [
           {

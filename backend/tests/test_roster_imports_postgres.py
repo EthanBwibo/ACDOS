@@ -356,7 +356,7 @@ def test_a_file_missing_a_column_imports_nothing(client):
     assert response.status_code == 422
     assert response.json() == {
         "code": "validation_failed",
-        "detail": "missing columns: crew_role",
+        "detail": "No crew_role column. Found: staff_no, name, pickup_location, report_time",
     }
     assert crew() == {}
 

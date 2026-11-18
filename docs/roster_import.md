@@ -2,7 +2,11 @@
 
 The roster is an external input: ACDOS does not build it. The dispatcher puts it in with a CSV
 file (#229), from **Pickups > Import roster** in the app, or `POST /roster-imports`. One row is
-one rostered pickup. A sample is in [`roster_sample.csv`](roster_sample.csv): six good rows and
+one rostered pickup. To start a roster from scratch, use the template:
+**Download template** on Import roster saves it, and the same file is
+[`acdos_roster_template.csv`](acdos_roster_template.csv). It has the headers and two example
+rows: one with a blank location (a known crew member, collected from home) and one with a
+point pasted from Google Maps. A sample is in [`roster_sample.csv`](roster_sample.csv): six good rows and
 five bad ones. Most of its rows have no location; two new crew members give one, pasted from
 Google Maps as coordinates and as a link. The last row moves one of them home with
 `set_home`. Rows with a
@@ -16,8 +20,21 @@ python scripts/make_sample_roster.py --date 2026-12-01  # from a given day
 
 ## Columns
 
-The first line is the header. Column names ignore case and surrounding spaces, and the columns
-can be in any order.
+The first line is the header. The columns can be in any order. Headers are matched ignoring
+case, spaces, underscores and hyphens, so `Staff No`, `staff_no` and `STAFF-NO` are the same
+column, and each column also accepts the names a spreadsheet may already use (#254):
+
+| Column | Also accepted |
+|---|---|
+| `staff_no` | staff number, staff no, staff id, employee no |
+| `crew_role` | role, rank |
+| `pickup_location` | location, pickup point, pickup, coordinates |
+| `report_time` | report, report at, duty time |
+| `request_type` | type |
+| `set_home` | new home, move home |
+
+Any other column is ignored. Two headers for the same column, e.g. `Role` and `crew_role`, are
+refused, rather than one of them being read without a word.
 
 | Column | Required | Format |
 |---|---|---|
@@ -139,8 +156,12 @@ every zone is rejected anyway.
 ## Whole-file errors
 
 These are answered with 422 `validation_failed`, and nothing is imported:
-- the file is empty, not UTF-8, or missing a required column;
-- the file still has the old `pickup_lat` and `pickup_lon` columns;
+- the file is empty, or not UTF-8;
+- a required column is missing. The detail names it and lists the headers found, e.g. "No
+  staff_no column. Found: Name, Role, Location, Report";
+- two headers are the same column;
+- the file still has the old `pickup_lat` and `pickup_lon` columns, however their headers are
+  written;
 - the file has over 500 rows;
 - a real import is sent without an `Idempotency-Key`.
 
