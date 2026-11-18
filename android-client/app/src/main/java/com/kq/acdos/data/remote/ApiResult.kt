@@ -61,6 +61,16 @@ enum class ErrorCode {
     @Json(name = "already_confirmed")
     ALREADY_CONFIRMED,
 
+    /** Add pickup or Set home (#253): the roster import's reasons, as error codes. */
+    @Json(name = "outside_pickup_zones")
+    OUTSIDE_PICKUP_ZONES,
+
+    @Json(name = "report_time_past")
+    REPORT_TIME_PAST,
+
+    @Json(name = "duplicate_pickup")
+    DUPLICATE_PICKUP,
+
     /**
      * The generic error: a code newer than this app, or a body that isn't an
      * ErrorBody at all (a proxy's HTML 502, an empty body). Not in the contract.

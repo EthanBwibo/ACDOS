@@ -78,6 +78,21 @@ class RosterImportViewModelTest {
 
         override suspend fun vehicles(cursor: String?, limit: Int?) = error("not used here")
 
+        override suspend fun crew(query: String?, cursor: String?, limit: Int?) =
+            error("not used here")
+
+        override suspend fun nearestZone(lat: Double, lon: Double) = error("not used here")
+
+        override suspend fun addPickup(
+            idempotencyKey: String,
+            body: com.kq.acdos.data.remote.PickupRequestCreateDto
+        ) = error("not used here")
+
+        override suspend fun setHome(
+            crewMemberId: String,
+            body: com.kq.acdos.data.remote.LatLonDto
+        ) = error("not used here")
+
         override suspend fun routes(date: LocalDate?, cursor: String?, limit: Int?) =
             error("not used here")
 
