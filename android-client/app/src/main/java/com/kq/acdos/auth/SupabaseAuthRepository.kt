@@ -112,6 +112,9 @@ class SupabaseAuthRepository(
     override suspend fun storedSessionUserId(): String? =
         sessionManager.loadSessionOrNull()?.user?.id
 
+    override suspend fun storedSessionEmail(): String? =
+        sessionManager.loadSessionOrNull()?.user?.email
+
     override suspend fun signIn(email: String, password: String): SignInResult =
         runSignIn(onNetworkError = { Log.w(TAG, "Sign-in could not reach Supabase", it) }) {
             client.auth.signInWith(Email) {

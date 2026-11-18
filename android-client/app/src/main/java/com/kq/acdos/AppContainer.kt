@@ -131,7 +131,12 @@ open class AppContainer(context: Context) {
 
     /** Null without an API URL; the Profile screen then shows only the cache. */
     val profileRepository: ProfileRepository? by lazy {
-        if (isApiConfigured) ProfileRepository(meApi, database.myProfileDao()) else null
+        if (isApiConfigured) {
+            val email: suspend () -> String? = { authRepository.storedSessionEmail() }
+            ProfileRepository(meApi, database.myProfileDao(), email)
+        } else {
+            null
+        }
     }
 
     /** Null without an API URL; the Message tab then lists only cached presets. */

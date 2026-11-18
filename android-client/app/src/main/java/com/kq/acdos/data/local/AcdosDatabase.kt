@@ -26,15 +26,17 @@ import androidx.room.TypeConverters
         PendingPickupEventEntity::class,
         MyProfileEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     // Keep every step from here on: an update must never lose queued pickup events.
     // 3 to 4: route_stop.server_status (#196).
     // 4 to 5: my_profile and crew_pickup.status, for the Profile screen (#231).
+    // 5 to 6: my_profile.email, for the dispatcher's Profile (#249).
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5)
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6)
     ]
 )
 @TypeConverters(Converters::class)

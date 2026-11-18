@@ -20,6 +20,9 @@ interface AuthRepository : AccessTokenProvider {
     /** User id of the session saved on the device, read without the network. */
     suspend fun storedSessionUserId(): String?
 
+    /** Email of the session saved on the device, read without the network. */
+    suspend fun storedSessionEmail(): String? = null
+
     suspend fun signIn(email: String, password: String): SignInResult
 
     /** Reads the caller's own profiles row (RLS: profiles_select_own). */

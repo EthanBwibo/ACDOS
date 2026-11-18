@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
-/** Starts the Profile screen from a crew or driver home screen, with the name it was given. */
+/** Starts the Profile screen from a home screen, with the name it was given. */
 fun Activity.openProfile(role: AppRole) {
     startActivity(
         Intent(this, ProfileActivity::class.java)
@@ -85,8 +85,8 @@ class ProfileViewModel(
 }
 
 /**
- * The crew member's or driver's own details, read-only (#231), opened from
- * the overflow menu rather than a tab. The roster is the source of truth for
+ * The signed-in user's own details, read-only, opened from the overflow menu
+ * rather than a tab: crew and drivers (#231), and the dispatcher (#249). The roster is the source of truth for
  * the home location, so nothing here can be edited. Sign out and the theme
  * are here instead of the menu.
  */
@@ -108,7 +108,11 @@ class ProfileActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.name).text = name
         findViewById<TextView>(R.id.avatar).text = initials(name)
         findViewById<TextView>(R.id.role).setText(
-            if (role == AppRole.CREW) R.string.profile_role_crew else R.string.profile_role_driver
+            when (role) {
+                AppRole.CREW -> R.string.profile_role_crew
+                AppRole.DRIVER -> R.string.profile_role_driver
+                AppRole.DISPATCHER -> R.string.profile_role_dispatcher
+            }
         )
         findViewById<MaterialButton>(R.id.theme).apply {
             text = getString(R.string.login_theme, getString(container.themeStore.mode().label))

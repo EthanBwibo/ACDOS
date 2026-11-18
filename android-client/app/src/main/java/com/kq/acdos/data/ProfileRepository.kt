@@ -13,11 +13,13 @@ import retrofit2.Response
 /**
  * Keeps the Room copy of the Profile screen's details (#231) in step with
  * GET /crew/me or GET /drivers/me. A failed refresh leaves the copy as it
- * was, so the screen still opens with no signal.
+ * was, so the screen still opens with no signal. The dispatcher's (#249)
+ * comes from the signed-in session, through [email], with no API call.
  */
 class ProfileRepository(
     private val api: MeApi,
     private val dao: MyProfileDao,
+    private val email: suspend () -> String? = { null },
     private val clock: () -> Instant = Instant::now
 ) {
     val profile: Flow<MyProfileEntity?> = dao.observe()
@@ -37,8 +39,11 @@ class ProfileRepository(
             )
         }
 
-        // The dispatcher has no Profile screen.
-        AppRole.DISPATCHER -> RefreshResult.NOT_ALLOWED
+        // Read from the session on the device, so it works with no signal too.
+        AppRole.DISPATCHER -> email()?.let {
+            dao.save(MyProfileEntity(email = it, fetchedAt = clock()))
+            RefreshResult.UPDATED
+        } ?: RefreshResult.FAILED
     }
 
     private suspend fun <T : Any> fetch(

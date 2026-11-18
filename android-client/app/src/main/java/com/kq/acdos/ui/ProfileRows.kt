@@ -18,9 +18,9 @@ data class ProfileRow(@StringRes val label: Int, val value: String)
 const val NOT_LOADED = "—"
 
 /**
- * The Profile screen's details (#231), all from Room so they show with no
- * signal. [details] is null until GET /crew/me or /drivers/me has answered
- * once; [pickup] is the crew member's cached next pickup, null when there is
+ * The Profile screen's details (#231, #249), all from Room so they show with
+ * no signal. [details] is null until GET /crew/me or /drivers/me has answered
+ * once, or for the dispatcher until the email was first read; [pickup] is the crew member's cached next pickup, null when there is
  * none to come. [text] looks up a string.
  */
 fun profileRows(
@@ -66,7 +66,9 @@ fun profileRows(
         )
     )
 
-    AppRole.DISPATCHER -> emptyList()
+    AppRole.DISPATCHER -> listOf(
+        ProfileRow(R.string.profile_email, details?.email ?: NOT_LOADED)
+    )
 }
 
 /** "cabin_crew" as the roster has it, shown as "Cabin crew". */

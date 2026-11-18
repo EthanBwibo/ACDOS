@@ -63,6 +63,14 @@ class ProfileRowsTest {
     }
 
     @Test
+    fun theDispatcher_seesTheirEmail() {
+        val details = MyProfileEntity(email = "grace@acdos.test", fetchedAt = now)
+
+        assertEquals(listOf("Email" to "grace@acdos.test"), rows(AppRole.DISPATCHER, details))
+        assertEquals(listOf("Email" to NOT_LOADED), rows(AppRole.DISPATCHER, null))
+    }
+
+    @Test
     fun drivers_seeTheirVan() {
         val details = MyProfileEntity(
             vehiclePlate = "KDA 001A",

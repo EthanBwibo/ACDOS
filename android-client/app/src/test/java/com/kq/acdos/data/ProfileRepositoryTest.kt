@@ -30,11 +30,12 @@ class ProfileRepositoryTest {
     private lateinit var db: AcdosDatabase
     private val api = FakeMeApi()
     private lateinit var repository: ProfileRepository
+    private var email: String? = "grace@acdos.test"
 
     @Before
     fun setUp() {
         db = inMemoryDatabase()
-        repository = ProfileRepository(api, db.myProfileDao(), clock = { t0 })
+        repository = ProfileRepository(api, db.myProfileDao(), { email }, clock = { t0 })
     }
 
     @After
@@ -55,6 +56,22 @@ class ProfileRepositoryTest {
                 fetchedAt = t0
             )
         assertEquals(expected, cached())
+    }
+
+    @Test
+    fun theDispatcher_getsTheirEmailFromTheSession() = runTest {
+        assertEquals(RefreshResult.UPDATED, repository.refresh(AppRole.DISPATCHER))
+
+        assertEquals(MyProfileEntity(email = "grace@acdos.test", fetchedAt = t0), cached())
+    }
+
+    @Test
+    fun theDispatcher_withNoSessionEmail_savesNothing() = runTest {
+        email = null
+
+        assertEquals(RefreshResult.FAILED, repository.refresh(AppRole.DISPATCHER))
+
+        assertNull(cached())
     }
 
     @Test
