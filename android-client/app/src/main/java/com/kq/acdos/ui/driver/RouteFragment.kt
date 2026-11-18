@@ -20,6 +20,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.dial
 import com.kq.acdos.ui.useThemeColors
 import java.time.Instant
 import kotlinx.coroutines.flow.combine
@@ -53,6 +54,14 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         val swipe = view.findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
         val map = view.findViewById<RouteMapView>(R.id.map)
         view.findViewById<View>(R.id.recentre).setOnClickListener { map.recentre() }
+        // A refresh can bring the next stop's number into its window, or take it away (#255).
+        container.driverRouteRepository?.crewPhones?.let { phones ->
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    phones.collect { showCall(view) }
+                }
+            }
+        }
         swipe.useThemeColors()
         swipe.setOnRefreshListener {
             container.uploadPickupEvents()
@@ -132,6 +141,7 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         map.contentDescription = getString(R.string.route_map_description, route.stops.size)
         map.show(driverMapStops(route.stops, progress.next))
 
+        if (progress.next == null) next = null
         view.findViewById<View>(R.id.next_card).isVisible = progress.next != null
         view.findViewById<View>(R.id.all_done).isVisible = progress.next == null
         progress.next?.let { showNext(view, it, route.arriveBy) }
@@ -187,6 +197,22 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
         return row
     }
 
+    /** The next stop on screen, for its Call button. */
+    private var next: StopRow? = null
+
+    /** Call the next stop's crew member, only while the server gives their number (#255). */
+    private fun showCall(view: View) {
+        val stop = next
+        val phone = stop?.let {
+            container.driverRouteRepository?.crewPhones?.value?.get(it.routeNodeId)
+        }
+        view.findViewById<Button>(R.id.call_crew).apply {
+            isVisible = phone != null
+            text = stop?.let { getString(R.string.call_crew, firstName(it.crewName)) }
+            setOnClickListener { phone?.let { requireContext().dial(it) } }
+        }
+    }
+
     private fun openConfirm(stop: StopRow) {
         startActivity(ConfirmPickupActivity.intent(requireContext(), stop.routeNodeId))
     }
@@ -223,6 +249,8 @@ class RouteFragment : Fragment(R.layout.fragment_route) {
             )
         }
         view.findViewById<Button>(R.id.confirm).setOnClickListener { openConfirm(stop) }
+        next = stop
+        showCall(view)
     }
 
     private fun zoneName(stop: StopRow) =

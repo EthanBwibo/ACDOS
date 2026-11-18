@@ -141,6 +141,15 @@
 
                         </LinearLayout>
 
+                        <!-- Only while the server gives the number: 30 min before, until settled (issue 255). -->
+                        <Button
+                            android:id="@+id/call_crew"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone" />
+
                     </LinearLayout>
 
                 </com.google.android.material.card.MaterialCardView>

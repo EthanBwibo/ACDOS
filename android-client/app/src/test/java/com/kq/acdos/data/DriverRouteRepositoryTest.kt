@@ -53,7 +53,8 @@ class DriverRouteRepositoryTest {
         node: String,
         seq: Int,
         eta: Instant? = null,
-        status: PickupRequestStatusDto = PickupRequestStatusDto.ASSIGNED
+        status: PickupRequestStatusDto = PickupRequestStatusDto.ASSIGNED,
+        phone: String? = null
     ) = DriverStopDto(
         routeNodeId = node,
         seqOrder = seq,
@@ -63,7 +64,8 @@ class DriverRouteRepositoryTest {
         eta = eta,
         lat = -1.2675,
         lon = 36.81202,
-        pickupStatus = status
+        pickupStatus = status,
+        crewPhone = phone
     )
 
     private fun route(id: String, status: RouteStatusDto = RouteStatusDto.ACTIVE) =
@@ -163,6 +165,35 @@ class DriverRouteRepositoryTest {
             ),
             statuses.zip(saved.map { it.serverStatus }).toMap()
         )
+    }
+
+    @Test
+    fun onlyStopsInTheWindow_haveANumber_heldInMemory() = runTest {
+        val stops = listOf(stop("n1", 1, phone = "+254700000201"), stop("n2", 2))
+        answer(DriverRouteDto("r1", RouteStatusDto.ACTIVE, "KDA r1", t0, stops))
+
+        repository.refresh(force = true)
+
+        assertEquals(mapOf("n1" to "+254700000201"), repository.crewPhones.value)
+        val restarted = DriverRouteRepository(api, db.driverRouteDao(), clock = { now })
+        assertEquals("not stored", emptyMap<String, String>(), restarted.crewPhones.value)
+    }
+
+    @Test
+    fun aRefreshWithoutTheNumber_orWithNoRoute_takesItAway() = runTest {
+        val inWindow = listOf(stop("n1", 1, phone = "+254700000201"))
+        answer(DriverRouteDto("r1", RouteStatusDto.ACTIVE, "KDA r1", t0, inWindow))
+        repository.refresh(force = true)
+
+        answer(DriverRouteDto("r1", RouteStatusDto.ACTIVE, "KDA r1", t0, listOf(stop("n1", 1))))
+        repository.refresh(force = true)
+        assertEquals(emptyMap<String, String>(), repository.crewPhones.value)
+
+        answer(DriverRouteDto("r1", RouteStatusDto.ACTIVE, "KDA r1", t0, inWindow))
+        repository.refresh(force = true)
+        answer(null)
+        repository.refresh(force = true)
+        assertEquals(emptyMap<String, String>(), repository.crewPhones.value)
     }
 
     @Test

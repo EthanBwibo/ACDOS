@@ -97,6 +97,25 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp" />
 
+                        <!-- The driver's first name, once a route plans the pickup (issue 255). -->
+                        <include
+                            android:id="@+id/driver_row"
+                            layout="@layout/view_detail_row"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone" />
+
+                        <!-- Only while the server gives the number: 30 min before, until settled. -->
+                        <Button
+                            android:id="@+id/call_driver"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/call_driver"
+                            android:visibility="gone" />
+
                     </LinearLayout>
 
                 </com.google.android.material.card.MaterialCardView>

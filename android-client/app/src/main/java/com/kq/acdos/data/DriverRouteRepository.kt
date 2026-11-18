@@ -13,6 +13,9 @@ import com.kq.acdos.data.remote.RouteStatusDto
 import com.kq.acdos.data.remote.apiCall
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -72,6 +75,14 @@ class DriverRouteRepository(
 ) {
     private val lock = Mutex()
 
+    private val phones = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /**
+     * Each stop's crew number (#255) by route node id, only for stops inside the server's
+     * window. In memory only, never in Room, and replaced by each refresh that answers.
+     */
+    val crewPhones: StateFlow<Map<String, String>> = phones.asStateFlow()
+
     /** When the last refresh started, whatever its result. Guarded by [lock]. */
     private var lastAttempt: Instant? = null
 
@@ -107,9 +118,13 @@ class DriverRouteRepository(
      */
     private suspend fun save(route: DriverRouteDto?, fetchedAt: Instant): RefreshResult {
         if (route == null || route.status != RouteStatusDto.ACTIVE) {
+            phones.value = emptyMap()
             dao.deleteAllRoutes()
             return RefreshResult.NO_ROUTE
         }
+        phones.value = route.stops.mapNotNull { stop ->
+            stop.crewPhone?.let { stop.routeNodeId to it }
+        }.toMap()
         dao.saveActiveRoute(
             RouteEntity(route.routeId, route.vehiclePlate, route.plannedArrival, fetchedAt),
             route.stops.map { stop ->

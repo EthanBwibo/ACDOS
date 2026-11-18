@@ -30,6 +30,7 @@ import com.kq.acdos.data.local.RouteStopEntity
 import com.kq.acdos.data.outbox.PickupEventOutbox
 import com.kq.acdos.ui.Times
 import com.kq.acdos.ui.applySystemBarPadding
+import com.kq.acdos.ui.dial
 import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +40,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
+/** "Amina" from "Amina Otieno", for "Call Amina". */
+fun firstName(name: String): String = name.trim().substringBefore(' ')
 
 /** Up to two letters for the avatar: "A. Sample" gives "AS". */
 fun initials(name: String): String = name.split(' ').filter { it.isNotBlank() }
@@ -167,6 +171,19 @@ class ConfirmPickupActivity : AppCompatActivity() {
                             navigateTo(findViewById(R.id.main), stop.pickupLat, stop.pickupLon)
                         }
                     }
+                }
+            }
+        }
+        // Call, only while the server gives the crew member's number (#255).
+        val phones = container.driverRouteRepository?.crewPhones ?: MutableStateFlow(emptyMap())
+        val call = findViewById<Button>(R.id.call_crew)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(viewModel.stop, phones, ::Pair).collect { (stop, numbers) ->
+                    val phone = stop?.let { numbers[it.routeNodeId] }
+                    call.isVisible = phone != null
+                    call.text = stop?.let { getString(R.string.call_crew, firstName(it.crewName)) }
+                    call.setOnClickListener { phone?.let { dial(it) } }
                 }
             }
         }

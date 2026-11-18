@@ -14,13 +14,24 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.kq.acdos.R
+import com.kq.acdos.data.DriverContact
 import com.kq.acdos.data.local.CrewPickupEntity
 import com.kq.acdos.data.local.ScheduleChangeNoticeEntity
 import com.kq.acdos.ui.Times
+import com.kq.acdos.ui.dial
 import com.kq.acdos.ui.showLoading
 import com.kq.acdos.ui.useThemeColors
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+
+/**
+ * The contact for the pickup on screen: from the same refresh, for the same pickup. A
+ * contact left from another pickup (or another account) is never shown.
+ */
+fun driverFor(state: CrewPickupState, contact: DriverContact?): DriverContact? {
+    val pickup = (state as? CrewPickupState.Pickup)?.pickup ?: return null
+    return contact?.takeIf { it.pickupRequestId == pickup.pickupRequestId }
+}
 
 /**
  * The crew member's next pickup (Figma 3:333): time, JKIA report time and
@@ -43,6 +54,7 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
         }
         view.findViewById<View>(R.id.report_row).label(R.string.crew_report_time)
         view.findViewById<View>(R.id.vehicle_row).label(R.string.crew_vehicle)
+        view.findViewById<View>(R.id.driver_row).label(R.string.crew_driver)
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -69,6 +81,13 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
                     empty.isVisible = chrome.showEmpty
                     error.isVisible = chrome.error != null
                     chrome.error?.let(error::setText)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(viewModel.state, viewModel.driverContact, ::Pair).collect { (s, c) ->
+                    showDriver(view, driverFor(s, c))
                 }
             }
         }
@@ -107,6 +126,20 @@ class CrewPickupFragment : Fragment(R.layout.fragment_crew_pickup) {
             .value(pickup.plateNumber ?: getString(R.string.crew_no_vehicle))
         view.findViewById<TextView>(R.id.updated).text =
             getString(R.string.route_updated, Times.clock(pickup.fetchedAt))
+    }
+
+    /** The driver's first name, and Call driver only while the server gives the number. */
+    private fun showDriver(view: View, contact: DriverContact?) {
+        val name = contact?.firstName
+        view.findViewById<View>(R.id.driver_row).apply {
+            isVisible = name != null
+            name?.let { value(it) }
+        }
+        val phone = contact?.phone
+        view.findViewById<View>(R.id.call_driver).apply {
+            isVisible = phone != null
+            setOnClickListener { phone?.let { requireContext().dial(it) } }
+        }
     }
 
     private fun showNotice(

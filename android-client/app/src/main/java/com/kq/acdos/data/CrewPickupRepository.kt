@@ -9,6 +9,9 @@ import com.kq.acdos.data.remote.MeApi
 import com.kq.acdos.data.remote.ScheduleChangeNoticeDto
 import com.kq.acdos.data.remote.apiCall
 import java.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -19,6 +22,10 @@ import kotlinx.coroutines.sync.withLock
  *
  * The notice table mirrors the server: after each refresh it holds only the
  * pickup's latest unacknowledged change (#53), if there is one.
+ *
+ * The driver's first name and number (#255) are kept in memory only, never in
+ * Room: the number is only meant to exist around the pickup, and the server
+ * decides when that is, so each refresh replaces it.
  */
 class CrewPickupRepository(
     private val api: MeApi,
@@ -26,6 +33,11 @@ class CrewPickupRepository(
     private val clock: () -> Instant = Instant::now
 ) {
     private val lock = Mutex()
+
+    private val contact = MutableStateFlow<DriverContact?>(null)
+
+    /** From the last refresh that answered; null with no pickup. */
+    val driverContact: StateFlow<DriverContact?> = contact.asStateFlow()
 
     /**
      * Called when the Pickup tab starts and on a pull. [RefreshResult.NO_ROUTE]
@@ -41,6 +53,9 @@ class CrewPickupRepository(
 
     private suspend fun save(pickup: CrewPickupDto?): RefreshResult {
         dao.deleteNotices()
+        contact.value = pickup?.let {
+            DriverContact(it.pickupRequestId, it.driverFirstName, it.driverPhone)
+        }
         if (pickup == null) {
             dao.deletePickups()
             return RefreshResult.NO_ROUTE
@@ -77,6 +92,14 @@ class CrewPickupRepository(
         }
     }
 }
+
+/** Who is driving the crew member's pickup, and their number while it can be called (#255). */
+data class DriverContact(
+    val pickupRequestId: String,
+    val firstName: String?,
+    /** Null outside the server's window: then there is no Call button. */
+    val phone: String?
+)
 
 private fun ScheduleChangeNoticeDto.toEntity(pickupRequestId: String) = ScheduleChangeNoticeEntity(
     id = id,
