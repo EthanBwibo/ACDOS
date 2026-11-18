@@ -13,11 +13,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -41,6 +44,9 @@ class RosterImportViewModelTest {
         val sent = mutableListOf<Sent>()
         var pickups = 2
         var failNext = false
+
+        /** The next answer is this HTTP error, e.g. 422 for a file with the wrong columns. */
+        var errorNext: Int? = null
         var contentType: String? = null
 
         override suspend fun importRoster(
@@ -56,6 +62,11 @@ class RosterImportViewModelTest {
             if (failNext) {
                 failNext = false
                 throw IOException("no signal")
+            }
+            errorNext?.let { status ->
+                errorNext = null
+                val body = """{"code":"VALIDATION_FAILED","detail":"No staff_no column"}"""
+                return Response.error(status, body.toResponseBody("application/json".toMediaType()))
             }
             return Response.success(
                 RosterImportResultDto(dryRun, pickups + 1, 1, 1, pickups, 1, emptyList())
@@ -183,6 +194,46 @@ class RosterImportViewModelTest {
 
         assertEquals(R.string.roster_too_large, viewModel.state.value.failure?.text)
         assertTrue(api.sent.isEmpty())
+    }
+
+    @Test
+    fun aFileError_offersAnotherFileAndNoRetry() {
+        api.errorNext = 422
+        viewModel.choose("roster.csv", csv)
+
+        val state = viewModel.state.value
+        assertNotNull(state.failure)
+        assertFalse("no Retry for a 422", state.showRetry)
+        assertTrue("Choose another file leads", state.fileRefused)
+
+        viewModel.retry()
+        assertEquals("retry sends nothing", 1, api.sent.size)
+    }
+
+    @Test
+    fun aServerError_offersRetry() {
+        api.errorNext = 503
+        viewModel.choose("roster.csv", csv)
+
+        assertTrue(viewModel.state.value.showRetry)
+        assertFalse(viewModel.state.value.fileRefused)
+    }
+
+    @Test
+    fun noConnection_offersRetry() {
+        api.failNext = true
+        viewModel.choose("roster.csv", csv)
+
+        assertTrue(viewModel.state.value.showRetry)
+        assertFalse(viewModel.state.value.fileRefused)
+    }
+
+    @Test
+    fun aFileOverTheLimit_offersAnotherFileAndNoRetry() {
+        viewModel.choose("huge.csv", ByteArray(ROSTER_MAX_BYTES + 1))
+
+        assertFalse(viewModel.state.value.showRetry)
+        assertTrue(viewModel.state.value.fileRefused)
     }
 
     @Test

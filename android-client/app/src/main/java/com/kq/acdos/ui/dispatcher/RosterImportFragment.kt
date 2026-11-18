@@ -111,6 +111,10 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.import_now).setOnClickListener { roster.importNow() }
         view.findViewById<Button>(R.id.retry).setOnClickListener { roster.retry() }
+        // A refused file: the same action as a filled button, since it's the way on.
+        view.findViewById<Button>(R.id.choose_file).setOnClickListener {
+            picker.launch(ROSTER_TYPES)
+        }
         val other = view.findViewById<Button>(R.id.other_file)
         other.setOnClickListener {
             if (roster.state.value.imported != null) {
@@ -172,8 +176,10 @@ class RosterImportFragment : Fragment(R.layout.fragment_roster_import) {
                 state.check?.pickupsCreated ?: 0
             )
         }
-        view.findViewById<View>(R.id.retry).isVisible = state.failure != null && !state.busy
+        view.findViewById<View>(R.id.retry).isVisible = state.showRetry
+        view.findViewById<View>(R.id.choose_file).isVisible = state.fileRefused
         view.findViewById<Button>(R.id.other_file).apply {
+            isVisible = !state.fileRefused
             setText(
                 if (state.imported !=
                     null
