@@ -20,7 +20,7 @@ Bands, report times at JKIA in Nairobi time: early 04:00-06:30, mid 08:00-10:00,
 | daniel@acdos.test | crew | Daniel Mutua (KQ30004), Kasarani, mid |
 | esther@acdos.test | crew | Esther Wairimu (KQ30005), South C, noon |
 | faith@acdos.test | crew | Faith Chebet (KQ30006), Ruiru, afternoon |
-| george@acdos.test | crew | George Ouma (KQ30007), Kilimani, night |
+| george@acdos.test | crew | George Njuguna (KQ30007), Kilimani, night |
 | halima@acdos.test | crew | Halima Abdi (KQ30008), Kitengela, night |
 | driver-v01@acdos.test | driver | Joseph Kamau, defence-KDX 001 |
 | driver-v02@acdos.test | driver | Peter Odhiambo, defence-KDX 002 |

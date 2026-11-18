@@ -128,7 +128,7 @@ NAMED_CREW = [
               "South C, Nairobi", 250, 350, ("noon",)),
     NamedCrew("faith@acdos.test", "Faith Chebet", "KQ30006", "cabin_crew",
               "Ruiru, Kiambu County", -350, 200, ("afternoon",)),
-    NamedCrew("george@acdos.test", "George Ouma", "KQ30007", "pilot",
+    NamedCrew("george@acdos.test", "George Njuguna", "KQ30007", "pilot",
               "Kilimani, Nairobi", 200, -300, ("night",)),
     NamedCrew("halima@acdos.test", "Halima Abdi", "KQ30008", "cabin_crew",
               "Kitengela, Kajiado County", -200, -350, ("night",)),
