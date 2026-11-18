@@ -280,8 +280,9 @@ def test_driver_gets_their_current_route_with_live_stops_only(client, world):
     # Exactly what the driver's screen shows, no more.
     assert set(stop_c) == {
         "route_node_id", "seq_order", "crew_name", "zone_label",
-        "scheduled_pickup", "eta", "lat", "lon", "pickup_status",
+        "scheduled_pickup", "eta", "lat", "lon", "pickup_status", "crew_phone",
     }  # fmt: skip
+    assert stop_c["crew_phone"] is None  # none on record (#255: test_contacts_postgres.py)
 
 
 def set_status(pickups: dict, statuses: dict[str, str]) -> None:
@@ -368,8 +369,9 @@ def test_crew_get_their_next_pickup_without_coordinates(client, world):
     assert body["scheduled_pickup"] is not None
     assert set(body) == {
         "pickup_request_id", "status", "report_time", "scheduled_pickup", "eta", "vehicle_plate",
-        "needs_ack", "notice",
+        "driver_first_name", "driver_phone", "needs_ack", "notice",
     }  # fmt: skip
+    assert body["driver_phone"] is None  # none on record (#255: test_contacts_postgres.py)
     # No re-plan has changed it (#53).
     assert (body["needs_ack"], body["notice"]) == (False, None)
     assert not keys_anywhere(body) & {"lat", "lon", "location", "pickup_location"}
