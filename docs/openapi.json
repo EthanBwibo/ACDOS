@@ -16,6 +16,123 @@
         "title": "Body_import_roster_roster_imports_post",
         "type": "object"
       },
+      "CrewHome": {
+        "description": "A crew member's home after PATCH /crew-members/{id}/home.",
+        "properties": {
+          "distance_km": {
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "home": {
+            "$ref": "#/components/schemas/LatLon"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "zone_label": {
+            "title": "Zone Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "home",
+          "zone_label",
+          "distance_km"
+        ],
+        "title": "CrewHome",
+        "type": "object"
+      },
+      "CrewListItem": {
+        "description": "One crew member in the dispatcher's Crew list and Add pickup search.",
+        "properties": {
+          "crew_role": {
+            "title": "Crew Role",
+            "type": "string"
+          },
+          "home": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatLon"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "home_zone_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home Zone Label"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "staff_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff No"
+          }
+        },
+        "required": [
+          "id",
+          "staff_no",
+          "name",
+          "crew_role",
+          "home",
+          "home_zone_label"
+        ],
+        "title": "CrewListItem",
+        "type": "object"
+      },
+      "CrewListPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CrewListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "CrewListPage",
+        "type": "object"
+      },
       "CrewMe": {
         "properties": {
           "crew_role": {
@@ -722,7 +839,11 @@
           "payload_too_large",
           "driver_mismatch",
           "not_your_stop",
-          "already_confirmed"
+          "already_confirmed",
+          "outside_pickup_zones",
+          "report_time_past",
+          "duplicate_pickup",
+          "no_pickup_location"
         ],
         "title": "ErrorCode",
         "type": "string"
@@ -817,6 +938,29 @@
         "title": "HomeUse",
         "type": "object"
       },
+      "LatLon": {
+        "description": "A point the dispatcher dropped on the map, in decimal degrees.",
+        "properties": {
+          "lat": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "LatLon",
+        "type": "object"
+      },
       "LatePickup": {
         "properties": {
           "late_sec": {
@@ -879,6 +1023,30 @@
           "preset_code"
         ],
         "title": "MessageReplyCreate",
+        "type": "object"
+      },
+      "NearestZone": {
+        "description": "GET /pickup-zones/nearest: the pin's nearest pickup zone, by PostGIS,\nas the import's zone check sees it. Asked once per pin placement, not\nwhile dragging.",
+        "properties": {
+          "distance_km": {
+            "title": "Distance Km",
+            "type": "number"
+          },
+          "within_pickup_zones": {
+            "title": "Within Pickup Zones",
+            "type": "boolean"
+          },
+          "zone_label": {
+            "title": "Zone Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_label",
+          "distance_km",
+          "within_pickup_zones"
+        ],
+        "title": "NearestZone",
         "type": "object"
       },
       "NoticeAcknowledged": {
@@ -1186,6 +1354,41 @@
         "title": "PickupReportTimeUpdate",
         "type": "object"
       },
+      "PickupRequestCreate": {
+        "description": "A pickup added by hand. Starts no re-plan.",
+        "properties": {
+          "crew_member_id": {
+            "format": "uuid",
+            "title": "Crew Member Id",
+            "type": "string"
+          },
+          "pickup_location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LatLon"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "report_time": {
+            "format": "date-time",
+            "title": "Report Time",
+            "type": "string"
+          },
+          "request_type": {
+            "$ref": "#/components/schemas/PickupRequestType",
+            "default": "rostered"
+          }
+        },
+        "required": [
+          "crew_member_id",
+          "report_time"
+        ],
+        "title": "PickupRequestCreate",
+        "type": "object"
+      },
       "PickupRequestStatus": {
         "enum": [
           "pending",
@@ -1195,6 +1398,14 @@
           "cancelled"
         ],
         "title": "PickupRequestStatus",
+        "type": "string"
+      },
+      "PickupRequestType": {
+        "enum": [
+          "rostered",
+          "standby"
+        ],
+        "title": "PickupRequestType",
         "type": "string"
       },
       "PlannedNode": {
@@ -1601,6 +1812,249 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/crew-members": {
+      "get": {
+        "description": "Crew in name order, optionally only those whose name or staff number\ncontains q (ignoring case).",
+        "operationId": "list_crew_crew_members_get",
+        "parameters": [
+          {
+            "description": "part of a name or staff number",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "part of a name or staff number",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewListPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List Crew",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
+    "/crew-members/{crew_member_id}/home": {
+      "patch": {
+        "description": "Move a crew member's home to the point, from now on: pickups already\nstored keep their points. Rejected beyond 10 km of every zone, as in the\nimport. Safe to retry. Starts no re-plan.",
+        "operationId": "set_home_crew_members__crew_member_id__home_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "crew_member_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Crew Member Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LatLon"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrewHome"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, outside_pickup_zones",
+            "x-error-codes": [
+              "validation_failed",
+              "outside_pickup_zones"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set Home",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
     "/crew/me": {
       "get": {
         "description": "The crew member's profile screen (#231): their crew role and home zone.",
@@ -2995,6 +3449,124 @@
         "tags": [
           "dispatcher"
         ]
+      },
+      "post": {
+        "description": "Add one pending pickup, at pickup_location or else the crew member's\nhome. Rejected for the import's reasons. A retry with the same key and\nbody returns the same pickup; the same key with another body is\nidempotency_key_reused. Starts no re-plan.",
+        "operationId": "add_pickup_pickup_requests_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PickupRequestCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatcherPickup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found: not_found",
+            "x-error-codes": [
+              "not_found"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused, outside_pickup_zones, report_time_past, duplicate_pickup, no_pickup_location",
+            "x-error-codes": [
+              "validation_failed",
+              "idempotency_key_reused",
+              "outside_pickup_zones",
+              "report_time_past",
+              "duplicate_pickup",
+              "no_pickup_location"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Add Pickup",
+        "tags": [
+          "dispatcher"
+        ]
       }
     },
     "/pickup-requests/{pickup_id}": {
@@ -3107,6 +3679,109 @@
           }
         ],
         "summary": "Set Report Time",
+        "tags": [
+          "dispatcher"
+        ]
+      }
+    },
+    "/pickup-zones/nearest": {
+      "get": {
+        "description": "A map pin's nearest pickup zone and whether it can be saved: the\nimport's zone check. Call it when the pin is placed, not while dragging.",
+        "operationId": "nearest_zone_pickup_zones_nearest_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "lat",
+            "required": true,
+            "schema": {
+              "maximum": 90,
+              "minimum": -90,
+              "title": "Lat",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lon",
+            "required": true,
+            "schema": {
+              "maximum": 180,
+              "minimum": -180,
+              "title": "Lon",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NearestZone"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unauthorized: unauthorized",
+            "x-error-codes": [
+              "unauthorized"
+            ]
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Forbidden: forbidden",
+            "x-error-codes": [
+              "forbidden"
+            ]
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content: validation_failed",
+            "x-error-codes": [
+              "validation_failed"
+            ]
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable: unavailable",
+            "x-error-codes": [
+              "unavailable"
+            ]
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Nearest Zone",
         "tags": [
           "dispatcher"
         ]

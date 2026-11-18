@@ -59,6 +59,9 @@ TOKEN_ROUTES = {
     "/messages/{message_id}/ack",
     "/messages/{message_id}/replies",
     "/roster-imports",
+    "/crew-members",
+    "/crew-members/{crew_member_id}/home",
+    "/pickup-zones/nearest",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
