@@ -16,13 +16,13 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** The reply bar in the real fragment_messages layout, on the app's theme. */
+/** The reply bar in the real fragment_crew_thread layout, on the app's theme. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class ReplyBarTest {
     private val screen: View = LayoutInflater
         .from(ContextThemeWrapper(ApplicationProvider.getApplicationContext(), R.style.Theme_ACDOS))
-        .inflate(R.layout.fragment_messages, null)
+        .inflate(R.layout.fragment_crew_thread, null)
 
     private val bar = screen.findViewById<View>(R.id.reply_group)
 

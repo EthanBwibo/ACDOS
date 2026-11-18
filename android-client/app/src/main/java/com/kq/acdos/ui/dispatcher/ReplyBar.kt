@@ -20,7 +20,7 @@ data class ReplyBarState(
 )
 
 /**
- * Fills the reply bar (`R.id.reply_group` in fragment_messages.xml). The bar
+ * Fills the reply bar (`R.id.reply_group` in fragment_crew_thread.xml). The bar
  * is always there: with no message selected it says how to pick one and its
  * chips are disabled; if the replies failed to load it shows an error with
  * Retry in place of the chips.

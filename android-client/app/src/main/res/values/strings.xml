@@ -250,7 +250,8 @@
     <string name="dispatch_compare">%1$d min · %2$d veh · %3$d late</string>
     <string name="dispatch_discard">Discard</string>
     <string name="dispatch_filter_all">All</string>
-    <string name="dispatch_filter_unread">Unread</string>
+    <string name="dispatch_filter_needs_reply">Needs reply</string>
+    <string name="dispatch_thread_you">You: %1$s</string>
     <string name="dispatch_reply_presets">Reply with preset</string>
     <string name="dispatch_reply_to">Reply to %1$s</string>
     <string name="dispatch_reply_pick">Tap a message to reply</string>
@@ -272,7 +273,7 @@
     <string name="dispatch_no_pickups">No pickups for this day</string>
     <string name="dispatch_no_vehicles">No vehicles</string>
     <string name="dispatch_no_messages">No messages yet</string>
-    <string name="dispatch_no_unread">No unread messages</string>
+    <string name="dispatch_no_needs_reply">No one is waiting for a reply</string>
     <string name="dispatch_not_allowed">This account can\'t dispatch.</string>
     <string name="dispatch_failed">Couldn\'t do that: %1$s</string>
     <string name="dispatch_nothing_to_plan">No pickups to plan.</string>

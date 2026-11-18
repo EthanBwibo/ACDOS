@@ -45,8 +45,17 @@ class MessagesRepositoryTest {
                 sent += idempotencyKey to body
             }
 
-        override suspend fun messages(cursor: String?, limit: Int?) =
-            Response.success(CrewMessagePageDto(inbox, null))
+        /** When set, the inbox comes as these pages, each pointing at the next. */
+        var pages: List<List<CrewMessageDto>>? = null
+        val cursors = mutableListOf<String?>()
+
+        override suspend fun messages(cursor: String?, limit: Int?): Response<CrewMessagePageDto> {
+            cursors += cursor
+            val pages = pages ?: return Response.success(CrewMessagePageDto(inbox, null))
+            val index = cursor?.toInt() ?: 0
+            val next = (index + 1).takeIf { it < pages.size }?.toString()
+            return Response.success(CrewMessagePageDto(pages[index], next))
+        }
 
         override suspend fun markRead(messageId: String) =
             Response.success(CrewMessageReadDto(messageId, Instant.EPOCH))
@@ -97,6 +106,26 @@ class MessagesRepositoryTest {
         val inbox = (repository.inbox() as ApiResult.Success).body
 
         assertEquals(listOf("m2", "m1"), inbox.map { it.id })
+    }
+
+    @Test
+    fun inbox_followsTheCursorForUpToFourPages() = runTest {
+        api.pages = (1..6).map { listOf(message("m$it", "running_late")) }
+
+        val inbox = (repository.inbox() as ApiResult.Success).body
+
+        assertEquals(listOf("m1", "m2", "m3", "m4"), inbox.map { it.id })
+        assertEquals(listOf(null, "1", "2", "3"), api.cursors)
+    }
+
+    @Test
+    fun inbox_stopsWhenThereIsNoNextPage() = runTest {
+        api.pages = listOf(listOf(message("m1", "late")), listOf(message("m2", "late")))
+
+        val inbox = (repository.inbox() as ApiResult.Success).body
+
+        assertEquals(listOf("m1", "m2"), inbox.map { it.id })
+        assertEquals(2, api.cursors.size)
     }
 
     private companion object {
