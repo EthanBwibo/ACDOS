@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.kq.acdos.AcdosApplication
 import com.kq.acdos.R
 import com.kq.acdos.data.CrewPickupRepository
+import com.kq.acdos.data.DriverContact
 import com.kq.acdos.data.RefreshResult
 import com.kq.acdos.data.local.CrewDao
 import com.kq.acdos.data.local.CrewPickupEntity
@@ -103,6 +104,10 @@ class CrewPickupViewModel(dao: CrewDao, private val repository: CrewPickupReposi
                 CrewPickupState.Pickup(pickup, forThisPickup)
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CrewPickupState.Loading)
+
+    /** The driver's name and number (#255), in memory only; null before a refresh answers. */
+    val driverContact: StateFlow<DriverContact?> =
+        repository?.driverContact ?: MutableStateFlow(null)
 
     private val firstLoadState = MutableStateFlow(repository != null)
 

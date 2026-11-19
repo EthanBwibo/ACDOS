@@ -52,7 +52,8 @@ class CrewPickupRepositoryTest {
     private fun pickup(
         eta: Instant?,
         plate: String? = "KDA 002T",
-        notice: ScheduleChangeNoticeDto? = null
+        notice: ScheduleChangeNoticeDto? = null,
+        driverPhone: String? = null
     ) = CrewPickupDto(
         pickupRequestId = "p1",
         status = PickupRequestStatusDto.ASSIGNED,
@@ -61,7 +62,9 @@ class CrewPickupRepositoryTest {
         eta = eta,
         vehiclePlate = plate,
         needsAck = notice != null,
-        notice = notice
+        notice = notice,
+        driverFirstName = "Peter",
+        driverPhone = driverPhone
     )
 
     private fun answer(pickup: CrewPickupDto?) {
@@ -94,6 +97,42 @@ class CrewPickupRepositoryTest {
         repository.refresh()
 
         assertEquals(t0.plusSeconds(1900), cached()?.estimatedPickup)
+    }
+
+    @Test
+    fun inTheWindow_theDriversNumberComesWithTheirName() = runTest {
+        answer(pickup(eta = null, driverPhone = "+254700000101"))
+
+        repository.refresh()
+
+        assertEquals(
+            DriverContact("p1", "Peter", "+254700000101"),
+            repository.driverContact.value
+        )
+    }
+
+    @Test
+    fun outsideTheWindow_thereIsNoNumber_andARefreshTakesAnOldOneAway() = runTest {
+        answer(pickup(eta = null, driverPhone = "+254700000101"))
+        repository.refresh()
+
+        // Picked up, or more than 30 minutes out: the server leaves the number out.
+        answer(pickup(eta = null, driverPhone = null))
+        repository.refresh()
+
+        assertEquals(DriverContact("p1", "Peter", null), repository.driverContact.value)
+    }
+
+    @Test
+    fun theNumberIsNeverStored_soANewRunOfTheAppHasNone() = runTest {
+        answer(pickup(eta = null, driverPhone = "+254700000101"))
+        repository.refresh()
+
+        // The app starts again: the pickup is still in Room, the number isn't anywhere.
+        val restarted = CrewPickupRepository(api, db.crewDao(), clock = { t0 })
+
+        assertEquals("p1", cached()?.pickupRequestId)
+        assertNull(restarted.driverContact.value)
     }
 
     @Test

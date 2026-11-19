@@ -359,6 +359,12 @@
     <string name="roster_reason_no_location">New crew member needs a pickup location</string>
     <string name="roster_reason_set_home_no_location">set_home needs a pickup location</string>
 
+    <!-- Driver and crew contact (issue 255): calls only, only around the pickup. -->
+    <string name="crew_driver">Driver</string>
+    <string name="call_driver">Call driver</string>
+    <string name="call_crew">Call %1$s</string>
+    <string name="call_no_dialer">This device can\'t make calls</string>
+
     <!-- Add pickup and Set home (issue 253). -->
     <string name="add_pickup">Add pickup</string>
     <string name="add_pickup_crew">Crew member</string>
