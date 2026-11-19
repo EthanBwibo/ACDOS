@@ -124,49 +124,164 @@ class PlanWavesTest {
         assertTrue(waves.all { Duration.between(it.first, it.last) <= MAX_PLAN_SPAN })
     }
 
-    private fun van(id: String, status: VehicleStatusDto = VehicleStatusDto.AVAILABLE) =
-        DispatcherVehicleDto(id, "KDA $id", 8, status, onTheRoad = false)
+    private fun van(
+        id: String,
+        status: VehicleStatusDto = VehicleStatusDto.AVAILABLE,
+        onTheRoad: Boolean = false
+    ) = DispatcherVehicleDto(id, "KDA $id", 8, status, onTheRoad)
 
-    private fun route(vehicleId: String, vararg pickupIds: String) = DispatcherRouteDto(
-        routeId = "route-$vehicleId-${pickupIds.first()}",
-        vehicleId = vehicleId,
-        vehiclePlate = "KDA $vehicleId",
-        totalDistanceKm = 30.0,
-        plannedDeparture = at("02:30"),
-        plannedArrival = at("03:45"),
-        nodes = pickupIds.mapIndexed { i, id -> PlannedNodeDto(id, i + 1, at("03:00")) }
+    private fun route(vehicleId: String, from: String, to: String, vararg pickupIds: String) =
+        DispatcherRouteDto(
+            routeId = "route-$vehicleId-$from",
+            vehicleId = vehicleId,
+            vehiclePlate = "KDA $vehicleId",
+            totalDistanceKm = 30.0,
+            plannedDeparture = at(from),
+            plannedArrival = at(to),
+            nodes = pickupIds.mapIndexed { i, id -> PlannedNodeDto(id, i + 1, at(from)) }
+        )
+
+    private val assigned = PickupRequestStatusDto.ASSIGNED
+
+    /** The 08:00–09:30 wave to plan, and vans in each of the server's cases. */
+    private val day = DayBoard(
+        listOf(
+            pickup("w1", "08:00"),
+            pickup("w2", "09:30"),
+            pickup("e1", "06:00", assigned),
+            pickup("o1", "08:30", assigned),
+            pickup("o2", "09:00", assigned),
+            pickup("l1", "12:00", assigned)
+        ),
+        listOf(
+            van("free"),
+            van("early", onTheRoad = true),
+            van("on"),
+            van("later"),
+            van("both"),
+            van("broken", VehicleStatusDto.BROKEN_DOWN)
+        ),
+        listOf(
+            route("early", "04:30", "06:15", "e1"),
+            route("on", "07:00", "09:15", "o1", "o2"),
+            route("later", "10:30", "11:45", "l1"),
+            route("both", "04:30", "05:45", "e1"),
+            route("both", "10:30", "11:45", "l1")
+        )
+    )
+
+    private fun statuses(board: DayBoard, vararg pickupIds: String) =
+        vanChoices(board, pickupIds.toList()).associate { it.vehicle.id to it.status }
+
+    @Test
+    fun eachVan_getsTheServersStatusForTheWave() {
+        assertEquals(
+            mapOf(
+                "free" to VanStatus.Free,
+                // Due in at 06:15, so free 15 minutes later, even while still on the road.
+                "early" to VanStatus.FreeFrom(at("06:30")),
+                // The overlapping route's crew report 08:30 to 09:00.
+                "on" to VanStatus.OnWave(at("08:30"), at("09:00")),
+                "later" to VanStatus.LaterRoute(at("10:30")),
+                // The server leaves out a van with a later route even if it is also reused.
+                "both" to VanStatus.LaterRoute(at("10:30"))
+            ),
+            statuses(day, "w1", "w2")
+        )
+    }
+
+    @Test
+    fun onlyFreeVans_startTicked() {
+        val ticked = vanChoices(day, listOf("w1", "w2"))
+            .filter { it.tickedByDefault }
+            .map { it.vehicle.id }
+
+        assertEquals(listOf("free", "early"), ticked)
+    }
+
+    @Test
+    fun theTurnaround_isTheServers15Minutes() {
+        assertEquals(Duration.ofMinutes(15), REUSE_TURNAROUND)
+    }
+
+    @Test
+    fun aRouteDueInAtTheWavesFirstReportTime_overlapsIt() {
+        // An earlier route arrives strictly before the wave's first report time.
+        val board = day.copy(routes = listOf(route("early", "06:30", "08:00", "e1")))
+
+        assertEquals(
+            VanStatus.OnWave(at("06:00"), at("06:00")),
+            statuses(board, "w1", "w2")["early"]
+        )
+    }
+
+    @Test
+    fun theRouteCarryingTheJobsOwnPickups_doesntCount() {
+        // A flight-delay re-plan of o1: the route it is on is the one being replaced.
+        assertEquals(VanStatus.Free, statuses(day, "o1")["on"])
+    }
+
+    // The cases of #275's test_van_reuse_postgres.py, wave 10:00–10:15.
+    private fun kind(depart: String, arrive: String, vararg crew: String) = routeKind(
+        arrival = at(arrive),
+        departure = at(depart),
+        crewReport = crew.map(::at),
+        start = at("10:00"),
+        end = at("10:15")
     )
 
     @Test
-    fun aVanWithARouteToday_isOnItsWave_andStartsUnticked() {
-        val assigned = PickupRequestStatusDto.ASSIGNED
-        val board = DayBoard(
-            listOf(
-                pickup("a", "04:00", assigned),
-                pickup("b", "06:30", assigned),
-                pickup("c", "08:00", assigned),
-                pickup("d", "09:15", assigned),
-                pickup("e", "11:30")
+    fun aVanIsReusedAcrossTwoWaves_itsEarlyRouteIsEarlier() {
+        // The early wave's route: crew 05:00 and 05:15, in at JKIA well before 10:00.
+        assertEquals(RouteKind.EARLIER, kind("03:45", "04:50", "05:00", "05:15"))
+    }
+
+    @Test
+    fun aRouteInAt1030_overlapsTheWave_andIsReplaced() {
+        assertEquals(RouteKind.OVERLAPPING, kind("09:00", "10:30", "10:20"))
+    }
+
+    @Test
+    fun aRouteLeavingAt1430_isLater_andItsVanIsLeftOut() {
+        assertEquals(RouteKind.LATER, kind("14:30", "15:20", "15:30"))
+    }
+
+    @Test
+    fun aRouteOfThisWavesCrew_isNeverEarlier_evenIfItArrivesEarly() {
+        // 3a14321: in at 09:50, but its crew reports at 10:05, inside the wave.
+        assertEquals(RouteKind.OVERLAPPING, kind("08:40", "09:50", "10:05"))
+        // A crew member reporting exactly at the wave's start is not before it.
+        assertEquals(RouteKind.OVERLAPPING, kind("08:40", "09:50", "10:00"))
+    }
+
+    @Test
+    fun aLaterRoute_needsAllItsCrewAfterTheWave() {
+        // Leaves after 10:15, but one of its crew reports at 10:15.
+        assertEquals(RouteKind.OVERLAPPING, kind("10:30", "11:20", "10:15", "11:30"))
+    }
+
+    @Test
+    fun aBrokenVansLaterRoutes_needAVan_untilEachIsReplanned() {
+        val board = day.copy(
+            pickups = day.pickups + listOf(
+                pickup("b1", "08:15", assigned),
+                pickup("b2", "15:00", assigned),
+                pickup("b3", "20:00", PickupRequestStatusDto.PICKED_UP)
             ),
-            listOf(van("v1"), van("v2"), van("v3"), van("v4", VehicleStatusDto.BROKEN_DOWN)),
-            listOf(route("v1", "a", "b"), route("v2", "d", "c"), route("v2", "a"))
+            routes = listOf(
+                route("broken", "06:45", "08:00", "b1"),
+                route("broken", "13:30", "14:45", "b2"),
+                // All collected: nothing left to re-plan.
+                route("broken", "18:30", "19:45", "b3")
+            )
         )
 
-        val choices = vanChoices(board).associateBy { it.vehicle.id }
-
-        // v4 is broken down, so it isn't offered at all.
-        assertEquals(setOf("v1", "v2", "v3"), choices.keys)
-        assertEquals(listOf(at("04:00") to at("06:30")), choices.getValue("v1").waves)
-        // Two routes: two waves, earliest first.
+        // b1's route is the pending re-plan; only the later one is waiting.
         assertEquals(
-            listOf(at("04:00") to at("04:00"), at("08:00") to at("09:15")),
-            choices.getValue("v2").waves
+            listOf(RouteNeedingVan("KDA broken", at("13:30"), at("14:45"), listOf("b2"))),
+            routesNeedingAVan(board, replanning = listOf("b1"))
         )
-        assertEquals(emptyList<Pair<Instant, Instant>>(), choices.getValue("v3").waves)
-        assertEquals(
-            mapOf("v1" to false, "v2" to false, "v3" to true),
-            choices.mapValues { it.value.tickedByDefault }
-        )
+        assertEquals(emptyList<RouteNeedingVan>(), routesNeedingAVan(board, listOf("b1", "b2")))
     }
 
     @Test

@@ -12,17 +12,20 @@ import com.kq.acdos.data.DayBoard
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.PlanSummary
 import com.kq.acdos.data.PlanWave
+import com.kq.acdos.data.RouteNeedingVan
 import com.kq.acdos.data.planSummary
 import com.kq.acdos.data.planWaves
-import com.kq.acdos.data.plannableVans
 import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.DispatcherPickupDto
 import com.kq.acdos.data.remote.DispatcherVehicleDto
 import com.kq.acdos.data.remote.ErrorCode
+import com.kq.acdos.data.remote.LeftOutVehicleDto
 import com.kq.acdos.data.remote.OptimizationJobStatusDto
 import com.kq.acdos.data.remote.OptimizationTriggerTypeDto
 import com.kq.acdos.data.remote.VehicleStatusDto
+import com.kq.acdos.data.routesNeedingAVan
 import com.kq.acdos.data.strandedPickups
+import com.kq.acdos.data.vanChoices
 import com.kq.acdos.ui.Times
 import java.time.Instant
 import java.time.LocalDate
@@ -75,11 +78,23 @@ data class DispatcherUiState(
     val replan: PendingReplan? = null,
     /** The plan as it was when the latest job started, for Re-plan's Before and After. */
     val before: PlanSummary? = null,
+    /** Ticked vans the latest job left out, each keeping a later route (#274). */
+    val leftOut: List<LeftOutVehicleDto> = emptyList(),
+    /** The pickups the latest job planned, for Re-plan's After. */
+    val replanned: List<String> = emptyList(),
     /** Why the last load failed, null once one works. The last board stays on screen. */
     val loadFailure: DispatcherMessage? = null,
     /** The wave a first plan covers, by its first report time. None until the dispatcher picks. */
     val selectedWave: Instant? = null
 )
+
+/** The pickups a re-plan is about: the pending one's, else the latest job's. */
+fun replanning(state: DispatcherUiState): List<String> =
+    state.replan?.pickupIds.orEmpty() + state.replanned
+
+/** Broken-down vans' later routes still waiting for a re-plan (#274). */
+fun routesNeedingAVan(state: DispatcherUiState): List<RouteNeedingVan> =
+    state.board?.let { routesNeedingAVan(it, replanning(state)) }.orEmpty()
 
 /** The picked wave, or null if none is picked or it has since been planned. */
 fun selectedWave(state: DispatcherUiState): PlanWave? = state.board?.let(::planWaves)
@@ -238,6 +253,18 @@ class DispatcherViewModel(
         startJob(replan.trigger, replan.pickupIds, vehicleIds)
     }
 
+    /** Re-plan a broken-down van's later route, from its Overview alert. */
+    fun replanRoute(route: RouteNeedingVan) = uiState.update {
+        it.copy(
+            replan = PendingReplan(
+                OptimizationTriggerTypeDto.VEHICLE_BREAKDOWN,
+                route.pickupIds,
+                R.string.dispatch_replan_breakdown,
+                route.plate
+            )
+        )
+    }
+
     /** Drops the alert. What was recorded stays recorded: only the re-plan is skipped. */
     fun discardReplan() = uiState.update { it.copy(replan = null) }
 
@@ -268,8 +295,11 @@ class DispatcherViewModel(
     ) {
         val repository = repository ?: return
         val board = uiState.value.board ?: return
-        // Only plannable vans, even if the board changed while the picker was open.
-        val vans = plannableVans(board).filter { vehicleIds == null || it in vehicleIds }
+        // Only vans still offered, even if the board changed while the picker was
+        // open; with no picker, the ones it would tick.
+        val vans = vanChoices(board, pickupIds)
+            .filter { if (vehicleIds == null) it.tickedByDefault else it.vehicle.id in vehicleIds }
+            .map { it.vehicle.id }
         when {
             pickupIds.isEmpty() -> send(DispatcherMessage(R.string.dispatch_nothing_to_plan))
 
@@ -280,7 +310,13 @@ class DispatcherViewModel(
                     is ApiResult.Success -> {
                         val replan = uiState.value.replan
                         uiState.update {
-                            it.copy(replan = null, job = JobUi.Queued, before = planSummary(board))
+                            it.copy(
+                                replan = null,
+                                job = JobUi.Queued,
+                                before = planSummary(board, pickupIds),
+                                leftOut = emptyList(),
+                                replanned = pickupIds
+                            )
                         }
                         follow(repository, result.body.id, replan)
                     }
@@ -308,6 +344,8 @@ class DispatcherViewModel(
             when (val result = repository.job(jobId)) {
                 is ApiResult.Success -> {
                     val job = result.body
+                    // Known from acceptance, so every status carries it.
+                    uiState.update { it.copy(leftOut = job.leftOut) }
                     when (job.status) {
                         OptimizationJobStatusDto.QUEUED -> Unit
 

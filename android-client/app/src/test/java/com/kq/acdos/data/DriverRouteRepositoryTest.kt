@@ -210,6 +210,25 @@ class DriverRouteRepositoryTest {
     }
 
     @Test
+    fun theRouteTab_followsTheServersCurrentRoute_fromWaveToWave() = runTest {
+        // The server answers the route with crew still to collect: the first wave's, then the next.
+        answer(route("wave-1"))
+        repository.refresh(force = true)
+        assertEquals("wave-1", cached()!!.route.id)
+
+        answer(route("wave-2"))
+        repository.refresh(force = true)
+
+        assertEquals("wave-2", cached()!!.route.id)
+        assertEquals(
+            setOf("wave-2-n1", "wave-2-n2"),
+            cached()!!.stops.map {
+                it.routeNodeId
+            }.toSet()
+        )
+    }
+
+    @Test
     fun noRouteCompletedOrSuperseded_purgeTheCacheAndKeepPendingEvents() = runTest {
         val answers = listOf(
             null,

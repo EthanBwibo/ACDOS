@@ -51,7 +51,13 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.start).setOnClickListener {
-            pickVans(viewModel, viewModel::runOptimisation, markWaves = true)
+            // With no wave picked, Start is disabled; the ViewModel says so if it isn't.
+            val wave = selectedWave(viewModel.state.value)
+            if (wave == null) {
+                viewModel.runOptimisation()
+            } else {
+                pickVans(viewModel, wave.pickupIds, viewModel::runOptimisation)
+            }
         }
         view.findViewById<Button>(R.id.next_wave).setOnClickListener { viewModel.nextWave() }
         view.findViewById<ChipGroup>(R.id.waves).setOnCheckedStateChangeListener { group, ids ->
@@ -67,6 +73,7 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
                 viewModel.state.collect { state ->
                     state.board?.let { showSetup(view, state, it) }
                     showJob(view, state.job)
+                    showLeftOut(view.findViewById(R.id.job_left_out), state.leftOut)
                     showReplan(view, state.replan)
                     view.findViewById<Button>(R.id.start).isEnabled =
                         selectedWave(state) != null && !state.job.isActive

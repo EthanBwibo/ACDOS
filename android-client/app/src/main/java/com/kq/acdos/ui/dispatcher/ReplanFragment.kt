@@ -17,6 +17,7 @@ import com.kq.acdos.data.PlanSummary
 import com.kq.acdos.data.orderedRoutes
 import com.kq.acdos.data.planSummary
 import com.kq.acdos.data.remote.PickupRequestStatusDto
+import java.time.Instant
 import kotlinx.coroutines.launch
 
 /**
@@ -42,7 +43,9 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
             home.close()
         }
         view.findViewById<Button>(R.id.replan).setOnClickListener {
-            pickVans(viewModel, viewModel::replan)
+            viewModel.state.value.replan?.let {
+                pickVans(viewModel, it.pickupIds, viewModel::replan)
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -74,6 +77,12 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         }
         view.findViewById<View>(R.id.replan_actions).isVisible = replan != null
         view.findViewById<View>(R.id.replan_progress).isVisible = state.job.isActive
+        showLeftOut(view.findViewById(R.id.replan_left_out), state.leftOut)
+        view.findViewById<TextView>(R.id.replan_needs_van).apply {
+            val routes = routesNeedingAVan(state)
+            isVisible = routes.isNotEmpty()
+            text = routes.joinToString("\n") { requireContext().needsVanText(it) }
+        }
         view.findViewById<Button>(R.id.replan).isEnabled =
             state.board != null && !state.job.isActive
 
@@ -92,6 +101,8 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         fixed.removeAllViews()
         resolved.removeAllViews()
         val outNow = board.vehicles.filter { it.onTheRoad }.map { it.id }.toSet()
+        // Since #274 a van out now can also hold routes in later waves; those haven't left.
+        val now = Instant.now()
         val pickedUp = board.pickups
             .filter { it.status == PickupRequestStatusDto.PICKED_UP }
             .map { it.id }
@@ -99,7 +110,7 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         orderedRoutes(board).forEachIndexed { index, route ->
             val pickups = route.nodes.map { it.pickupRequestId }
             val name = routeName(index + 1, route.vehiclePlate)
-            if (route.vehicleId in outNow) {
+            if (route.vehicleId in outNow && !route.plannedDeparture.isAfter(now)) {
                 fixed.addRow(
                     title = name,
                     subtitle = getString(
@@ -125,8 +136,9 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         if (resolved.childCount == 0) resolved.addRow(getString(R.string.dispatch_none))
     }
 
+    /** Only the routes being replaced: those carrying the re-plan's pickups (#274). */
     private fun showComparison(view: View, state: DispatcherUiState) {
-        val now = state.board?.let(::planSummary)
+        val now = state.board?.let { planSummary(it, replanning(state)) }
         val before = state.before ?: now
         val finished = state.before != null && state.job is JobUi.Done
         val beforeRow = view.findViewById<View>(R.id.before_row)

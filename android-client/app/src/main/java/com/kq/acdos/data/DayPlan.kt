@@ -26,14 +26,26 @@ fun latePickups(board: DayBoard): Set<String> {
     }.toSet()
 }
 
-fun planSummary(board: DayBoard) = PlanSummary(
-    plannedDriveMinutes = board.routes.sumOf {
-        Duration.between(it.plannedDeparture, it.plannedArrival).toMinutes()
-    },
-    vansUsed = board.routes.map { it.vehicleId }.distinct().size,
-    vans = board.vehicles.size,
-    late = latePickups(board).size
-)
+/**
+ * [board]'s plan, or with [pickupIds] only the routes carrying any of them:
+ * the routes a re-plan replaces, not every route their vans have today.
+ */
+fun planSummary(board: DayBoard, pickupIds: Collection<String>? = null): PlanSummary {
+    val ids = pickupIds?.toSet()
+    val routes = if (ids == null) {
+        board.routes
+    } else {
+        board.routes.filter { route -> route.nodes.any { it.pickupRequestId in ids } }
+    }
+    return PlanSummary(
+        plannedDriveMinutes = routes.sumOf {
+            Duration.between(it.plannedDeparture, it.plannedArrival).toMinutes()
+        },
+        vansUsed = routes.map { it.vehicleId }.distinct().size,
+        vans = board.vehicles.size,
+        late = latePickups(board.copy(routes = routes)).size
+    )
+}
 
 /** The earliest and latest report times, or null with no pickups. */
 fun planWindow(board: DayBoard): Pair<Instant, Instant>? {

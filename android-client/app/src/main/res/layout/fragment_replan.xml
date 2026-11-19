@@ -50,6 +50,24 @@
                         android:layout_marginTop="8dp"
                         android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
+                    <!-- A broken-down van's later routes, each waiting for its own re-plan (issue 274). -->
+                    <TextView
+                        android:id="@+id/replan_needs_van"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
+                        android:visibility="gone" />
+
+                    <!-- Vans the job left out because they keep a later route (issue 274). -->
+                    <TextView
+                        android:id="@+id/replan_left_out"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
+                        android:visibility="gone" />
+
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/replan_progress"
                         android:layout_width="match_parent"
