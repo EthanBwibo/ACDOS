@@ -1,7 +1,11 @@
 package com.kq.acdos.data
 
 import com.kq.acdos.data.remote.DispatcherPickupDto
+import com.kq.acdos.data.remote.DispatcherRouteDto
+import com.kq.acdos.data.remote.DispatcherVehicleDto
 import com.kq.acdos.data.remote.PickupRequestStatusDto
+import com.kq.acdos.data.remote.PlannedNodeDto
+import com.kq.acdos.data.remote.VehicleStatusDto
 import java.time.Duration
 import java.time.Instant
 import org.junit.Assert.assertEquals
@@ -118,6 +122,51 @@ class PlanWavesTest {
         // In report-time order, and none wider than the server allows.
         assertEquals(waves.sortedBy { it.first }, waves)
         assertTrue(waves.all { Duration.between(it.first, it.last) <= MAX_PLAN_SPAN })
+    }
+
+    private fun van(id: String, status: VehicleStatusDto = VehicleStatusDto.AVAILABLE) =
+        DispatcherVehicleDto(id, "KDA $id", 8, status, onTheRoad = false)
+
+    private fun route(vehicleId: String, vararg pickupIds: String) = DispatcherRouteDto(
+        routeId = "route-$vehicleId-${pickupIds.first()}",
+        vehicleId = vehicleId,
+        vehiclePlate = "KDA $vehicleId",
+        totalDistanceKm = 30.0,
+        plannedDeparture = at("02:30"),
+        plannedArrival = at("03:45"),
+        nodes = pickupIds.mapIndexed { i, id -> PlannedNodeDto(id, i + 1, at("03:00")) }
+    )
+
+    @Test
+    fun aVanWithARouteToday_isOnItsWave_andStartsUnticked() {
+        val assigned = PickupRequestStatusDto.ASSIGNED
+        val board = DayBoard(
+            listOf(
+                pickup("a", "04:00", assigned),
+                pickup("b", "06:30", assigned),
+                pickup("c", "08:00", assigned),
+                pickup("d", "09:15", assigned),
+                pickup("e", "11:30")
+            ),
+            listOf(van("v1"), van("v2"), van("v3"), van("v4", VehicleStatusDto.BROKEN_DOWN)),
+            listOf(route("v1", "a", "b"), route("v2", "d", "c"), route("v2", "a"))
+        )
+
+        val choices = vanChoices(board).associateBy { it.vehicle.id }
+
+        // v4 is broken down, so it isn't offered at all.
+        assertEquals(setOf("v1", "v2", "v3"), choices.keys)
+        assertEquals(listOf(at("04:00") to at("06:30")), choices.getValue("v1").waves)
+        // Two routes: two waves, earliest first.
+        assertEquals(
+            listOf(at("04:00") to at("04:00"), at("08:00") to at("09:15")),
+            choices.getValue("v2").waves
+        )
+        assertEquals(emptyList<Pair<Instant, Instant>>(), choices.getValue("v3").waves)
+        assertEquals(
+            mapOf("v1" to false, "v2" to false, "v3" to true),
+            choices.mapValues { it.value.tickedByDefault }
+        )
     }
 
     @Test

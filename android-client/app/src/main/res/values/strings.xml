@@ -286,6 +286,8 @@
     </plurals>
     <string name="dispatch_no_free_vans">No van is free to plan with.</string>
     <string name="dispatch_pick_vans">Vans to plan with</string>
+    <string name="dispatch_time_range">%1$s–%2$s</string>
+    <string name="dispatch_van_on_wave">%1$s · On wave %2$s</string>
     <string name="dispatch_start_job">Start</string>
     <string name="dispatch_unknown_crew">Unknown crew</string>
     <string name="dispatch_pickup_title">%1$s · %2$s</string>
