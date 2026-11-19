@@ -15,6 +15,7 @@ Every table has a UUID primary key and a UTC `created_at`. Locations are
 | vehicles | id UUID; assigned_driver_id UUID; plate_number TEXT; capacity INT; status TEXT; created_at TIMESTAMPTZ | PK id; FK assigned_driver_id to profiles; plate_number unique; capacity above 0; status in (available, in_service, broken_down, unavailable) |
 | optimization_jobs | id UUID; triggered_at TIMESTAMPTZ; trigger_type TEXT; status TEXT; idempotency_key TEXT; request_hash TEXT; error TEXT; finished_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; trigger_type in (scheduled, flight_delay, standby_activation, vehicle_breakdown); status in (queued, running, completed, failed), default queued; idempotency_key unique, null for jobs not made through the API; error and finished_at null until the job fails or completes |
 | optimization_job_pickups | id UUID; optimization_job_id UUID; pickup_request_id UUID; outcome TEXT; late_sec INT; created_at TIMESTAMPTZ | PK id; FK optimization_job_id, pickup_request_id; optimization_job_id and pickup_request_id unique together; outcome in (on_time, late, unassigned); late_sec at least 0, null exactly when unassigned |
+| optimization_job_left_out_vehicles | optimization_job_id UUID; vehicle_id UUID; reason TEXT; route_id UUID; route_departure TIMESTAMPTZ; route_arrival TIMESTAMPTZ; created_at TIMESTAMPTZ | PK (optimization_job_id, vehicle_id); FK optimization_job_id, vehicle_id, route_id; reason in (later_route) |
 | pickup_requests | id UUID; crew_member_id UUID; pickup_location GEOGRAPHY(Point, 4326); report_time TIMESTAMPTZ; request_type TEXT; status TEXT; idempotency_key TEXT; request_hash TEXT; created_at TIMESTAMPTZ | PK id; FK crew_member_id; request_type in (rostered, standby); status in (pending, assigned, picked_up, missed, cancelled); spatial index on pickup_location; idempotency_key unique, with request_hash, only for pickups added by hand (#253, 035) |
 | routes | id UUID; vehicle_id UUID; optimization_job_id UUID; total_distance_km NUMERIC; status TEXT; planned_departure TIMESTAMPTZ; planned_arrival TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK vehicle_id, optimization_job_id; status in (active, completed, superseded); planned_departure (the van leaves the depot) and planned_arrival (it reaches JKIA) not null, from the solver's schedule, planned_departure <= planned_arrival |
 | route_nodes | id UUID; route_id UUID; pickup_request_id UUID; seq_order INT; estimated_arrival TIMESTAMPTZ; superseded_at TIMESTAMPTZ; created_at TIMESTAMPTZ | PK id; FK route_id, pickup_request_id; pickup_request_id unique among nodes with superseded_at null (partial unique index); route_id and seq_order unique together; superseded_at null until a later job re-plans the pickup |
@@ -69,6 +70,9 @@ importing twice. A dry run writes nothing. The CSV format is in `docs/roster_imp
 - pickup_requests 1 to many route_nodes, at most 1 not superseded (the live plan)
 - optimization_jobs 1 to many optimization_job_pickups, one per pickup the job was asked to
   place; pickup_requests 1 to many optimization_job_pickups
+- optimization_jobs 1 to many optimization_job_left_out_vehicles, one per ticked van left
+  out because it already has a route after the job's wave; vehicles and routes 1 to many
+  optimization_job_left_out_vehicles
 - route_nodes 1 to many pickup_events: any number of exceptions, at most one `pickup_confirmed`
 - route_nodes 1 to at most 1 trip_records (completed leg, feeds Random Forest retraining)
 - A driver reaches their route through the vehicle: vehicles.assigned_driver_id

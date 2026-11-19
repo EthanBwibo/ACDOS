@@ -124,23 +124,39 @@ _STOPS = """
     order by n.seq_order
 """
 
-# The caller's ($1) active routes, each with its first live stop's time.
-# The join on assigned_driver_id is the explicit second check.
+# The caller's ($1) active routes, each with its first live stop's time, and
+# whether it is unfinished: a stop still to collect (pending or assigned).
+# A van can have several active routes, one per wave (jobs/store.py, van
+# reuse across waves). The join on assigned_driver_id is the explicit
+# second check.
 _DRIVER_ROUTES = """
     select r.id, r.status, r.total_distance_km, r.planned_arrival, v.plate_number,
-        min(n.estimated_arrival) as first_pickup, count(n.id) as stop_count
+        min(n.estimated_arrival) as first_pickup, count(n.id) as stop_count,
+        bool_or(p.status in ('pending', 'assigned')) as unfinished
     from public.routes r
     join public.vehicles v on v.id = r.vehicle_id
     join public.route_nodes n on n.route_id = r.id and n.superseded_at is null
+    join public.pickup_requests p on p.id = n.pickup_request_id
     where v.assigned_driver_id = $1 and r.status = 'active'
     group by r.id, v.plate_number
 """
 
 
 async def current_route(conn: asyncpg.Connection, driver_id: UUID) -> DriverRoute | None:
-    """The driver's active route whose first stop comes first."""
+    """The driver's next unfinished route: the one with stops still to
+    collect whose first stop comes first. Once every route is finished, the
+    latest one, so the driver still sees the run just done (nothing marks a
+    route completed)."""
     route = await conn.fetchrow(
-        f"select * from ({_DRIVER_ROUTES}) d order by first_pickup, id limit 1", driver_id
+        f"""
+        select * from ({_DRIVER_ROUTES}) d
+        order by unfinished desc,
+            case when unfinished then first_pickup end,
+            first_pickup desc,
+            id
+        limit 1
+        """,
+        driver_id,
     )
     if route is None:
         return None

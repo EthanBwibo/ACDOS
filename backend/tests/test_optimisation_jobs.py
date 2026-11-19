@@ -12,11 +12,11 @@ from fastapi.testclient import TestClient
 
 from app.config import settings
 from app.jobs.runner import JobRunner, solver_pool
-from app.jobs.store import StoredPickup, StoredVehicle
+from app.jobs.store import LeftOut, StoredPickup, StoredVehicle
 from app.jobs.worker import PickupInput, SolveInput, VehicleInput, build_problem
 from app.main import app
-from app.solver.problem import Point
-from tests.fake_job_store import InMemoryJobStore
+from app.solver.problem import JKIA, Point
+from tests.fake_job_store import InMemoryJobStore, plate
 from tests.job_api import individual_from_result, wait_for_job
 from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
 from tests.solver_checks import assert_feasible
@@ -307,3 +307,46 @@ def test_without_a_database_the_job_endpoints_are_unavailable(monkeypatch):
     monkeypatch.setattr(app.state, "jwt_issuer", ISSUER, raising=False)
     with TestClient(app, headers=bearer(KEY.token(DISPATCHER))) as client:
         assert client.get(f"/optimisation-jobs/{uuid4()}").status_code == 503
+
+
+def test_a_van_with_a_later_route_is_left_out_and_listed(client, store):
+    busy, free = list(store.stored_vehicles)
+    later = LeftOut(busy, uuid4(), EPOCH + timedelta(hours=5), EPOCH + timedelta(hours=6))
+    store.later_routes[busy] = later
+
+    accepted = post(client, body(store))
+
+    assert accepted.status_code == 202
+    result = wait_for_job(client, accepted.json()["id"])
+    assert result["left_out"] == [
+        {
+            "vehicle_id": str(busy),
+            "plate_number": plate(busy),
+            "reason": "later_route",
+            "route_departure": later.departure.isoformat().replace("+00:00", "Z"),
+            "route_arrival": later.arrival.isoformat().replace("+00:00", "Z"),
+        }
+    ]
+    # Not checked for conflicts, not given to the solver, never in a route.
+    assert store.vans_asked == [[free]]
+    [job] = store.jobs.values()
+    assert job.vehicle_ids == [free]
+    assert {r["vehicle_id"] for r in result["routes"]} <= {str(free)}
+
+
+def test_a_reused_van_starts_at_jkia_when_its_earlier_route_is_in(client, store, monkeypatch):
+    reused, depot_van = list(store.stored_vehicles)
+    free_at = EPOCH + timedelta(hours=1)
+    store.reused[reused] = free_at
+    submitted = []
+    monkeypatch.setattr(app.state.job_runner, "submit", lambda *args: submitted.append(args))
+
+    assert post(client, body(store)).status_code == 202
+
+    [(_, _, vehicles, _, wave)] = submitted
+    assert vehicles == (
+        VehicleInput(str(reused), SEATS, JKIA, free_at),
+        VehicleInput(str(depot_van), SEATS),
+    )
+    report_times = [p.report_time for p in store.stored_pickups.values()]
+    assert (wave.start, wave.end) == (min(report_times), max(report_times))

@@ -68,6 +68,13 @@ class JobPickupOutcome(StrEnum):
     UNASSIGNED = "unassigned"
 
 
+class LeftOutReason(StrEnum):
+    """Why a job left out a van it was given (van reuse across waves)."""
+
+    # The van has a route starting after the job's wave, which it keeps.
+    LATER_ROUTE = "later_route"
+
+
 class PickupRequestType(StrEnum):
     ROSTERED = "rostered"
     STANDBY = "standby"
@@ -156,6 +163,18 @@ class OptimizationJobPickup(BaseModel):
     pickup_request_id: UUID
     outcome: JobPickupOutcome
     late_sec: int | None = Field(default=None, ge=0)  # null when unassigned
+    created_at: datetime
+
+
+class OptimizationJobLeftOutVehicle(BaseModel):
+    """A van a job was given but left out, and the route that kept it out."""
+
+    optimization_job_id: UUID
+    vehicle_id: UUID
+    reason: LeftOutReason
+    route_id: UUID
+    route_departure: datetime
+    route_arrival: datetime
     created_at: datetime
 
 
@@ -268,10 +287,23 @@ class LatePickup(BaseModel):
     late_sec: int  # past report_time at JKIA
 
 
+class LeftOutVehicle(BaseModel):
+    """A ticked van the job left out, e.g. "KDX 004 left out: has the
+    08:00-10:00 route". route_departure and route_arrival are the later
+    route's, as they were when the job was accepted."""
+
+    vehicle_id: UUID
+    plate_number: str
+    reason: LeftOutReason
+    route_departure: datetime
+    route_arrival: datetime
+
+
 class OptimisationJobResult(BaseModel):
     """A job and, once completed, its plan. Every requested pickup is in a
     route; the late ones are also in late, and the rest in unassigned, so a
-    missed deadline is always listed, never left to be noticed."""
+    missed deadline is always listed, never left to be noticed. left_out is
+    known when the job is accepted, so it is there in every status."""
 
     id: UUID
     status: OptimizationJobStatus
@@ -279,6 +311,7 @@ class OptimisationJobResult(BaseModel):
     routes: list[PlannedRoute] = []
     late: list[LatePickup] = []
     unassigned: list[UUID] = []
+    left_out: list[LeftOutVehicle] = []
 
 
 # Driver and crew read endpoints (#52). Only what each screen shows, for

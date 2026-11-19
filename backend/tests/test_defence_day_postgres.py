@@ -202,6 +202,10 @@ def test_each_band_is_planned_with_its_own_vans(world):
     # --whole-day: the one job the app's Plan tab would send.
     [(name, pickups, vans)] = defence.whole_day(jobs)
     assert (name, len(set(pickups)), len(set(vans))) == ("whole-day", 120, 20)
+    # --reuse: each band in order, with all 20 vans.
+    reused = defence.reuse_fleet(jobs)
+    assert [(band, p) for band, p, _ in reused] == [(band, p) for band, p, _ in jobs]
+    assert all(len(set(vans)) == 20 for _, _, vans in reused)
 
 
 def test_seed_stops_without_the_accounts():
