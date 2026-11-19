@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Figma frame 2:87, the Plan tab. No solver time limit, Cancel or Publish: the API has none of them. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -57,6 +58,44 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
+
+        <!-- The day's unplanned pickups in waves; a first plan covers the one picked. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/Widget.ACDOS.FieldLabel"
+                android:layout_width="0dp"
+                android:layout_marginTop="0dp"
+                android:layout_weight="1"
+                android:text="@string/dispatch_waves_label" />
+
+            <Button
+                android:id="@+id/next_wave"
+                style="@style/Widget.ACDOS.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dispatch_next_wave" />
+
+        </LinearLayout>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/waves"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:singleSelection="true" />
+
+        <TextView
+            android:id="@+id/no_waves"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dispatch_nothing_to_plan"
+            android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"

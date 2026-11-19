@@ -277,6 +277,13 @@
     <string name="dispatch_not_allowed">This account can\'t dispatch.</string>
     <string name="dispatch_failed">Couldn\'t do that: %1$s</string>
     <string name="dispatch_nothing_to_plan">No pickups to plan.</string>
+    <string name="dispatch_waves_label">Waves</string>
+    <string name="dispatch_next_wave">Next wave</string>
+    <string name="dispatch_pick_a_wave">Pick a wave to plan.</string>
+    <plurals name="dispatch_wave_chip">
+        <item quantity="one">%1$s–%2$s · %3$d crew</item>
+        <item quantity="other">%1$s–%2$s · %3$d crew</item>
+    </plurals>
     <string name="dispatch_no_free_vans">No van is free to plan with.</string>
     <string name="dispatch_pick_vans">Vans to plan with</string>
     <string name="dispatch_start_job">Start</string>
