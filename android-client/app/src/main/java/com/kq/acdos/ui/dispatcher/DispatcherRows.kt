@@ -10,7 +10,8 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kq.acdos.R
-import com.kq.acdos.data.plannableVans
+import com.kq.acdos.data.vanChoices
+import com.kq.acdos.ui.Times
 
 /** A Figma ListRow: every list on the dispatcher's screens uses this one row. */
 internal fun LinearLayout.addRow(
@@ -61,24 +62,44 @@ internal fun Fragment.jobText(job: JobUi): String = when (job) {
 }
 
 /**
- * The vans the job may use, all ticked: untick one to leave it out, e.g. a
- * van that isn't part of today's plan. Broken-down vans and vans out on a
- * route that has left are not offered.
+ * The vans the job may use, ticked: untick one to leave it out, e.g. a van
+ * that isn't part of today's plan. Broken-down vans and vans out on a route
+ * that has left are not offered. With [markWaves] (the Plan tab, #272), a van
+ * that already has a route today shows "On wave 04:00–06:30" and starts
+ * unticked; the dispatcher can still tick it.
  */
-internal fun Fragment.pickVans(viewModel: DispatcherViewModel, start: (List<String>) -> Unit) {
+internal fun Fragment.pickVans(
+    viewModel: DispatcherViewModel,
+    start: (List<String>) -> Unit,
+    markWaves: Boolean = false
+) {
     val board = viewModel.state.value.board ?: return
-    val plannable = plannableVans(board)
-    val vans = board.vehicles.filter { it.id in plannable }
+    val vans = vanChoices(board)
     // None to offer: let the ViewModel say so.
     if (vans.isEmpty()) return start(emptyList())
-    val ticked = BooleanArray(vans.size) { true }
+    val labels = vans.map { van ->
+        val plate = van.vehicle.plateNumber
+        if (!markWaves || van.waves.isEmpty()) {
+            plate
+        } else {
+            val waves = van.waves.joinToString(", ") { (first, last) ->
+                getString(
+                    R.string.dispatch_time_range,
+                    Times.shortClock(first),
+                    Times.shortClock(last)
+                )
+            }
+            getString(R.string.dispatch_van_on_wave, plate, waves)
+        }
+    }
+    val ticked = BooleanArray(vans.size) { !markWaves || vans[it].tickedByDefault }
     MaterialAlertDialogBuilder(requireContext())
         .setTitle(R.string.dispatch_pick_vans)
-        .setMultiChoiceItems(vans.map { it.plateNumber }.toTypedArray(), ticked) { _, i, on ->
+        .setMultiChoiceItems(labels.toTypedArray(), ticked) { _, i, on ->
             ticked[i] = on
         }
         .setPositiveButton(R.string.dispatch_start_job) { _, _ ->
-            start(vans.filterIndexed { i, _ -> ticked[i] }.map { it.id })
+            start(vans.filterIndexed { i, _ -> ticked[i] }.map { it.vehicle.id })
         }
         .setNegativeButton(R.string.action_cancel, null)
         .show()
