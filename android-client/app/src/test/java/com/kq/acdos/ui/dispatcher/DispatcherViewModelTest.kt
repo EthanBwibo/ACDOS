@@ -28,6 +28,7 @@ import com.kq.acdos.data.remote.VehicleStatusDto
 import com.kq.acdos.data.remote.VehicleStatusUpdateDto
 import com.kq.acdos.data.strandedPickups
 import com.kq.acdos.data.unplannedPickups
+import com.kq.acdos.data.vanChoices
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
@@ -495,6 +496,22 @@ class DispatcherViewModelTest {
         viewModel.runOptimisation()
         assertEquals(JobUi.Queued, viewModel.state.value.job)
         assertEquals(emptyList<LeftOutVehicleDto>(), viewModel.state.value.leftOut)
+    }
+
+    @Test
+    fun aVanAlreadyOnAWave_tickedDeliberately_goesIntoTheJob() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+        // v1 already has a route today, so the picker starts it unticked (#272).
+        val v1 = vanChoices(viewModel.state.value.board!!).first { it.vehicle.id == "v1" }
+        assertEquals(false, v1.tickedByDefault)
+
+        viewModel.nextWave()
+        viewModel.runOptimisation(listOf("v1"))
+        advanceUntilIdle()
+
+        assertEquals(listOf("v1"), jobs.created.single().vehicleIds)
     }
 
     @Test

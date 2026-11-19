@@ -1,6 +1,7 @@
 package com.kq.acdos.data
 
 import com.kq.acdos.data.remote.DispatcherPickupDto
+import com.kq.acdos.data.remote.DispatcherVehicleDto
 import java.time.Duration
 import java.time.Instant
 
@@ -44,4 +45,26 @@ fun planWaves(pickups: List<DispatcherPickupDto>): List<PlanWave> {
 fun planWaves(board: DayBoard): List<PlanWave> {
     val unplanned = unplannedPickups(board).toSet()
     return planWaves(board.pickups.filter { it.id in unplanned })
+}
+
+/** A van in the Plan tab's picker, with the report times its routes today already cover. */
+data class VanChoice(val vehicle: DispatcherVehicleDto, val waves: List<Pair<Instant, Instant>>) {
+    /** A van already on a wave starts unticked; the dispatcher can still tick it. */
+    val tickedByDefault: Boolean get() = waves.isEmpty()
+}
+
+/**
+ * The vans a first plan may use, each with the waves it is already on: one
+ * range per route today, from its pickups' earliest report time to the latest.
+ */
+fun vanChoices(board: DayBoard): List<VanChoice> {
+    val plannable = plannableVans(board).toSet()
+    val reportTimes = board.pickups.associate { it.id to it.reportTime }
+    return board.vehicles.filter { it.id in plannable }.map { van ->
+        val waves = board.routes.filter { it.vehicleId == van.id }.mapNotNull { route ->
+            val times = route.nodes.mapNotNull { reportTimes[it.pickupRequestId] }
+            if (times.isEmpty()) null else times.min() to times.max()
+        }
+        VanChoice(van, waves.distinct().sortedBy { it.first })
+    }
 }

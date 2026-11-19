@@ -51,7 +51,7 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<Button>(R.id.start).setOnClickListener {
-            pickVans(viewModel, viewModel::runOptimisation)
+            pickVans(viewModel, viewModel::runOptimisation, markWaves = true)
         }
         view.findViewById<Button>(R.id.next_wave).setOnClickListener { viewModel.nextWave() }
         view.findViewById<ChipGroup>(R.id.waves).setOnCheckedStateChangeListener { group, ids ->
