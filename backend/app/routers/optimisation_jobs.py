@@ -26,7 +26,12 @@ has several problems, the first in this order is reported:
    route that has not departed, so a van never has two active routes. Their
    new places (or unassigned) are in the job's result like the requested
    ones.
-5. Create the job (queued) and hand it to the runner.
+5. The report times of all those pickups span more than PLANNING_WINDOW:
+   422 planning_window_too_wide. A plan is for one wave of crew. The
+   solver has a deadline per crew member but no earliest pickup, so a
+   whole day planned at once collects everyone before the first report
+   time, some of them most of a day early.
+6. Create the job (queued) and hand it to the runner.
 
 Only dispatchers may call these (#127): the caller's token is checked
 (app/auth.py, 401 without a valid one), and their profiles.role must be
@@ -35,6 +40,7 @@ dispatcher (403 otherwise).
 
 import hashlib
 import json
+from datetime import timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -61,6 +67,9 @@ router = APIRouter(prefix="/optimisation-jobs", tags=["optimisation jobs"])
 PLANNABLE = {PickupRequestStatus.PENDING, PickupRequestStatus.ASSIGNED}
 # Vans the planner may not use: broken down, or taken out of planning (#198).
 UNPLANNABLE_VANS = {VehicleStatus.BROKEN_DOWN, VehicleStatus.UNAVAILABLE}
+# The widest spread of report times one job may plan: one wave of crew. The
+# demo morning spans 2 h 30 min; each of the defence day's waves at most 3 h.
+PLANNING_WINDOW = timedelta(hours=4)
 
 
 def runner(request: Request) -> JobRunner:
@@ -108,6 +117,12 @@ def _repeated(ids: list[UUID]) -> list[UUID]:
     return sorted({i for i in ids if ids.count(i) > 1}, key=str)
 
 
+def _hours(span: timedelta) -> str:
+    """4 h, 18 h 35 min: whole minutes, rounded down."""
+    hours, minutes = divmod(int(span.total_seconds()) // 60, 60)
+    return f"{hours} h {minutes} min" if minutes else f"{hours} h"
+
+
 def _422(code: ErrorCode, detail: str, **ids: list[UUID]) -> ApiError:
     return ApiError(
         status.HTTP_422_UNPROCESSABLE_CONTENT, code, detail, **{k: v for k, v in ids.items() if v}
@@ -128,6 +143,7 @@ def _422(code: ErrorCode, detail: str, **ids: list[UUID]) -> ApiError:
                 ErrorCode.DUPLICATE_IDS,
                 ErrorCode.UNKNOWN_IDS,
                 ErrorCode.NOT_PLANNABLE,
+                ErrorCode.PLANNING_WINDOW_TOO_WIDE,
             ],
             503: [ErrorCode.UNAVAILABLE],
         }
@@ -204,6 +220,14 @@ async def create_job(
     # never left on a superseded route.
     pickups |= await store.pickups(conflicts.left_behind)
     planned = body.pickup_request_ids + conflicts.left_behind
+
+    report_times = [pickups[i].report_time for i in planned]
+    if report_times and (span := max(report_times) - min(report_times)) > PLANNING_WINDOW:
+        raise _422(
+            ErrorCode.PLANNING_WINDOW_TOO_WIDE,
+            f"these pickups' report times span {_hours(span)}, more than the "
+            f"{_hours(PLANNING_WINDOW)} one plan may cover: plan each wave separately",
+        )
 
     job = await store.create_job(idempotency_key, body_hash, body.trigger_type)
     if not job.created:

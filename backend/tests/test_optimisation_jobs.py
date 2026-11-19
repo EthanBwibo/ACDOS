@@ -192,6 +192,31 @@ def test_pickups_past_assigned_are_refused(client, store, status):
     assert store.jobs == {}
 
 
+def report_in(store: InMemoryJobStore, after: timedelta) -> None:
+    """Move one pickup's report time to EPOCH + after. The fixture's crew
+    report from EPOCH + 5 min to EPOCH + 3 h."""
+    p = next(iter(store.stored_pickups.values()))
+    store.stored_pickups[p.id] = StoredPickup(p.id, p.location, EPOCH + after, p.status)
+
+
+def test_report_times_more_than_4_hours_apart_are_refused(client, store):
+    report_in(store, timedelta(hours=5))  # 5 min to 5 h: 4 h 55 min
+
+    response = post(client, body(store))
+
+    assert response.status_code == 422
+    error = response.json()
+    assert error["code"] == "planning_window_too_wide"
+    assert "span 4 h 55 min, more than the 4 h" in error["detail"]
+    assert store.jobs == {}
+
+
+def test_report_times_exactly_4_hours_apart_are_planned(client, store):
+    report_in(store, timedelta(hours=4, minutes=5))  # 5 min to 4 h 5 min: 4 h
+
+    assert post(client, body(store)).status_code == 202
+
+
 def test_pickup_on_a_departed_route_is_a_conflict(client, store):
     on_the_road = next(iter(store.stored_pickups))
     store.departed.add(on_the_road)

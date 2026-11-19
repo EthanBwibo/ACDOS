@@ -862,6 +862,7 @@
           "not_plannable",
           "departed_routes",
           "vehicles_on_departed_routes",
+          "planning_window_too_wide",
           "payload_too_large",
           "driver_mismatch",
           "not_your_stop",
@@ -3211,13 +3212,14 @@
                 }
               }
             },
-            "description": "Unprocessable Content: validation_failed, idempotency_key_reused, duplicate_ids, unknown_ids, not_plannable",
+            "description": "Unprocessable Content: validation_failed, idempotency_key_reused, duplicate_ids, unknown_ids, not_plannable, planning_window_too_wide",
             "x-error-codes": [
               "validation_failed",
               "idempotency_key_reused",
               "duplicate_ids",
               "unknown_ids",
-              "not_plannable"
+              "not_plannable",
+              "planning_window_too_wide"
             ]
           },
           "503": {

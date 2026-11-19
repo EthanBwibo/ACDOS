@@ -39,6 +39,8 @@ class ErrorCode(StrEnum):
     NOT_PLANNABLE = "not_plannable"
     DEPARTED_ROUTES = "departed_routes"
     VEHICLES_ON_DEPARTED_ROUTES = "vehicles_on_departed_routes"
+    # One plan covers one wave of crew (report times within PLANNING_WINDOW).
+    PLANNING_WINDOW_TOO_WIDE = "planning_window_too_wide"
     # Pickup-event upload (#33): the whole request, then one event.
     PAYLOAD_TOO_LARGE = "payload_too_large"
     DRIVER_MISMATCH = "driver_mismatch"

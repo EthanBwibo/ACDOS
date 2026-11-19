@@ -49,6 +49,9 @@ enum class ErrorCode {
     @Json(name = "vehicles_on_departed_routes")
     VEHICLES_ON_DEPARTED_ROUTES,
 
+    @Json(name = "planning_window_too_wide")
+    PLANNING_WINDOW_TOO_WIDE,
+
     @Json(name = "payload_too_large")
     PAYLOAD_TOO_LARGE,
 
