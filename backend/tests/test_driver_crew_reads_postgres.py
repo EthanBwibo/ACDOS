@@ -300,7 +300,9 @@ def set_status(pickups: dict, statuses: dict[str, str]) -> None:
 def test_the_route_shows_pickups_the_server_already_has(client, world):
     # Recorded from another phone, or before a reinstall (#196): this phone's
     # outbox has nothing, so the status is the only record.
-    set_status(world["pickups"], {"F": "picked_up", "C": "missed"})
+    # C is still to collect: once every stop is done, the current route is
+    # A's next unfinished one (van reuse across waves), one of later_A.
+    set_status(world["pickups"], {"F": "picked_up"})
     try:
         body = client.get("/drivers/me/route", headers=as_user(world, "A")).json()["route"]
     finally:
@@ -308,7 +310,7 @@ def test_the_route_shows_pickups_the_server_already_has(client, world):
         set_status(world["pickups"], {"F": "assigned", "C": "assigned"})
 
     assert [(s["crew_name"], s["pickup_status"]) for s in body["stops"]] == [
-        ("Crew F", "picked_up"), ("Crew C", "missed"),
+        ("Crew F", "picked_up"), ("Crew C", "assigned"),
     ]  # fmt: skip
 
 
