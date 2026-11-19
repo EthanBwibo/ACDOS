@@ -19,10 +19,13 @@ other vans.
 Van reuse across waves: a job's wave is the span of its pickups' report
 times (Wave). Each of a van's routes on the wave's day, other than the
 routes of the job's own pickups, is one of three kinds:
-- earlier: reaches JKIA before the wave's earliest report time. It is kept,
+- earlier: reaches JKIA before the wave's earliest report time, and all its
+  crew report before it too (a route of this wave's crew that arrives early
+  is not an earlier wave's). It is kept,
   and the van joins the job at JKIA, free REUSE_TURNAROUND after the latest
   such route is due in (Fleet.reused), even while that route is on the road.
-- later: leaves after the wave's latest report time. It is kept, and the van
+- later: leaves after the wave's latest report time, and all its crew
+  report after it. It is kept, and the van
   is left out of the job (Fleet.left_out) so the new plan never runs into
   that route; the job result lists it with the later route's times.
 - overlapping: anything else. Replaced, as before, or, once departed, the
@@ -241,12 +244,29 @@ _LIVE_NODES = """
       and r.status in ('active', 'completed')
 """
 
+
+# The live crew on route r reporting at or after $n (_CREW_FROM) or at or
+# before it (_CREW_UNTIL).
+def _crew_reporting(op: str, param: str) -> str:
+    return f"""exists (
+        select 1 from public.route_nodes wn
+        join public.pickup_requests wp on wp.id = wn.pickup_request_id
+        where wn.route_id = r.id and wn.superseded_at is null
+          and wp.report_time {op} {param}::timestamptz
+    )"""
+
+
 # A route of a van that overlaps the wave from $4 (earliest report time) to
-# $5 (latest): neither earlier (in at JKIA before $4) nor later (leaving
-# after $5). With no wave ($4, $5 null), every route overlaps.
-_OVERLAPS_WAVE = """
-    not coalesce(r.planned_arrival < $4::timestamptz, false)
-    and not coalesce(r.planned_departure > $5::timestamptz, false)
+# $5 (latest): neither earlier (in at JKIA before $4, its crew all reporting
+# before $4) nor later (leaving after $5, its crew all reporting after $5).
+# With no wave ($4, $5 null), every route overlaps.
+_OVERLAPS_WAVE = f"""
+    not coalesce(
+        r.planned_arrival < $4::timestamptz and not {_crew_reporting(">=", "$4")}, false
+    )
+    and not coalesce(
+        r.planned_departure > $5::timestamptz and not {_crew_reporting("<=", "$5")}, false
+    )
 """
 
 # The routes a job over pickups $1 and vans $3 replaces, at $2, for the wave
@@ -275,7 +295,7 @@ _REPLACED_ROUTES = f"""
 # A van's earlier and later routes on the wave's day, for vans $1, without
 # the routes of the job's pickups $2, for the wave $3 to $4 (Fleet). Days
 # are Nairobi days.
-_EARLIER_AND_LATER = """
+_EARLIER_AND_LATER = f"""
     select r.vehicle_id, r.id, r.planned_departure, r.planned_arrival,
         r.planned_arrival < $3 as earlier
     from public.routes r
@@ -288,10 +308,12 @@ _EARLIER_AND_LATER = """
       and (
           (r.status in ('active', 'completed')
            and r.planned_arrival < $3
+           and not {_crew_reporting(">=", "$3")}
            and (r.planned_arrival at time zone 'Africa/Nairobi')::date
                = ($3 at time zone 'Africa/Nairobi')::date)
           or (r.status = 'active'
               and r.planned_departure > $4
+              and not {_crew_reporting("<=", "$4")}
               and (r.planned_departure at time zone 'Africa/Nairobi')::date
                   = ($4 at time zone 'Africa/Nairobi')::date)
       )
