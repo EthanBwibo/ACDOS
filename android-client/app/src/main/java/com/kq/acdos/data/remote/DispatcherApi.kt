@@ -73,7 +73,99 @@ interface DispatcherApi {
         @Query("dry_run") dryRun: Boolean,
         @Header("Idempotency-Key") idempotencyKey: String?
     ): Response<RosterImportResultDto>
+
+    /** Crew in name order (#253), only those whose name or staff number contains [query]. */
+    @GET("crew-members")
+    suspend fun crew(
+        @Query("q") query: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("limit") limit: Int? = null
+    ): Response<CrewListPageDto>
+
+    /**
+     * The pickup zone nearest a map pin, by the import's PostGIS check. Asked once each
+     * time a pin is placed, never while it moves, to keep it to one request on 2G.
+     */
+    @GET("pickup-zones/nearest")
+    suspend fun nearestZone(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double
+    ): Response<NearestZoneDto>
+
+    /**
+     * One pickup added by hand (#253), with the roster import's checks: a refusal's
+     * ErrorBody code is the import's reason. Safe to retry with the same
+     * [idempotencyKey] and body. Starts no re-plan.
+     */
+    @POST("pickup-requests")
+    suspend fun addPickup(
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body body: PickupRequestCreateDto
+    ): Response<DispatcherPickupDto>
+
+    /** Moves a crew member's home from now on; stored pickups keep their points. */
+    @PATCH("crew-members/{crew_member_id}/home")
+    suspend fun setHome(
+        @Path("crew_member_id") crewMemberId: String,
+        @Body body: LatLonDto
+    ): Response<CrewHomeDto>
 }
+
+@JsonClass(generateAdapter = true)
+data class LatLonDto(val lat: Double, val lon: Double)
+
+@JsonClass(generateAdapter = true)
+data class CrewListItemDto(
+    val id: String,
+    @Json(name = "staff_no") val staffNo: String?,
+    val name: String,
+    @Json(name = "crew_role") val crewRole: String,
+    /** Every crew member has one: the roster import needs it for a new crew member. */
+    val home: LatLonDto,
+    /** The home's nearest pickup zone; null only when there are no zones at all. */
+    @Json(name = "home_zone_label") val homeZoneLabel: String?
+)
+
+@JsonClass(generateAdapter = true)
+data class CrewListPageDto(
+    val items: List<CrewListItemDto>,
+    @Json(name = "next_cursor") val nextCursor: String?
+)
+
+@JsonClass(generateAdapter = true)
+data class NearestZoneDto(
+    @Json(name = "zone_label") val zoneLabel: String,
+    /** To 0.1 km. */
+    @Json(name = "distance_km") val distanceKm: Double,
+    /** False beyond 10 km of every zone: such a point can't be saved. */
+    @Json(name = "within_pickup_zones") val withinPickupZones: Boolean
+)
+
+enum class PickupRequestTypeDto {
+    @Json(name = "rostered")
+    ROSTERED,
+
+    @Json(name = "standby")
+    STANDBY
+}
+
+@JsonClass(generateAdapter = true)
+data class PickupRequestCreateDto(
+    @Json(name = "crew_member_id") val crewMemberId: String,
+    @Json(name = "report_time") val reportTime: Instant,
+    @Json(name = "request_type") val requestType: PickupRequestTypeDto =
+        PickupRequestTypeDto.ROSTERED,
+    /** Null: picked up from home. */
+    @Json(name = "pickup_location") val pickupLocation: LatLonDto? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class CrewHomeDto(
+    val id: String,
+    val home: LatLonDto,
+    @Json(name = "zone_label") val zoneLabel: String,
+    @Json(name = "distance_km") val distanceKm: Double
+)
 
 // DTOs match docs/openapi.json (OpenApiContractTest checks it). Ids stay strings.
 

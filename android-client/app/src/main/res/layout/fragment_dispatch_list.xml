@@ -10,6 +10,15 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Pickups only (issue 253): the form for one pickup, without a CSV. -->
+        <Button
+            android:id="@+id/add_pickup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/add_pickup"
+            android:visibility="gone" />
+
         <!-- Pickups only (issue 229): opens the file picker for a roster CSV. -->
         <Button
             android:id="@+id/import_roster"
@@ -18,6 +27,17 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             android:text="@string/roster_import"
+            android:visibility="gone" />
+
+        <!-- Pickups only (issue 254): saves the roster template through the file picker. -->
+        <Button
+            android:id="@+id/download_template"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-8dp"
+            android:layout_marginBottom="4dp"
+            android:text="@string/roster_download_template"
             android:visibility="gone" />
 
         <com.google.android.material.card.MaterialCardView

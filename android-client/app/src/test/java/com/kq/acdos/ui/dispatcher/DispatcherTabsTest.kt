@@ -246,6 +246,19 @@ class DispatcherTabsTest {
     }
 
     @Test
+    fun fleetAndCrewHasACrewList_andPickupsHasAddPickup() {
+        val activity = start()
+        activity.tap(DispatcherTab.FLEET)
+        val pickups = activity.fleetList()!!.requireView()
+        assertTrue(pickups.findViewById<View>(R.id.add_pickup).isShown)
+
+        (activity.screen(DispatcherTab.FLEET) as FleetCrewFragment).select(FleetList.CREW)
+        idle()
+
+        assertTrue(activity.fleetList() is CrewListFragment)
+    }
+
+    @Test
     fun thePlanCardOpensThePlanTab() {
         val activity = start()
 

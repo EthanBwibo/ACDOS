@@ -78,6 +78,12 @@ android {
                 .withPropertyName("openapi")
                 .withPathSensitivity(PathSensitivity.RELATIVE)
             it.systemProperty("acdos.openapi", spec.absolutePath)
+            // RosterTemplateTest checks the bundled template is the one in docs/ (#254).
+            val template = rootProject.file("../docs/acdos_roster_template.csv")
+            it.inputs.file(template)
+                .withPropertyName("rosterTemplate")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+            it.systemProperty("acdos.rosterTemplate", template.absolutePath)
         }
     }
 }

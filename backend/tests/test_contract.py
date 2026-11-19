@@ -25,12 +25,13 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app import contract, dispatch, messages, reads, roster
+from app import contract, dispatch, manual, messages, reads, roster
 from app.config import settings
 from app.errors import ErrorBody, ErrorCode
 from app.jobs.runner import JobRunner
 from app.jobs.store import StoredPickup, StoredVehicle
 from app.main import app
+from app.models.schemas import RejectReason
 from app.solver.problem import Point
 from tests.fake_job_store import FakeJob, InMemoryJobStore
 from tests.jwt_keys import ISSUER, FakeJwks, SigningKey, bearer
@@ -59,6 +60,9 @@ TOKEN_ROUTES = {
     "/messages/{message_id}/ack",
     "/messages/{message_id}/replies",
     "/roster-imports",
+    "/crew-members",
+    "/crew-members/{crew_member_id}/home",
+    "/pickup-zones/nearest",
 }
 DISPATCHER, CREW_USER = uuid4(), uuid4()  # profiles.role in the fake job store
 
@@ -416,6 +420,96 @@ def _roster(
         return w.client.post(ROSTER, files=files, headers=headers)
 
     return run
+
+
+CREW_HOME = "/crew-members/{crew_member_id}/home"
+HOME = CREW_HOME.format(crew_member_id=uuid4())
+NEW_PICKUP = {"crew_member_id": str(uuid4()), "report_time": "2026-11-20T05:30:00+03:00"}
+PIN = {"lat": -1.29, "lon": 36.79}
+
+
+def _manual(
+    method: str,
+    path: str,
+    setup: Callable[[World], None] | None = _as_dispatcher,
+    token: bool = True,
+    body: dict | None = None,
+    key: str | None = "contract-pickup",
+    stub: tuple[str, object] | None = None,
+):
+    """Add pickup, Set home and their reads (#253). stub replaces one
+    app.manual function with one that returns, or raises, the given value."""
+
+    def run(w: World):
+        if setup:
+            setup(w)
+        if stub:
+            name, outcome = stub
+
+            async def fake(*args, outcome=outcome):
+                if isinstance(outcome, Exception):
+                    raise outcome
+                return outcome
+
+            w.monkeypatch.setattr(manual, name, fake)
+        headers = (w.token() if token else {}) | ({"Idempotency-Key": key} if key else {})
+        return w.client.request(method, path, json=body, headers=headers)
+
+    return run
+
+
+def _rejected(reason: RejectReason):
+    return manual.Rejected(reason, f"rejected as {reason.value}")
+
+
+MANUAL_CASES = [
+    case
+    for method, spec_path, path, body in [
+        ("GET", "/crew-members", "/crew-members?q=amina", None),
+        ("GET", "/pickup-zones/nearest", "/pickup-zones/nearest?lat=-1.29&lon=36.79", None),
+        ("POST", "/pickup-requests", "/pickup-requests", NEW_PICKUP),
+        ("PATCH", CREW_HOME, HOME, PIN),
+    ]
+    for case in [
+        (method, spec_path, 401, "unauthorized", _manual(method, path, None, False, body), False),
+        (
+            method,
+            spec_path,
+            403,
+            "forbidden",
+            _manual(method, path, lambda w: w.as_profile("crew"), body=body),
+            False,
+        ),
+        (method, spec_path, 503, "unavailable", _manual(method, path, World.without_db, body=body),
+         False),
+    ]
+] + [
+    ("GET", "/crew-members", 422, "validation_failed",
+     _manual("GET", "/crew-members?cursor=not-a-cursor"), False),
+    ("GET", "/pickup-zones/nearest", 422, "validation_failed",
+     _manual("GET", "/pickup-zones/nearest?lat=100&lon=36.79"), False),
+    ("POST", "/pickup-requests", 404, "not_found",
+     _manual("POST", "/pickup-requests", body=NEW_PICKUP, stub=("add_pickup", None)), False),
+    ("POST", "/pickup-requests", 422, "validation_failed",
+     _manual("POST", "/pickup-requests", body=NEW_PICKUP, key=None), False),
+    ("POST", "/pickup-requests", 422, "idempotency_key_reused",
+     _manual("POST", "/pickup-requests", body=NEW_PICKUP,
+             stub=("add_pickup", manual.KeyReused("contract-pickup"))), False),
+] + [
+    ("POST", "/pickup-requests", 422, reason.value,
+     _manual("POST", "/pickup-requests", body=NEW_PICKUP,
+             stub=("add_pickup", _rejected(reason))), False)
+    for reason in (RejectReason.OUTSIDE_PICKUP_ZONES, RejectReason.REPORT_TIME_PAST,
+                   RejectReason.DUPLICATE_PICKUP)
+] + [
+    ("PATCH", CREW_HOME, 404, "not_found",
+     _manual("PATCH", HOME, body=PIN, stub=("set_home", None)), False),
+    ("PATCH", CREW_HOME, 422, "validation_failed",
+     _manual("PATCH", HOME, body={"lat": 100, "lon": 36.79}), False),
+    ("PATCH", CREW_HOME, 422, "outside_pickup_zones",
+     _manual("PATCH", HOME, body=PIN,
+             stub=("set_home", _rejected(RejectReason.OUTSIDE_PICKUP_ZONES))), False),
+]  # fmt: skip
 
 
 # (method, path, status, code, how to make the route send it, ids expected)
@@ -804,6 +898,7 @@ CASES = (
             False,
         ),
     ]
+    + MANUAL_CASES
 )
 
 

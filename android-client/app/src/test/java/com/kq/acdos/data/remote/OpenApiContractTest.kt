@@ -81,7 +81,13 @@ class OpenApiContractTest {
         "RejectedRow" to RejectedRowDto::class.java,
         "RowLocation" to RowLocationDto::class.java,
         "HomeMove" to HomeMoveDto::class.java,
-        "HomeUse" to HomeUseDto::class.java
+        "HomeUse" to HomeUseDto::class.java,
+        "LatLon" to LatLonDto::class.java,
+        "CrewListItem" to CrewListItemDto::class.java,
+        "CrewListPage" to CrewListPageDto::class.java,
+        "NearestZone" to NearestZoneDto::class.java,
+        "PickupRequestCreate" to PickupRequestCreateDto::class.java,
+        "CrewHome" to CrewHomeDto::class.java
     )
 
     private val enums: Map<String, Class<out Enum<*>>> = mapOf(
@@ -94,7 +100,8 @@ class OpenApiContractTest {
         "PickupEventType" to PickupEventTypeDto::class.java,
         "PickupExceptionType" to PickupExceptionTypeDto::class.java,
         "PickupEventOutcome" to PickupEventOutcomeDto::class.java,
-        "RejectReason" to RejectReasonDto::class.java
+        "RejectReason" to RejectReasonDto::class.java,
+        "PickupRequestType" to PickupRequestTypeDto::class.java
     )
 
     @Test
