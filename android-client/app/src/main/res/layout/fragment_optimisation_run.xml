@@ -219,6 +219,15 @@
                     android:layout_marginTop="8dp"
                     android:textAppearance="@style/TextAppearance.ACDOS.Secondary" />
 
+                <!-- Vans the job left out because they keep a later route (issue 274). -->
+                <TextView
+                    android:id="@+id/job_left_out"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textAppearance="@style/TextAppearance.ACDOS.Secondary"
+                    android:visibility="gone" />
+
                 <com.google.android.material.progressindicator.LinearProgressIndicator
                     android:id="@+id/job_progress"
                     android:layout_width="match_parent"

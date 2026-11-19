@@ -19,6 +19,7 @@ import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.DispatcherPickupDto
 import com.kq.acdos.data.remote.DispatcherVehicleDto
 import com.kq.acdos.data.remote.ErrorCode
+import com.kq.acdos.data.remote.LeftOutVehicleDto
 import com.kq.acdos.data.remote.OptimizationJobStatusDto
 import com.kq.acdos.data.remote.OptimizationTriggerTypeDto
 import com.kq.acdos.data.remote.VehicleStatusDto
@@ -75,6 +76,8 @@ data class DispatcherUiState(
     val replan: PendingReplan? = null,
     /** The plan as it was when the latest job started, for Re-plan's Before and After. */
     val before: PlanSummary? = null,
+    /** Ticked vans the latest job left out, each keeping a later route (#274). */
+    val leftOut: List<LeftOutVehicleDto> = emptyList(),
     /** Why the last load failed, null once one works. The last board stays on screen. */
     val loadFailure: DispatcherMessage? = null,
     /** The wave a first plan covers, by its first report time. None until the dispatcher picks. */
@@ -280,7 +283,12 @@ class DispatcherViewModel(
                     is ApiResult.Success -> {
                         val replan = uiState.value.replan
                         uiState.update {
-                            it.copy(replan = null, job = JobUi.Queued, before = planSummary(board))
+                            it.copy(
+                                replan = null,
+                                job = JobUi.Queued,
+                                before = planSummary(board),
+                                leftOut = emptyList()
+                            )
                         }
                         follow(repository, result.body.id, replan)
                     }
@@ -308,6 +316,8 @@ class DispatcherViewModel(
             when (val result = repository.job(jobId)) {
                 is ApiResult.Success -> {
                     val job = result.body
+                    // Known from acceptance, so every status carries it.
+                    uiState.update { it.copy(leftOut = job.leftOut) }
                     when (job.status) {
                         OptimizationJobStatusDto.QUEUED -> Unit
 

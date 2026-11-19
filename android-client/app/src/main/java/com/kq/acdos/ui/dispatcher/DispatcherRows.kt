@@ -1,5 +1,6 @@
 package com.kq.acdos.ui.dispatcher
 
+import android.content.Context
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,8 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kq.acdos.R
 import com.kq.acdos.data.plannableVans
+import com.kq.acdos.data.remote.LeftOutVehicleDto
+import com.kq.acdos.ui.Times
 
 /** A Figma ListRow: every list on the dispatcher's screens uses this one row. */
 internal fun LinearLayout.addRow(
@@ -46,6 +49,24 @@ internal val Fragment.home get() = requireActivity() as DispatcherHomeActivity
 /** "R2 · KDA 456B" */
 internal fun Fragment.routeName(number: Int, plate: String) =
     getString(R.string.dispatch_route_name, number, plate)
+
+/** "KDX 004 left out: has the 08:00–10:00 route", one line per van; null with none. */
+internal fun Context.leftOutText(leftOut: List<LeftOutVehicleDto>): String? =
+    leftOut.takeIf { it.isNotEmpty() }?.joinToString("\n") {
+        getString(
+            R.string.dispatch_left_out,
+            it.plateNumber,
+            Times.shortClock(it.routeDeparture),
+            Times.shortClock(it.routeArrival)
+        )
+    }
+
+/** Shows [leftOut] in [view], or hides it with none. */
+internal fun Fragment.showLeftOut(view: TextView, leftOut: List<LeftOutVehicleDto>) {
+    val text = requireContext().leftOutText(leftOut)
+    view.isVisible = text != null
+    view.text = text
+}
 
 internal fun Fragment.jobText(job: JobUi): String = when (job) {
     JobUi.None -> ""

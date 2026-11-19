@@ -55,11 +55,17 @@ fun unplannedPickups(board: DayBoard): List<String> = board.pickups
  * collected yet. Crew already on board stay where they are (#135).
  */
 fun strandedPickups(board: DayBoard, vehicleId: String): List<String> {
-    val onVan = board.routes
+    val waiting = board.pickups.filter { it.status in REPLANNABLE }.map { it.id }.toSet()
+    // Only the van's current route: since #274 a van can hold a route in each
+    // wave, and re-planning them all at once would span more than one plan
+    // may (planning_window_too_wide). Its later waves keep their routes.
+    val current = board.routes
         .filter { it.vehicleId == vehicleId }
-        .flatMap { route -> route.nodes.map { it.pickupRequestId } }
-        .toSet()
-    return board.pickups.filter { it.id in onVan && it.status in REPLANNABLE }.map { it.id }
+        .sortedBy { it.plannedDeparture }
+        .firstOrNull { route -> route.nodes.any { it.pickupRequestId in waiting } }
+        ?: return emptyList()
+    val onRoute = current.nodes.map { it.pickupRequestId }.toSet()
+    return board.pickups.filter { it.id in onRoute && it.id in waiting }.map { it.id }
 }
 
 internal val REPLANNABLE = setOf(PickupRequestStatusDto.PENDING, PickupRequestStatusDto.ASSIGNED)

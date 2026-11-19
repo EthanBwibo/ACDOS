@@ -12,6 +12,8 @@ import com.kq.acdos.data.remote.DispatcherRouteDto
 import com.kq.acdos.data.remote.DispatcherRoutePageDto
 import com.kq.acdos.data.remote.DispatcherVehicleDto
 import com.kq.acdos.data.remote.DispatcherVehiclePageDto
+import com.kq.acdos.data.remote.LeftOutReasonDto
+import com.kq.acdos.data.remote.LeftOutVehicleDto
 import com.kq.acdos.data.remote.OptimisationJobAcceptedDto
 import com.kq.acdos.data.remote.OptimisationJobCreateDto
 import com.kq.acdos.data.remote.OptimisationJobResultDto
@@ -146,6 +148,7 @@ class DispatcherViewModelTest {
     private class FakeJobsApi : OptimisationJobsApi {
         val created = mutableListOf<OptimisationJobCreateDto>()
         var status = OptimizationJobStatusDto.COMPLETED
+        var leftOut = emptyList<LeftOutVehicleDto>()
 
         /** A 422 body to answer createJob with instead of accepting the job. */
         var refusal: String? = null
@@ -162,7 +165,7 @@ class DispatcherViewModelTest {
         }
 
         override suspend fun getJob(jobId: String): Response<OptimisationJobResultDto> =
-            Response.success(OptimisationJobResultDto(jobId, status))
+            Response.success(OptimisationJobResultDto(jobId, status, leftOut = leftOut))
     }
 
     private val api = FakeDispatcherApi(
@@ -422,6 +425,76 @@ class DispatcherViewModelTest {
             DispatcherMessage(R.string.dispatch_failed, detail),
             viewModel.messages.first()
         )
+    }
+
+    @Test
+    fun aBreakdown_replansOnlyTheVansCurrentWave() {
+        // v1 also holds a later wave's route (#274): p6 stays on it.
+        api.pickups = api.pickups + pickup("p6", PickupRequestStatusDto.ASSIGNED)
+            .copy(reportTime = t0.plusSeconds(4 * 3600))
+        api.routes = api.routes + route("v1", "p6").copy(
+            routeId = "route-v1-later",
+            plannedDeparture = t0.plusSeconds(4 * 3600 - 5400),
+            plannedArrival = t0.plusSeconds(4 * 3600 - 1800)
+        )
+
+        assertEquals(listOf("p1", "p3"), strandedPickups(board(), "v1"))
+    }
+
+    @Test
+    fun aBreakdown_afterTheVansFirstWaveIsDone_replansItsNextWave() {
+        api.pickups = api.pickups.map {
+            if (it.id in
+                setOf("p1", "p3")
+            ) {
+                it.copy(status = PickupRequestStatusDto.PICKED_UP)
+            } else {
+                it
+            }
+        } +
+            pickup(
+                "p6",
+                PickupRequestStatusDto.ASSIGNED
+            ).copy(reportTime = t0.plusSeconds(4 * 3600))
+        api.routes = api.routes + route("v1", "p6").copy(
+            routeId = "route-v1-later",
+            plannedDeparture = t0.plusSeconds(4 * 3600 - 5400)
+        )
+
+        assertEquals(listOf("p6"), strandedPickups(board(), "v1"))
+    }
+
+    @Test
+    fun theJobsLeftOutVans_showFromItsFirstPoll_andClearWithTheNextJob() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val later = LeftOutVehicleDto(
+            "v2",
+            "KDA v2",
+            LeftOutReasonDto.LATER_ROUTE,
+            t0.plusSeconds(3600),
+            t0.plusSeconds(3 * 3600)
+        )
+        jobs.leftOut = listOf(later)
+        jobs.status = OptimizationJobStatusDto.RUNNING
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.nextWave()
+        viewModel.runOptimisation()
+        // Still running: the list is there before the job ends.
+        testScheduler.advanceTimeBy(5_000)
+        assertEquals(JobUi.Running, viewModel.state.value.job)
+        assertEquals(listOf(later), viewModel.state.value.leftOut)
+
+        jobs.status = OptimizationJobStatusDto.COMPLETED
+        advanceUntilIdle()
+        assertEquals(listOf(later), viewModel.state.value.leftOut)
+
+        // The next job starts with none, before its first poll says otherwise.
+        viewModel.nextWave()
+        viewModel.runOptimisation()
+        assertEquals(JobUi.Queued, viewModel.state.value.job)
+        assertEquals(emptyList<LeftOutVehicleDto>(), viewModel.state.value.leftOut)
     }
 
     @Test

@@ -67,6 +67,7 @@ class OptimisationRunFragment : Fragment(R.layout.fragment_optimisation_run) {
                 viewModel.state.collect { state ->
                     state.board?.let { showSetup(view, state, it) }
                     showJob(view, state.job)
+                    showLeftOut(view.findViewById(R.id.job_left_out), state.leftOut)
                     showReplan(view, state.replan)
                     view.findViewById<Button>(R.id.start).isEnabled =
                         selectedWave(state) != null && !state.job.isActive
