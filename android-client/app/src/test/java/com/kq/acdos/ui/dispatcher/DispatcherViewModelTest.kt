@@ -30,12 +30,15 @@ import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -139,15 +142,24 @@ class DispatcherViewModelTest {
         ): Response<RosterImportResultDto> = error("not used here")
     }
 
-    /** Every job completes on its first poll with one route. */
+    /** Every job completes on its first poll with one route, unless [refusal] is set. */
     private class FakeJobsApi : OptimisationJobsApi {
         val created = mutableListOf<OptimisationJobCreateDto>()
         var status = OptimizationJobStatusDto.COMPLETED
 
-        override suspend fun createJob(idempotencyKey: String, body: OptimisationJobCreateDto) =
-            Response.success(OptimisationJobAcceptedDto("job-${created.size}")).also {
-                created += body
+        /** A 422 body to answer createJob with instead of accepting the job. */
+        var refusal: String? = null
+
+        override suspend fun createJob(
+            idempotencyKey: String,
+            body: OptimisationJobCreateDto
+        ): Response<OptimisationJobAcceptedDto> {
+            refusal?.let {
+                return Response.error(422, it.toResponseBody("application/json".toMediaType()))
             }
+            created += body
+            return Response.success(OptimisationJobAcceptedDto("job-${created.size - 1}"))
+        }
 
         override suspend fun getJob(jobId: String): Response<OptimisationJobResultDto> =
             Response.success(OptimisationJobResultDto(jobId, status))
@@ -317,6 +329,7 @@ class DispatcherViewModelTest {
         advanceUntilIdle()
         val before = planSummary(viewModel.state.value.board!!)
 
+        viewModel.nextWave()
         viewModel.runOptimisation()
         advanceUntilIdle()
 
@@ -329,11 +342,86 @@ class DispatcherViewModelTest {
         val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
         advanceUntilIdle()
 
+        viewModel.nextWave()
         viewModel.runOptimisation()
         advanceUntilIdle()
 
         assertEquals(OptimizationTriggerTypeDto.SCHEDULED, jobs.created.single().triggerType)
         assertEquals(listOf("p4"), jobs.created.single().pickupRequestIds)
+    }
+
+    /** p4 at 05:30 is pending; p6 and p7 are a later wave, more than an hour after it. */
+    private fun twoWaves() {
+        api.pickups = api.pickups + listOf(
+            pickup(
+                "p6",
+                PickupRequestStatusDto.PENDING
+            ).copy(reportTime = t0.plusSeconds(3 * 3600)),
+            pickup("p7", PickupRequestStatusDto.PENDING).copy(reportTime = t0.plusSeconds(4 * 3600))
+        )
+    }
+
+    @Test
+    fun noWave_isSelectedByDefault_andStartPlansNothing() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        twoWaves()
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        assertNull(selectedWave(viewModel.state.value))
+        viewModel.runOptimisation()
+        advanceUntilIdle()
+
+        assertTrue(jobs.created.isEmpty())
+        assertEquals(DispatcherMessage(R.string.dispatch_pick_a_wave), viewModel.messages.first())
+    }
+
+    @Test
+    fun nextWave_selectsTheEarliest_andStartPlansOnlyThatWave() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        twoWaves()
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.nextWave()
+        assertEquals(listOf("p4"), selectedWave(viewModel.state.value)?.pickupIds)
+        viewModel.runOptimisation()
+        advanceUntilIdle()
+
+        assertEquals(listOf("p4"), jobs.created.single().pickupRequestIds)
+    }
+
+    @Test
+    fun aPickedWave_isPlanned() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        twoWaves()
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.selectWave(t0.plusSeconds(3 * 3600))
+        viewModel.runOptimisation()
+        advanceUntilIdle()
+
+        assertEquals(listOf("p6", "p7"), jobs.created.single().pickupRequestIds)
+    }
+
+    @Test
+    fun planningWindowTooWide_showsTheServersMessage() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val detail = "these pickups' report times span 18 h 35 min, more than the 4 h " +
+            "one plan may cover: plan each wave separately"
+        jobs.refusal = """{"code": "planning_window_too_wide", "detail": "$detail"}"""
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.nextWave()
+        viewModel.runOptimisation()
+        advanceUntilIdle()
+
+        assertEquals(
+            DispatcherMessage(R.string.dispatch_failed, detail),
+            viewModel.messages.first()
+        )
     }
 
     @Test
@@ -354,6 +442,7 @@ class DispatcherViewModelTest {
         advanceUntilIdle()
 
         // v2 unticked; v4 is broken down, so it never goes in even if asked for.
+        viewModel.nextWave()
         viewModel.runOptimisation(listOf("v1", "v4"))
         advanceUntilIdle()
 

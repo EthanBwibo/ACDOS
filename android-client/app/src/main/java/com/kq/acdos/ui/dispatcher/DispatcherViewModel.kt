@@ -11,7 +11,9 @@ import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
 import com.kq.acdos.data.DispatchRepository
 import com.kq.acdos.data.PlanSummary
+import com.kq.acdos.data.PlanWave
 import com.kq.acdos.data.planSummary
+import com.kq.acdos.data.planWaves
 import com.kq.acdos.data.plannableVans
 import com.kq.acdos.data.remote.ApiResult
 import com.kq.acdos.data.remote.DispatcherPickupDto
@@ -21,7 +23,6 @@ import com.kq.acdos.data.remote.OptimizationJobStatusDto
 import com.kq.acdos.data.remote.OptimizationTriggerTypeDto
 import com.kq.acdos.data.remote.VehicleStatusDto
 import com.kq.acdos.data.strandedPickups
-import com.kq.acdos.data.unplannedPickups
 import com.kq.acdos.ui.Times
 import java.time.Instant
 import java.time.LocalDate
@@ -75,8 +76,14 @@ data class DispatcherUiState(
     /** The plan as it was when the latest job started, for Re-plan's Before and After. */
     val before: PlanSummary? = null,
     /** Why the last load failed, null once one works. The last board stays on screen. */
-    val loadFailure: DispatcherMessage? = null
+    val loadFailure: DispatcherMessage? = null,
+    /** The wave a first plan covers, by its first report time. None until the dispatcher picks. */
+    val selectedWave: Instant? = null
 )
+
+/** The picked wave, or null if none is picked or it has since been planned. */
+fun selectedWave(state: DispatcherUiState): PlanWave? = state.board?.let(::planWaves)
+    ?.firstOrNull { it.first == state.selectedWave }
 
 /** A Snackbar: [text], with the server's [detail] for %1$s when there is one. */
 data class DispatcherMessage(@StringRes val text: Int, val detail: String? = null)
@@ -164,8 +171,21 @@ class DispatcherViewModel(
      * vans ticked in the picker; by default every plannable one.
      */
     fun runOptimisation(vehicleIds: List<String>? = null) {
+        val wave = selectedWave(uiState.value)
+        if (wave == null) {
+            send(DispatcherMessage(R.string.dispatch_pick_a_wave))
+            return
+        }
+        startJob(OptimizationTriggerTypeDto.SCHEDULED, wave.pickupIds, vehicleIds)
+    }
+
+    /** Pick the wave starting at [first]; null picks none. */
+    fun selectWave(first: Instant?) = uiState.update { it.copy(selectedWave = first) }
+
+    /** The Next wave shortcut: the earliest wave not planned yet. */
+    fun nextWave() {
         val board = uiState.value.board ?: return
-        startJob(OptimizationTriggerTypeDto.SCHEDULED, unplannedPickups(board), vehicleIds)
+        selectWave(planWaves(board).firstOrNull()?.first)
     }
 
     fun delayFlight(pickup: DispatcherPickupDto, reportTime: Instant) {
