@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 
 /**
  * The day's pickups, under Fleet & crew (#230): who reports when, whether they've
- * acknowledged a change, and where a flight delay is recorded. No wireframe of
+ * acknowledged a change, and where a flight delay is recorded. New pickups come in
+ * from Add pickup (#253) or Import roster (#229). No wireframe of
  * its own, so it uses the same rows as the others.
  */
 class PickupsFragment : Fragment(R.layout.fragment_dispatch_list) {
@@ -39,6 +40,10 @@ class PickupsFragment : Fragment(R.layout.fragment_dispatch_list) {
     private val templateSaver = rosterTemplateSaver()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        view.findViewById<View>(R.id.add_pickup).apply {
+            isVisible = true
+            setOnClickListener { home.open(AddPickupFragment()) }
+        }
         view.findViewById<View>(R.id.import_roster).apply {
             isVisible = true
             setOnClickListener { picker.launch(ROSTER_TYPES) }

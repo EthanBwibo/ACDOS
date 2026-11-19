@@ -358,4 +358,37 @@
     <string name="roster_reason_duplicate">Pickup already listed</string>
     <string name="roster_reason_no_location">New crew member needs a pickup location</string>
     <string name="roster_reason_set_home_no_location">set_home needs a pickup location</string>
+
+    <!-- Add pickup and Set home (issue 253). -->
+    <string name="add_pickup">Add pickup</string>
+    <string name="add_pickup_crew">Crew member</string>
+    <string name="add_pickup_search_hint">Name or staff number</string>
+    <string name="add_pickup_no_match">No crew member matches</string>
+    <string name="add_pickup_change">Change</string>
+    <string name="add_pickup_report_time">Report time (Nairobi)</string>
+    <string name="add_pickup_pick_time">Pick date and time</string>
+    <string name="add_pickup_type">Type</string>
+    <string name="add_pickup_rostered">Rostered</string>
+    <string name="add_pickup_standby">Standby</string>
+    <string name="add_pickup_location">Pickup location</string>
+    <string name="add_pickup_home">Home</string>
+    <string name="add_pickup_home_zone">Home · %1$s</string>
+    <string name="add_pickup_different">Different location</string>
+    <string name="add_pickup_pin_zone">Pin · %1$s, %2$s km</string>
+    <string name="add_pickup_save">Add pickup</string>
+    <string name="add_pickup_added">Pickup added</string>
+    <string name="pin_pickup_point">Pickup point</string>
+    <string name="pin_set_home">Set home: %1$s</string>
+    <string name="pin_tap_hint">Tap the map to drop a pin</string>
+    <string name="pin_checking">Finding the nearest zone…</string>
+    <string name="dispatch_crew">Crew</string>
+    <string name="crew_none">No crew match</string>
+    <string name="crew_load_more">Load more</string>
+    <string name="crew_staff_no">Staff number</string>
+    <string name="crew_set_home">Set home</string>
+    <string name="pin_nearest_zone">Nearest zone: %1$s · %2$s km</string>
+    <string name="pin_too_far">%2$s km from %1$s, the nearest zone. Over 10 km can\'t be saved.</string>
+    <string name="pin_use_point">Use this point</string>
+    <string name="pin_save_home">Save home</string>
+    <string name="pin_home_saved">%1$s\'s home is now in %2$s</string>
 </resources>

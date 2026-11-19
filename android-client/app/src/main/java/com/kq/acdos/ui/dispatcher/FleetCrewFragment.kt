@@ -7,12 +7,12 @@ import androidx.fragment.app.commit
 import com.google.android.material.tabs.TabLayout
 import com.kq.acdos.R
 
-/** The two lists on Fleet & crew, in the order of their tabs. */
-enum class FleetList { PICKUPS, VEHICLES }
+/** The lists on Fleet & crew, in the order of their tabs. */
+enum class FleetList { PICKUPS, VEHICLES, CREW }
 
 /**
- * The Fleet & crew tab (#230): Pickups (with Import roster) and Vehicles,
- * one at a time under a pair of tabs. Import roster opens on top of this
+ * The Fleet & crew tab (#230): Pickups (with Add pickup and Import roster),
+ * Vehicles, and Crew (#253), one at a time under a row of tabs. Import roster opens on top of this
  * screen, inside the bottom-nav tab.
  */
 class FleetCrewFragment : Fragment(R.layout.fragment_fleet_crew) {
@@ -21,12 +21,21 @@ class FleetCrewFragment : Fragment(R.layout.fragment_fleet_crew) {
         // The list on show survives the tab being hidden and a rotation, in the child manager.
         val showing = childFragmentManager.findFragmentById(R.id.fleet_screen)
         if (showing == null) show(PickupsFragment())
-        val list = if (showing is VehiclesFragment) FleetList.VEHICLES else FleetList.PICKUPS
+        val list = when (showing) {
+            is VehiclesFragment -> FleetList.VEHICLES
+            is CrewListFragment -> FleetList.CREW
+            else -> FleetList.PICKUPS
+        }
         tabs.getTabAt(list.ordinal)?.select()
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                val list = FleetList.entries[tab.position]
-                show(if (list == FleetList.VEHICLES) VehiclesFragment() else PickupsFragment())
+                show(
+                    when (FleetList.entries[tab.position]) {
+                        FleetList.PICKUPS -> PickupsFragment()
+                        FleetList.VEHICLES -> VehiclesFragment()
+                        FleetList.CREW -> CrewListFragment()
+                    }
+                )
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) = Unit

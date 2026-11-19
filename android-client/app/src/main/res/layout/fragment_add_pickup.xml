@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Add pickup (issue 253), for a dispatcher who doesn't want a CSV: who, when,
+    rostered or standby, and from home or a pin on the map.
+-->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            style="@style/Widget.ACDOS.Overline"
+            android:text="@string/add_pickup_crew" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/crew_search_layout"
+            style="?attr/textInputOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/add_pickup_search_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/crew_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:inputType="textPersonName" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/crew_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/crew_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@drawable/divider_hairline"
+                android:orientation="vertical"
+                android:paddingVertical="4dp"
+                android:showDividers="middle" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            style="@style/Widget.ACDOS.Overline"
+            android:text="@string/add_pickup_report_time" />
+
+        <Button
+            android:id="@+id/report_time"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/add_pickup_pick_time" />
+
+        <TextView
+            style="@style/Widget.ACDOS.Overline"
+            android:text="@string/add_pickup_type" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:checkedChip="@id/type_rostered"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/type_rostered"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_pickup_rostered" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/type_standby"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_pickup_standby" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+        <TextView
+            style="@style/Widget.ACDOS.Overline"
+            android:text="@string/add_pickup_location" />
+
+        <RadioGroup
+            android:id="@+id/place"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checkedButton="@id/place_home">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/place_home"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/place_pin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/failure"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorError"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/add_pickup_save" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>
