@@ -345,6 +345,9 @@
         <item quantity="other">Import %d pickups</item>
     </plurals>
     <string name="roster_choose_other">Choose another file</string>
+    <string name="roster_download_template">Download template</string>
+    <string name="roster_template_saved">Template saved</string>
+    <string name="roster_template_failed">Couldn\'t save the template there. Try another place.</string>
     <string name="roster_done">Done</string>
     <string name="roster_no_replan">Importing doesn\'t re-plan. Skipped rows are left out; the rest import together.</string>
     <string name="roster_too_large">The file is over 256 KB. Split the roster into smaller files.</string>

@@ -1,0 +1,3 @@
+staff_no,name,crew_role,pickup_location,report_time,request_type,set_home
+KQ12345,Jane Wanjiru,cabin_crew,,2026-12-01T05:30:00+03:00,rostered,
+KQ12346,Peter Otieno,pilot,"-1.292533, 36.787543",2026-12-01T06:00:00+03:00,rostered,

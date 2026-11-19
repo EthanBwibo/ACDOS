@@ -35,10 +35,17 @@ class PickupsFragment : Fragment(R.layout.fragment_dispatch_list) {
     /** The chosen file goes straight to its dry run, on the Import roster screen. */
     private val picker = rosterPicker({ roster }) { home.open(RosterImportFragment()) }
 
+    /** Download template (#254): the dispatcher picks where the copy goes. */
+    private val templateSaver = rosterTemplateSaver()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<View>(R.id.import_roster).apply {
             isVisible = true
             setOnClickListener { picker.launch(ROSTER_TYPES) }
+        }
+        view.findViewById<View>(R.id.download_template).apply {
+            isVisible = true
+            setOnClickListener { templateSaver.launch(ROSTER_TEMPLATE) }
         }
         val rows = view.findViewById<LinearLayout>(R.id.rows)
 
