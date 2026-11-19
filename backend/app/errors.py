@@ -44,6 +44,11 @@ class ErrorCode(StrEnum):
     DRIVER_MISMATCH = "driver_mismatch"
     NOT_YOUR_STOP = "not_your_stop"
     ALREADY_CONFIRMED = "already_confirmed"
+    # Add pickup and Set home (#253): the roster import's reject reasons
+    # (RejectReason), so both paths refuse the same things the same way.
+    OUTSIDE_PICKUP_ZONES = "outside_pickup_zones"
+    REPORT_TIME_PAST = "report_time_past"
+    DUPLICATE_PICKUP = "duplicate_pickup"
 
 
 class ErrorBody(BaseModel):

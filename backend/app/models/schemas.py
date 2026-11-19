@@ -160,6 +160,9 @@ class PickupRequest(BaseModel):
     report_time: datetime  # hard deadline at JKIA
     request_type: PickupRequestType
     status: PickupRequestStatus
+    # Add pickup's retry key and body hash (#253); null for other pickups.
+    idempotency_key: str | None = None
+    request_hash: str | None = None
     created_at: datetime
 
 
@@ -501,6 +504,67 @@ class PickupReportTimeUpdate(BaseModel):
 
 class VehicleStatusUpdate(BaseModel):
     status: VehicleStatus
+
+
+# Add pickup and Set home without a CSV (#253). Both reject what the roster
+# import rejects, for the same reasons: the 422 ErrorBody's code is the
+# import's RejectReason value (outside_pickup_zones, report_time_past,
+# duplicate_pickup). No no_pickup_location: every stored crew member has a
+# home (crew_members.home_location is not null).
+
+
+class LatLon(BaseModel):
+    """A point the dispatcher dropped on the map, in decimal degrees."""
+
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+
+
+class NearestZone(BaseModel):
+    """GET /pickup-zones/nearest: the pin's nearest pickup zone, by PostGIS,
+    as the import's zone check sees it. Asked once per pin placement, not
+    while dragging."""
+
+    zone_label: str
+    distance_km: float  # to 0.1 km
+    # Within 10 km of a zone: the point can be saved. Otherwise POST
+    # /pickup-requests and PATCH .../home reject it as outside_pickup_zones.
+    within_pickup_zones: bool
+
+
+class CrewListItem(BaseModel):
+    """One crew member in the dispatcher's Crew list and Add pickup search."""
+
+    id: UUID
+    staff_no: str | None  # null for crew added before staff numbers (#246)
+    name: str
+    crew_role: str
+    home: LatLon  # rounded as on the driver's route
+    home_zone_label: str | None  # the home's nearest pickup zone; null only without zones
+
+
+class CrewListPage(BaseModel):
+    items: list[CrewListItem]
+    next_cursor: str | None
+
+
+class PickupRequestCreate(BaseModel):
+    """A pickup added by hand. Starts no re-plan."""
+
+    crew_member_id: UUID
+    report_time: AwareDatetime  # the deadline at JKIA, with its UTC offset
+    request_type: PickupRequestType = PickupRequestType.ROSTERED
+    # Where to collect them; left out or null means their home location.
+    pickup_location: LatLon | None = None
+
+
+class CrewHome(BaseModel):
+    """A crew member's home after PATCH /crew-members/{id}/home."""
+
+    id: UUID
+    home: LatLon
+    zone_label: str  # the new home's nearest pickup zone
+    distance_km: float  # from that zone, to 0.1 km
 
 
 # Crew-to-dispatcher preset messages (#54). No free text anywhere: a message
