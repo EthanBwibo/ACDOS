@@ -93,10 +93,19 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
 
 ## Planning per wave
 
-Plan a day one wave at a time, each wave with its own vans. The server refuses a job whose
-pickups' report times span more than 4 h (422 `planning_window_too_wide`). The Plan tab
-shows its message, for example "these pickups' report times span 18 h 35 min, more than the
-4 h one plan may cover: plan each wave separately".
+Plan a day one wave at a time, earliest first. The Plan tab groups the day's unplanned
+pickups into waves and plans one at a time. The server refuses a job whose pickups' report
+times span more than 4 h (422 `planning_window_too_wide`), with a message such as "these
+pickups' report times span 18 h 35 min, more than the 4 h one plan may cover: plan each
+wave separately".
+
+The same vans can be ticked for every wave. A van whose route in an earlier wave reaches
+JKIA before the wave's first report time keeps that route and starts the new one from JKIA,
+15 minutes after it is due in. A van that already has a route *after* the wave keeps it and
+is left out of the job; after Start, the Plan tab lists it, for example "KDX 004 left out:
+has the 08:00–10:00 route". That only happens when an earlier wave is re-planned after a
+later one, so plan waves in order. The driver's Route tab shows the next route with crew
+still to collect, and moves on once the earlier route's crew are all picked up.
 
 Why: the solver makes sure each crew member reaches JKIA by their report time, but it has
 no earliest pickup. Planned as one job, a whole day of 120 crew was collected before 05:30,
@@ -106,10 +115,12 @@ keeps every crew member on a van within a few hours of their report time.
 - **The demo morning** (`benchmarks.demo_seed`) is a single wave, so steps 3 to 5 plan it
   as before.
 - **A full day**, such as the defence dataset of 120 crew in five waves (04:00–06:30,
-  08:00–10:00, 11:30–13:30, 15:00–17:30 and 20:00–23:00): plan each wave on its own
-  vans. `python scripts/make_defence_day.py seed --plan` seeds the day and plans every wave
-  this way. On the phone, Start with the whole day's pickups gets the message above.
-- **A re-plan** (step 5) takes the routes of one wave, so the limit doesn't affect it.
+  08:00–10:00, 11:30–13:30, 15:00–17:30 and 20:00–23:00): plan each wave in turn on the
+  Plan tab. `python scripts/make_defence_day.py seed --plan --reuse` seeds the day and plans
+  every wave in order with all 20 vans, printing how many vans each wave used; without
+  `--reuse`, each wave gets its own vans.
+- **A re-plan** (step 5) takes the routes of one wave, so the limit doesn't affect it. A van
+  with a later wave's route is left out of it and listed, as above.
 
 ## If something goes wrong
 

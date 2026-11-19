@@ -93,7 +93,27 @@ data class LatePickupDto(
     @Json(name = "late_sec") val lateSec: Int
 )
 
-/** Every requested pickup is in a route; the late ones also in [late], the rest in [unassigned]. */
+/** Why a job left out a van it was given. */
+enum class LeftOutReasonDto {
+    /** The van has a route starting after the job's wave, which it keeps. */
+    @Json(name = "later_route")
+    LATER_ROUTE
+}
+
+/** A ticked van the job left out, with the later route's times. */
+@JsonClass(generateAdapter = true)
+data class LeftOutVehicleDto(
+    @Json(name = "vehicle_id") val vehicleId: String,
+    @Json(name = "plate_number") val plateNumber: String,
+    val reason: LeftOutReasonDto,
+    @Json(name = "route_departure") val routeDeparture: Instant,
+    @Json(name = "route_arrival") val routeArrival: Instant
+)
+
+/**
+ * Every requested pickup is in a route; the late ones also in [late], the rest in [unassigned].
+ * [leftOut] is known from acceptance, so it is there in every status.
+ */
 @JsonClass(generateAdapter = true)
 data class OptimisationJobResultDto(
     val id: String,
@@ -101,5 +121,6 @@ data class OptimisationJobResultDto(
     val error: String? = null,
     val routes: List<PlannedRouteDto> = emptyList(),
     val late: List<LatePickupDto> = emptyList(),
-    val unassigned: List<String> = emptyList()
+    val unassigned: List<String> = emptyList(),
+    @Json(name = "left_out") val leftOut: List<LeftOutVehicleDto> = emptyList()
 )

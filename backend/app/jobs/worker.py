@@ -56,14 +56,20 @@ class PickupInput:
 class VehicleInput:
     id: str  # vehicles.id
     capacity: int
+    # A van reused from an earlier wave starts at JKIA, free once that
+    # wave's route is in plus a turnaround (store.REUSE_TURNAROUND). None:
+    # it starts at the depot, free from the epoch.
+    start: Point | None = None
+    available_from: datetime | None = None
 
 
 @dataclass(frozen=True)
 class SolveInput:
     pickups: tuple[PickupInput, ...]
     vehicles: tuple[VehicleInput, ...]
-    # Every vehicle starts here, free to leave at the epoch (docs/schema.md:
-    # vehicles have no location). Vans on the road are not in a job (#113).
+    # A vehicle starts here, free to leave at the epoch (docs/schema.md:
+    # vehicles have no location), unless it is reused from an earlier wave
+    # (VehicleInput.start). Vans on the road in this wave are not in a job.
     depot: Point
     epoch: datetime  # timezone-aware
     time_limit_sec: float
@@ -81,9 +87,12 @@ class PlannedStop:
 class PlannedRoute:
     vehicle_id: str
     stops: tuple[PlannedStop, ...]
-    # When the van leaves the depot and reaches JKIA (#113).
+    # When the van leaves its start and reaches JKIA (#113).
     departure: datetime
     arrival: datetime
+    # Where it leaves from when not the depot: JKIA, for a van reused from
+    # an earlier wave. The route's length is measured from here.
+    start: Point | None = None
 
 
 @dataclass(frozen=True)
@@ -99,7 +108,7 @@ def run(job: SolveInput) -> SolveOutcome:
     """The process pool's entry point."""
     problem = build_problem(job)
     result = solve(problem, random.Random(job.seed), time_limit_sec=job.time_limit_sec)
-    return outcome(problem, result.best, job.epoch)
+    return outcome(problem, result.best, job.epoch, job.depot)
 
 
 def build_problem(job: SolveInput) -> Problem:
@@ -112,7 +121,19 @@ def build_problem(job: SolveInput) -> Problem:
         )
         for p in job.pickups
     )
-    vehicles = tuple(Vehicle(v.id, v.capacity, job.depot) for v in job.vehicles)
+    vehicles = tuple(
+        Vehicle(
+            v.id,
+            v.capacity,
+            v.start or job.depot,
+            # Seconds from the epoch, never before it: a van whose earlier
+            # route is already in is free now.
+            available_from=max(0.0, (v.available_from - job.epoch).total_seconds())
+            if v.available_from
+            else 0.0,
+        )
+        for v in job.vehicles
+    )
     return Problem(pickups, vehicles, travel_time(job.travel_model, job.epoch))
 
 
@@ -172,7 +193,9 @@ def _exit_with(parent_pid: int) -> None:
     threading.Thread(target=watch, name="exit-with-parent", daemon=True).start()
 
 
-def outcome(problem: Problem, best: Individual, epoch: datetime) -> SolveOutcome:
+def outcome(
+    problem: Problem, best: Individual, epoch: datetime, job_depot: Point | None = None
+) -> SolveOutcome:
     routes = []
     late_sec = {}
     for route in schedule(problem, best):
@@ -185,12 +208,14 @@ def outcome(problem: Problem, best: Individual, epoch: datetime) -> SolveOutcome
             # Rounded up, so a crew member late by a fraction of a second is
             # still reported late.
             late_sec[pickup_id] = math.ceil(stop.lateness)
+        vehicle = problem.vehicles[route.vehicle_index]
         routes.append(
             PlannedRoute(
-                problem.vehicles[route.vehicle_index].id,
+                vehicle.id,
                 tuple(stops),
                 departure=epoch + timedelta(seconds=route.start),
                 arrival=epoch + timedelta(seconds=route.destination_arrival),
+                start=None if vehicle.start == job_depot else vehicle.start,
             )
         )
     unassigned = tuple(problem.pickups[i].id for i in best.unassigned)

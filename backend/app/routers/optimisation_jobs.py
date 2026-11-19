@@ -17,21 +17,28 @@ has several problems, the first in this order is reported:
 2. An id listed twice: 422 duplicate_ids. An id that doesn't exist: 422
    unknown_ids. A pickup past assigned, or a van broken down or
    unavailable: 422 not_plannable.
-3. A pickup on a route that has departed: 409 departed_routes (a departed
+3. The wave: the span of the requested pickups' report times. Each van
+   with a route leaving after the wave keeps it and is left out of the job
+   (listed in the job's result as left_out); each van whose routes on the
+   wave's day reach JKIA before the wave keeps them and joins the job at
+   JKIA, free REUSE_TURNAROUND after the latest is due in (store.py, van
+   reuse across waves).
+4. A pickup on a route that has departed: 409 departed_routes (a departed
    route is never re-planned, except a broken-down van's in a
-   vehicle_breakdown re-plan). A van on the road: 409
-   vehicles_on_departed_routes.
-4. Add the other pickups on the routes the request replaces, so a re-plan
-   takes whole routes: the routes of its pickups, and each requested van's
-   route that has not departed, so a van never has two active routes. Their
-   new places (or unassigned) are in the job's result like the requested
-   ones.
-5. The report times of all those pickups span more than PLANNING_WINDOW:
+   vehicle_breakdown re-plan). A van on the road on a route that overlaps
+   the wave: 409 vehicles_on_departed_routes.
+5. Add the other pickups on the routes the request replaces, so a re-plan
+   takes whole routes: the routes of its pickups, and each van's route that
+   overlaps the wave and has not departed, so a van never has two routes in
+   one wave. Their new places (or unassigned) are in the job's result like
+   the requested ones.
+6. The report times of all those pickups span more than PLANNING_WINDOW:
    422 planning_window_too_wide. A plan is for one wave of crew. The
    solver has a deadline per crew member but no earliest pickup, so a
    whole day planned at once collects everyone before the first report
    time, some of them most of a day early.
-6. Create the job (queued) and hand it to the runner.
+7. Create the job (queued), with the vans left out, and hand it to the
+   runner.
 
 Only dispatchers may call these (#127): the caller's token is checked
 (app/auth.py, 401 without a valid one), and their profiles.role must be
@@ -49,7 +56,7 @@ from fastapi import APIRouter, Header, Request, status
 from app.auth import Caller, CallerDep
 from app.errors import ApiError, ErrorCode, errors
 from app.jobs.runner import JobRunner
-from app.jobs.store import JobStore
+from app.jobs.store import JobStore, Wave
 from app.jobs.worker import PickupInput, VehicleInput
 from app.models.schemas import (
     OptimisationJobAccepted,
@@ -59,6 +66,7 @@ from app.models.schemas import (
     PickupRequestStatus,
     VehicleStatus,
 )
+from app.solver.problem import JKIA
 
 router = APIRouter(prefix="/optimisation-jobs", tags=["optimisation jobs"])
 
@@ -195,11 +203,18 @@ async def create_job(
             vehicle_ids=broken,
         )
 
+    requested_times = [pickups[i].report_time for i in body.pickup_request_ids]
+    wave = Wave(min(requested_times), max(requested_times)) if requested_times else None
+    fleet = await store.fleet(body.vehicle_ids, body.pickup_request_ids, wave)
+    left_out = {v.vehicle_id for v in fleet.left_out}
+    vans = [i for i in body.vehicle_ids if i not in left_out]
+
     conflicts = await store.route_conflicts(
         body.pickup_request_ids,
-        body.vehicle_ids,
+        vans,
         job_runner.now(),
         breakdown=body.trigger_type == OptimizationTriggerType.VEHICLE_BREAKDOWN,
+        wave=wave,
     )
     if conflicts.departed:
         raise ApiError(
@@ -215,9 +230,9 @@ async def create_job(
             "these vans are on a route that has departed and are not yet due back at JKIA",
             vehicle_ids=conflicts.on_the_road,
         )
-    # A re-plan takes whole routes, its pickups' and its vans' (store.py,
-    # _REPLACED_ROUTES): the other pickups on them are planned with it,
-    # never left on a superseded route.
+    # A re-plan takes whole routes, its pickups' and its vans' in the wave
+    # (store.py, _REPLACED_ROUTES): the other pickups on them are planned
+    # with it, never left on a superseded route.
     pickups |= await store.pickups(conflicts.left_behind)
     planned = body.pickup_request_ids + conflicts.left_behind
 
@@ -229,7 +244,7 @@ async def create_job(
             f"{_hours(PLANNING_WINDOW)} one plan may cover: plan each wave separately",
         )
 
-    job = await store.create_job(idempotency_key, body_hash, body.trigger_type)
+    job = await store.create_job(idempotency_key, body_hash, body.trigger_type, fleet.left_out)
     if not job.created:
         # Another request with this key made the job since the lookup above.
         return _accepted_or_422(job.id, job.request_hash, body_hash)
@@ -238,8 +253,14 @@ async def create_job(
         tuple(
             PickupInput(str(p.id), p.location, p.report_time) for p in (pickups[i] for i in planned)
         ),
-        tuple(VehicleInput(str(v.id), v.capacity) for v in (vehicles[i] for i in body.vehicle_ids)),
+        tuple(
+            VehicleInput(str(v.id), v.capacity)
+            if v.id not in fleet.reused
+            else VehicleInput(str(v.id), v.capacity, JKIA, fleet.reused[v.id])
+            for v in (vehicles[i] for i in vans)
+        ),
         body.trigger_type,
+        wave,
     )
     return OptimisationJobAccepted(id=job.id)
 

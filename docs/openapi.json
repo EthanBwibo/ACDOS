@@ -1006,6 +1006,50 @@
         "title": "LatePickup",
         "type": "object"
       },
+      "LeftOutReason": {
+        "description": "Why a job left out a van it was given (van reuse across waves).",
+        "enum": [
+          "later_route"
+        ],
+        "title": "LeftOutReason",
+        "type": "string"
+      },
+      "LeftOutVehicle": {
+        "description": "A ticked van the job left out, e.g. \"KDX 004 left out: has the\n08:00-10:00 route\". route_departure and route_arrival are the later\nroute's, as they were when the job was accepted.",
+        "properties": {
+          "plate_number": {
+            "title": "Plate Number",
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/LeftOutReason"
+          },
+          "route_arrival": {
+            "format": "date-time",
+            "title": "Route Arrival",
+            "type": "string"
+          },
+          "route_departure": {
+            "format": "date-time",
+            "title": "Route Departure",
+            "type": "string"
+          },
+          "vehicle_id": {
+            "format": "uuid",
+            "title": "Vehicle Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "plate_number",
+          "reason",
+          "route_departure",
+          "route_arrival"
+        ],
+        "title": "LeftOutVehicle",
+        "type": "object"
+      },
       "MessageReply": {
         "properties": {
           "id": {
@@ -1143,7 +1187,7 @@
         "type": "object"
       },
       "OptimisationJobResult": {
-        "description": "A job and, once completed, its plan. Every requested pickup is in a\nroute; the late ones are also in late, and the rest in unassigned, so a\nmissed deadline is always listed, never left to be noticed.",
+        "description": "A job and, once completed, its plan. Every requested pickup is in a\nroute; the late ones are also in late, and the rest in unassigned, so a\nmissed deadline is always listed, never left to be noticed. left_out is\nknown when the job is accepted, so it is there in every status.",
         "properties": {
           "error": {
             "anyOf": [
@@ -1167,6 +1211,14 @@
               "$ref": "#/components/schemas/LatePickup"
             },
             "title": "Late",
+            "type": "array"
+          },
+          "left_out": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/LeftOutVehicle"
+            },
+            "title": "Left Out",
             "type": "array"
           },
           "routes": {

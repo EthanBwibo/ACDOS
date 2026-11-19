@@ -10,11 +10,24 @@ checks requests itself. Every name is schema-qualified, PostGIS included
 search_path.
 
 Re-planning (#113): a job replaces whole routes that have not departed:
-the routes of its pickups, and the routes of its vans, so a van never has
-two active routes. A departed route stays as it is, and its van stays out
-of new plans until it is due back at JKIA. The one exception is a van that broke down: in a
+the routes of its pickups, and its vans' routes that overlap its wave. A
+departed route stays as it is, and its van stays out of new plans until it
+is due back at JKIA. The one exception is a van that broke down: in a
 vehicle_breakdown re-plan, its route's pickups not yet collected may go to
 other vans.
+
+Van reuse across waves: a job's wave is the span of its pickups' report
+times (Wave). Each of a van's routes on the wave's day, other than the
+routes of the job's own pickups, is one of three kinds:
+- earlier: reaches JKIA before the wave's earliest report time. It is kept,
+  and the van joins the job at JKIA, free REUSE_TURNAROUND after the latest
+  such route is due in (Fleet.reused), even while that route is on the road.
+- later: leaves after the wave's latest report time. It is kept, and the van
+  is left out of the job (Fleet.left_out) so the new plan never runs into
+  that route; the job result lists it with the later route's times.
+- overlapping: anything else. Replaced, as before, or, once departed, the
+  van is on the road for this wave.
+So a van can have several active routes in a day, one per wave.
 """
 
 from dataclasses import dataclass
@@ -27,6 +40,8 @@ import asyncpg
 from app.jobs.worker import SolveOutcome
 from app.models.schemas import (
     LatePickup,
+    LeftOutReason,
+    LeftOutVehicle,
     OptimisationJobResult,
     OptimizationJobStatus,
     OptimizationTriggerType,
@@ -34,6 +49,39 @@ from app.models.schemas import (
     PlannedRoute,
 )
 from app.solver.problem import JKIA, Point
+
+# How long after a reused van's earlier route is due at JKIA it may leave
+# JKIA again: crew off, the van turned round.
+REUSE_TURNAROUND = timedelta(minutes=15)
+
+
+@dataclass(frozen=True)
+class Wave:
+    """The span of the report times of a job's pickups (the ids it was sent,
+    not the pickups it adds from replaced routes)."""
+
+    start: datetime  # the earliest report time
+    end: datetime  # the latest
+
+
+@dataclass(frozen=True)
+class LeftOut:
+    """A van left out of a job, and the later route it keeps."""
+
+    vehicle_id: UUID
+    route_id: UUID
+    departure: datetime
+    arrival: datetime
+
+
+@dataclass(frozen=True)
+class Fleet:
+    """What a job's wave makes of its vans."""
+
+    # Vans reused from an earlier wave: when each may leave JKIA.
+    reused: dict[UUID, datetime]
+    # Vans with a later route, which stay out of the job.
+    left_out: list[LeftOut]
 
 
 @dataclass(frozen=True)
@@ -120,12 +168,25 @@ class JobStore(Protocol):
 
     async def vehicles(self, ids: list[UUID]) -> dict[UUID, StoredVehicle]: ...
 
+    async def fleet(
+        self, vehicle_ids: list[UUID], pickup_ids: list[UUID], wave: Wave | None
+    ) -> Fleet: ...
+
     async def route_conflicts(
-        self, pickup_ids: list[UUID], vehicle_ids: list[UUID], now: datetime, breakdown: bool
+        self,
+        pickup_ids: list[UUID],
+        vehicle_ids: list[UUID],
+        now: datetime,
+        breakdown: bool,
+        wave: Wave | None = None,
     ) -> RouteConflicts: ...
 
     async def create_job(
-        self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType
+        self,
+        idempotency_key: str,
+        request_hash: str,
+        trigger_type: OptimizationTriggerType,
+        left_out: list[LeftOut] = (),
     ) -> KeyedJob: ...
 
     async def mark_running(self, job_id: UUID) -> None: ...
@@ -137,6 +198,7 @@ class JobStore(Protocol):
         vehicle_ids: list[UUID],
         now: datetime,
         breakdown: bool,
+        wave: Wave | None = None,
     ) -> None: ...
 
     async def fail(self, job_id: UUID, error: str) -> None: ...
@@ -179,11 +241,21 @@ _LIVE_NODES = """
       and r.status in ('active', 'completed')
 """
 
-# The routes a job over pickups $1 and vans $3 replaces, at $2: every active
-# route holding a live node of a pickup in $1, and every active route of a
-# van in $3 that has not departed. Taking the vans' routes too means a van
-# never has two active routes: its route that has not left is re-planned
-# with the job (a departed one keeps the van out of the job, ON_THE_ROAD).
+# A route of a van that overlaps the wave from $4 (earliest report time) to
+# $5 (latest): neither earlier (in at JKIA before $4) nor later (leaving
+# after $5). With no wave ($4, $5 null), every route overlaps.
+_OVERLAPS_WAVE = """
+    not coalesce(r.planned_arrival < $4::timestamptz, false)
+    and not coalesce(r.planned_departure > $5::timestamptz, false)
+"""
+
+# The routes a job over pickups $1 and vans $3 replaces, at $2, for the wave
+# $4 to $5: every active route holding a live node of a pickup in $1, and
+# every active route of a van in $3 that overlaps the wave and has not
+# departed. Taking those too means a van never has two routes in one wave:
+# its route that has not left is re-planned with the job (a departed one
+# keeps the van out of the job, ON_THE_ROAD). Its earlier and later routes
+# stay (Fleet).
 _REPLACED_ROUTES = f"""
     select n.route_id
     from public.route_nodes n
@@ -196,7 +268,34 @@ _REPLACED_ROUTES = f"""
     from public.routes r
     where r.vehicle_id = any($3::uuid[])
       and r.status = 'active'
+      and {_OVERLAPS_WAVE}
       and not ({_DEPARTED_ROUTE})
+"""
+
+# A van's earlier and later routes on the wave's day, for vans $1, without
+# the routes of the job's pickups $2, for the wave $3 to $4 (Fleet). Days
+# are Nairobi days.
+_EARLIER_AND_LATER = """
+    select r.vehicle_id, r.id, r.planned_departure, r.planned_arrival,
+        r.planned_arrival < $3 as earlier
+    from public.routes r
+    where r.vehicle_id = any($1::uuid[])
+      and not exists (
+          select 1 from public.route_nodes n
+          where n.route_id = r.id and n.superseded_at is null
+            and n.pickup_request_id = any($2::uuid[])
+      )
+      and (
+          (r.status in ('active', 'completed')
+           and r.planned_arrival < $3
+           and (r.planned_arrival at time zone 'Africa/Nairobi')::date
+               = ($3 at time zone 'Africa/Nairobi')::date)
+          or (r.status = 'active'
+              and r.planned_departure > $4
+              and (r.planned_departure at time zone 'Africa/Nairobi')::date
+                  = ($4 at time zone 'Africa/Nairobi')::date)
+      )
+    order by r.vehicle_id, r.planned_departure, r.id
 """
 
 # Vans ($1) on the road at $2: an active route of theirs has departed and
@@ -216,10 +315,14 @@ ON_THE_ROAD = """
           )
       )
       and $2 < r.planned_arrival + $3::interval
-    order by r.vehicle_id
 """
 
-# Straight-line length of a route ($1): depot ($2, $3) to each stop in turn,
+# The same for a job's wave, $4 to $5: only a route that overlaps it keeps
+# the van out. A van out on an earlier wave's route is reused (Fleet).
+_ON_THE_ROAD_FOR_WAVE = f"{ON_THE_ROAD} and {_OVERLAPS_WAVE}"
+
+# Straight-line length of a route ($1): its start ($2, $3), the depot or
+# JKIA for a reused van, to each stop in turn,
 # then JKIA ($4, $5), by PostGIS on geography (CLAUDE.md: no distance math
 # in the API layer).
 _ROUTE_LENGTH_KM = """
@@ -287,28 +390,61 @@ class PostgresJobStore:
         )
         return {r["id"]: StoredVehicle(r["id"], r["capacity"], r["status"]) for r in rows}
 
+    async def fleet(
+        self, vehicle_ids: list[UUID], pickup_ids: list[UUID], wave: Wave | None
+    ) -> Fleet:
+        if wave is None:
+            return Fleet({}, [])
+        rows = await self._pool.fetch(
+            _EARLIER_AND_LATER, vehicle_ids, pickup_ids, wave.start, wave.end
+        )
+        return fleet_of(rows)
+
     async def route_conflicts(
-        self, pickup_ids: list[UUID], vehicle_ids: list[UUID], now: datetime, breakdown: bool
+        self,
+        pickup_ids: list[UUID],
+        vehicle_ids: list[UUID],
+        now: datetime,
+        breakdown: bool,
+        wave: Wave | None = None,
     ) -> RouteConflicts:
         return await _route_conflicts(
-            self._pool, pickup_ids, vehicle_ids, now, breakdown, self._grace
+            self._pool, pickup_ids, vehicle_ids, now, breakdown, self._grace, wave
         )
 
     async def create_job(
-        self, idempotency_key: str, request_hash: str, trigger_type: OptimizationTriggerType
+        self,
+        idempotency_key: str,
+        request_hash: str,
+        trigger_type: OptimizationTriggerType,
+        left_out: list[LeftOut] = (),
     ) -> KeyedJob:
-        row = await self._pool.fetchrow(
-            """
-            insert into public.optimization_jobs
-                (trigger_type, status, idempotency_key, request_hash)
-            values ($1, 'queued', $2, $3)
-            on conflict (idempotency_key) do nothing
-            returning id, request_hash
-            """,
-            trigger_type.value,
-            idempotency_key,
-            request_hash,
-        )
+        async with self._pool.acquire() as conn, conn.transaction():
+            row = await conn.fetchrow(
+                """
+                insert into public.optimization_jobs
+                    (trigger_type, status, idempotency_key, request_hash)
+                values ($1, 'queued', $2, $3)
+                on conflict (idempotency_key) do nothing
+                returning id, request_hash
+                """,
+                trigger_type.value,
+                idempotency_key,
+                request_hash,
+            )
+            if row is not None:
+                await conn.executemany(
+                    """
+                    insert into public.optimization_job_left_out_vehicles
+                        (optimization_job_id, vehicle_id, reason, route_id,
+                         route_departure, route_arrival)
+                    values ($1, $2, 'later_route', $3, $4, $5)
+                    """,
+                    [
+                        (row["id"], v.vehicle_id, v.route_id, v.departure, v.arrival)
+                        for v in left_out
+                    ],
+                )
         if row is None:
             # A request with the same key got in between the lookup and here.
             existing = await self.job_for_key(idempotency_key)
@@ -328,6 +464,7 @@ class PostgresJobStore:
         vehicle_ids: list[UUID],
         now: datetime,
         breakdown: bool,
+        wave: Wave | None = None,
     ) -> None:
         """Write the plan and complete the job in one transaction, so a job is
         never completed without its routes, and a failure leaves nothing.
@@ -353,7 +490,9 @@ class PostgresJobStore:
             # left, a van may have left, broken down or been given a route, a
             # pickup may have been collected (and 025 taken it off its route),
             # or another job may have changed the plan.
-            conflicts = await _route_conflicts(conn, requested, vans, now, breakdown, self._grace)
+            conflicts = await _route_conflicts(
+                conn, requested, vans, now, breakdown, self._grace, wave
+            )
             if conflicts:
                 raise RouteConflictError(conflicts)
 
@@ -375,7 +514,8 @@ class PostgresJobStore:
             }
 
             # Supersede the job's pickups' live nodes, and every other live
-            # node of the routes it replaces (its pickups' and its vans'), so
+            # node of the routes it replaces (its pickups', and its vans' in
+            # the wave), so
             # those routes are replaced whole. The pickups left on such a
             # route are past assigned (the check above found no plannable
             # ones): they get no new node.
@@ -398,6 +538,8 @@ class PostgresJobStore:
                 requested,
                 now,
                 vans,
+                wave.start if wave else None,
+                wave.end if wave else None,
             )
             # A replaced route with no live node left is superseded; a
             # broken-down van's route that keeps a collected pickup stays.
@@ -438,13 +580,9 @@ class PostgresJobStore:
                         for seq, s in enumerate(route.stops, start=1)
                     ],
                 )
+                start = route.start or self._depot
                 await conn.execute(
-                    _ROUTE_LENGTH_KM,
-                    route_id,
-                    self._depot.lat,
-                    self._depot.lon,
-                    JKIA.lat,
-                    JKIA.lon,
+                    _ROUTE_LENGTH_KM, route_id, start.lat, start.lon, JKIA.lat, JKIA.lon
                 )
 
             await conn.execute(
@@ -514,6 +652,26 @@ class PostgresJobStore:
         result = OptimisationJobResult(
             id=job["id"], status=OptimizationJobStatus(job["status"]), error=job["error"]
         )
+        result.left_out = [
+            LeftOutVehicle(
+                vehicle_id=r["vehicle_id"],
+                plate_number=r["plate_number"],
+                reason=LeftOutReason(r["reason"]),
+                route_departure=r["route_departure"],
+                route_arrival=r["route_arrival"],
+            )
+            for r in await self._pool.fetch(
+                """
+                select l.vehicle_id, v.plate_number, l.reason,
+                    l.route_departure, l.route_arrival
+                from public.optimization_job_left_out_vehicles l
+                join public.vehicles v on v.id = l.vehicle_id
+                where l.optimization_job_id = $1
+                order by v.plate_number, l.vehicle_id
+                """,
+                job_id,
+            )
+        ]
         if result.status != OptimizationJobStatus.COMPLETED:
             return result
         # The job's own routes, superseded or not: this is what it planned.
@@ -623,7 +781,9 @@ async def _route_conflicts(
     now: datetime,
     breakdown: bool,
     grace: timedelta,
+    wave: Wave | None,
 ) -> RouteConflicts:
+    start, end = (wave.start, wave.end) if wave else (None, None)
     departed = await conn.fetch(
         f"select n.pickup_request_id {_LIVE_NODES} and ({_FIXED_ROUTE}) "
         "order by n.pickup_request_id",
@@ -645,6 +805,8 @@ async def _route_conflicts(
         pickup_ids,
         now,
         vehicle_ids,
+        start,
+        end,
     )
     not_plannable = await conn.fetch(
         """
@@ -654,7 +816,14 @@ async def _route_conflicts(
         """,
         pickup_ids,
     )
-    on_the_road = await conn.fetch(ON_THE_ROAD, vehicle_ids, now, grace)
+    on_the_road = await conn.fetch(
+        f"select distinct vehicle_id from ({_ON_THE_ROAD_FOR_WAVE}) t order by vehicle_id",
+        vehicle_ids,
+        now,
+        grace,
+        start,
+        end,
+    )
     broken_down = await conn.fetch(
         """
         select id from public.vehicles
@@ -669,6 +838,27 @@ async def _route_conflicts(
         [r["id"] for r in not_plannable],
         [r["vehicle_id"] for r in on_the_road],
         [r["id"] for r in broken_down],
+    )
+
+
+def fleet_of(rows) -> Fleet:
+    """Fleet from _EARLIER_AND_LATER's rows. A van with a later route is
+    left out, for its first later route, even if it also has an earlier one;
+    otherwise one with earlier routes is reused from the latest of them."""
+    reused: dict[UUID, datetime] = {}
+    left_out: dict[UUID, LeftOut] = {}
+    for r in rows:
+        van = r["vehicle_id"]
+        if not r["earlier"]:
+            left_out.setdefault(
+                van, LeftOut(van, r["id"], r["planned_departure"], r["planned_arrival"])
+            )
+        else:
+            free = r["planned_arrival"] + REUSE_TURNAROUND
+            reused[van] = max(free, reused.get(van, free))
+    return Fleet(
+        {van: free for van, free in reused.items() if van not in left_out},
+        list(left_out.values()),
     )
 
 

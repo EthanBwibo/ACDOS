@@ -33,9 +33,10 @@ Bands, report times at JKIA in Nairobi time, and their share of the pickups:
     afternoon  15:00-17:30   15%   18 pickups   vans 015-017
     night      20:00-23:00   15%   18 pickups   vans 018-020
 
-Each band has its own vans because a job re-plans every route of the vans it
-is given (app/routers/optimisation_jobs.py): planning the noon band with the
-early band's vans would re-plan the early routes too.
+Each band has its own vans by default. With plan --reuse, every band is
+planned with all 20 vans instead, in order, so a van whose earlier band's
+route is in at JKIA in time is reused (van reuse across waves,
+app/jobs/store.py); each band's line then says how many vans it used.
 
 Crew: the 8 named crew of scripts/seed_test_accounts.py (with logins, their
 records owned by that script and never deleted here) and 112 more, tagged
@@ -510,6 +511,13 @@ def whole_day(jobs: list[tuple[str, list[UUID], list[UUID]]]):
     return [("whole-day", [p for _, ps, _ in jobs for p in ps], [v for _, _, vs in jobs for v in vs])]
 
 
+def reuse_fleet(jobs: list[tuple[str, list[UUID], list[UUID]]]):
+    """The bands' jobs with every van ticked in each, planned in band order,
+    so vans are reused from one band to the next."""
+    vans = [v for _, _, vs in jobs for v in vs]
+    return [(band, pickups, vans) for band, pickups, _ in jobs]
+
+
 def plan_bands(jobs, api: str) -> list[dict]:
     """One optimisation job per band on the API, one after another, each timed
     from POST to completed or failed."""
@@ -564,14 +572,19 @@ def plan_bands(jobs, api: str) -> list[dict]:
                 "routes": sum(1 for route in body["routes"] if route["nodes"]),
                 "late": len(body["late"]),
                 "unassigned": len(body["unassigned"]),
+                "used": sorted({route["vehicle_id"] for route in body["routes"] if route["nodes"]}),
+                "left_out": len(body.get("left_out", [])),
                 "job": job_id,
             }
             print(
                 f"plan: {band:<9} {result['pickups']:>3} pickups, {result['vans']} vans: "
                 f"{result['status']} in {result['seconds']} s, {result['routes']} routes, "
-                f"{result['late']} late, {result['unassigned']} unassigned (job {job_id})"
+                f"{result['late']} late, {result['unassigned']} unassigned, "
+                f"{len(result['used'])} vans used, {result['left_out']} left out (job {job_id})"
             )
             results.append(result)
+    used = {van for result in results for van in result["used"]}
+    print(f"plan: {len(used)} vans used over {len(results)} job(s)")
     return results
 
 
@@ -620,6 +633,8 @@ async def main_async(args: argparse.Namespace) -> None:
         jobs = await band_jobs(conn, day, args.seed)
         if args.whole_day:
             jobs = whole_day(jobs)
+        elif args.reuse:
+            jobs = reuse_fleet(jobs)
     finally:
         await conn.close()
     plan_bands(jobs, args.api)
@@ -638,6 +653,9 @@ def main() -> None:
     parser.add_argument("--api", default=API_URL, help="plan: the API (default Azure)")
     parser.add_argument(
         "--whole-day", action="store_true", help="plan: one job for the day, as the app sends"
+    )
+    parser.add_argument(
+        "--reuse", action="store_true", help="plan: every band with all the vans, in order"
     )
     args = parser.parse_args()
     if args.command == "roster":
