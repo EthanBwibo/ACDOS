@@ -107,6 +107,9 @@ class Profile(BaseModel):
     id: UUID
     role: ProfileRole
     full_name: str
+    # A driver's number, +2547XXXXXXXX (#255). Never read from the table by a
+    # signed-in user: only through private.driver_contact (migration 036).
+    phone: str | None = None
     created_at: datetime
 
 
@@ -117,6 +120,9 @@ class CrewMember(BaseModel):
     role: str  # free text in the schema (e.g. pilot, cabin_crew)
     home_location: GeoPoint
     staff_no: str | None = None  # the airline's staff number; null before #229's import
+    # +2547XXXXXXXX (#255), from the roster import. Only through
+    # private.crew_phone (migration 036).
+    phone: str | None = None
     created_at: datetime
 
 
@@ -295,6 +301,11 @@ class DriverStop(BaseModel):
     # a pickup event is in (migration 023's trigger). A reinstalled or new
     # phone has no outbox, so this is its only record of progress (#196).
     pickup_status: PickupRequestStatus
+    # For the Call button (#255): the crew member's number, +2547XXXXXXXX,
+    # only from 30 minutes before scheduled_pickup until the pickup is
+    # confirmed, missed or cancelled, and only with one on record. Null
+    # otherwise: the number is not in the response outside that window.
+    crew_phone: str | None = None
 
 
 class DriverRoute(BaseModel):
@@ -343,6 +354,11 @@ class CrewPickup(BaseModel):
     scheduled_pickup: datetime | None  # null until a route plans the pickup
     eta: datetime | None = None
     vehicle_plate: str | None  # null until a route plans the pickup
+    # The van's driver (#255): first name once a route plans the pickup, and
+    # number, +2547XXXXXXXX, only from 30 minutes before scheduled_pickup
+    # until it is confirmed, missed or cancelled. Null otherwise.
+    driver_first_name: str | None = None
+    driver_phone: str | None = None
     # True while a notice for this pickup is not acknowledged; notice is the
     # latest such one, null when there is none.
     needs_ack: bool

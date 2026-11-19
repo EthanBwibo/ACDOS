@@ -3,6 +3,7 @@ the script would create, checked without calling Supabase."""
 
 import importlib.util
 import math
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -86,3 +87,11 @@ def test_the_printed_table_has_the_user_ids():
     table = accounts.accounts_table({"amina@acdos.test": "1234"})
     assert "| Email | Role | Crew or van | User id |" in table
     assert "| amina@acdos.test | crew | Amina Yusuf (KQ30001), Westlands, early | 1234 |" in table
+
+
+def test_every_account_has_its_own_obviously_fake_number():
+    """#255: +254700000xxx, never a real one; the same on every run."""
+    phones = [accounts.phone_of(a) for a in accounts.ACCOUNTS]
+    assert len(set(phones)) == len(phones)
+    assert all(re.fullmatch(r"\+254700000\d{3}", p) for p in phones), phones
+    assert phones == [accounts.phone_of(a) for a in accounts.ACCOUNTS]
