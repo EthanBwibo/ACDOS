@@ -52,6 +52,8 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
    Open the **Plan** tab and tap **Start**: only the three `demo-` vans are selected. Tap
    **Start**. When the job shows Done, open the **Routes** tab: it lists the demo vans'
    routes. Tap one for its stops, times and crew names. The job takes a few seconds.
+   One plan covers one **wave** of crew: report times no more than 4 h apart. The seeded
+   morning (05:00 to 07:30) is one wave. See "Planning per wave" below for a fuller day.
 4. **Breakdown** (dispatcher), before anyone is picked up: in **Routes**, open each route to
    find the van that lists "Test Crew". In **Fleet & crew > Vehicles**, tap that van and
    **Mark broken down**. Overview's Alerts says it is broken down.
@@ -88,6 +90,26 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
 
 **After the demo:** run `reset` (on the hotspot). To run the demo again, start from step 1
 (the phone signs in as that run's driver in step 6).
+
+## Planning per wave
+
+Plan a day one wave at a time, each wave with its own vans. The server refuses a job whose
+pickups' report times span more than 4 h (422 `planning_window_too_wide`). The Plan tab
+shows its message, for example "these pickups' report times span 18 h 35 min, more than the
+4 h one plan may cover: plan each wave separately".
+
+Why: the solver makes sure each crew member reaches JKIA by their report time, but it has
+no earliest pickup. Planned as one job, a whole day of 120 crew was collected before 05:30,
+so crew reporting at 23:00 would have reached JKIA almost 19 hours early (#260). A wave
+keeps every crew member on a van within a few hours of their report time.
+
+- **The demo morning** (`benchmarks.demo_seed`) is a single wave, so steps 3 to 5 plan it
+  as before.
+- **A full day**, such as the defence dataset of 120 crew in five waves (04:00–06:30,
+  08:00–10:00, 11:30–13:30, 15:00–17:30 and 20:00–23:00): plan each wave on its own
+  vans. `python scripts/make_defence_day.py seed --plan` seeds the day and plans every wave
+  this way. On the phone, Start with the whole day's pickups gets the message above.
+- **A re-plan** (step 5) takes the routes of one wave, so the limit doesn't affect it.
 
 ## If something goes wrong
 

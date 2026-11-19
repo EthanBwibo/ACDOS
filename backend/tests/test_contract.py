@@ -207,6 +207,14 @@ def _not_plannable(w: World):
     return w.post_job(w.job_body())
 
 
+def _window_too_wide(w: World):
+    first = next(iter(w.store.stored_pickups.values()))
+    w.store.stored_pickups[first.id] = StoredPickup(
+        first.id, first.location, first.report_time + timedelta(hours=12), first.status
+    )
+    return w.post_job(w.job_body())
+
+
 def _departed(w: World):
     w.store.departed.add(next(iter(w.store.stored_pickups)))
     return w.post_job(w.job_body())
@@ -531,6 +539,14 @@ CASES = (
         ("POST", "/optimisation-jobs", 422, "duplicate_ids", _duplicates, True),
         ("POST", "/optimisation-jobs", 422, "unknown_ids", _unknown, True),
         ("POST", "/optimisation-jobs", 422, "not_plannable", _not_plannable, True),
+        (
+            "POST",
+            "/optimisation-jobs",
+            422,
+            "planning_window_too_wide",
+            _window_too_wide,
+            False,
+        ),
         ("POST", "/optimisation-jobs", 503, "unavailable", _job_without_runner("POST"), False),
         (
             "GET",
