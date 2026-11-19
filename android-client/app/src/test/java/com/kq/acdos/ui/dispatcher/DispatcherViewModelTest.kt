@@ -3,6 +3,8 @@ package com.kq.acdos.ui.dispatcher
 import com.kq.acdos.R
 import com.kq.acdos.data.DayBoard
 import com.kq.acdos.data.DispatchRepository
+import com.kq.acdos.data.MAX_PLAN_SPAN
+import com.kq.acdos.data.VanStatus
 import com.kq.acdos.data.planSummary
 import com.kq.acdos.data.plannableVans
 import com.kq.acdos.data.remote.DispatcherApi
@@ -30,6 +32,7 @@ import com.kq.acdos.data.strandedPickups
 import com.kq.acdos.data.unplannedPickups
 import com.kq.acdos.data.vanChoices
 import java.io.IOException
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
@@ -193,8 +196,9 @@ class DispatcherViewModelTest {
     private fun board() = DayBoard(api.pickups, api.vans, api.routes)
 
     @Test
-    fun plannableVans_leaveOutBrokenDownAndOnTheRoad() {
-        assertEquals(listOf("v1", "v2"), plannableVans(board()))
+    fun plannableVans_leaveOutBrokenDown_butKeepVansOnTheRoad() {
+        // v3 is out on the road: an earlier wave's van is reused for the next one (#274).
+        assertEquals(listOf("v1", "v2", "v3"), plannableVans(board()))
     }
 
     @Test
@@ -206,7 +210,7 @@ class DispatcherViewModelTest {
             api.routes
         )
 
-        assertEquals(listOf("v1", "v2"), plannableVans(withTestVan))
+        assertEquals(listOf("v1", "v2", "v3"), plannableVans(withTestVan))
     }
 
     @Test
@@ -242,6 +246,7 @@ class DispatcherViewModelTest {
             OptimisationJobCreateDto(
                 OptimizationTriggerTypeDto.VEHICLE_BREAKDOWN,
                 listOf("p1", "p3"),
+                // v3's route has p5, reporting at the wave's own 05:30, so it overlaps (#274).
                 listOf("v2")
             ),
             jobs.created.single()
@@ -331,7 +336,7 @@ class DispatcherViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
         val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
         advanceUntilIdle()
-        val before = planSummary(viewModel.state.value.board!!)
+        val before = planSummary(viewModel.state.value.board!!, listOf("p4"))
 
         viewModel.nextWave()
         viewModel.runOptimisation()
@@ -443,15 +448,66 @@ class DispatcherViewModelTest {
     }
 
     @Test
+    fun aBrokenVanWithRoutesInTwoWaves_replansOnlyTheCurrentOne_underThe4hGuard() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        // v1's second route is five hours on: re-planning both at once would be refused.
+        api.pickups = api.pickups + pickup("p6", PickupRequestStatusDto.ASSIGNED)
+            .copy(reportTime = t0.plusSeconds(5 * 3600))
+        api.routes = api.routes + route("v1", "p6").copy(
+            routeId = "route-v1-later",
+            plannedDeparture = t0.plusSeconds(5 * 3600 - 5400),
+            plannedArrival = t0.plusSeconds(5 * 3600 - 1800)
+        )
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+
+        viewModel.markBrokenDown(api.vans.first { it.id == "v1" })
+        advanceUntilIdle()
+        val replan = viewModel.state.value.replan!!
+        val reportTimes = api.pickups.associate { it.id to it.reportTime }
+        val times = replan.pickupIds.map { reportTimes.getValue(it) }
+
+        assertEquals(listOf("p1", "p3"), replan.pickupIds)
+        assertTrue(Duration.between(times.min(), times.max()) <= MAX_PLAN_SPAN)
+        // The later route waits for its own re-plan, shown in Overview's alerts.
+        val waiting = routesNeedingAVan(viewModel.state.value).single()
+        assertEquals(listOf("p6"), waiting.pickupIds)
+
+        viewModel.replan()
+        advanceUntilIdle()
+        assertEquals(listOf("p1", "p3"), jobs.created.single().pickupRequestIds)
+
+        viewModel.replanRoute(waiting)
+        viewModel.replan()
+        advanceUntilIdle()
+        assertEquals(listOf("p6"), jobs.created.last().pickupRequestIds)
+        assertEquals(OptimizationTriggerTypeDto.VEHICLE_BREAKDOWN, jobs.created.last().triggerType)
+    }
+
+    @Test
+    fun replanBefore_coversOnlyTheRoutesBeingReplaced() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
+        advanceUntilIdle()
+        val board = viewModel.state.value.board!!
+
+        viewModel.markBrokenDown(api.vans.first { it.id == "v1" })
+        advanceUntilIdle()
+        viewModel.replan()
+        advanceUntilIdle()
+
+        // Only route-v1 carries p1 and p3; v3's route isn't in Before.
+        val before = viewModel.state.value.before!!
+        assertEquals(planSummary(board, listOf("p1", "p3")), before)
+        assertEquals(1, before.vansUsed)
+        assertEquals(2, planSummary(board).vansUsed)
+    }
+
+    @Test
     fun aBreakdown_afterTheVansFirstWaveIsDone_replansItsNextWave() {
+        val collected = setOf("p1", "p3")
         api.pickups = api.pickups.map {
-            if (it.id in
-                setOf("p1", "p3")
-            ) {
-                it.copy(status = PickupRequestStatusDto.PICKED_UP)
-            } else {
-                it
-            }
+            if (it.id in collected) it.copy(status = PickupRequestStatusDto.PICKED_UP) else it
         } +
             pickup(
                 "p6",
@@ -499,19 +555,28 @@ class DispatcherViewModelTest {
     }
 
     @Test
-    fun aVanAlreadyOnAWave_tickedDeliberately_goesIntoTheJob() = runTest {
+    fun aVanWithALaterRoute_tickedDeliberately_goesIntoTheJob() = runTest {
         Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        // v2 leaves at 08:30 with p7, reporting at 09:30: a later wave than p4's 05:30.
+        api.pickups = api.pickups + pickup("p7", PickupRequestStatusDto.ASSIGNED)
+            .copy(reportTime = t0.plusSeconds(4 * 3600))
+        api.routes = api.routes + route("v2", "p7").copy(
+            routeId = "route-v2-later",
+            plannedDeparture = t0.plusSeconds(3 * 3600),
+            plannedArrival = t0.plusSeconds(4 * 3600)
+        )
         val viewModel = DispatcherViewModel(DispatchRepository(api, jobs), day)
         advanceUntilIdle()
-        // v1 already has a route today, so the picker starts it unticked (#272).
-        val v1 = vanChoices(viewModel.state.value.board!!).first { it.vehicle.id == "v1" }
-        assertEquals(false, v1.tickedByDefault)
+        val v2 = vanChoices(viewModel.state.value.board!!, listOf("p4"))
+            .first { it.vehicle.id == "v2" }
+        assertEquals(VanStatus.LaterRoute(t0.plusSeconds(3 * 3600)), v2.status)
+        assertEquals(false, v2.tickedByDefault)
 
         viewModel.nextWave()
-        viewModel.runOptimisation(listOf("v1"))
+        viewModel.runOptimisation(listOf("v2"))
         advanceUntilIdle()
 
-        assertEquals(listOf("v1"), jobs.created.single().vehicleIds)
+        assertEquals(listOf("v2"), jobs.created.single().vehicleIds)
     }
 
     @Test

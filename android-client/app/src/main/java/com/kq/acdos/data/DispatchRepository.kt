@@ -38,11 +38,12 @@ data class DayBoard(
 private val UNPLANNABLE_VANS = setOf(VehicleStatusDto.BROKEN_DOWN, VehicleStatusDto.UNAVAILABLE)
 
 /**
- * The vans a job may use: not broken down or unavailable, and not out on a route that has
- * left.
+ * The vans a job may use: not broken down or unavailable. A van on the road
+ * stays in: since #274 a van out on an earlier wave's route is reused for the
+ * next one, and whether it is free for a given wave is vanChoices' call.
  */
 fun plannableVans(board: DayBoard): List<String> = board.vehicles
-    .filter { it.status !in UNPLANNABLE_VANS && !it.onTheRoad }
+    .filter { it.status !in UNPLANNABLE_VANS }
     .map { it.id }
 
 /** A first plan: the day's pickups not on a route yet. */

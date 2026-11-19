@@ -43,7 +43,9 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
             home.close()
         }
         view.findViewById<Button>(R.id.replan).setOnClickListener {
-            pickVans(viewModel, viewModel::replan)
+            viewModel.state.value.replan?.let {
+                pickVans(viewModel, it.pickupIds, viewModel::replan)
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -76,6 +78,11 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         view.findViewById<View>(R.id.replan_actions).isVisible = replan != null
         view.findViewById<View>(R.id.replan_progress).isVisible = state.job.isActive
         showLeftOut(view.findViewById(R.id.replan_left_out), state.leftOut)
+        view.findViewById<TextView>(R.id.replan_needs_van).apply {
+            val routes = routesNeedingAVan(state)
+            isVisible = routes.isNotEmpty()
+            text = routes.joinToString("\n") { requireContext().needsVanText(it) }
+        }
         view.findViewById<Button>(R.id.replan).isEnabled =
             state.board != null && !state.job.isActive
 
@@ -129,8 +136,9 @@ class ReplanFragment : Fragment(R.layout.fragment_replan) {
         if (resolved.childCount == 0) resolved.addRow(getString(R.string.dispatch_none))
     }
 
+    /** Only the routes being replaced: those carrying the re-plan's pickups (#274). */
     private fun showComparison(view: View, state: DispatcherUiState) {
-        val now = state.board?.let(::planSummary)
+        val now = state.board?.let { planSummary(it, replanning(state)) }
         val before = state.before ?: now
         val finished = state.before != null && state.job is JobUi.Done
         val beforeRow = view.findViewById<View>(R.id.before_row)

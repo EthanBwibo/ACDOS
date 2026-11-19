@@ -289,6 +289,9 @@
     <string name="dispatch_left_out">%1$s left out: has the %2$s–%3$s route</string>
     <string name="dispatch_time_range">%1$s–%2$s</string>
     <string name="dispatch_van_on_wave">%1$s · On wave %2$s</string>
+    <string name="dispatch_van_free_from">%1$s · Free from %2$s</string>
+    <string name="dispatch_van_later_route">%1$s · Later route %2$s</string>
+    <string name="dispatch_route_needs_van">%1$s\'s %2$s–%3$s route needs a van</string>
     <string name="dispatch_start_job">Start</string>
     <string name="dispatch_unknown_crew">Unknown crew</string>
     <string name="dispatch_pickup_title">%1$s · %2$s</string>

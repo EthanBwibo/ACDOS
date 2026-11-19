@@ -95,6 +95,22 @@ class ScheduleTest {
     }
 
     @Test
+    fun `a van's routes in several waves today are all listed under Today`() {
+        // Since #274 one van can drive a route in each wave.
+        val waves = listOf(
+            route("w1", "2026-11-05T01:00:00Z"),
+            route("w2", "2026-11-05T05:00:00Z"),
+            route("w3", "2026-11-05T17:00:00Z")
+        )
+
+        val sections = scheduleSections(waves.reversed(), now)
+
+        assertEquals(listOf(true, true, false), sections.today.map { it.started })
+        assertEquals(3, sections.today.size)
+        assertTrue(sections.upcoming.isEmpty())
+    }
+
+    @Test
     fun `today's rows leave the day to the section heading`() {
         val row = scheduleSections(listOf(route("a", "2026-11-05T09:00:00Z")), now).today.single()
 

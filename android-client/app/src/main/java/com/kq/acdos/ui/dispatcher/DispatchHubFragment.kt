@@ -139,6 +139,20 @@ class DispatchHubFragment : Fragment(R.layout.fragment_dispatch_hub) {
                 value = getString(R.string.dispatch_replan_link)
             ) { home.open(DispatcherTab.PLAN, ReplanFragment()) }
         }
+        for (route in routesNeedingAVan(state)) {
+            rows.addRow(
+                title = requireContext().needsVanText(route),
+                subtitle = resources.getQuantityString(
+                    R.plurals.dispatch_to_replan,
+                    route.pickupIds.size,
+                    route.pickupIds.size
+                ),
+                value = getString(R.string.dispatch_replan_link)
+            ) {
+                viewModel.replanRoute(route)
+                home.open(DispatcherTab.PLAN, ReplanFragment())
+            }
+        }
         val unread = messages?.count { it.readAt == null }
         rows.addRow(
             title = getString(R.string.dispatch_messages),
