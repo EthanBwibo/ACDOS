@@ -23,11 +23,15 @@ The password for every account is `SEED_PASSWORD` (`scripts/seed_test_accounts.p
 
 1. `https://acdos-api.azurewebsites.net/health` returns `{"status":"ok"}`. If it doesn't, see
    README, "Deploy", or use the fallback below.
-2. The accounts exist: `python scripts/seed_test_accounts.py` (safe to re-run).
+2. The accounts exist: `python scripts/seed_test_accounts.py` (safe to re-run). It also
+   gives every account a demo phone number (`+2547000001xx`), for the Call buttons.
 3. Sign in once with each account (dispatcher, the three van drivers, then crew) and check
    that it loads.
 
 ## The demo
+
+**There are no notifications** (push, #55, isn't built). Every phone shows a change only when
+it refreshes: on opening the screen, or a pull down. The steps below say when to pull.
 
 Run the two commands from `backend/` with `DATABASE_URL` in `backend/.env`. They connect
 to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot.
@@ -49,11 +53,12 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
    warnings it prints**: any van it lists is still offered, so untick it at steps 3 and 5.
 3. **Dispatcher plans** (dispatcher): on **Overview**, tap **Next** to tomorrow. The
    **crew pickups** tile says 14, and **Fleet & crew > Pickups** lists them as Not planned.
-   Open the **Plan** tab and tap **Start**: only the three `demo-` vans are selected. Tap
+   Open the **Plan** tab. Under **Waves** there is one chip, "05:00–07:30 · 14 crew": the
+   seeded morning is one **wave** (report times no more than 4 h apart). Tap **Next wave**
+   to select it, then **Start**: only the three `demo-` vans are listed and ticked. Tap
    **Start**. When the job shows Done, open the **Routes** tab: it lists the demo vans'
    routes. Tap one for its stops, times and crew names. The job takes a few seconds.
-   One plan covers one **wave** of crew: report times no more than 4 h apart. The seeded
-   morning (05:00 to 07:30) is one wave. See "Planning per wave" below for a fuller day.
+   See "Planning per wave" below for a fuller day.
 4. **Breakdown** (dispatcher), before anyone is picked up: in **Routes**, open each route to
    find the van that lists "Test Crew". In **Fleet & crew > Vehicles**, tap that van and
    **Mark broken down**. Overview's Alerts says it is broken down.
@@ -66,8 +71,8 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
    Note which demo van Test Crew is on now; step 6 signs in as that van's driver.
 6. **Driver confirms** (phone): sign in as the driver of one of the vans in the new plan
    (`demo-KDH 10xA` → `driver-10xa@acdos.test`). After the breakdown re-plan, pull down on
-   the Route tab to refresh: the app isn't told about a re-plan, so a driver already signed
-   in can show the old route until then. That van's re-planned route appears. Tap **Confirm
+   the Route tab to refresh: with no notifications, a driver already signed in can show the
+   old route until then. That van's re-planned route appears. Tap **Confirm
    pickup**, then **Crew on board**, on a stop that is **not Test Crew's**: once Test Crew
    is picked up, the crew app no longer shows that pickup, so step 7 has no change card to
    acknowledge. After **Refresh**, the dispatcher's crew pickups list shows it Picked up.
@@ -76,15 +81,18 @@ to Postgres on port 5432, which campus Wi-Fi blocks: run them on a phone hotspot
    and the reason (a vehicle breakdown). Below it are the pickup time, "Report at JKIA" 06:15
    and the new van. Tap **Acknowledge**: "Acknowledged. The
    dispatcher can see it." The card goes, and it stays gone after a pull to refresh.
+   There is no **Call driver** button yet: a number shows only from 30 minutes before the
+   pickup, and the seeded pickups are tomorrow. The Driver row shows the driver's first name.
 8. **Crew messages the dispatcher** (crew): open the **Message** tab. It lists the presets
    as buttons and has no text field. Tap **I am running late**: "Sent to the dispatcher.",
    and it appears under **Recent**.
 9. **Dispatcher replies** (dispatcher, then crew): **⋮ > Profile > Sign out**, sign in as
    `dispatcher@acdos.test` and tap **Next** to the seeded day. In the **crew pickups** list,
    Test Crew's row now says "Acknowledged" (step 7). Alerts counts one unread, and
-   **Messages** shows Test Crew's "I am running late" with the time it was sent. Tap that
-   message. It's marked read, and the presets appear under it. Tap **Noted**: "Reply sent.",
-   and the row says "Replied: Noted". **Sign out**, sign in as `crew@acdos.test` and pull
+   **Messages** has a row for Test Crew with "I am running late" and an unread count. Tap
+   the row: their conversation opens, the message is marked read, and the presets appear
+   under it. Tap **Noted**: "Reply sent." Back to the list: the row's last line is
+   "You: Noted". **Sign out**, sign in as `crew@acdos.test` and pull
    down on the **Message** tab: **Recent** shows "Dispatch · Noted" under the message. Replies are presets only, go only to that crew member, and don't start a
    re-plan.
 
@@ -112,8 +120,7 @@ no earliest pickup. Planned as one job, a whole day of 120 crew was collected be
 so crew reporting at 23:00 would have reached JKIA almost 19 hours early (#260). A wave
 keeps every crew member on a van within a few hours of their report time.
 
-- **The demo morning** (`benchmarks.demo_seed`) is a single wave, so steps 3 to 5 plan it
-  as before.
+- **The demo morning** (`benchmarks.demo_seed`) is a single wave, so step 3 has one chip.
 - **A full day**, such as the defence dataset of 120 crew in five waves (04:00–06:30,
   08:00–10:00, 11:30–13:30, 15:00–17:30 and 20:00–23:00): plan each wave in turn on the
   Plan tab. `python scripts/make_defence_day.py seed --plan --reuse` seeds the day and plans
@@ -124,6 +131,8 @@ keeps every crew member on a van within a few hours of their report time.
 
 ## If something goes wrong
 
+- **Start stays greyed out on the Plan tab.** No wave is selected: tap **Next wave** or a
+  wave chip. "No pickups to plan." means every pickup that day is already planned.
 - **The seed prints `non-demo pending pickup(s)`.** Another script (for example
   `plan_test_route.py`) has pickups on the same day. Seed another day with
   `seed --date YYYY-MM-DD` and tap Next to that day on the dispatcher phone.
